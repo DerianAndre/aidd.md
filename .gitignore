@@ -1,0 +1,10 @@
+node_modules/
+researchs/
+.env
+.env.*
+*.log
+dist/
+.DS_Store
+Thumbs.db
+nul
+target/

@@ -1,0 +1,145 @@
+import { existsSync } from 'node:fs';
+import { readFileOrNull, listFiles } from './fs.js';
+import { aiddPaths } from './paths.js';
+import { parseFrontmatter } from './utils.js';
+import type { AiddConfig } from './types.js';
+
+export interface ContentEntry {
+  path: string;
+  name: string;
+  frontmatter: Record<string, string>;
+  /** Full content is loaded lazily via getContent(). */
+  getContent: () => string;
+}
+
+export interface ContentIndex {
+  agents?: ContentEntry;
+  rules: ContentEntry[];
+  skills: ContentEntry[];
+  workflows: ContentEntry[];
+  spec: ContentEntry[];
+  knowledge: ContentEntry[];
+  templates: ContentEntry[];
+}
+
+/**
+ * ContentLoader handles the hybrid content strategy:
+ * 1. Bundled content (shipped with the npm package)
+ * 2. Project content (from the user's project)
+ * 3. Merged result based on override mode
+ */
+export class ContentLoader {
+  private index: ContentIndex | null = null;
+
+  constructor(
+    private readonly bundledRoot: string | null,
+    private readonly projectAiddRoot: string | null,
+    private readonly overrideMode: AiddConfig['content']['overrideMode'],
+  ) {}
+
+  /** Build or return the cached content index. */
+  getIndex(): ContentIndex {
+    if (this.index) return this.index;
+
+    const bundled = this.bundledRoot ? this.scanRoot(this.bundledRoot) : emptyIndex();
+    const project = this.projectAiddRoot ? this.scanRoot(this.projectAiddRoot) : emptyIndex();
+
+    this.index = this.merge(bundled, project);
+    return this.index;
+  }
+
+  /** Get full content of a specific entry by path. */
+  getContent(entryPath: string): string | null {
+    return readFileOrNull(entryPath);
+  }
+
+  /** Invalidate cache (call after project files change). */
+  invalidate(): void {
+    this.index = null;
+  }
+
+  private scanRoot(root: string): ContentIndex {
+    const paths = aiddPaths(root);
+
+    return {
+      agents: this.scanFile(paths.agentsMd),
+      rules: this.scanDir(paths.rules),
+      skills: this.scanDir(paths.skills),
+      workflows: this.scanDir(paths.workflows),
+      spec: this.scanDir(paths.spec),
+      knowledge: this.scanDir(paths.knowledge),
+      templates: this.scanDir(paths.templates),
+    };
+  }
+
+  private scanFile(filePath: string): ContentEntry | undefined {
+    if (!existsSync(filePath)) return undefined;
+
+    const content = readFileOrNull(filePath);
+    if (!content) return undefined;
+
+    const { frontmatter } = parseFrontmatter(content);
+    const name = filePath.split(/[/\\]/).pop() ?? filePath;
+
+    return {
+      path: filePath,
+      name,
+      frontmatter,
+      getContent: () => readFileOrNull(filePath) ?? '',
+    };
+  }
+
+  private scanDir(dirPath: string): ContentEntry[] {
+    const files = listFiles(dirPath, {
+      extensions: ['.md'],
+      recursive: true,
+    });
+
+    return files.map((filePath) => {
+      const content = readFileOrNull(filePath);
+      const { frontmatter } = content ? parseFrontmatter(content) : { frontmatter: {} };
+      const name = filePath.split(/[/\\]/).pop() ?? filePath;
+
+      return {
+        path: filePath,
+        name,
+        frontmatter,
+        getContent: () => readFileOrNull(filePath) ?? '',
+      };
+    });
+  }
+
+  private merge(bundled: ContentIndex, project: ContentIndex): ContentIndex {
+    if (this.overrideMode === 'project_only') return project;
+    if (this.overrideMode === 'bundled_only') return bundled;
+
+    // Default: merge — project overrides bundled by filename
+    return {
+      agents: project.agents ?? bundled.agents,
+      rules: mergeEntries(bundled.rules, project.rules),
+      skills: mergeEntries(bundled.skills, project.skills),
+      workflows: mergeEntries(bundled.workflows, project.workflows),
+      spec: bundled.spec, // Specs always come from bundled
+      knowledge: mergeEntries(bundled.knowledge, project.knowledge),
+      templates: mergeEntries(bundled.templates, project.templates),
+    };
+  }
+}
+
+function emptyIndex(): ContentIndex {
+  return {
+    rules: [],
+    skills: [],
+    workflows: [],
+    spec: [],
+    knowledge: [],
+    templates: [],
+  };
+}
+
+/** Merge two entry lists — project entries override bundled by name. */
+function mergeEntries(bundled: ContentEntry[], project: ContentEntry[]): ContentEntry[] {
+  const projectNames = new Set(project.map((e) => e.name));
+  const fromBundled = bundled.filter((e) => !projectNames.has(e.name));
+  return [...fromBundled, ...project];
+}

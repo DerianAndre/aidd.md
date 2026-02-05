@@ -1,0 +1,112 @@
+import { invoke } from '@tauri-apps/api/core';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+
+// ---------------------------------------------------------------------------
+// Typed invoke wrappers for Rust commands
+// ---------------------------------------------------------------------------
+
+// Filesystem
+export const readFile = (path: string) =>
+  invoke<string>('read_file', { path });
+
+export const writeFile = (path: string, content: string) =>
+  invoke<void>('write_file', { path, content });
+
+export const deleteFile = (path: string) =>
+  invoke<void>('delete_file', { path });
+
+export const fileExists = (path: string) =>
+  invoke<boolean>('file_exists', { path });
+
+export interface FileEntry {
+  name: string;
+  path: string;
+  is_dir: boolean;
+  extension: string | null;
+  size: number;
+}
+
+export const listDirectory = (
+  path: string,
+  extensions?: string[],
+  recursive = false,
+) => invoke<FileEntry[]>('list_directory', { path, extensions, recursive });
+
+export interface MarkdownEntity {
+  path: string;
+  name: string;
+  frontmatter: Record<string, string>;
+  content: string;
+  last_modified: string;
+}
+
+export const listMarkdownEntities = (basePath: string, recursive = false) =>
+  invoke<MarkdownEntity[]>('list_markdown_entities', {
+    basePath,
+    recursive,
+  });
+
+export const readJsonFile = (path: string) =>
+  invoke<unknown>('read_json_file', { path });
+
+export const writeJsonFile = (path: string, data: unknown) =>
+  invoke<void>('write_json_file', { path, data });
+
+// Project management
+export interface ProjectInfo {
+  name: string;
+  path: string;
+  detected: boolean;
+  markers: {
+    agents_md: boolean;
+    rules: boolean;
+    skills: boolean;
+    workflows: boolean;
+    spec: boolean;
+    knowledge: boolean;
+    templates: boolean;
+    aidd_dir: boolean;
+    memory: boolean;
+  };
+}
+
+export interface ProjectEntry {
+  name: string;
+  path: string;
+  detected: boolean;
+}
+
+export const detectProject = (path: string) =>
+  invoke<ProjectInfo>('detect_project', { path });
+
+export const addProject = (path: string) =>
+  invoke<ProjectInfo>('add_project', { path });
+
+export const removeProject = (path: string) =>
+  invoke<void>('remove_project', { path });
+
+export const listProjects = () =>
+  invoke<ProjectEntry[]>('list_projects');
+
+export const getActiveProject = () =>
+  invoke<string | null>('get_active_project');
+
+export const setActiveProject = (path: string) =>
+  invoke<void>('set_active_project', { path });
+
+// File watcher
+export interface FileChangeEvent {
+  event_type: 'created' | 'modified' | 'deleted';
+  paths: string[];
+}
+
+export const startWatching = (path: string, recursive = true) =>
+  invoke<string>('start_watching', { path, recursive });
+
+export const stopWatching = (watcherId: string) =>
+  invoke<void>('stop_watching', { watcherId });
+
+export const onFileChanged = (
+  callback: (event: FileChangeEvent) => void,
+): Promise<UnlistenFn> =>
+  listen<FileChangeEvent>('file-changed', (e) => callback(e.payload));

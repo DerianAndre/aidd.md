@@ -1,0 +1,61 @@
+{
+  "name": "@aidd.md/mcp-core",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "aidd.md — MCP — Core — The Brain: guidance, routing, knowledge",
+  "homepage": "https://aidd.md",
+  "author": {
+    "name": "Derian Castillo",
+    "email": "hola@derianandre.com",
+    "url": "https://derianandre.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/derianandre/aidd.md.git"
+  },
+  "keywords": [
+    "aidd",
+    "mcp",
+    "core",
+    "guidance",
+    "routing",
+    "knowledge"
+  ],
+  "main": "./dist/index.js",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "aidd-mcp-core": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./modules": {
+      "import": "./dist/modules/index.js",
+      "types": "./dist/modules/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@aidd.md/mcp-shared": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

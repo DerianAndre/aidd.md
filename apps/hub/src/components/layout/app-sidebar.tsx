@@ -1,0 +1,169 @@
+import { ListBox, Select, Label } from '@heroui/react';
+import {
+  LayoutDashboard,
+  Users,
+  ShieldCheck,
+  Zap,
+  GitBranch,
+  FileText,
+  BookOpen,
+  History,
+  Eye,
+  Brain,
+  BarChart3,
+  Dna,
+  FileStack,
+  Activity,
+  Server,
+  Terminal,
+  Settings,
+  Plug,
+  PanelLeftClose,
+  PanelLeft,
+} from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigationStore } from '../../stores/navigation-store';
+import { useProjectStore } from '../../stores/project-store';
+import { ROUTES } from '../../lib/constants';
+import { cn } from '../../lib/utils';
+
+const NAV_GROUPS = [
+  {
+    label: 'Overview',
+    items: [
+      { label: 'Dashboard', path: ROUTES.DASHBOARD, icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'Framework',
+    items: [
+      { label: 'Agents', path: ROUTES.AGENTS, icon: Users },
+      { label: 'Rules', path: ROUTES.RULES, icon: ShieldCheck },
+      { label: 'Skills', path: ROUTES.SKILLS, icon: Zap },
+      { label: 'Workflows', path: ROUTES.WORKFLOWS, icon: GitBranch },
+      { label: 'Templates', path: ROUTES.TEMPLATES, icon: FileText },
+      { label: 'Knowledge', path: ROUTES.KNOWLEDGE, icon: BookOpen },
+    ],
+  },
+  {
+    label: 'Memory',
+    items: [
+      { label: 'Sessions', path: ROUTES.SESSIONS, icon: History },
+      { label: 'Observations', path: ROUTES.OBSERVATIONS, icon: Eye },
+      { label: 'Permanent Memory', path: ROUTES.MEMORY, icon: Brain },
+    ],
+  },
+  {
+    label: 'Intelligence',
+    items: [
+      { label: 'Analytics', path: ROUTES.ANALYTICS, icon: BarChart3 },
+      { label: 'Evolution', path: ROUTES.EVOLUTION, icon: Dna },
+      { label: 'Drafts', path: ROUTES.DRAFTS, icon: FileStack },
+      { label: 'Diagnostics', path: ROUTES.DIAGNOSTICS, icon: Activity },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { label: 'MCP Servers', path: ROUTES.MCP_SERVERS, icon: Server },
+      { label: 'MCP Playground', path: ROUTES.MCP_PLAYGROUND, icon: Terminal },
+      { label: 'Config', path: ROUTES.CONFIG, icon: Settings },
+      { label: 'Adapters', path: ROUTES.ADAPTERS, icon: Plug },
+    ],
+  },
+] as const;
+
+export function AppSidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const collapsed = useNavigationStore((s) => s.sidebarCollapsed);
+  const toggleSidebar = useNavigationStore((s) => s.toggleSidebar);
+  const projects = useProjectStore((s) => s.projects);
+  const activeProject = useProjectStore((s) => s.activeProject);
+  const switchProject = useProjectStore((s) => s.switchProject);
+
+  return (
+    <aside
+      className={cn(
+        'flex h-screen flex-col border-r border-divider bg-content1 transition-all duration-200',
+        collapsed ? 'w-16' : 'w-64',
+      )}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-divider p-3">
+        {!collapsed && (
+          <span className="text-sm font-semibold text-foreground">
+            aidd.md Hub
+          </span>
+        )}
+        <button
+          onClick={toggleSidebar}
+          className="rounded-md p-1 text-default-500 hover:bg-default-100 hover:text-foreground"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
+        </button>
+      </div>
+
+      {/* Project Switcher */}
+      {!collapsed && projects.length > 0 && (
+        <div className="border-b border-divider p-3">
+          <Select
+            selectedKey={activeProject ? activeProject.path : null}
+            onSelectionChange={(key) => {
+              if (key) {
+                switchProject(String(key));
+              }
+            }}
+          >
+            <Label>Project</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {projects.map((p) => (
+                  <ListBox.Item key={p.path} id={p.path} textValue={p.name}>
+                    {p.name}
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
+          </Select>
+        </div>
+      )}
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto p-2">
+        <ListBox
+          aria-label="Navigation"
+          selectedKeys={new Set([location.pathname])}
+          onAction={(key) => navigate(String(key))}
+        >
+          {NAV_GROUPS.map((group) => (
+            <ListBox.Section key={group.label}>
+              {!collapsed && (
+                <span className="px-3 text-xs font-medium uppercase tracking-wider text-default-400">
+                  {group.label}
+                </span>
+              )}
+              {group.items.map((item) => (
+                <ListBox.Item
+                  key={item.path}
+                  id={item.path}
+                  textValue={item.label}
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon size={18} />
+                    {collapsed ? null : item.label}
+                  </div>
+                </ListBox.Item>
+              ))}
+            </ListBox.Section>
+          ))}
+        </ListBox>
+      </nav>
+    </aside>
+  );
+}

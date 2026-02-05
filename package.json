@@ -1,0 +1,62 @@
+{
+  "name": "aidd.md",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "aidd.md — Monorepo — AI-Driven Development Framework",
+  "homepage": "https://aidd.md",
+  "author": {
+    "name": "Derian Castillo",
+    "email": "hola@derianandre.com",
+    "url": "https://derianandre.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/derianandre/aidd.md.git"
+  },
+  "keywords": [
+    "aidd",
+    "ai-driven development",
+    "framework",
+    "mcp",
+    "monolithic"
+  ],
+  "type": "module",
+  "scripts": {
+    "mcp:setup": "node scripts/mcp-setup.mjs",
+    "mcp:build": "pnpm --filter \"./mcps/**\" build",
+    "mcp:dev": "pnpm --filter \"./mcps/**\" dev",
+    "mcp:test": "pnpm --filter \"./mcps/**\" test",
+    "mcp:typecheck": "pnpm --filter \"./mcps/**\" typecheck",
+    "mcp:clean": "pnpm --filter \"./mcps/**\" clean",
+    "mcp:status": "node scripts/mcp-status.mjs",
+    "mcp:doctor": "node scripts/mcp-doctor.mjs",
+    "mcp:check": "node scripts/mcp-check.mjs",
+    "validate:mermaid": "tsx skills/system-architect/scripts/validate-mermaid.ts",
+    "validate:openapi": "tsx skills/contract-architect/scripts/validate-openapi.ts",
+    "validate:sql": "tsx skills/data-architect/scripts/validate-sql.ts",
+    "validate:tests": "tsx skills/quality-engineer/scripts/validate-tests.ts",
+    "validate:dockerfile": "tsx skills/platform-engineer/scripts/validate-dockerfile.ts",
+    "validate:i18n": "tsx skills/i18n-specialist/scripts/validate-i18n.ts",
+    "validate:tkb": "tsx skills/knowledge-architect/scripts/validate-tkb-entry.ts",
+    "validate:design-tokens": "tsx skills/design-architect/scripts/validate-design-tokens.ts",
+    "audit:accessibility": "tsx skills/interface-artisan/scripts/audit-accessibility.ts",
+    "audit:performance": "tsx skills/experience-engineer/scripts/audit-performance.ts",
+    "scan:secrets": "tsx skills/security-architect/scripts/scan-secrets.ts",
+    "hub:dev": "pnpm --filter @aidd.md/hub tauri dev",
+    "hub:build": "pnpm --filter @aidd.md/hub tauri build",
+    "hub:typecheck": "pnpm --filter @aidd.md/hub typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.8",
+    "@types/better-sqlite3": "^7.6.13",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.0",
+    "yaml": "^2.8.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3", "esbuild"]
+  }
+}

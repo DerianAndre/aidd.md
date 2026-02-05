@@ -1,0 +1,56 @@
+{
+  "name": "@aidd.md/mcp",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "aidd.md — MCP — Server — Monolithic: all 58 tools in one process",
+  "homepage": "https://aidd.md",
+  "author": {
+    "name": "Derian Castillo",
+    "email": "hola@derianandre.com",
+    "url": "https://derianandre.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/derianandre/aidd.md.git"
+  },
+  "keywords": [
+    "aidd",
+    "mcp",
+    "server",
+    "monolithic"
+  ],
+  "main": "./dist/index.js",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "aidd-mcp": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@aidd.md/mcp-shared": "workspace:*",
+    "@aidd.md/mcp-core": "workspace:*",
+    "@aidd.md/mcp-memory": "workspace:*",
+    "@aidd.md/mcp-tools": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
