@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Chip, Button, Breadcrumbs, Spinner } from '@heroui/react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Chip, Button, Spinner } from '@heroui/react';
 import {
   ArrowLeft,
+  ChevronRight,
   ExternalLink,
   Download,
   Check,
@@ -69,21 +70,37 @@ export function MarketplaceDetailPage() {
 
   return (
     <div>
-      {/* Breadcrumbs */}
-      <Breadcrumbs className="mb-4">
-        <Breadcrumbs.Item onPress={() => navigate('/marketplace')}>Marketplace</Breadcrumbs.Item>
-        <Breadcrumbs.Item onPress={() => navigate('/marketplace')}>{tabLabel}</Breadcrumbs.Item>
-        <Breadcrumbs.Item>{entry.name}</Breadcrumbs.Item>
-      </Breadcrumbs>
+      {/* Back + Breadcrumbs */}
+      <nav className="mb-4 flex items-center gap-2" aria-label="Breadcrumb">
+        <Button
+          size="sm"
+          variant="ghost"
+          isIconOnly
+          onPress={() => navigate('/marketplace')}
+          aria-label="Back to Marketplace"
+        >
+          <ArrowLeft size={16} />
+        </Button>
+        <ol className="flex items-center gap-1 text-sm">
+          <li>
+            <Link to="/marketplace" className="text-default-500 hover:text-foreground transition-colors">
+              Marketplace
+            </Link>
+          </li>
+          <li><ChevronRight size={14} className="text-default-300" /></li>
+          <li>
+            <Link to="/marketplace" className="text-default-500 hover:text-foreground transition-colors">
+              {tabLabel}
+            </Link>
+          </li>
+          <li><ChevronRight size={14} className="text-default-300" /></li>
+          <li className="text-foreground font-medium">{entry.name}</li>
+        </ol>
+      </nav>
 
       <PageHeader
         title={entry.name}
         description={entry.description}
-        actions={
-          <Button size="sm" variant="ghost" onPress={() => navigate('/marketplace')}>
-            <ArrowLeft size={14} /> Back
-          </Button>
-        }
       />
 
       {/* Two-column layout */}
