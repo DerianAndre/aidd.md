@@ -5,7 +5,7 @@ mod presentation;
 
 use std::sync::Arc;
 
-use application::{FrameworkService, ProjectService};
+use application::{FrameworkService, IntegrationService, ProjectService};
 use infrastructure::filesystem::FileAdapter;
 use infrastructure::persistence::JsonStore;
 
@@ -13,6 +13,7 @@ use infrastructure::persistence::JsonStore;
 pub struct AppContext {
     pub project_service: Arc<ProjectService>,
     pub framework_service: Arc<FrameworkService>,
+    pub integration_service: Arc<IntegrationService>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -32,10 +33,14 @@ pub fn run() {
         FrameworkService::new(json_store.aidd_dir(), json_store.clone(), file_adapter.clone())
             .expect("Failed to initialize framework service"),
     );
+    let integration_service = Arc::new(
+        IntegrationService::new(json_store.aidd_dir()),
+    );
 
     let ctx = AppContext {
         project_service,
         framework_service,
+        integration_service,
     };
 
     tauri::Builder::default()
@@ -58,6 +63,11 @@ pub fn run() {
             presentation::commands::framework_commands::read_framework_entity,
             presentation::commands::framework_commands::write_framework_entity,
             presentation::commands::framework_commands::delete_framework_entity,
+            // Integration management (DDD)
+            presentation::commands::integration_commands::integrate_tool,
+            presentation::commands::integration_commands::remove_integration,
+            presentation::commands::integration_commands::check_integrations,
+            presentation::commands::integration_commands::list_integration_types,
             // Filesystem
             presentation::commands::filesystem_commands::read_file,
             presentation::commands::filesystem_commands::write_file,

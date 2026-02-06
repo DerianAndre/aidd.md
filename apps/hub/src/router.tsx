@@ -138,8 +138,12 @@ export const router = createBrowserRouter([
         element: lazyPage(() => import('./features/config/pages/config-page'), 'ConfigPage'),
       },
       {
+        path: 'integrations',
+        element: lazyPage(() => import('./features/integrations/pages/integrations-page'), 'IntegrationsPage'),
+      },
+      {
         path: 'adapters',
-        element: lazyPage(() => import('./features/adapters/pages/adapters-page'), 'AdaptersPage'),
+        element: <Navigate to="/integrations" replace />,
       },
     ],
   },

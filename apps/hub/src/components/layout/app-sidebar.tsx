@@ -71,7 +71,7 @@ const NAV_GROUPS = [
       { label: 'MCP Servers', path: ROUTES.MCP_SERVERS, icon: Server },
       { label: 'MCP Playground', path: ROUTES.MCP_PLAYGROUND, icon: Terminal },
       { label: 'Config', path: ROUTES.CONFIG, icon: Settings },
-      { label: 'Adapters', path: ROUTES.ADAPTERS, icon: Plug },
+      { label: 'Integrations', path: ROUTES.INTEGRATIONS, icon: Plug },
     ],
   },
 ] as const;

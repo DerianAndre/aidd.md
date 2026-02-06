@@ -124,6 +124,36 @@ export const writeFrameworkEntity = (category: FrameworkCategory, name: string, 
 export const deleteFrameworkEntity = (category: FrameworkCategory, name: string) =>
   invoke<void>('delete_framework_entity', { category, name });
 
+// Integration management
+export type IntegrationTool = 'claude_code' | 'cursor' | 'vscode' | 'gemini';
+
+export type IntegrationStatusValue = 'not_configured' | 'configured' | 'needs_update';
+
+export interface IntegrationConfig {
+  integration_type: IntegrationTool;
+  status: IntegrationStatusValue;
+  config_files: string[];
+}
+
+export interface IntegrationResult {
+  tool: IntegrationTool;
+  files_created: string[];
+  files_modified: string[];
+  messages: string[];
+}
+
+export const integrateTool = (projectPath: string, tool: IntegrationTool) =>
+  invoke<IntegrationResult>('integrate_tool', { projectPath, tool });
+
+export const removeIntegration = (projectPath: string, tool: IntegrationTool) =>
+  invoke<IntegrationResult>('remove_integration', { projectPath, tool });
+
+export const checkIntegrations = (projectPath: string) =>
+  invoke<IntegrationConfig[]>('check_integrations', { projectPath });
+
+export const listIntegrationTypes = () =>
+  invoke<IntegrationTool[]>('list_integration_types');
+
 // File watcher
 export interface FileChangeEvent {
   event_type: 'created' | 'modified' | 'deleted';
