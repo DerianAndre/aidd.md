@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Skeleton } from '@heroui/react';
+import { Tabs, Chip } from '@heroui/react';
+import { Users, Crown } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
-import { EmptyState } from '../../../components/empty-state';
+import { EntityList } from '../../../components/entity';
 import { AgentCard } from '../components/agent-card';
 import { readFile } from '../../../lib/tauri';
 import { useProjectStore } from '../../../stores/project-store';
@@ -34,53 +35,109 @@ export function AgentsListPage() {
 
   return (
     <div>
-      <PageHeader title="Agents" description="Agent roles and competency matrix (read-only from AGENTS.md)" />
+      <PageHeader
+        title="Agents"
+        description="Agent roles and competency matrix (read-only from AGENTS.md)"
+      />
 
-      {loading && (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-xl" />
-          ))}
+      {/* Stat cards */}
+      <div className="mb-6 grid gap-3 grid-cols-3">
+        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
+          <div className="rounded-lg bg-default-100 p-2 text-default-500">
+            <Users size={18} strokeWidth={1.5} />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-foreground">{agents.length}</p>
+            <p className="text-[10px] text-default-400">Total</p>
+          </div>
         </div>
-      )}
-
-      {!loading && agents.length === 0 && (
-        <EmptyState message="No AGENTS.md found in this project." />
-      )}
-
-      {!loading && individualAgents.length > 0 && (
-        <section className="mb-8">
-          <h2 className="mb-3 text-sm font-semibold text-default-600">
-            Individual Agents ({individualAgents.length})
-          </h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {individualAgents.map((agent, i) => (
-              <AgentCard
-                key={`${agent.name}-${i}`}
-                agent={agent}
-                onPress={() => navigate(`/agents/${agentSlug(agent.name)}`)}
-              />
-            ))}
+        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
+          <div className="rounded-lg bg-default-100 p-2 text-default-500">
+            <Users size={18} strokeWidth={1.5} />
           </div>
-        </section>
-      )}
-
-      {!loading && orchestrators.length > 0 && (
-        <section>
-          <h2 className="mb-3 text-sm font-semibold text-default-600">
-            Orchestrators ({orchestrators.length})
-          </h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {orchestrators.map((agent, i) => (
-              <AgentCard
-                key={`${agent.name}-${i}`}
-                agent={agent}
-                onPress={() => navigate(`/agents/${agentSlug(agent.name)}`)}
-              />
-            ))}
+          <div>
+            <p className="text-lg font-bold text-foreground">{individualAgents.length}</p>
+            <p className="text-[10px] text-default-400">Agents</p>
           </div>
-        </section>
-      )}
+        </div>
+        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
+          <div className="rounded-lg bg-default-100 p-2 text-accent">
+            <Crown size={18} strokeWidth={1.5} />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-foreground">{orchestrators.length}</p>
+            <p className="text-[10px] text-default-400">Orchestrators</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <Tabs aria-label="Agent types" defaultSelectedKey="agents">
+        <Tabs.ListContainer>
+          <Tabs.List>
+            <Tabs.Tab key="agents" id="agents">
+              <span className="flex items-center gap-1.5">
+                <Users size={14} />
+                Agents
+                {individualAgents.length > 0 && (
+                  <Chip size="sm" variant="soft">{individualAgents.length}</Chip>
+                )}
+              </span>
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab key="orchestrators" id="orchestrators">
+              <span className="flex items-center gap-1.5">
+                <Crown size={14} />
+                Orchestrators
+                {orchestrators.length > 0 && (
+                  <Chip size="sm" variant="soft">{orchestrators.length}</Chip>
+                )}
+              </span>
+              <Tabs.Indicator />
+            </Tabs.Tab>
+          </Tabs.List>
+        </Tabs.ListContainer>
+
+        <Tabs.Panel id="agents">
+          <div className="pt-4">
+            <EntityList
+              items={individualAgents}
+              loading={loading}
+              getKey={(a) => `${a.name}-${a.type}`}
+              getSearchText={(a) => `${a.name} ${a.purpose ?? ''} ${a.skills ?? ''}`}
+              searchPlaceholder="Search agents..."
+              emptyMessage="No agents found in AGENTS.md."
+              columns={3}
+              renderItem={(agent) => (
+                <AgentCard
+                  agent={agent}
+                  onPress={() => navigate(`/agents/${agentSlug(agent.name)}`)}
+                />
+              )}
+            />
+          </div>
+        </Tabs.Panel>
+
+        <Tabs.Panel id="orchestrators">
+          <div className="pt-4">
+            <EntityList
+              items={orchestrators}
+              loading={loading}
+              getKey={(a) => `${a.name}-${a.type}`}
+              getSearchText={(a) => `${a.name} ${a.purpose ?? ''} ${a.skills ?? ''}`}
+              searchPlaceholder="Search orchestrators..."
+              emptyMessage="No orchestrators found in AGENTS.md."
+              columns={3}
+              renderItem={(agent) => (
+                <AgentCard
+                  agent={agent}
+                  onPress={() => navigate(`/agents/${agentSlug(agent.name)}`)}
+                />
+              )}
+            />
+          </div>
+        </Tabs.Panel>
+      </Tabs>
     </div>
   );
 }

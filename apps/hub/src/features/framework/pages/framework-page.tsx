@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Tabs, Chip, Spinner, Button, Switch, Label } from '@heroui/react';
+import { Tabs, Chip, Spinner, Button } from '@heroui/react';
 import {
   ShieldCheck,
   Zap,
@@ -11,21 +11,24 @@ import {
   RefreshCw,
   Download,
   Check,
+  ChevronDown,
+  Package,
 } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
+import { EntityList, EntityCard } from '../../../components/entity';
 import { useFrameworkStore, CATEGORIES } from '../stores/framework-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { KnowledgeTreeView } from '../components/knowledge-tree-view';
 import type { FrameworkCategory } from '../../../lib/tauri';
 import type { LucideIcon } from 'lucide-react';
 
-const TAB_META: Record<FrameworkCategory, { label: string; icon: LucideIcon }> = {
-  rules: { label: 'Rules', icon: ShieldCheck },
-  skills: { label: 'Skills', icon: Zap },
-  knowledge: { label: 'Knowledge', icon: BookOpen },
-  workflows: { label: 'Workflows', icon: GitBranch },
-  templates: { label: 'Templates', icon: FileText },
-  spec: { label: 'Spec', icon: FileCode },
+const TAB_META: Record<FrameworkCategory, { label: string; icon: LucideIcon; description: string }> = {
+  rules: { label: 'Rules', icon: ShieldCheck, description: 'Immutable framework constraints' },
+  skills: { label: 'Skills', icon: Zap, description: 'Specialized agent capabilities' },
+  knowledge: { label: 'Knowledge', icon: BookOpen, description: 'Technology Knowledge Base entries' },
+  workflows: { label: 'Workflows', icon: GitBranch, description: 'Multi-step procedure guides' },
+  templates: { label: 'Templates', icon: FileText, description: 'Task routing and decision templates' },
+  spec: { label: 'Spec', icon: FileCode, description: 'AIDD standard specifications' },
 };
 
 export function FrameworkPage() {
@@ -47,9 +50,9 @@ export function FrameworkPage() {
   const checking = useFrameworkStore((s) => s.checking);
   const checkUpdates = useFrameworkStore((s) => s.checkUpdates);
   const doSync = useFrameworkStore((s) => s.doSync);
-  const toggleAutoSync = useFrameworkStore((s) => s.toggleAutoSync);
 
   const invalidateAll = useFrameworkStore((s) => s.invalidateAll);
+  const [syncExpanded, setSyncExpanded] = useState(false);
 
   // Initialize framework path on mount
   useEffect(() => {
@@ -75,7 +78,6 @@ export function FrameworkPage() {
   };
 
   const handleEntityClick = (cat: FrameworkCategory, name: string) => {
-    // Navigate to existing detail/editor routes
     switch (cat) {
       case 'rules':
         navigate(`/rules/${name}`);
@@ -97,83 +99,117 @@ export function FrameworkPage() {
     }
   };
 
+  const totalEntities = CATEGORIES.reduce((sum, cat) => sum + entities[cat].length, 0);
+  const globalCount = CATEGORIES.reduce(
+    (sum, cat) => sum + entities[cat].filter((e) => e.source === 'global').length,
+    0,
+  );
+  const projectCount = CATEGORIES.reduce(
+    (sum, cat) => sum + entities[cat].filter((e) => e.source === 'project').length,
+    0,
+  );
+
   return (
     <div>
       <PageHeader
         title="Framework"
-        description="Global AIDD framework content managed from ~/.aidd/framework/"
+        description={activeProject ? `Global + ${activeProject.name} project content` : 'Global AIDD framework content'}
+        actions={
+          <div className="flex items-center gap-2">
+            {/* Compact version badge */}
+            <Chip size="sm" variant="soft" color={syncInfo?.update_available ? 'warning' : 'success'}>
+              {syncInfo?.current_version ? `v${syncInfo.current_version}` : 'No version'}
+            </Chip>
+            {syncInfo?.update_available && (
+              <Button
+                size="sm"
+                variant="primary"
+                isDisabled={syncing}
+                onPress={() => void doSync()}
+              >
+                {syncing ? <Spinner size="sm" /> : <Download size={14} />}
+                {syncing ? 'Syncing...' : 'Update'}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              isDisabled={checking || syncing}
+              onPress={() => void checkUpdates()}
+            >
+              {checking ? <Spinner size="sm" /> : <RefreshCw size={14} />}
+            </Button>
+            <button
+              type="button"
+              className="text-default-400 hover:text-foreground transition-colors"
+              onClick={() => setSyncExpanded((v) => !v)}
+              title="Sync details"
+            >
+              <ChevronDown size={14} className={`transition-transform ${syncExpanded ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+        }
       />
 
-      {/* ── Sync status bar ──────────────────────────────────────────── */}
-      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-default-200 bg-default-50 px-4 py-3">
-        {/* Version badge */}
-        <Chip size="sm" variant="soft" color={syncInfo?.update_available ? 'warning' : 'success'}>
-          {syncInfo?.current_version ? `v${syncInfo.current_version}` : 'No version'}
-        </Chip>
-
-        {/* Update available indicator */}
-        {syncInfo?.update_available && syncInfo.latest_version && (
-          <span className="text-xs text-warning">
-            v{syncInfo.latest_version} available
-          </span>
-        )}
-
-        {/* Check for updates */}
-        <Button
-          size="sm"
-          variant="ghost"
-          isDisabled={checking || syncing}
-          onPress={() => void checkUpdates()}
-        >
-          {checking ? (
-            <Spinner size="sm" />
-          ) : (
-            <RefreshCw size={14} />
+      {/* Expandable sync details */}
+      {syncExpanded && (
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-default-200 bg-default-50 px-4 py-3 text-xs text-default-500">
+          {syncInfo?.update_available && syncInfo.latest_version && (
+            <span className="text-warning">v{syncInfo.latest_version} available</span>
           )}
-          Check for updates
-        </Button>
+          {syncInfo && !syncInfo.update_available && syncInfo.current_version && (
+            <span className="flex items-center gap-1 text-success">
+              <Check size={12} /> Up to date
+            </span>
+          )}
+          {syncInfo?.last_check && (
+            <span>Last checked: {syncInfo.last_check}</span>
+          )}
+          <span>Auto-sync: {syncInfo?.auto_sync ? 'On' : 'Off'}</span>
+        </div>
+      )}
 
-        {/* Update now */}
-        {syncInfo?.update_available && (
-          <Button
-            size="sm"
-            variant="primary"
-            isDisabled={syncing}
-            onPress={() => void doSync()}
-          >
-            {syncing ? (
-              <Spinner size="sm" />
-            ) : (
-              <Download size={14} />
-            )}
-            {syncing ? 'Syncing…' : 'Update now'}
-          </Button>
-        )}
-
-        {/* Up to date indicator */}
-        {syncInfo && !syncInfo.update_available && syncInfo.current_version && (
-          <span className="flex items-center gap-1 text-xs text-success">
-            <Check size={12} />
-            Up to date
-          </span>
-        )}
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Auto-sync toggle */}
-        <Switch
-          size="sm"
-          isSelected={syncInfo?.auto_sync ?? false}
-          onChange={(val) => void toggleAutoSync(val)}
-        >
-          <Switch.Control>
-            <Switch.Thumb />
-          </Switch.Control>
-          <Label className="text-xs">Auto-sync</Label>
-        </Switch>
+      {/* Stat cards */}
+      <div className="mb-6 grid gap-3 grid-cols-2 sm:grid-cols-4">
+        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
+          <div className="rounded-lg bg-default-100 p-2 text-default-500">
+            <Package size={18} strokeWidth={1.5} />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-foreground">{totalEntities}</p>
+            <p className="text-[10px] text-default-400">Total Entities</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
+          <div className="rounded-lg bg-default-100 p-2 text-default-500">
+            <ShieldCheck size={18} strokeWidth={1.5} />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-foreground">{globalCount}</p>
+            <p className="text-[10px] text-default-400">Global</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
+          <div className="rounded-lg bg-default-100 p-2 text-success">
+            <FileCode size={18} strokeWidth={1.5} />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-foreground">{projectCount}</p>
+            <p className="text-[10px] text-default-400">Project</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
+          <div className="rounded-lg bg-default-100 p-2 text-default-500">
+            <BookOpen size={18} strokeWidth={1.5} />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-foreground">{CATEGORIES.filter((c) => entities[c].length > 0).length}</p>
+            <p className="text-[10px] text-default-400">Categories</p>
+          </div>
+        </div>
       </div>
 
+      {/* Tabs */}
       <Tabs
         selectedKey={tab}
         onSelectionChange={handleTabChange}
@@ -203,58 +239,51 @@ export function FrameworkPage() {
 
         {CATEGORIES.map((cat) => {
           const meta = TAB_META[cat];
-          const Icon = meta.icon;
           return (
             <Tabs.Panel key={cat} id={cat}>
               <div className="pt-4">
-                {loading[cat] ? (
-                  <div className="flex justify-center py-12">
-                    <Spinner />
-                  </div>
-                ) : entities[cat].length === 0 ? (
-                  <div className="flex flex-col items-center py-12 text-default-400">
-                    <Icon size={40} className="mb-3" />
-                    <p className="text-sm">No {meta.label.toLowerCase()} found</p>
-                    <p className="mt-1 text-xs">
-                      Add .md files to the project&apos;s {cat}/ directory or sync the global framework
-                    </p>
-                  </div>
-                ) : cat === 'knowledge' ? (
-                  <KnowledgeTreeView
-                    entities={entities[cat]}
-                    onEntityClick={(name) => handleEntityClick(cat, name)}
-                  />
+                {cat === 'knowledge' ? (
+                  loading[cat] ? (
+                    <div className="flex justify-center py-12">
+                      <Spinner />
+                    </div>
+                  ) : entities[cat].length === 0 ? (
+                    <div className="flex flex-col items-center py-12 text-default-400">
+                      <BookOpen size={40} className="mb-3" />
+                      <p className="text-sm">No knowledge entries found</p>
+                      <p className="mt-1 text-xs">
+                        Add .md files to the project&apos;s knowledge/ directory or sync the global framework
+                      </p>
+                    </div>
+                  ) : (
+                    <KnowledgeTreeView
+                      entities={entities[cat]}
+                      onEntityClick={(name) => handleEntityClick(cat, name)}
+                    />
+                  )
                 ) : (
-                  <div className="grid gap-2">
-                    {entities[cat].map((entity) => (
-                      <button
-                        key={`${entity.source}-${entity.name}`}
-                        type="button"
-                        className="flex items-center justify-between rounded-lg border border-default-200 bg-default-50 px-4 py-3 text-left transition-colors hover:bg-default-100"
-                        onClick={() => handleEntityClick(cat, entity.name)}
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-foreground">
-                            {entity.name}
-                          </p>
-                          {entity.content && (
-                            <p className="mt-0.5 line-clamp-1 text-xs text-default-400">
-                              {entity.content.slice(0, 120)}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Chip
-                            size="sm"
-                            variant="soft"
-                            color={entity.source === 'project' ? 'accent' : 'default'}
-                          >
-                            {entity.source}
-                          </Chip>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                  <EntityList
+                    items={entities[cat]}
+                    loading={loading[cat]}
+                    getKey={(e) => `${e.source}-${e.name}`}
+                    getSearchText={(e) => `${e.name} ${e.content ?? ''} ${e.source}`}
+                    searchPlaceholder={`Search ${meta.label.toLowerCase()}...`}
+                    emptyMessage={`No ${meta.label.toLowerCase()} found. Add .md files to the project's ${cat}/ directory or sync the global framework.`}
+                    columns={2}
+                    renderItem={(entity) => (
+                      <EntityCard
+                        title={entity.name}
+                        description={entity.content ?? undefined}
+                        chips={[
+                          {
+                            label: entity.source,
+                            color: entity.source === 'project' ? 'accent' : 'default',
+                          },
+                        ]}
+                        onPress={() => handleEntityClick(cat, entity.name)}
+                      />
+                    )}
+                  />
                 )}
               </div>
             </Tabs.Panel>
