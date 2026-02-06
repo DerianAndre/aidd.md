@@ -60,7 +60,7 @@ export const ciModule: AiddModule = {
       schema: {
         format: z.enum(['markdown', 'json']).optional().describe('Output format. Defaults to markdown.'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { format: fmt } = args as { format?: 'markdown' | 'json' };
         const ci = context.config.ci;
@@ -121,7 +121,7 @@ export const ciModule: AiddModule = {
         changedFiles: z.array(z.string()).describe('List of changed file paths to validate'),
         format: z.enum(['markdown', 'json']).optional().describe('Output format. Defaults to markdown.'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { changedFiles, format: fmt } = args as { changedFiles: string[]; format?: 'markdown' | 'json' };
         const format = fmt ?? 'markdown';

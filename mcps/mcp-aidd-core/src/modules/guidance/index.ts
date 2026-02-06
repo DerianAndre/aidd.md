@@ -357,7 +357,7 @@ export const guidanceModule: AiddModule = {
           .default('medium')
           .describe('Decision stakes level — determines which heuristics are prioritized'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { decision, context: decisionContext, stakes } = args as {
           decision: string;
@@ -423,7 +423,7 @@ export const guidanceModule: AiddModule = {
         phase: z.string().optional().describe('Current ASDD phase (DESIGN, IMPLEMENTATION, QUALITY, RELEASE)'),
         recentActions: z.array(z.string()).optional().describe('Recent tool names or actions taken'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { currentTask, phase, recentActions } = args as {
           currentTask?: string;
@@ -542,7 +542,7 @@ export const guidanceModule: AiddModule = {
           .array(z.string())
           .describe('Technology names to analyze (e.g., ["react", "vue", "tailwind"])'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { technologies } = args as { technologies: string[] };
 

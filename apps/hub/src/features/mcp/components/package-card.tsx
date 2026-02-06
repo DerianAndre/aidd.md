@@ -9,13 +9,13 @@ const ROLE_COLORS: Record<string, 'accent' | 'success' | 'warning' | 'danger' | 
   'The Brain': 'accent',
   'The Memory': 'success',
   'The Hands': 'warning',
-  'Monolithic': 'default',
+  'Engine': 'default',
   'Foundation': 'default',
 };
 
 /** Maps package dir to the server id used by the Rust backend. */
 const DIR_TO_SERVER_ID: Record<string, string> = {
-  'mcp-aidd': 'monolithic',
+  'mcp-aidd-engine': 'engine',
   'mcp-aidd-core': 'core',
   'mcp-aidd-memory': 'memory',
   'mcp-aidd-tools': 'tools',

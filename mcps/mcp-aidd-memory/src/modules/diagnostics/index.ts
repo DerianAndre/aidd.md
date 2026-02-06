@@ -42,7 +42,7 @@ export function createDiagnosticsModule(storage: StorageProvider): AiddModule {
           limit: z.number().optional().default(5).describe('Max matches to return'),
           threshold: z.number().optional().default(0.3).describe('Minimum similarity score (0-1)'),
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { error, limit, threshold } = args as {
             error: string;
@@ -103,7 +103,7 @@ export function createDiagnosticsModule(storage: StorageProvider): AiddModule {
         schema: {
           sessionsLimit: z.number().optional().default(50).describe('Number of recent sessions to analyze'),
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { sessionsLimit } = args as { sessionsLimit: number };
 

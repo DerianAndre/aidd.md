@@ -419,6 +419,7 @@ export interface StorageBackend {
 export interface AiddServerOptions {
   name: string;
   version: string;
+  instructions?: string;
   modules: AiddModule[];
   projectPath?: string;
 }

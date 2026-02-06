@@ -7,6 +7,7 @@ export function createCoreServer(projectPath?: string) {
   return createAiddServer({
     name: 'aidd-core',
     version: PKG_VERSION,
+    instructions: 'AIDD framework guidance: project detection, task classification, agent routing, knowledge base queries, heuristic decisions, context optimization, and project scaffolding.',
     modules: coreModules,
     projectPath,
   });

@@ -1,7 +1,7 @@
 # AIDD — Project Instructions for Claude Code
 
 > AI-Driven Development Framework — MCP Ecosystem
-> **Last Updated**: 2026-02-05
+> **Last Updated**: 2026-02-06
 
 ---
 
@@ -14,9 +14,9 @@ pnpm mcp:check
 ```
 
 This outputs a single-line status indicator:
-- `[aidd.md] AI Engine - ON` — All MCP packages built and ready
-- `[aidd.md] AI Engine - PARTIAL` — Some packages need rebuilding
-- `[aidd.md] AI Engine - OFF` — Setup required
+- `[aidd.md] Engine - ON — 5/5 packages ready` — All MCP packages built and ready
+- `[aidd.md] Engine - PARTIAL — 3/5 packages ready` — Some packages need rebuilding
+- `[aidd.md] Engine - OFF — 0/5 packages ready` — Setup required
 
 If the check fails, follow the remediation hint in the output.
 
@@ -34,7 +34,7 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 - **knowledge/** — Technology Knowledge Base (TKB) entries
 - **templates/** — Task routing and decision templates
 - **packages/** — Shared libraries and CLI
-- **mcps/** — MCP server packages (Core, Memory, Tools + Monolithic)
+- **mcps/** — MCP server packages (Core, Memory, Tools + Engine)
 
 ---
 
@@ -55,7 +55,7 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 | `pnpm mcp:typecheck` | TypeScript type checking |
 | `pnpm mcp:clean` | Clean build artifacts |
 | `pnpm mcp:status` | Detailed package build status |
-| `pnpm mcp:doctor` | Full diagnostic (environment, packages, framework) |
+| `pnpm mcp:doctor` | Full diagnostic (supports `--json`, `--fix`, `--deep`, `--quiet`, `--no-runtime`, `--no-color`) |
 | `pnpm mcp:check` | Single-line status for startup |
 
 ---
@@ -92,7 +92,7 @@ packages/
   cli/              @aidd.md/cli           (CLI — framework management)
 
 mcps/
-  mcp-aidd/         @aidd.md/mcp           (monolithic — all modules)
+  mcp-aidd-engine/  @aidd.md/mcp-engine    (engine — all modules in one process)
   mcp-aidd-core/    @aidd.md/mcp-core      (brain — guidance, routing, knowledge)
   mcp-aidd-memory/  @aidd.md/mcp-memory    (memory — sessions, evolution, analytics)
   mcp-aidd-tools/   @aidd.md/mcp-tools     (hands — validation, enforcement, CI)

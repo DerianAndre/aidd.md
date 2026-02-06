@@ -41,7 +41,7 @@ export function createObservationModule(storage: StorageProvider): AiddModule {
           filesModified: z.array(z.string()).optional().describe('Files modified'),
           discoveryTokens: z.number().optional().describe('Tokens spent on this discovery (ROI metric)'),
         },
-        annotations: { readOnlyHint: false },
+        annotations: { idempotentHint: false },
         handler: async (args) => {
           const a = args as {
             sessionId: string;

@@ -61,7 +61,7 @@ program
 program
   .command('serve')
   .description('Start MCP server')
-  .option('-m, --mode <mode>', 'Server mode: monolithic, core, memory, tools', 'monolithic')
+  .option('-m, --mode <mode>', 'Server mode: engine, core, memory, tools', 'engine')
   .action((options: { mode?: string }) => {
     runServe(options);
   });

@@ -45,7 +45,7 @@ function registerValidator(
     name,
     description,
     schema: VALIDATOR_SCHEMA,
-    annotations: { readOnlyHint: true },
+    annotations: { readOnlyHint: true, idempotentHint: true },
     handler: async (args: { content?: string; filePath?: string }) => {
       const text = await resolveContent(args);
       if (!text) {

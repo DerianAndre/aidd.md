@@ -1,8 +1,8 @@
 {
-  "name": "@aidd.md/mcp",
+  "name": "@aidd.md/mcp-engine",
   "version": "1.0.0",
   "license": "MIT",
-  "description": "aidd.md — MCP — Server — Monolithic: all 58 tools in one process",
+  "description": "aidd.md — MCP — Engine: all 63 tools in one process",
   "homepage": "https://aidd.md",
   "author": {
     "name": "Derian Castillo",
@@ -17,13 +17,13 @@
     "aidd",
     "mcp",
     "server",
-    "monolithic"
+    "engine"
   ],
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",
   "bin": {
-    "aidd-mcp": "./dist/index.js"
+    "aidd-mcp-engine": "./dist/index.js"
   },
   "exports": {
     ".": {

@@ -47,10 +47,10 @@ export function createAiddServer(options: AiddServerOptions): McpServer {
   };
 
   // Create MCP server
-  const server = new McpServer({
-    name: options.name,
-    version: options.version,
-  });
+  const server = new McpServer(
+    { name: options.name, version: options.version },
+    options.instructions ? { instructions: options.instructions } : undefined,
+  );
 
   // Register all modules
   for (const mod of options.modules) {
@@ -80,6 +80,7 @@ export function registerTool(server: McpServer, tool: ToolDefinition): void {
     tool.name,
     tool.description,
     tool.schema,
+    tool.annotations ?? {},
     async (args) => {
       try {
         return await tool.handler(args);

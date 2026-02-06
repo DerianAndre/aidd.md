@@ -82,7 +82,7 @@ export const contextModule: AiddModule = {
           .optional()
           .describe('Specific sections to include (header, rules, agents, suggestions). Omit for all.'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { budget: totalBudget, sections: requestedSections } = args as {
           budget: number;

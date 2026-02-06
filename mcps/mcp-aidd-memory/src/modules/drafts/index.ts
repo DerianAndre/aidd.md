@@ -75,7 +75,7 @@ export function createDraftsModule(): AiddModule {
           source: z.enum(['evolution', 'manual']).optional().default('manual').describe('Draft source'),
           evolutionCandidateId: z.string().optional().describe('Associated evolution candidate ID'),
         },
-        annotations: { readOnlyHint: false },
+        annotations: { idempotentHint: false },
         handler: async (args) => {
           const a = args as {
             category: DraftCategory;
@@ -132,7 +132,7 @@ export function createDraftsModule(): AiddModule {
           status: z.enum(['pending', 'approved', 'rejected']).optional().describe('Filter by status'),
           limit: z.number().optional().default(20).describe('Max results'),
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { category, status, limit } = args as {
             category?: DraftCategory;
@@ -174,7 +174,7 @@ export function createDraftsModule(): AiddModule {
           id: z.string().describe('Draft ID to approve'),
           targetPath: z.string().optional().describe('Override target path (auto-detected from category if omitted)'),
         },
-        annotations: { readOnlyHint: false },
+        annotations: { idempotentHint: false },
         handler: async (args) => {
           const { id, targetPath } = args as { id: string; targetPath?: string };
 

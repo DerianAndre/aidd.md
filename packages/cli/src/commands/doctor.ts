@@ -81,7 +81,7 @@ export function runDoctor(): void {
     try {
       const content = readFileSync(claudeMcp, 'utf-8');
       const config = JSON.parse(content);
-      claudeConfigured = !!config?.mcpServers?.aidd;
+      claudeConfigured = !!config?.mcpServers?.['aidd-engine'] || !!config?.mcpServers?.aidd;
     } catch {
       // ignore
     }
@@ -94,14 +94,14 @@ export function runDoctor(): void {
       : 'Not configured — run `aidd integrate claude`',
   });
 
-  // 8. MCP packages — check if the monolithic dist exists in the monorepo
-  const monolithicDist = join(aiddHome(), '..', 'aidd.md', 'mcps', 'mcp-aidd', 'dist', 'index.js');
-  const mcpAvailable = existsSync(monolithicDist);
+  // 8. MCP packages — check if the engine dist exists in the monorepo
+  const engineDist = join(aiddHome(), '..', 'aidd.md', 'mcps', 'mcp-aidd-engine', 'dist', 'index.js');
+  const mcpAvailable = existsSync(engineDist);
   checks.push({
     name: 'MCP server package',
     status: mcpAvailable ? 'pass' : 'warn',
     detail: mcpAvailable
-      ? '@aidd.md/mcp is available'
+      ? '@aidd.md/mcp-engine is available'
       : 'Not installed globally (npx will auto-install)',
   });
 

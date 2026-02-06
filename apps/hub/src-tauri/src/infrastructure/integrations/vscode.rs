@@ -56,7 +56,7 @@ impl ToolAdapter for VscodeAdapter {
         // 3. MCP setup guidance
         result.messages.push(
             "To enable aidd.md MCP in VS Code, add to your settings.json:\n\
-             \"mcp\": { \"servers\": { \"aidd\": { \"command\": \"npx\", \"args\": [\"-y\", \"@aidd.md/mcp\"] } } }"
+             \"mcp\": { \"servers\": { \"aidd-engine\": { \"command\": \"npx\", \"args\": [\"-y\", \"@aidd.md/mcp-engine\"] } } }"
                 .to_string(),
         );
 

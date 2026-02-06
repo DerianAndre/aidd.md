@@ -100,7 +100,7 @@ export function createAnalyticsModule(storage: StorageProvider): AiddModule {
           provider: z.string().optional().describe('Filter by provider'),
           limit: z.number().optional().default(10).describe('Max models to return'),
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { model, provider, limit } = args as {
             model?: string;
@@ -148,7 +148,7 @@ export function createAnalyticsModule(storage: StorageProvider): AiddModule {
         schema: {
           models: z.array(z.string()).describe('Model IDs to compare (at least 2)'),
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { models } = args as { models: string[] };
           if (models.length < 2) return createErrorResult('At least 2 model IDs required');
@@ -216,7 +216,7 @@ export function createAnalyticsModule(storage: StorageProvider): AiddModule {
           taskDomain: z.string().describe('Task domain (frontend, backend, fullstack, etc.)'),
           taskComplexity: z.string().optional().describe('Task complexity (trivial, moderate, complex)'),
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { taskDomain, taskComplexity } = args as {
             taskDomain: string;

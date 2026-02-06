@@ -26,7 +26,7 @@ export const bootstrapModule: AiddModule = {
           .optional()
           .describe('Directory path to scan. Defaults to project root.'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const projectInfo = detectProject(
           (args as { path?: string }).path ?? context.projectRoot,
@@ -43,7 +43,7 @@ export const bootstrapModule: AiddModule = {
       description:
         'Return the active AIDD MCP configuration (evolution, memory, model tracking, CI, content settings).',
       schema: {},
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async () => {
         return createJsonResult(context.config);
       },
@@ -76,7 +76,7 @@ export const bootstrapModule: AiddModule = {
           .optional()
           .describe('Project path to bootstrap from. Defaults to detected project root.'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const projectPath = (args as { path?: string }).path;
         const info = projectPath ? detectProject(projectPath) : context.projectInfo;

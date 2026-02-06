@@ -86,7 +86,7 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
           status: z.enum(['active', 'completed']).optional().describe('Filter by status (for list)'),
           limit: z.number().optional().describe('Max results (for list)'),
         },
-        annotations: { readOnlyHint: false },
+        annotations: { idempotentHint: false },
         handler: async (args) => {
           const a = args as Record<string, unknown>;
           const action = a['action'] as string;

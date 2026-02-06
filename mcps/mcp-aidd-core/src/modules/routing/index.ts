@@ -352,7 +352,7 @@ export const routingModule: AiddModule = {
           .optional()
           .describe('Optional phase hint (DESIGN, IMPLEMENTATION, QUALITY, RELEASE, KNOWLEDGE)'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { description, domain, phase } = args as {
           description: string;
@@ -375,7 +375,7 @@ export const routingModule: AiddModule = {
           .default('all')
           .describe('Which routing mode to return'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { mode } = args as { mode: string };
         parseRoutingTables(context);
@@ -434,7 +434,7 @@ export const routingModule: AiddModule = {
           .default(true)
           .describe('Exclude deprecated models from results'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { tier, provider, task, excludeDeprecated } = args as {
           tier: number;
@@ -469,7 +469,7 @@ export const routingModule: AiddModule = {
           .optional()
           .describe('Filter by provider name'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { tier, provider } = args as { tier?: number; provider?: string };
         let models = MODEL_MATRIX;
@@ -494,7 +494,7 @@ export const routingModule: AiddModule = {
       description:
         'Get the health status of the model routing matrix: total models, distribution by tier/provider/status, deprecated models, and upcoming deprecation alerts.',
       schema: {},
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async () => {
         const status = getMatrixStatus();
         return createJsonResult(status);

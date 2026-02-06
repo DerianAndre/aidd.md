@@ -127,7 +127,7 @@ export const enforcementModule: AiddModule = {
         filePath: z.string().optional().describe('File path for context (affects which rules apply)'),
         ruleCategories: z.array(z.string()).optional().describe('Specific rule categories to check (e.g., ["code-style", "testing"]). Defaults to all rules.'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { content, ruleCategories } = args as { content: string; filePath?: string; ruleCategories?: string[] };
         const issues: ComplianceIssue[] = [];
@@ -203,7 +203,7 @@ export const enforcementModule: AiddModule = {
       schema: {
         packageJsonPath: z.string().optional().describe('Path to package.json. Defaults to project root.'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { packageJsonPath } = args as { packageJsonPath?: string };
         const pkgPath = packageJsonPath ?? `${context.projectRoot}/package.json`;
@@ -268,7 +268,7 @@ export const enforcementModule: AiddModule = {
         phase: z.string().describe('ASDD phase name (sync, story, plan, commit_spec, execute, test, verify, commit_impl)'),
         checklist: z.record(z.string(), z.boolean()).optional().describe('Optional checklist: { gateId: true/false }. Returns evaluation if provided.'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { phase: phaseName, checklist } = args as { phase: string; checklist?: Record<string, boolean> };
         const phase = ASDD_PHASES.find((p) => p.name === phaseName.toLowerCase());
@@ -319,7 +319,7 @@ export const enforcementModule: AiddModule = {
         rule: z.string().describe('Rule name or keyword (e.g., "code-style", "no-any", "testing")'),
         violation: z.string().optional().describe('Optional: specific violation to explain'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { rule, violation } = args as { rule: string; violation?: string };
         const index = context.contentLoader.getIndex();

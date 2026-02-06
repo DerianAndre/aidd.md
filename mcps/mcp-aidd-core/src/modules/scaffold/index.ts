@@ -160,7 +160,7 @@ export const scaffoldModule: AiddModule = {
             'Initialization preset: minimal (AGENTS.md + rules), standard (+ skills, workflows, templates), full (+ spec, knowledge, memory, .aidd/)',
           ),
       },
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
+      annotations: { destructiveHint: true, idempotentHint: true },
       handler: async (args) => {
         const { path: targetPath, preset } = args as {
           path?: string;

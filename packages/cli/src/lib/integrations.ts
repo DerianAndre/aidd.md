@@ -62,9 +62,9 @@ function integrateClaude(projectPath: string): IntegrationResult {
   }
 
   const servers = (mcpConfig['mcpServers'] ?? {}) as Record<string, unknown>;
-  servers['aidd'] = {
+  servers['aidd-engine'] = {
     command: 'npx',
-    args: ['-y', '@aidd.md/mcp'],
+    args: ['-y', '@aidd.md/mcp-engine'],
     env: { AIDD_PROJECT_PATH: projectPath },
   };
   mcpConfig['mcpServers'] = servers;
@@ -113,9 +113,9 @@ function integrateCursor(projectPath: string): IntegrationResult {
   }
 
   const servers = (mcpConfig['mcpServers'] ?? {}) as Record<string, unknown>;
-  servers['aidd'] = {
+  servers['aidd-engine'] = {
     command: 'npx',
-    args: ['-y', '@aidd.md/mcp'],
+    args: ['-y', '@aidd.md/mcp-engine'],
     env: { AIDD_PROJECT_PATH: projectPath },
   };
   mcpConfig['mcpServers'] = servers;

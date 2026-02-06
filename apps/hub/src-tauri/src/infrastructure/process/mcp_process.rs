@@ -26,7 +26,7 @@ impl McpProcessManager {
 
     /// Start an MCP server process.
     ///
-    /// `package` is one of: "monolithic", "core", "memory", "tools"
+    /// `package` is one of: "engine", "core", "memory", "tools"
     pub fn start(&self, package: &str, mode: McpServerMode) -> Result<McpServer, String> {
         let mut procs = self.processes.lock().map_err(|e| e.to_string())?;
 
@@ -156,9 +156,9 @@ impl McpProcessManager {
 /// Resolve package name to display name and command.
 fn resolve_command(package: &str) -> Result<(String, Vec<String>), String> {
     match package {
-        "monolithic" => Ok((
-            "@aidd.md/mcp".to_string(),
-            vec!["npx".to_string(), "-y".to_string(), "@aidd.md/mcp".to_string()],
+        "engine" => Ok((
+            "@aidd.md/mcp-engine".to_string(),
+            vec!["npx".to_string(), "-y".to_string(), "@aidd.md/mcp-engine".to_string()],
         )),
         "core" => Ok((
             "@aidd.md/mcp-core".to_string(),
@@ -173,7 +173,7 @@ fn resolve_command(package: &str) -> Result<(String, Vec<String>), String> {
             vec!["npx".to_string(), "-y".to_string(), "@aidd.md/mcp-tools".to_string()],
         )),
         _ => Err(format!(
-            "Unknown package '{}'. Valid: monolithic, core, memory, tools",
+            "Unknown package '{}'. Valid: engine, core, memory, tools",
             package
         )),
     }

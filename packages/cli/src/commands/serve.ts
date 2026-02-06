@@ -1,9 +1,9 @@
 import { spawn } from 'node:child_process';
 
-type ServerMode = 'monolithic' | 'core' | 'memory' | 'tools';
+type ServerMode = 'engine' | 'core' | 'memory' | 'tools';
 
 const MODE_TO_PACKAGE: Record<ServerMode, string> = {
-  monolithic: '@aidd.md/mcp',
+  engine: '@aidd.md/mcp-engine',
   core: '@aidd.md/mcp-core',
   memory: '@aidd.md/mcp-memory',
   tools: '@aidd.md/mcp-tools',
@@ -13,7 +13,7 @@ const MODE_TO_PACKAGE: Record<ServerMode, string> = {
  * `aidd serve [--mode <mode>]` — Start MCP server.
  */
 export function runServe(options: { mode?: string }): void {
-  const mode = (options.mode ?? 'monolithic') as ServerMode;
+  const mode = (options.mode ?? 'engine') as ServerMode;
 
   if (!Object.keys(MODE_TO_PACKAGE).includes(mode)) {
     console.error(`Unknown mode: ${mode}`);
@@ -26,7 +26,7 @@ export function runServe(options: { mode?: string }): void {
   console.log('Press Ctrl+C to stop.\n');
 
   // Resolve the package entry point relative to the monorepo
-  // In production, `npx @aidd.md/mcp` is the recommended way.
+  // In production, `npx @aidd.md/mcp-engine` is the recommended way.
   // For dev, we spawn npx.
   const child = spawn('npx', ['-y', pkg], {
     stdio: 'inherit',

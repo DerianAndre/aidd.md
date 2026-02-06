@@ -52,7 +52,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
             .default('relevance')
             .describe('Sort order'),
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { query, type, sessionId, limit, orderBy } = args as {
             query: string;
@@ -83,7 +83,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
           anchor: z.string().describe('Observation/entry ID to center timeline on'),
           depth: z.number().optional().default(3).describe('Number of entries before and after'),
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { anchor, depth } = args as { anchor: string; depth: number };
           const backend = await storage.getBackend();
@@ -100,7 +100,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
         schema: {
           ids: z.array(z.string()).describe('Array of entry IDs to retrieve'),
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { ids } = args as { ids: string[] };
           const backend = await storage.getBackend();
@@ -122,7 +122,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
           context: z.string().optional().describe('Additional context'),
           sessionId: z.string().optional().describe('Associated session ID'),
         },
-        annotations: { readOnlyHint: false },
+        annotations: { idempotentHint: true },
         handler: async (args) => {
           const a = args as {
             decision: string;
@@ -161,7 +161,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
           prevention: z.string().describe('How to prevent in the future'),
           sessionId: z.string().optional().describe('Associated session ID'),
         },
-        annotations: { readOnlyHint: false },
+        annotations: { idempotentHint: true },
         handler: async (args) => {
           const a = args as {
             error: string;
@@ -223,7 +223,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
           rationale: z.string().optional().describe('Why this convention exists'),
           sessionId: z.string().optional().describe('Associated session ID'),
         },
-        annotations: { readOnlyHint: false },
+        annotations: { idempotentHint: true },
         handler: async (args) => {
           const a = args as {
             convention: string;
@@ -257,7 +257,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
           type: z.enum(['decision', 'mistake', 'convention']).describe('Type of entry to remove'),
           id: z.string().describe('Entry ID to remove'),
         },
-        annotations: { readOnlyHint: false, destructiveHint: true },
+        annotations: { destructiveHint: true, idempotentHint: true },
         handler: async (args) => {
           const { type, id } = args as { type: string; id: string };
 

@@ -10,7 +10,7 @@ import { useProjectStore } from '../../../stores/project-store';
 import { ROUTES } from '../../../lib/constants';
 
 const DIR_TO_SERVER_ID: Record<string, string> = {
-  'mcp-aidd': 'monolithic',
+  'mcp-aidd-engine': 'engine',
   'mcp-aidd-core': 'core',
   'mcp-aidd-memory': 'memory',
   'mcp-aidd-tools': 'tools',

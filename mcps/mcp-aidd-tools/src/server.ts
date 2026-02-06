@@ -7,6 +7,7 @@ export function createToolsServer(projectPath?: string) {
   return createAiddServer({
     name: 'aidd-tools',
     version: PKG_VERSION,
+    instructions: 'AIDD code quality tools: 11 validators (TKB, SQL, secrets, Docker, i18n, a11y, performance, design tokens, tests, Mermaid, OpenAPI), 4 enforcement checks, commit message generation, migration planning, and CI reporting.',
     modules: toolsModules,
     projectPath,
   });

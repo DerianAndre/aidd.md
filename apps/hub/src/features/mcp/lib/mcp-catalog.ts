@@ -157,13 +157,13 @@ export const MCP_PACKAGES: McpPackageInfo[] = [
     prompts: [],
   },
 
-  // ── Monolithic ─────────────────────────────────────────────────────────
+  // ── Engine ────────────────────────────────────────────────────────────
   {
-    name: '@aidd.md/mcp',
-    dir: 'mcp-aidd',
+    name: '@aidd.md/mcp-engine',
+    dir: 'mcp-aidd-engine',
     location: 'mcps',
-    description: 'All tools in one process — convenience package for single-server setups',
-    role: 'Monolithic',
+    description: 'All tools in one process — the complete AIDD engine',
+    role: 'Engine',
     isServer: true,
     tools: [], // aggregates core + memory + tools at runtime
     resources: [],
@@ -178,7 +178,7 @@ export const MCP_PACKAGES: McpPackageInfo[] = [
 /** Only MCP server packages (excludes support libs like shared) */
 export const MCP_SERVERS = MCP_PACKAGES.filter((p) => p.isServer);
 
-/** All tools across all packages (excluding monolithic aggregate) */
+/** All tools across all packages (excluding engine aggregate) */
 export function getAllTools(): (McpToolInfo & { packageName: string })[] {
   return MCP_PACKAGES.flatMap((pkg) =>
     pkg.tools.map((t) => ({ ...t, packageName: pkg.name })),

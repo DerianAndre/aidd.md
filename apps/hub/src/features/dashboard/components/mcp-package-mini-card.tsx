@@ -8,7 +8,7 @@ const ROLE_COLORS: Record<string, string> = {
   'The Brain': 'text-accent',
   'The Memory': 'text-success',
   'The Hands': 'text-warning',
-  'Monolithic': 'text-default-500',
+  'Engine': 'text-default-500',
   'Foundation': 'text-default-500',
 };
 
@@ -16,7 +16,7 @@ const SHORT_ROLES: Record<string, string> = {
   'The Brain': 'Brain',
   'The Memory': 'Memory',
   'The Hands': 'Tools',
-  'Monolithic': 'All-in-1',
+  'Engine': 'All-in-1',
   'Foundation': 'Shared',
 };
 

@@ -134,7 +134,7 @@ export const executionModule: AiddModule = {
         diff: z.string().describe('Git diff output (from git diff or git diff --staged)'),
         context: z.string().optional().describe('Optional context about what was changed (ticket number, feature name)'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { diff, context: ctxHint } = args as { diff: string; context?: string };
         const analysis = analyzeDiff(diff);
@@ -174,7 +174,7 @@ export const executionModule: AiddModule = {
         currentVersion: z.string().describe('Current version (e.g., "18.2.0")'),
         targetVersion: z.string().optional().describe('Target version (e.g., "19.0.0"). Defaults to latest.'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { framework, currentVersion, targetVersion } = args as { framework: string; currentVersion: string; targetVersion?: string };
         const steps = planMigrationSteps(framework, currentVersion, targetVersion);

@@ -1,5 +1,5 @@
 import { startStdioServer } from '@aidd.md/mcp-shared';
-import { createMonolithicServer } from './server.js';
+import { createEngineServer } from './server.js';
 
-const server = createMonolithicServer();
+const server = createEngineServer();
 await startStdioServer(server);

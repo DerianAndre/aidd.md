@@ -319,7 +319,7 @@ mod tests {
     #[test]
     fn test_detect_aidd_with_args() {
         let cmd = Some("npx".to_string());
-        let args = Some(vec!["-y".to_string(), "@aidd.md/mcp".to_string()]);
+        let args = Some(vec!["-y".to_string(), "@aidd.md/mcp-engine".to_string()]);
         assert!(detect_aidd(&cmd, &args));
     }
 

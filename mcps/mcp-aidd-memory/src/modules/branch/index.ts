@@ -88,7 +88,7 @@ export function createBranchModule(storage: StorageProvider): AiddModule {
             .optional()
             .describe('Whether to promote decisions to permanent memory on merge'),
         },
-        annotations: { readOnlyHint: false },
+        annotations: { idempotentHint: true },
         handler: async (args) => {
           const a = args as Record<string, unknown>;
           const action = a['action'] as string;

@@ -34,14 +34,14 @@ impl ToolAdapter for CursorAdapter {
             .entry("mcpServers")
             .or_insert_with(|| serde_json::json!({}));
 
-        let had_entry = servers.get("aidd").is_some();
+        let had_entry = servers.get("aidd-engine").is_some();
         servers.as_object_mut()
             .ok_or("mcpServers is not a JSON object")?
             .insert(
-                "aidd".to_string(),
+                "aidd-engine".to_string(),
                 serde_json::json!({
                     "command": "npx",
-                    "args": ["-y", "@aidd.md/mcp"]
+                    "args": ["-y", "@aidd.md/mcp-engine"]
                 }),
             );
 
@@ -85,7 +85,7 @@ impl ToolAdapter for CursorAdapter {
         if mcp_path.exists() {
             let mut config = read_json_or_default(&mcp_path)?;
             if let Some(servers) = config.get_mut("mcpServers").and_then(|s| s.as_object_mut()) {
-                if servers.remove("aidd").is_some() {
+                if servers.remove("aidd-engine").is_some() {
                     write_json(&mcp_path, &config)?;
                     result.files_modified.push(mcp_path.to_string_lossy().to_string());
                 }
@@ -105,7 +105,7 @@ impl ToolAdapter for CursorAdapter {
         let has_mcp = if mcp_path.exists() {
             let config = read_json_or_default(&mcp_path)?;
             config.get("mcpServers")
-                .and_then(|s| s.get("aidd"))
+                .and_then(|s| s.get("aidd-engine"))
                 .is_some()
         } else {
             false

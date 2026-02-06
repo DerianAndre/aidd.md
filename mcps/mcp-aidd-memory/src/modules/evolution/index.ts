@@ -86,7 +86,7 @@ export function createEvolutionModule(storage: StorageProvider): AiddModule {
         schema: {
           dryRun: z.boolean().optional().default(false).describe('If true, only return candidates without persisting'),
         },
-        annotations: { readOnlyHint: false },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { dryRun } = args as { dryRun: boolean };
 
@@ -205,7 +205,7 @@ export function createEvolutionModule(storage: StorageProvider): AiddModule {
         description:
           'Get current evolution engine status: pending candidates grouped by confidence tier, recent actions.',
         schema: {},
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async () => {
           const state = readPending(context.aiddDir);
           const log = readLog(context.aiddDir);
@@ -253,7 +253,7 @@ export function createEvolutionModule(storage: StorageProvider): AiddModule {
         schema: {
           candidateId: z.string().describe('Evolution candidate ID to review'),
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { candidateId } = args as { candidateId: string };
 
@@ -283,7 +283,7 @@ export function createEvolutionModule(storage: StorageProvider): AiddModule {
           candidateId: z.string().describe('Evolution candidate ID to revert'),
           reason: z.string().optional().describe('Reason for reverting'),
         },
-        annotations: { readOnlyHint: false, destructiveHint: true },
+        annotations: { destructiveHint: true, idempotentHint: true },
         handler: async (args) => {
           const { candidateId, reason } = args as { candidateId: string; reason?: string };
 

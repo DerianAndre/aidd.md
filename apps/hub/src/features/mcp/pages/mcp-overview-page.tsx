@@ -37,7 +37,7 @@ const TOOL_ORDER: McpToolSource[] = ['claude_code', 'cursor', 'vscode', 'gemini'
 
 /** Maps package dir to the server id used by the Rust backend. */
 const DIR_TO_SERVER_ID: Record<string, string> = {
-  'mcp-aidd': 'monolithic',
+  'mcp-aidd-engine': 'engine',
   'mcp-aidd-core': 'core',
   'mcp-aidd-memory': 'memory',
   'mcp-aidd-tools': 'tools',
@@ -293,14 +293,14 @@ export function McpOverviewPage() {
           <h3 className="mb-2 text-sm font-semibold text-foreground">Integration</h3>
           <p className="mb-3 text-xs text-default-500">
             Add AIDD MCP servers to your AI client configuration. Each server runs as a separate stdio process,
-            or use the monolithic server for all tools in one process.
+            or use the engine server for all tools in one process.
           </p>
           <pre className="overflow-x-auto rounded-lg bg-default-100 p-3 text-xs text-default-700">
 {`{
   "mcpServers": {
-    "aidd": {
+    "aidd-engine": {
       "command": "node",
-      "args": ["mcps/mcp-aidd/dist/index.js"],
+      "args": ["mcps/mcp-aidd-engine/dist/index.js"],
       "env": { "AIDD_PROJECT_ROOT": "." }
     }
   }

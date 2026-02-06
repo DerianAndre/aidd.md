@@ -45,7 +45,7 @@ export function createLifecycleModule(): AiddModule {
         description:
           'Get the 8-phase ASDD lifecycle definition with entry/exit criteria and key activities for each phase.',
         schema: {},
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async () => {
           return createJsonResult({
             name: 'AI-Spec-Driven Development (ASDD)',
@@ -69,7 +69,7 @@ export function createLifecycleModule(): AiddModule {
             .default('SYNC')
             .describe('Starting phase (default: SYNC)'),
         },
-        annotations: { readOnlyHint: false },
+        annotations: { idempotentHint: false },
         handler: async (args) => {
           const { feature, sessionId, startPhase } = args as {
             feature: string;
@@ -113,7 +113,7 @@ export function createLifecycleModule(): AiddModule {
           notes: z.string().optional().describe('Notes about phase completion'),
           force: z.boolean().optional().describe('Force advance without exit criteria check'),
         },
-        annotations: { readOnlyHint: false },
+        annotations: { idempotentHint: false },
         handler: async (args) => {
           const { lifecycleId, notes, force } = args as {
             lifecycleId: string;
@@ -192,7 +192,7 @@ export function createLifecycleModule(): AiddModule {
         schema: {
           lifecycleId: z.string().describe('Lifecycle session ID'),
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { lifecycleId } = args as { lifecycleId: string };
 
@@ -233,7 +233,7 @@ export function createLifecycleModule(): AiddModule {
             .describe('Filter by status'),
           limit: z.number().optional().default(20).describe('Max results'),
         },
-        annotations: { readOnlyHint: true },
+        annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async (args) => {
           const { status, limit } = args as { status?: string; limit: number };
 

@@ -18,11 +18,11 @@ Transform AIDD from a static file-based standard into an autonomous, self-improv
 
 ## 2. Architecture
 
-### Approach C: Monolithic Default + Optional Split
+### Approach C: Engine Default + Optional Split
 
 ```
 ┌─────────────────────────────────────────────────┐
-│              @aidd.md/mcp (MONOLITHIC)              │
+│              @aidd.md/mcp-engine (ENGINE)              │
 │         Default. One process. All modules.       │
 │                                                  │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
@@ -42,20 +42,20 @@ Transform AIDD from a static file-based standard into an autonomous, self-improv
   3 separate processes — AI orchestrates
 ```
 
-- **Monolithic** = simpler setup (1 MCP), direct inter-module calls, lower resource usage
+- **Engine** = simpler setup (1 MCP), direct inter-module calls, lower resource usage
 - **Split** = granular control, resource isolation, independent scaling for HTTP transport
 
 ### Distribution: npm Packages
 
 ```
-@aidd.md/mcp          ← Monolithic (default, recommended)
+@aidd.md/mcp-engine   ← Engine (default, recommended — all modules)
 @aidd.md/mcp-core     ← Split: brain only
 @aidd.md/mcp-memory   ← Split: memory only
 @aidd.md/mcp-tools    ← Split: tools only
 @aidd.md/mcp-shared   ← Internal shared dependency
 ```
 
-Usage: `npx @aidd.md/mcp` — no global install, no copying.
+Usage: `npx @aidd.md/mcp-engine` — no global install, no copying.
 
 ### Stack
 
@@ -118,13 +118,13 @@ packages/
 │       └── schemas.ts            # Shared Zod schemas
 
 mcps/
-├── mcp-aidd/                     # @aidd.md/mcp (monolithic)
+├── mcp-aidd-engine/              # @aidd.md/mcp-engine (engine — all modules)
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── tsup.config.ts
 │   └── src/
 │       ├── index.ts              # Registers ALL modules from core + memory + tools
-│       ├── server.ts             # Monolithic server creation
+│       ├── server.ts             # Engine server creation
 │       └── transport/
 │           ├── stdio.ts
 │           └── http.ts
@@ -407,9 +407,9 @@ interface StorageBackend {
 
 ---
 
-## 5. Tool Inventory (60 total)
+## 5. Tool Inventory (63 total)
 
-### Core: The Brain (14 tools)
+### Core: The Brain (17 tools)
 
 | # | Tool | Purpose | Annotations |
 |---|------|---------|-------------|
@@ -842,12 +842,12 @@ Proven patterns to port from the EnXingaPay MCP implementation:
 
 | Package | npm | Tools | Identity |
 |---------|-----|-------|----------|
-| Monolithic | `@aidd.md/mcp` | 60 | All-in-one (recommended) |
-| Core | `@aidd.md/mcp-core` | 14 | The Brain |
+| Engine | `@aidd.md/mcp-engine` | 63 | All-in-one (recommended) |
+| Core | `@aidd.md/mcp-core` | 17 | The Brain |
 | Memory | `@aidd.md/mcp-memory` | 27 | The Memory |
 | Tools | `@aidd.md/mcp-tools` | 19 | The Hands |
 | Shared | `@aidd.md/mcp-shared` | — | Types, factory, utils, storage |
-| **Total** | | **60 tools** | + 13 resources, 5 prompts, CI mode, hook templates |
+| **Total** | | **63 tools** | + 13 resources, 5 prompts, CI mode, hook templates |
 
 ### Key Improvements (from claude-mem analysis)
 

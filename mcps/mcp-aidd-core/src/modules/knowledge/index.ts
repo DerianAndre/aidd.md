@@ -238,7 +238,7 @@ export const knowledgeModule: AiddModule = {
           .default(10)
           .describe('Maximum number of results'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { category, maturity, keyword, limit } = args as {
           category?: string;
@@ -296,7 +296,7 @@ export const knowledgeModule: AiddModule = {
           .string()
           .describe('TKB entry name (e.g., "astro", "nextjs", "prisma", "domain-driven-design")'),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { name } = args as { name: string };
         const entry = findTkbEntry(context.contentLoader, name);
@@ -335,7 +335,7 @@ export const knowledgeModule: AiddModule = {
             'Agent/skill name (e.g., "system-architect", "interface-artisan", "quality-engineer")',
           ),
       },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { agent } = args as { agent: string };
         const lower = agent.toLowerCase();
@@ -368,7 +368,7 @@ export const knowledgeModule: AiddModule = {
       description:
         'Get the cross-agent competency matrix showing all agents, their purposes, and activation triggers.',
       schema: {},
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async () => {
         const agentsEntry = context.contentLoader.getIndex().agents;
         if (!agentsEntry) {

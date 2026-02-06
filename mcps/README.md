@@ -1,6 +1,6 @@
 # AIDD MCP Ecosystem
 
-> AI-Driven Development made autonomous: 60 tools, 5-layer memory, self-evolving framework.
+> AI-Driven Development made autonomous: 63 tools, 5-layer memory, self-evolving framework.
 > **Last Updated**: 2026-02-05
 > **Status**: Implementation In Progress
 
@@ -16,9 +16,9 @@ Configure your AI tool to use the MCP server:
 ```json
 {
   "mcpServers": {
-    "aidd": {
+    "aidd-engine": {
       "command": "npx",
-      "args": ["@aidd.md/mcp"],
+      "args": ["@aidd.md/mcp-engine"],
       "env": { "AIDD_PROJECT_PATH": "${workspaceFolder}" }
     }
   }
@@ -29,9 +29,9 @@ Configure your AI tool to use the MCP server:
 ```json
 {
   "mcpServers": {
-    "aidd": {
+    "aidd-engine": {
       "command": "npx",
-      "args": ["@aidd.md/mcp"],
+      "args": ["@aidd.md/mcp-engine"],
       "env": { "AIDD_PROJECT_PATH": "${workspaceFolder}" }
     }
   }
@@ -74,7 +74,7 @@ Environment
 
 MCP Packages
   ✅ @aidd.md/mcp-shared built
-  ✅ @aidd.md/mcp built
+  ✅ @aidd.md/mcp-engine built
   ✅ @aidd.md/mcp-core built
   ✅ @aidd.md/mcp-memory built
   ✅ @aidd.md/mcp-tools built
@@ -108,7 +108,7 @@ Ready to use.
 | `pnpm mcp:typecheck` | TypeScript type checking |
 | `pnpm mcp:clean` | Clean build artifacts |
 | `pnpm mcp:status` | Quick check — are packages built? |
-| `pnpm mcp:doctor` | Full diagnostic of MCP environment |
+| `pnpm mcp:doctor` | Full diagnostic of MCP environment (supports `--json`, `--fix`, `--deep`, `--quiet`, `--no-runtime`, `--no-color`) |
 | `pnpm mcp:check` | Single-line status (for AI agent startup) |
 
 ### Typical workflow
@@ -137,11 +137,11 @@ This diagnoses the problem and suggests the solution.
 
 ## Architecture
 
-### Approach C: Monolithic Default + Optional Split
+### Approach C: Engine Default + Optional Split
 
 ```
 ┌─────────────────────────────────────────────────┐
-│              @aidd.md/mcp (MONOLITHIC)              │
+│              @aidd.md/mcp-engine (ENGINE)              │
 │         Default. One process. All modules.       │
 │                                                  │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
@@ -161,7 +161,7 @@ This diagnoses the problem and suggests the solution.
   3 separate processes — AI orchestrates
 ```
 
-**Monolithic** (recommended) — One process, all 60 tools, direct inter-module communication. Simpler setup, lower resource usage.
+**Engine** (recommended) — One process, all 63 tools, direct inter-module communication. Simpler setup, lower resource usage.
 
 **Split** — Three processes, granular control. Use when you need resource isolation or only need specific capabilities.
 
@@ -170,11 +170,11 @@ This diagnoses the problem and suggests the solution.
 ```
 AI Tool (Claude Code, Cursor, Windsurf, etc.)
     │
-    ├── stdio ──► @aidd.md/mcp (all 60 tools)
+    ├── stdio ──► @aidd.md/mcp-engine (all 63 tools)
     │
     OR
     │
-    ├── stdio ──► @aidd.md/mcp-core     (14 tools: guidance, routing, knowledge)
+    ├── stdio ──► @aidd.md/mcp-core     (17 tools: guidance, routing, knowledge)
     ├── stdio ──► @aidd.md/mcp-memory   (27 tools: sessions, search, evolution, analytics)
     └── stdio ──► @aidd.md/mcp-tools    (19 tools: validation, enforcement, CI)
 ```
@@ -185,7 +185,7 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 
 ## Inventory
 
-### Core: The Brain (14 tools)
+### Core: The Brain (17 tools)
 
 | Tool | Purpose |
 |------|---------|
@@ -451,7 +451,7 @@ The MCP scans for project-level AIDD files:
 | `AIDD_CONTENT_OVERRIDE_MODE` | `merge`, `project_only`, `bundled_only` | `merge` |
 | `AIDD_EVOLUTION_ENABLED` | `true`, `false` | `true` |
 | `AIDD_EVOLUTION_THRESHOLD` | `0-100` | `90` |
-| `AIDD_MODE` | `monolithic`, `core`, `memory`, `tools` | `monolithic` |
+| `AIDD_MODE` | `engine`, `core`, `memory`, `tools` | `engine` |
 
 ### Project Config (`.aidd/config.json`)
 
@@ -486,13 +486,13 @@ The MCP scans for project-level AIDD files:
 
 ### Client Configurations
 
-**Monolithic (recommended)** — Claude Code, Cursor, Windsurf:
+**Engine (recommended)** — Claude Code, Cursor, Windsurf:
 ```json
 {
   "mcpServers": {
-    "aidd": {
+    "aidd-engine": {
       "command": "npx",
-      "args": ["@aidd.md/mcp"],
+      "args": ["@aidd.md/mcp-engine"],
       "env": { "AIDD_PROJECT_PATH": "${workspaceFolder}" }
     }
   }
@@ -657,15 +657,15 @@ pnpm mcp:status
 ```
 
 ```
-=== AIDD MCP Status ===
+[aidd.md] Status
 
-  ✅ @aidd.md/mcp-shared         ready
-  ✅ @aidd.md/mcp                ready
-  ✅ @aidd.md/mcp-core           ready
-  ❌ @aidd.md/mcp-memory         not built
-  ✅ @aidd.md/mcp-tools          ready
+  ✅ @aidd.md/mcp-shared    ready
+  ✅ @aidd.md/mcp-engine    ready
+  ✅ @aidd.md/mcp-core      ready
+  ❌ @aidd.md/mcp-memory    not built
+  ✅ @aidd.md/mcp-tools     ready
 
-4/5 packages ready → Run: pnpm mcp:build
+[aidd.md] 4/5 packages ready → Run: pnpm mcp:build
 ```
 
 ### Full diagnostic
@@ -674,39 +674,82 @@ pnpm mcp:status
 pnpm mcp:doctor
 ```
 
-Reports the state of each component and suggests corrective action:
+Reports the state of each component with section timing and suggests corrective actions:
 
 ```
-=== AIDD MCP Doctor ===
+[aidd.md] Doctor
+  Environment → Dependencies → aidd.md MCPs → MCPs installed → aidd.md Framework →
+  Skills Validation → Cross-References → Model Matrix → Project State (.aidd/) → Installed Agents
 
-Environment
+Environment — Node.js, pnpm
   ✅ Node.js v22.x
   ✅ pnpm 10.x
 
-MCP Packages
+Dependencies — Lockfile and node_modules
+  ✅ node_modules/ exists
+  ✅ pnpm-lock.yaml up to date
+
+aidd.md MCPs — Package build status
   ✅ @aidd.md/mcp-shared built
-  ✅ @aidd.md/mcp built
+  ✅ @aidd.md/mcp-engine built
   ✅ @aidd.md/mcp-core built
   ✅ @aidd.md/mcp-memory built
   ✅ @aidd.md/mcp-tools built
   ✅ 5/5 packages built
+  ✅ @modelcontextprotocol/sdk 1.x
 
-AIDD Framework
+MCPs installed — External MCP servers
+  ✅ context7 [cursor] — running
+  ℹ  shadcn [cursor] — not running
+
+aidd.md Framework — Content and structure
   ✅ AGENTS.md found
   ✅ rules/ (11 files)
   ✅ skills/ (11 agents)
-  ✅ knowledge/ (106 entries)
-  ✅ workflows/ (12 files)
-  ✅ spec/ (5 files)
+  ✅ knowledge/ (9 domains, 106 entries)
+  ✅ workflows/ (9 files + 5 orchestrators)
+  ✅ spec/ (6 files)
+  ✅ templates/ (23 files)
 
-Project State (.aidd/)
+Skills Validation — Frontmatter integrity
+  ✅ 11/11 skills have valid frontmatter
+
+Cross-References — AGENTS.md ↔ skills/
+  ✅ AGENTS.md → skills/ (11 refs, all valid)
+
+Model Matrix — SSOT sync and freshness
+  ✅ model-matrix.md ↔ model-matrix.ts in sync (16 models)
+
+Project State (.aidd/) — Config, sessions, storage
   ✅ .aidd/ directory found
-  ✅ config.json valid
-  ✅ sessions/ directory exists
-  ✅ evolution/ directory exists
+  ✅ config.json valid (all sections present)
+  ✅ sessions/ exists
 
-All checks passed!
+Installed Agents — Detected AI editors/CLIs
+  ✅ Claude Code (CLI)
+  ✅ Cursor (IDE)
+
+[aidd.md] All checks passed! (952ms)
 ```
+
+#### Doctor flags
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Output structured JSON (for CI/scripting) |
+| `--fix` | Auto-fix common issues (rebuild stale packages, create `.aidd/`) |
+| `--deep` | Run slow checks (TypeScript type checking) |
+| `--quiet` | Only show failures and warnings |
+| `--no-runtime` | Skip process detection (faster) |
+| `--no-color` | Disable ANSI colors (also respects `NO_COLOR` env) |
+
+#### Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | All checks passed |
+| `1` | Warnings only (everything works, optional setup pending) |
+| `2` | Errors detected (action required) |
 
 ### Single-line check (for AI startup)
 
@@ -715,7 +758,7 @@ pnpm mcp:check
 ```
 
 ```
-[AIDD] MCP ON — 5/5 packages ready
+[aidd.md] Engine - ON — 5/5 packages ready
 ```
 
 Use this in CLAUDE.md startup protocol or similar automation.
