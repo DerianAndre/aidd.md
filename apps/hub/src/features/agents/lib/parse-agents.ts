@@ -1,5 +1,17 @@
 /**
  * Parses AGENTS.md into structured agent and orchestrator data.
+ *
+ * Expected structure:
+ *   ## 🧠 Agent System: ...
+ *     ### 👑 Master Orchestrator — ...
+ *     ### 🏗️ System Architect
+ *   ---
+ *   ## 🎭 Workflow Orchestrators
+ *     ### Available Orchestrators
+ *       #### 🏗️ Full-Stack Feature
+ *       #### 🛡️ Security Hardening
+ *   ---
+ *   ## 📜 Golden Rules  ← NOT agents, just section headings
  */
 
 export interface AgentEntry {
@@ -17,7 +29,15 @@ export interface AgentEntry {
   workflow?: string[];
 }
 
-const EMOJI_RE = /^#{2,4}\s*([\p{Emoji_Presentation}\p{Emoji}\u200d]+)\s*(.+)/u;
+/**
+ * Matches a real visual emoji at the start of a string.
+ * Uses Emoji_Presentation + Extended_Pictographic to EXCLUDE
+ * ASCII characters (#, *, 0-9) that have the generic \p{Emoji} property.
+ */
+const EMOJI_START_RE =
+  /^([\p{Emoji_Presentation}\p{Extended_Pictographic}][\u200d\uFE0F\p{Emoji_Presentation}\p{Extended_Pictographic}]*)\s*(.+)/u;
+
+const HEADING_RE = /^(#{2,4})\s+(.+)/;
 const FIELD_RE = /^\*\*([^*]+)\*\*:?\s*(.+)/;
 
 /**
@@ -27,47 +47,83 @@ export function parseAgents(markdown: string): AgentEntry[] {
   const entries: AgentEntry[] = [];
   const lines = markdown.split('\n');
 
+  // Track which major section we're in (delimited by --- separators)
+  let section: 'none' | 'agents' | 'orchestrators' = 'none';
   let currentEntry: Partial<AgentEntry> | null = null;
-  let inOrchestrators = false;
   let collectingWorkflow = false;
   const workflowLines: string[] = [];
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i] ?? '';
+  function flush() {
+    if (currentEntry?.name) {
+      if (collectingWorkflow && workflowLines.length > 0) {
+        currentEntry.workflow = workflowLines.slice();
+      }
+      entries.push(currentEntry as AgentEntry);
+    }
+    currentEntry = null;
+    collectingWorkflow = false;
+    workflowLines.length = 0;
+  }
+
+  for (const line of lines) {
     const trimmed = line.trim();
 
-    // Detect orchestrators section
-    if (trimmed.includes('Workflow Orchestrators')) {
-      inOrchestrators = true;
+    // Horizontal rules separate major sections — reset state
+    if (trimmed === '---') {
+      flush();
+      section = 'none';
       continue;
     }
 
-    // Check for heading with emoji
-    const headingMatch = trimmed.match(EMOJI_RE);
+    // Check for markdown headings
+    const headingMatch = trimmed.match(HEADING_RE);
     if (headingMatch) {
-      // Flush previous entry
-      if (currentEntry?.name) {
-        if (collectingWorkflow && workflowLines.length > 0) {
-          currentEntry.workflow = workflowLines.slice();
+      const level = headingMatch[1]!.length; // 2, 3, or 4
+      const rawContent = headingMatch[2]!.trim();
+      // Strip bold markers for emoji extraction
+      const content = rawContent.replace(/\*\*/g, '');
+
+      // h2 headings define top-level sections
+      if (level === 2) {
+        flush();
+        if (content.includes('Agent System')) {
+          section = 'agents';
+        } else if (content.includes('Workflow Orchestrators')) {
+          section = 'orchestrators';
+        } else {
+          section = 'none';
         }
-        entries.push(currentEntry as AgentEntry);
+        continue;
       }
 
-      collectingWorkflow = false;
-      workflowLines.length = 0;
+      // Outside recognized sections — skip all headings
+      if (section === 'none') continue;
 
-      const emoji = headingMatch[1]?.trim() ?? '';
-      const name = headingMatch[2]?.trim()
-        .replace(/\*\*/g, '')
+      // Try to extract a real emoji from the heading content
+      const emojiMatch = content.match(EMOJI_START_RE);
+      if (!emojiMatch) continue; // No emoji → subsection header, skip
+
+      const emoji = emojiMatch[1]!.trim();
+      const name = emojiMatch[2]!
+        .trim()
         .replace(/\s*—.*/, '')
-        .replace(/\s*\(.*\)/, '') ?? '';
+        .replace(/\s*\(.*\)/, '');
 
-      currentEntry = {
-        name,
-        emoji,
-        purpose: '',
-        type: inOrchestrators ? 'orchestrator' : 'agent',
-      };
+      // Agents section: h3 entries are individual agents
+      if (section === 'agents' && level === 3) {
+        flush();
+        currentEntry = { name, emoji, purpose: '', type: 'agent' };
+        continue;
+      }
+
+      // Orchestrators section: h4 entries are orchestrator definitions
+      if (section === 'orchestrators' && level === 4) {
+        flush();
+        currentEntry = { name, emoji, purpose: '', type: 'orchestrator' };
+        continue;
+      }
+
+      // Any other heading level in these sections → not an entry
       continue;
     }
 
@@ -76,8 +132,8 @@ export function parseAgents(markdown: string): AgentEntry[] {
     // Parse **Field:** Value lines
     const fieldMatch = trimmed.match(FIELD_RE);
     if (fieldMatch) {
-      const key = fieldMatch[1]?.trim().toLowerCase() ?? '';
-      const value = fieldMatch[2]?.trim() ?? '';
+      const key = fieldMatch[1]!.trim().toLowerCase();
+      const value = fieldMatch[2]!.trim();
 
       if (key === 'purpose') currentEntry.purpose = value;
       else if (key === 'skills') currentEntry.skills = value.replace(/`/g, '');
@@ -89,7 +145,7 @@ export function parseAgents(markdown: string): AgentEntry[] {
       continue;
     }
 
-    // Parse **Capability:** line (used for Master Orchestrator and Knowledge Architect)
+    // Parse **Capability:** line (alternative purpose format)
     if (trimmed.startsWith('- **Capability:**')) {
       currentEntry.purpose = trimmed.replace('- **Capability:**', '').trim();
       continue;
@@ -107,18 +163,31 @@ export function parseAgents(markdown: string): AgentEntry[] {
       continue;
     }
 
-    // End workflow collection on empty line or new section
+    // End workflow collection on empty line
     if (collectingWorkflow && trimmed === '') {
       collectingWorkflow = false;
     }
   }
 
   // Flush last entry
-  if (currentEntry?.name) {
-    if (collectingWorkflow && workflowLines.length > 0) {
-      currentEntry.workflow = workflowLines.slice();
+  flush();
+
+  // Deduplicate by name — keep the entry with more data
+  const seen = new Map<string, number>();
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i]!;
+    const prev = seen.get(entry.name);
+    if (prev !== undefined) {
+      const prevEntry = entries[prev]!;
+      // Keep whichever has more content
+      if ((entry.purpose?.length ?? 0) >= (prevEntry.purpose?.length ?? 0)) {
+        entries[prev] = entry;
+      }
+      entries.splice(i, 1);
+      i--;
+    } else {
+      seen.set(entry.name, i);
     }
-    entries.push(currentEntry as AgentEntry);
   }
 
   return entries;
