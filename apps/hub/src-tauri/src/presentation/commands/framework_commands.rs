@@ -1,7 +1,7 @@
 use tauri::State;
 
 use crate::AppContext;
-use crate::domain::model::FrameworkEntity;
+use crate::domain::model::{FrameworkEntity, SyncInfo};
 use crate::domain::ports::inbound::FrameworkPort;
 
 /// Get the resolved framework directory path (~/.aidd/framework/).
@@ -58,4 +58,40 @@ pub async fn delete_framework_entity(
     ctx: State<'_, AppContext>,
 ) -> Result<(), String> {
     ctx.framework_service.delete_entity(&category, &name)
+}
+
+// ── Framework sync commands ─────────────────────────────────────────────
+
+/// Get local sync status (no network call).
+#[tauri::command]
+pub async fn get_sync_status(
+    ctx: State<'_, AppContext>,
+) -> Result<SyncInfo, String> {
+    ctx.framework_service.get_sync_status()
+}
+
+/// Check for framework updates (hits GitHub API).
+#[tauri::command]
+pub async fn check_for_updates(
+    ctx: State<'_, AppContext>,
+) -> Result<SyncInfo, String> {
+    ctx.framework_service.check_for_updates().await
+}
+
+/// Download and install a framework version (or latest if None).
+#[tauri::command]
+pub async fn sync_framework(
+    version: Option<String>,
+    ctx: State<'_, AppContext>,
+) -> Result<SyncInfo, String> {
+    ctx.framework_service.sync_framework(version).await
+}
+
+/// Set auto-sync preference.
+#[tauri::command]
+pub async fn set_auto_sync(
+    enabled: bool,
+    ctx: State<'_, AppContext>,
+) -> Result<(), String> {
+    ctx.framework_service.set_auto_sync(enabled)
 }

@@ -5,8 +5,13 @@ import {
   writeFrameworkEntity,
   deleteFrameworkEntity,
   getFrameworkPath,
+  getSyncStatus,
+  checkForUpdates,
+  syncFramework,
+  setAutoSync,
   type FrameworkCategory,
   type FrameworkEntity,
+  type SyncInfo,
 } from '../../../lib/tauri';
 
 interface FrameworkStoreState {
@@ -15,6 +20,11 @@ interface FrameworkStoreState {
   loading: Record<FrameworkCategory, boolean>;
   stale: Record<FrameworkCategory, boolean>;
   selectedEntity: FrameworkEntity | null;
+
+  // Sync state
+  syncInfo: SyncInfo | null;
+  syncing: boolean;
+  checking: boolean;
 
   // Actions
   initialize: () => Promise<void>;
@@ -25,6 +35,12 @@ interface FrameworkStoreState {
   selectEntity: (entity: FrameworkEntity | null) => void;
   invalidateCategory: (category: FrameworkCategory) => void;
   invalidateAll: () => void;
+
+  // Sync actions
+  fetchSyncStatus: () => Promise<void>;
+  checkUpdates: () => Promise<void>;
+  doSync: (version?: string) => Promise<void>;
+  toggleAutoSync: (enabled: boolean) => Promise<void>;
 }
 
 const CATEGORIES: FrameworkCategory[] = ['rules', 'skills', 'knowledge', 'workflows', 'templates', 'spec'];
@@ -44,10 +60,20 @@ export const useFrameworkStore = create<FrameworkStoreState>((set, get) => ({
   loading: emptyFlags(),
   stale: staleFlags(),
   selectedEntity: null,
+  syncInfo: null,
+  syncing: false,
+  checking: false,
 
   initialize: async () => {
     const path = await getFrameworkPath();
     set({ frameworkPath: path });
+    // Also load local sync status (no network)
+    try {
+      const info = await getSyncStatus();
+      set({ syncInfo: info });
+    } catch {
+      // ignore
+    }
   },
 
   fetchCategory: async (category) => {
@@ -94,6 +120,44 @@ export const useFrameworkStore = create<FrameworkStoreState>((set, get) => ({
     set((s) => ({ stale: { ...s.stale, [category]: true } })),
 
   invalidateAll: () => set({ stale: staleFlags() }),
+
+  // ── Sync actions ───────────────────────────────────────────────────────
+
+  fetchSyncStatus: async () => {
+    try {
+      const info = await getSyncStatus();
+      set({ syncInfo: info });
+    } catch {
+      // ignore
+    }
+  },
+
+  checkUpdates: async () => {
+    set({ checking: true });
+    try {
+      const info = await checkForUpdates();
+      set({ syncInfo: info, checking: false });
+    } catch {
+      set({ checking: false });
+    }
+  },
+
+  doSync: async (version) => {
+    set({ syncing: true });
+    try {
+      const info = await syncFramework(version);
+      set({ syncInfo: info, syncing: false, stale: staleFlags() });
+    } catch {
+      set({ syncing: false });
+    }
+  },
+
+  toggleAutoSync: async (enabled) => {
+    await setAutoSync(enabled);
+    set((s) => ({
+      syncInfo: s.syncInfo ? { ...s.syncInfo, auto_sync: enabled } : null,
+    }));
+  },
 }));
 
 export { CATEGORIES };

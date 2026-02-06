@@ -12,6 +12,8 @@ pub struct HubData {
     pub framework_version: Option<String>,
     #[serde(default = "default_true")]
     pub auto_sync: bool,
+    #[serde(default)]
+    pub last_sync_check: Option<String>,
 }
 
 fn default_true() -> bool {
@@ -25,6 +27,7 @@ impl Default for HubData {
             active_project: None,
             framework_version: None,
             auto_sync: true,
+            last_sync_check: None,
         }
     }
 }

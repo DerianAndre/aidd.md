@@ -68,6 +68,11 @@ pub fn run() {
             presentation::commands::framework_commands::read_framework_entity,
             presentation::commands::framework_commands::write_framework_entity,
             presentation::commands::framework_commands::delete_framework_entity,
+            // Framework sync
+            presentation::commands::framework_commands::get_sync_status,
+            presentation::commands::framework_commands::check_for_updates,
+            presentation::commands::framework_commands::sync_framework,
+            presentation::commands::framework_commands::set_auto_sync,
             // Integration management (DDD)
             presentation::commands::integration_commands::integrate_tool,
             presentation::commands::integration_commands::remove_integration,

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Tabs, Chip, Spinner } from '@heroui/react';
+import { Tabs, Chip, Spinner, Button, Switch, Label } from '@heroui/react';
 import {
   ShieldCheck,
   Zap,
@@ -8,6 +8,9 @@ import {
   GitBranch,
   FileText,
   FileCode,
+  RefreshCw,
+  Download,
+  Check,
 } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { useFrameworkStore, CATEGORIES } from '../stores/framework-store';
@@ -34,6 +37,14 @@ export function FrameworkPage() {
   const fetchCategory = useFrameworkStore((s) => s.fetchCategory);
   const initialize = useFrameworkStore((s) => s.initialize);
   const frameworkPath = useFrameworkStore((s) => s.frameworkPath);
+
+  // Sync state
+  const syncInfo = useFrameworkStore((s) => s.syncInfo);
+  const syncing = useFrameworkStore((s) => s.syncing);
+  const checking = useFrameworkStore((s) => s.checking);
+  const checkUpdates = useFrameworkStore((s) => s.checkUpdates);
+  const doSync = useFrameworkStore((s) => s.doSync);
+  const toggleAutoSync = useFrameworkStore((s) => s.toggleAutoSync);
 
   // Initialize framework path on mount
   useEffect(() => {
@@ -82,6 +93,76 @@ export function FrameworkPage() {
         title="Framework"
         description="Global AIDD framework content managed from ~/.aidd/framework/"
       />
+
+      {/* ── Sync status bar ──────────────────────────────────────────── */}
+      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-default-200 bg-default-50 px-4 py-3">
+        {/* Version badge */}
+        <Chip size="sm" variant="soft" color={syncInfo?.update_available ? 'warning' : 'success'}>
+          {syncInfo?.current_version ? `v${syncInfo.current_version}` : 'No version'}
+        </Chip>
+
+        {/* Update available indicator */}
+        {syncInfo?.update_available && syncInfo.latest_version && (
+          <span className="text-xs text-warning">
+            v{syncInfo.latest_version} available
+          </span>
+        )}
+
+        {/* Check for updates */}
+        <Button
+          size="sm"
+          variant="ghost"
+          isDisabled={checking || syncing}
+          onPress={() => void checkUpdates()}
+        >
+          {checking ? (
+            <Spinner size="sm" />
+          ) : (
+            <RefreshCw size={14} />
+          )}
+          Check for updates
+        </Button>
+
+        {/* Update now */}
+        {syncInfo?.update_available && (
+          <Button
+            size="sm"
+            variant="primary"
+            isDisabled={syncing}
+            onPress={() => void doSync()}
+          >
+            {syncing ? (
+              <Spinner size="sm" />
+            ) : (
+              <Download size={14} />
+            )}
+            {syncing ? 'Syncing…' : 'Update now'}
+          </Button>
+        )}
+
+        {/* Up to date indicator */}
+        {syncInfo && !syncInfo.update_available && syncInfo.current_version && (
+          <span className="flex items-center gap-1 text-xs text-success">
+            <Check size={12} />
+            Up to date
+          </span>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Auto-sync toggle */}
+        <Switch
+          size="sm"
+          isSelected={syncInfo?.auto_sync ?? false}
+          onChange={(val) => void toggleAutoSync(val)}
+        >
+          <Switch.Control>
+            <Switch.Thumb />
+          </Switch.Control>
+          <Label className="text-xs">Auto-sync</Label>
+        </Switch>
+      </div>
 
       <Tabs
         selectedKey={tab}

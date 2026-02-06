@@ -1,14 +1,16 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use crate::domain::model::{FrameworkEntity, FRAMEWORK_CATEGORIES};
+use crate::domain::model::{FrameworkEntity, SyncInfo, FRAMEWORK_CATEGORIES};
 use crate::domain::ports::inbound::FrameworkPort;
 use crate::domain::ports::outbound::{FileSystemPort, ProjectRepository};
+use crate::infrastructure::sync::GitHubAdapter;
 
 pub struct FrameworkService {
     framework_path: PathBuf,
     repository: Arc<dyn ProjectRepository>,
     fs: Arc<dyn FileSystemPort>,
+    github: GitHubAdapter,
 }
 
 impl FrameworkService {
@@ -29,6 +31,95 @@ impl FrameworkService {
             framework_path,
             repository,
             fs,
+            github: GitHubAdapter::new(),
+        })
+    }
+
+    // ── Sync methods (async, called from Tauri async commands) ──────────
+
+    /// Check for framework updates without downloading.
+    pub async fn check_for_updates(&self) -> Result<SyncInfo, String> {
+        let data = self.repository.load()?;
+
+        let (latest_version, changelog) = self.github.fetch_latest_release().await?;
+        let update_available = match &data.framework_version {
+            Some(current) => current != &latest_version,
+            None => true,
+        };
+
+        let now = format!("{:?}", std::time::SystemTime::now());
+
+        // Persist the check timestamp
+        let mut data = data;
+        data.last_sync_check = Some(now.clone());
+        self.repository.save(&data)?;
+
+        Ok(SyncInfo {
+            current_version: data.framework_version,
+            latest_version: Some(latest_version),
+            update_available,
+            auto_sync: data.auto_sync,
+            last_check: Some(now),
+            changelog,
+        })
+    }
+
+    /// Download and install a framework version (or latest if None).
+    pub async fn sync_framework(&self, version: Option<String>) -> Result<SyncInfo, String> {
+        // Determine target version
+        let (target_version, changelog) = match version {
+            Some(v) => (v, None),
+            None => {
+                let (v, c) = self.github.fetch_latest_release().await?;
+                (v, c)
+            }
+        };
+
+        // Download and extract
+        self.github
+            .download_and_extract(&target_version, &self.framework_path)
+            .await?;
+
+        // Ensure category dirs still exist after extraction
+        for cat in FRAMEWORK_CATEGORIES {
+            self.fs
+                .create_dir_all(&self.framework_path.join(cat).to_string_lossy())?;
+        }
+
+        // Update persisted version
+        let mut data = self.repository.load()?;
+        let now = format!("{:?}", std::time::SystemTime::now());
+        data.framework_version = Some(target_version.clone());
+        data.last_sync_check = Some(now.clone());
+        self.repository.save(&data)?;
+
+        Ok(SyncInfo {
+            current_version: Some(target_version),
+            latest_version: None, // already at latest
+            update_available: false,
+            auto_sync: data.auto_sync,
+            last_check: Some(now),
+            changelog,
+        })
+    }
+
+    /// Set auto-sync preference.
+    pub fn set_auto_sync(&self, enabled: bool) -> Result<(), String> {
+        let mut data = self.repository.load()?;
+        data.auto_sync = enabled;
+        self.repository.save(&data)
+    }
+
+    /// Get current sync status without hitting the network.
+    pub fn get_sync_status(&self) -> Result<SyncInfo, String> {
+        let data = self.repository.load()?;
+        Ok(SyncInfo {
+            current_version: data.framework_version,
+            latest_version: None,
+            update_available: false,
+            auto_sync: data.auto_sync,
+            last_check: data.last_sync_check,
+            changelog: None,
         })
     }
 }

@@ -124,6 +124,28 @@ export const writeFrameworkEntity = (category: FrameworkCategory, name: string, 
 export const deleteFrameworkEntity = (category: FrameworkCategory, name: string) =>
   invoke<void>('delete_framework_entity', { category, name });
 
+// Framework sync
+export interface SyncInfo {
+  current_version: string | null;
+  latest_version: string | null;
+  update_available: boolean;
+  auto_sync: boolean;
+  last_check: string | null;
+  changelog: string | null;
+}
+
+export const getSyncStatus = () =>
+  invoke<SyncInfo>('get_sync_status');
+
+export const checkForUpdates = () =>
+  invoke<SyncInfo>('check_for_updates');
+
+export const syncFramework = (version?: string) =>
+  invoke<SyncInfo>('sync_framework', { version: version ?? null });
+
+export const setAutoSync = (enabled: boolean) =>
+  invoke<void>('set_auto_sync', { enabled });
+
 // Integration management
 export type IntegrationTool = 'claude_code' | 'cursor' | 'vscode' | 'gemini';
 
