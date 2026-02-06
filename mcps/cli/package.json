@@ -1,0 +1,53 @@
+{
+  "name": "@aidd.md/cli",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "aidd.md — CLI — Framework management, integration, and MCP server control",
+  "homepage": "https://aidd.md",
+  "author": {
+    "name": "Derian Castillo",
+    "email": "hola@derianandre.com",
+    "url": "https://derianandre.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/derianandre/aidd.md.git"
+  },
+  "keywords": [
+    "aidd",
+    "cli",
+    "framework",
+    "mcp",
+    "ai-driven-development"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "aidd": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@aidd.md/mcp-shared": "workspace:*",
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

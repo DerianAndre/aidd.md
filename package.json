@@ -44,7 +44,10 @@
     "scan:secrets": "tsx skills/security-architect/scripts/scan-secrets.ts",
     "hub:dev": "pnpm --filter @aidd.md/hub tauri dev",
     "hub:build": "pnpm --filter @aidd.md/hub tauri build",
-    "hub:typecheck": "pnpm --filter @aidd.md/hub typecheck"
+    "hub:typecheck": "pnpm --filter @aidd.md/hub typecheck",
+    "cli": "node mcps/cli/dist/index.js",
+    "cli:build": "pnpm --filter @aidd.md/cli build",
+    "cli:typecheck": "pnpm --filter @aidd.md/cli typecheck"
   },
   "devDependencies": {
     "@types/node": "^25.0.8",
