@@ -169,9 +169,11 @@ function escapeRegex(str) {
 function normalizeModelId(id) {
   return id
     .toLowerCase()
-    .replace(/-\d{8}$/, '')          // Strip YYYYMMDD date suffixes
-    .replace(/-latest$/, '')          // Strip -latest suffix
-    .replace(/(\d)-(\d)/g, '$1.$2');  // Version hyphens → dots (4-6 → 4.6)
+    .replace(/-\d{8}$/, '')              // Strip YYYYMMDD date suffixes
+    .replace(/-latest$/, '')              // Strip -latest suffix
+    .replace(/-(preview|beta|exp)([-\d]*)$/i, '') // Strip -preview, -beta, -exp-NNNN suffixes
+    .replace(/(\d)-(\d)/g, '$1.$2')      // Version hyphens → dots (4-6 → 4.6)
+    .replace(/(\d+)\.0(?=[-.]|$)/g, '$1'); // Strip .0 minor versions (3.0 → 3, 2.0 → 2)
 }
 
 // ---------------------------------------------------------------------------
@@ -398,7 +400,10 @@ function compareModels(localModels, orIndex, llIndex, mdContent) {
   const results = [];
 
   for (const local of localModels) {
-    if (local.selfHosted) continue;
+    if (local.selfHosted) {
+      results.push({ local, found: { openrouter: false, litellm: false }, changes: [] });
+      continue;
+    }
 
     // Find model in both sources
     const orMatch = findInSource(local, orIndex, {
@@ -547,6 +552,8 @@ function compareModels(localModels, orIndex, llIndex, mdContent) {
       local,
       found,
       changes,
+      orMatch,
+      llMatch,
     });
   }
 
@@ -566,10 +573,10 @@ function discoverNewModels(localModels, orAllModels) {
       if (model.id.startsWith(config.prefix)) {
         const pricing = model.pricing || {};
         const inputCostPer1M = parseFloat(pricing.prompt || '0') * 1_000_000;
-          const outputCostPer1M = parseFloat(pricing.completion || '0') * 1_000_000;
-          const tierSuggestion = inferTierFromCost(inputCostPer1M, outputCostPer1M);
+        const outputCostPer1M = parseFloat(pricing.completion || '0') * 1_000_000;
+        const tierSuggestion = inferTierFromCost(inputCostPer1M, outputCostPer1M);
 
-          tracked.push({
+        tracked.push({
           openRouterId: model.id,
           providerDisplay: config.display,
           name: model.name || model.id,
@@ -685,18 +692,35 @@ function applyTypeScriptUpdates(results) {
 // Display report
 // ---------------------------------------------------------------------------
 
-function displayReport(results, newModels) {
-  const matchedCount = results.filter((r) => r.found.openrouter || r.found.litellm).length;
-  const bothCount = results.filter((r) => r.found.openrouter && r.found.litellm).length;
-  const orOnlyCount = results.filter((r) => r.found.openrouter && !r.found.litellm).length;
-  const llOnlyCount = results.filter((r) => !r.found.openrouter && r.found.litellm).length;
-  const neitherCount = results.filter((r) => !r.found.openrouter && !r.found.litellm).length;
+function displayReport(results, newModels, mdContent) {
+  const apiModels = results.filter((r) => !r.local.selfHosted);
+  const bothCount = apiModels.filter((r) => r.found.openrouter && r.found.litellm).length;
+  const orOnlyCount = apiModels.filter((r) => r.found.openrouter && !r.found.litellm).length;
+  const llOnlyCount = apiModels.filter((r) => !r.found.openrouter && r.found.litellm).length;
+  const neitherCount = apiModels.filter((r) => !r.found.openrouter && !r.found.litellm).length;
 
   console.log(`\n${BOLD}Model Coverage${RESET}\n`);
   console.log(`  ${GREEN}\u2713${RESET} Both sources:    ${bothCount} models`);
   if (orOnlyCount) console.log(`  ${YELLOW}!${RESET} OpenRouter only: ${orOnlyCount} models`);
   if (llOnlyCount) console.log(`  ${YELLOW}!${RESET} LiteLLM only:    ${llOnlyCount} models`);
   if (neitherCount) console.log(`  ${RED}\u2717${RESET} Neither source:  ${neitherCount} models`);
+
+  // Show models with no changes (matched but current values are correct)
+  const noChanges = results.filter(
+    (r) => (r.found.openrouter || r.found.litellm) && r.changes.length === 0 && !r.local.selfHosted,
+  );
+  const selfHosted = results.filter((r) => r.local.selfHosted);
+
+  if (noChanges.length > 0 || selfHosted.length > 0) {
+    console.log(`\n${BOLD}Verified — No Changes${RESET}\n`);
+    for (const r of noChanges) {
+      const src = r.found.openrouter && r.found.litellm ? 'both' : r.found.openrouter ? 'OR' : 'LL';
+      console.log(`  ${GREEN}\u2713${RESET} ${r.local.name} ${DIM}(T${r.local.tier}, ${src} confirm current values)${RESET}`);
+    }
+    for (const r of selfHosted) {
+      console.log(`  ${DIM}\u2713 ${r.local.name} (self-hosted, skipped)${RESET}`);
+    }
+  }
 
   // Consensus updates (HIGH confidence)
   const highChanges = results.filter((r) =>
@@ -785,48 +809,143 @@ function displayReport(results, newModels) {
     }
   }
 
-  // New models from tracked providers
+  // New models from tracked providers (8 latest across all providers)
   if (newModels.length > 0) {
-    console.log(`\n${BOLD}${CYAN}New Models from Tracked Providers${RESET} ${DIM}(latest first, with cost-based tier suggestions)${RESET}\n`);
-
-    const grouped = {};
-    for (const m of newModels) {
-      (grouped[m.providerDisplay] ??= []).push(m);
-    }
-
-    const sortedProviders = Object.entries(grouped).sort(
-      ([, a], [, b]) => b[0].created - a[0].created,
-    );
-
+    const SHOW_LATEST = 8;
     const tierColors = { 1: RED, 2: YELLOW, 3: GREEN };
     const tierLabels = { 1: 'HIGH', 2: 'STD', 3: 'LOW' };
 
-    for (const [provider, models] of sortedProviders) {
-      console.log(`  ${BOLD}${provider}${RESET}`);
-      const top = models.slice(0, 8);
-      for (const m of top) {
-        const cost =
-          m.inputCostPer1M > 0
-            ? `${formatCostValue(m.inputCostPer1M)}/${formatCostValue(m.outputCostPer1M)} per 1M`
-            : 'free';
-        const ctx =
-          m.contextLength > 0 ? `${Math.round(m.contextLength / 1000)}K ctx` : '? ctx';
-        const date =
-          m.created > 0 ? new Date(m.created * 1000).toISOString().split('T')[0] : '?';
-        const tierColor = tierColors[m.suggestedTier] || DIM;
-        const tierLabel = tierLabels[m.suggestedTier] || '?';
-        console.log(
-          `    ${tierColor}T${m.suggestedTier}${RESET} ${DIM}[${date}] ${m.openRouterId} \u2014 ${m.name} (${ctx}, ${cost}) ${tierColor}${tierLabel} ${m.suggestedCostTier}${RESET} ${DIM}(${m.tierSignal})${RESET}`,
-        );
-      }
-      if (models.length > 8) {
-        console.log(`    ${DIM}... and ${models.length - 8} more${RESET}`);
-      }
+    // Flat list sorted by created date descending (already sorted from discoverNewModels)
+    const top = newModels.slice(0, SHOW_LATEST);
+    const remaining = newModels.length - top.length;
+    const providerCount = new Set(newModels.map((m) => m.providerDisplay)).size;
+
+    console.log(`\n${BOLD}${CYAN}New Models from Tracked Providers${RESET} ${DIM}(${SHOW_LATEST} latest of ${newModels.length} from ${providerCount} providers)${RESET}\n`);
+
+    for (const m of top) {
+      const cost =
+        m.inputCostPer1M > 0
+          ? `${formatCostValue(m.inputCostPer1M)}/${formatCostValue(m.outputCostPer1M)} per 1M`
+          : 'free';
+      const ctx =
+        m.contextLength > 0 ? `${Math.round(m.contextLength / 1000)}K ctx` : '? ctx';
+      const date =
+        m.created > 0 ? new Date(m.created * 1000).toISOString().split('T')[0] : '?';
+      const tierColor = tierColors[m.suggestedTier] || DIM;
+      const tierLabel = tierLabels[m.suggestedTier] || '?';
+      console.log(
+        `  ${tierColor}T${m.suggestedTier}${RESET} ${DIM}[${date}]${RESET} ${m.providerDisplay} ${DIM}${m.openRouterId} \u2014 ${m.name} (${ctx}, ${cost}) ${tierColor}${tierLabel} ${m.suggestedCostTier}${RESET} ${DIM}(${m.tierSignal})${RESET}`,
+      );
+    }
+    if (remaining > 0) {
+      console.log(`\n  ${DIM}... and ${remaining} more across ${providerCount} providers${RESET}`);
     }
 
     console.log(`\n  ${DIM}Tier suggestions are cost-based (output $/1M): >$10 \u2192 T1, $2\u2013$10 \u2192 T2, <$2 \u2192 T3${RESET}`);
     console.log(`  ${DIM}Review and add to templates/model-matrix.md, then mirror to model-matrix.ts${RESET}`);
   }
+
+  // -------------------------------------------------------------------------
+  // Matrix Summary — shows all local models with current vs API values
+  // -------------------------------------------------------------------------
+  console.log(`\n${BOLD}Matrix Summary${RESET} ${DIM}(local matrix vs API data)${RESET}\n`);
+
+  // Table header
+  const colModel = 22;
+  const colTier = 4;
+  const colCtxLocal = 9;
+  const colCtxApi = 12;
+  const colCostLocal = 18;
+  const colCostApi = 18;
+  const colStatus = 8;
+
+  const pad = (s, n) => String(s).padEnd(n);
+  const rpad = (s, n) => String(s).padStart(n);
+
+  console.log(
+    `  ${DIM}${pad('Model', colModel)} ${pad('T', colTier)} ${rpad('Ctx(local)', colCtxLocal)} ${rpad('Ctx(API)', colCtxApi)} ${pad('Cost(local)', colCostLocal)} ${pad('Cost(API)', colCostApi)} ${pad('Status', colStatus)}${RESET}`,
+  );
+  console.log(
+    `  ${DIM}${'─'.repeat(colModel)} ${'─'.repeat(colTier)} ${'─'.repeat(colCtxLocal)} ${'─'.repeat(colCtxApi)} ${'─'.repeat(colCostLocal)} ${'─'.repeat(colCostApi)} ${'─'.repeat(colStatus)}${RESET}`,
+  );
+
+  for (const r of results) {
+    const name = r.local.name.length > colModel - 1
+      ? r.local.name.slice(0, colModel - 2) + '\u2026'
+      : r.local.name;
+
+    const tier = `T${r.local.tier}`;
+
+    // Local context
+    const localCtx = r.local.selfHosted ? 'n/a' : formatContextMd(r.local.contextWindow);
+
+    // API context (prefer OpenRouter, fallback LiteLLM)
+    let apiCtx = '?';
+    const orCtx = r.orMatch?.contextWindow || 0;
+    const llCtx = r.llMatch?.contextWindow || 0;
+    if (orCtx > 0 && llCtx > 0 && !valuesAgree(orCtx, llCtx, CONTEXT_TOLERANCE)) {
+      apiCtx = `${formatContextMd(Math.min(orCtx, llCtx))}\u2013${formatContextMd(Math.max(orCtx, llCtx))}`;
+    } else if (orCtx > 0) {
+      apiCtx = formatContextMd(orCtx);
+    } else if (llCtx > 0) {
+      apiCtx = formatContextMd(llCtx);
+    } else if (r.local.selfHosted) {
+      apiCtx = 'n/a';
+    }
+
+    // Local cost
+    let localCost = r.local.selfHosted ? 'self-hosted' : '?';
+    if (!r.local.selfHosted) {
+      // Re-read from markdown for display
+      const mdLine = mdContent.split('\n').find((l) => l.includes(`\`${r.local.id}\``));
+      if (mdLine) {
+        const cols = mdLine.split('|').map((c) => c.trim());
+        if (cols.length >= 6) localCost = cols[5];
+      }
+    }
+
+    // API cost (prefer OpenRouter)
+    let apiCost = '?';
+    const orIn = r.orMatch?.inputCostPer1M || 0;
+    const orOut = r.orMatch?.outputCostPer1M || 0;
+    const llIn = r.llMatch?.inputCostPer1M || 0;
+    const llOut = r.llMatch?.outputCostPer1M || 0;
+    if (orIn > 0 || orOut > 0) {
+      apiCost = formatPricingMd(orIn, orOut);
+    } else if (llIn > 0 || llOut > 0) {
+      apiCost = formatPricingMd(llIn, llOut);
+    } else if (r.local.selfHosted) {
+      apiCost = 'self-hosted';
+    }
+
+    // Status indicator
+    let status;
+    if (r.local.selfHosted) {
+      status = `${DIM}hosted${RESET}`;
+    } else if (r.changes.length === 0 && (r.found.openrouter || r.found.litellm)) {
+      status = `${GREEN}\u2713${RESET}`;
+    } else if (r.changes.some((c) => c.confidence === 'CONFLICT' || c.confidence === 'SUSPICIOUS')) {
+      status = `${YELLOW}drift${RESET}`;
+    } else if (!r.found.openrouter && !r.found.litellm) {
+      status = `${RED}?${RESET}`;
+    } else {
+      status = `${YELLOW}~${RESET}`;
+    }
+
+    // Highlight context differences
+    let ctxColor = '';
+    if (!r.local.selfHosted && apiCtx !== '?' && apiCtx !== localCtx && !apiCtx.includes('\u2013')) {
+      ctxColor = YELLOW;
+    } else if (!r.local.selfHosted && apiCtx.includes('\u2013')) {
+      ctxColor = RED;
+    }
+
+    console.log(
+      `  ${pad(name, colModel)} ${pad(tier, colTier)} ${rpad(localCtx, colCtxLocal)} ${ctxColor ? ctxColor : ''}${rpad(apiCtx, colCtxApi)}${ctxColor ? RESET : ''} ${pad(localCost, colCostLocal)} ${pad(apiCost, colCostApi)} ${status}`,
+    );
+  }
+
+  console.log(`\n  ${DIM}Legend: ${GREEN}\u2713${RESET}${DIM}=current  ${YELLOW}drift${RESET}${DIM}=values differ  ${RED}?${RESET}${DIM}=not found  ${DIM}hosted${RESET}${DIM}=self-hosted${RESET}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -894,7 +1013,7 @@ try {
   // Discover new models (OpenRouter only — has created dates)
   const newModels = orOk ? discoverNewModels(localModels, orResult.value.allModels) : [];
 
-  displayReport(results, newModels);
+  displayReport(results, newModels, mdContent);
 
   // Summary
   const totalChanges = results.reduce(
