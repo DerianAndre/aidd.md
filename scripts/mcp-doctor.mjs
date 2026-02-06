@@ -8,6 +8,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { createInterface } from 'node:readline';
+import { homedir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
@@ -105,6 +106,117 @@ function parseFrontmatter(content) {
     }
   }
   return fm;
+}
+
+/**
+ * Get command lines of all running processes (for MCP server detection).
+ * Returns array of command-line strings, or null if detection unavailable.
+ */
+function getRunningProcessCommandLines() {
+  try {
+    if (process.platform === 'win32') {
+      // PowerShell — wmic is deprecated on modern Windows
+      const ps = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+      const out = execFileSync(ps, ['-NoProfile', '-Command',
+        'Get-CimInstance Win32_Process | Select-Object -ExpandProperty CommandLine',
+      ], { encoding: 'utf-8', timeout: 8000, stdio: ['pipe', 'pipe', 'pipe'] });
+      return out.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    } else {
+      const out = execFileSync('ps', ['-eo', 'args'], {
+        encoding: 'utf-8', timeout: 5000,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      return out.split('\n').map((l) => l.trim()).filter(Boolean);
+    }
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolve the entry-point file for an MCP server config.
+ * Returns absolute path or null if unresolvable.
+ */
+function resolveServerEntryPoint(config) {
+  const cmd = config.command ?? '';
+  const args = config.args ?? [];
+  const serverCwd = (config.cwd ?? '').replace(/\$\{workspaceFolder\}/g, root) || root;
+
+  if (/\bnode(\.exe)?$/.test(cmd)) {
+    const script = args.find((a) => /\.(m?js|cjs|ts)$/.test(a));
+    if (script) {
+      // Can't resolve paths with unresolvable template variables
+      if (script.includes('${') && !script.includes('${workspaceFolder}')) return null;
+      return resolve(serverCwd, script.replace(/\$\{workspaceFolder\}/g, root));
+    }
+  }
+  // Commands with template variables can't be resolved
+  if (cmd.includes('${')) return null;
+  return null;
+}
+
+/**
+ * Determine runtime status of an MCP server.
+ * Returns { status, detail? }
+ */
+function getMcpServerStatus(config, processLines) {
+  if (config.disabled === true) return { status: 'disabled' };
+
+  // HTTP/SSE transport servers (url-based) — always considered available
+  if (config.url) {
+    return { status: 'running' };
+  }
+
+  const cmd = config.command ?? '';
+  const args = config.args ?? [];
+  const entryPoint = resolveServerEntryPoint(config);
+
+  // For "node" command: check if entry point exists
+  if (entryPoint) {
+    if (!existsSync(entryPoint)) {
+      return { status: 'error', detail: 'entry point not found' };
+    }
+    if (processLines) {
+      const normalized = entryPoint.replace(/\\/g, '/').toLowerCase();
+      const isRunning = processLines.some((line) =>
+        line.replace(/\\/g, '/').toLowerCase().includes(normalized)
+      );
+      return { status: isRunning ? 'running' : 'not running' };
+    }
+    return { status: 'unknown' };
+  }
+
+  // For "npx" command: match by package name in process list
+  if (cmd === 'npx') {
+    const pkg = args.find((a) => !a.startsWith('-'));
+    if (pkg && processLines) {
+      const isRunning = processLines.some((line) => line.includes(pkg));
+      return { status: isRunning ? 'running' : 'not running' };
+    }
+    return processLines ? { status: 'not running' } : { status: 'unknown' };
+  }
+
+  // Plugin servers using ${CLAUDE_PLUGIN_ROOT} — can't resolve path
+  if (cmd.includes('CLAUDE_PLUGIN_ROOT')) {
+    if (processLines) {
+      const isRunning = processLines.some((line) =>
+        args.some((a) => !a.includes('$') && line.includes(a))
+      );
+      return { status: isRunning ? 'running' : 'not running' };
+    }
+    return { status: 'unknown' };
+  }
+
+  // For other commands: best-effort match by args
+  if (processLines && args.length > 0) {
+    const isRunning = processLines.some((line) => {
+      const lower = line.toLowerCase();
+      return args.some((a) => lower.includes(a.toLowerCase()));
+    });
+    return { status: isRunning ? 'running' : 'not running' };
+  }
+
+  return { status: 'unknown' };
 }
 
 console.log(`\n${BOLD}${PREFIX} Doctor${RESET}\n`);
@@ -263,6 +375,13 @@ if (existsSync(templatesDir)) {
   warn('templates/ missing');
 }
 
+const claudeMdPath = resolve(root, 'CLAUDE.md');
+if (existsSync(claudeMdPath)) {
+  pass('CLAUDE.md found');
+} else {
+  warn('CLAUDE.md missing (project instructions for Claude Code)');
+}
+
 // =========================================================================
 // 4. Skills Validation
 // =========================================================================
@@ -390,39 +509,7 @@ if (existsSync(modelMatrixMd) && existsSync(modelMatrixTs)) {
 }
 
 // =========================================================================
-// 7. Claude Code Integration
-// =========================================================================
-console.log(`\n${DIM}Claude Code Integration${RESET}`);
-
-const claudeSettingsPath = resolve(root, '.claude', 'settings.json');
-if (existsSync(claudeSettingsPath)) {
-  try {
-    const settings = JSON.parse(readFileSync(claudeSettingsPath, 'utf-8'));
-    const mcpServers = settings.mcpServers ?? settings['mcp-servers'] ?? {};
-    const hasAidd = Object.keys(mcpServers).some((k) =>
-      k.includes('aidd') || (mcpServers[k]?.command && JSON.stringify(mcpServers[k]).includes('mcp-aidd'))
-    );
-    if (hasAidd) {
-      pass('MCP server configured in .claude/settings.json');
-    } else {
-      warn('No AIDD MCP server found in .claude/settings.json', 'Add mcp-aidd to mcpServers');
-    }
-  } catch {
-    warn('.claude/settings.json exists but could not parse');
-  }
-} else {
-  info('.claude/settings.json not found (Claude Code project config)');
-}
-
-const claudeMdPath = resolve(root, 'CLAUDE.md');
-if (existsSync(claudeMdPath)) {
-  pass('CLAUDE.md found');
-} else {
-  warn('CLAUDE.md missing (project instructions for Claude Code)');
-}
-
-// =========================================================================
-// 8. Project State (.aidd/)
+// 7. Project State (.aidd/)
 // =========================================================================
 console.log(`\n${DIM}Project State (.aidd/)${RESET}`);
 
@@ -520,6 +607,153 @@ if (existsSync(aiddDir)) {
 } else {
   warn('.aidd/ directory not found');
   needsAiddSetup = true;
+}
+
+// =========================================================================
+// 8. Integrations
+// =========================================================================
+console.log(`\n${DIM}Integrations${RESET}`);
+
+const home = homedir();
+
+// --- Discover MCP servers from all config sources ---
+/** @type {Map<string, { config: any, label: string }>} */
+const discoveredServers = new Map();
+
+/** Read mcpServers from a JSON config file */
+function collectServers(filePath, label) {
+  if (!existsSync(filePath)) return;
+  try {
+    const data = JSON.parse(readFileSync(filePath, 'utf-8'));
+    const servers = data.mcpServers ?? {};
+    for (const [name, config] of Object.entries(servers)) {
+      if (!discoveredServers.has(name)) {
+        discoveredServers.set(name, { config, label });
+      }
+    }
+  } catch { /* skip unreadable */ }
+}
+
+// 1. Standalone MCP configs (Claude Code, Cursor, VS Code)
+const mcpConfigLocations = [
+  { path: resolve(root, '.claude', 'mcp.json'), label: 'project' },
+  { path: resolve(root, '.mcp.json'), label: 'project' },
+  { path: resolve(home, '.claude', 'mcp.json'), label: 'claude' },
+  { path: resolve(home, '.mcp.json'), label: 'claude' },
+  { path: resolve(root, '.cursor', 'mcp.json'), label: 'cursor' },
+  { path: resolve(home, '.cursor', 'mcp.json'), label: 'cursor' },
+  { path: resolve(root, '.vscode', 'mcp.json'), label: 'vscode' },
+];
+
+for (const loc of mcpConfigLocations) {
+  collectServers(loc.path, loc.label);
+}
+
+// 2. Enabled Claude Code plugins that expose MCP servers
+const userSettingsPath = resolve(home, '.claude', 'settings.json');
+let enabledPlugins = {};
+try {
+  enabledPlugins = JSON.parse(readFileSync(userSettingsPath, 'utf-8')).enabledPlugins ?? {};
+} catch { /* no settings */ }
+
+// Scan plugin cache for enabled plugins with MCP servers
+const pluginCacheDir = resolve(home, '.claude', 'plugins', 'cache');
+if (existsSync(pluginCacheDir)) {
+  try {
+    for (const marketplace of readdirSync(pluginCacheDir)) {
+      const mktDir = resolve(pluginCacheDir, marketplace);
+      if (!statSync(mktDir).isDirectory()) continue;
+
+      for (const plugin of readdirSync(mktDir)) {
+        const pluginKey = `${plugin}@${marketplace}`;
+        if (enabledPlugins[pluginKey] !== true) continue;
+
+        const pluginDir = resolve(mktDir, plugin);
+        if (!statSync(pluginDir).isDirectory()) continue;
+
+        // Find latest version directory
+        const versions = readdirSync(pluginDir).filter((v) => {
+          const vDir = resolve(pluginDir, v);
+          return statSync(vDir).isDirectory();
+        });
+        if (versions.length === 0) continue;
+        const latestDir = resolve(pluginDir, versions[versions.length - 1]);
+
+        // Check .mcp.json at version root
+        collectServers(resolve(latestDir, '.mcp.json'), 'plugin');
+
+        // Check .claude-plugin/plugin.json for mcpServers
+        const pluginJson = resolve(latestDir, '.claude-plugin', 'plugin.json');
+        if (existsSync(pluginJson)) {
+          collectServers(pluginJson, 'plugin');
+        }
+      }
+    }
+  } catch { /* skip unreadable plugin dirs */ }
+}
+
+// Also scan external_plugins — only collect if enabled via enabledMcpjsonServers
+let enabledMcpjsonServers = [];
+try {
+  const localSettingsPath = resolve(home, '.claude', 'settings.local.json');
+  const local = JSON.parse(readFileSync(localSettingsPath, 'utf-8'));
+  enabledMcpjsonServers = local.enabledMcpjsonServers ?? [];
+} catch { /* no local settings */ }
+
+const pluginMktsDir = resolve(home, '.claude', 'plugins', 'marketplaces');
+if (existsSync(pluginMktsDir)) {
+  try {
+    for (const marketplace of readdirSync(pluginMktsDir)) {
+      const mktDir = resolve(pluginMktsDir, marketplace);
+      if (!statSync(mktDir).isDirectory()) continue;
+
+      // Check external_plugins — only if the server name is in enabledMcpjsonServers
+      const extDir = resolve(mktDir, 'external_plugins');
+      if (existsSync(extDir) && statSync(extDir).isDirectory()) {
+        for (const plugin of readdirSync(extDir)) {
+          if (!enabledMcpjsonServers.includes(plugin)) continue;
+          const mcpFile = resolve(extDir, plugin, '.mcp.json');
+          collectServers(mcpFile, 'plugin');
+        }
+      }
+    }
+  } catch { /* skip */ }
+}
+
+// --- Filter: only show servers that are enabled (not disabled, not empty) ---
+// Remove disabled servers from display (user requested: don't show disabled)
+for (const [name, { config }] of discoveredServers) {
+  if (config.disabled === true) {
+    discoveredServers.delete(name);
+  }
+}
+
+if (discoveredServers.size === 0) {
+  info('No MCP servers configured');
+} else {
+  // Get running processes once for all server checks
+  const processLines = getRunningProcessCommandLines();
+
+  for (const [name, { config, label }] of discoveredServers) {
+    const { status, detail } = getMcpServerStatus(config, processLines);
+    const suffix = detail ? ` (${detail})` : '';
+    const source = `${DIM}[${label}]${RESET}`;
+
+    switch (status) {
+      case 'running':
+        pass(`${name} ${source} — running`);
+        break;
+      case 'not running':
+        info(`${name} ${source} — not running`);
+        break;
+      case 'error':
+        fail(`${name} ${source} — error${suffix}`);
+        break;
+      default:
+        info(`${name} ${source} — unknown`);
+        break;
+    }
+  }
 }
 
 // =========================================================================

@@ -846,106 +846,121 @@ function displayReport(results, newModels, mdContent) {
   }
 
   // -------------------------------------------------------------------------
-  // Matrix Summary — shows all local models with current vs API values
+  // Matrix Summary — provider-grouped, all three sources side by side
   // -------------------------------------------------------------------------
-  console.log(`\n${BOLD}Matrix Summary${RESET} ${DIM}(local matrix vs API data)${RESET}\n`);
 
-  // Table header
-  const colModel = 22;
-  const colTier = 4;
-  const colCtxLocal = 9;
-  const colCtxApi = 12;
-  const colCostLocal = 18;
-  const colCostApi = 18;
-  const colStatus = 8;
+  // ANSI-aware padding: strip escape codes for length, pad with spaces
+  const stripAnsi = (s) => String(s).replace(/\x1b\[[0-9;]*m/g, '');
+  const pad = (s, n) => {
+    const str = String(s);
+    const vis = stripAnsi(str).length;
+    return vis >= n ? str : str + ' '.repeat(n - vis);
+  };
+  const rpad = (s, n) => {
+    const str = String(s);
+    const vis = stripAnsi(str).length;
+    return vis >= n ? str : ' '.repeat(n - vis) + str;
+  };
 
-  const pad = (s, n) => String(s).padEnd(n);
-  const rpad = (s, n) => String(s).padStart(n);
+  // Canonical provider display order
+  const PROVIDER_ORDER = ['anthropic', 'openai', 'google', 'xai', 'deepseek', 'meta', 'mistral'];
+  const PROVIDER_LABELS = {
+    anthropic: 'Anthropic',
+    openai: 'OpenAI',
+    google: 'Google',
+    xai: 'xAI',
+    deepseek: 'DeepSeek',
+    meta: 'Meta',
+    mistral: 'Mistral',
+  };
+  const tierColors = { 1: RED, 2: YELLOW, 3: GREEN };
+  const tierLabels = { 1: 'HIGH', 2: 'STD', 3: 'LOW' };
 
-  console.log(
-    `  ${DIM}${pad('Model', colModel)} ${pad('T', colTier)} ${rpad('Ctx(local)', colCtxLocal)} ${rpad('Ctx(API)', colCtxApi)} ${pad('Cost(local)', colCostLocal)} ${pad('Cost(API)', colCostApi)} ${pad('Status', colStatus)}${RESET}`,
-  );
-  console.log(
-    `  ${DIM}${'─'.repeat(colModel)} ${'─'.repeat(colTier)} ${'─'.repeat(colCtxLocal)} ${'─'.repeat(colCtxApi)} ${'─'.repeat(colCostLocal)} ${'─'.repeat(colCostApi)} ${'─'.repeat(colStatus)}${RESET}`,
-  );
-
+  // Group results by provider, sorted by tier
+  const byProvider = new Map();
   for (const r of results) {
-    const name = r.local.name.length > colModel - 1
-      ? r.local.name.slice(0, colModel - 2) + '\u2026'
-      : r.local.name;
+    const prov = r.local.provider;
+    if (!byProvider.has(prov)) byProvider.set(prov, []);
+    byProvider.get(prov).push(r);
+  }
+  for (const [, models] of byProvider) {
+    models.sort((a, b) => a.local.tier - b.local.tier);
+  }
+  const providers = PROVIDER_ORDER.filter((p) => byProvider.has(p));
 
-    const tier = `T${r.local.tier}`;
+  console.log(`\n${BOLD}Matrix Summary${RESET} ${DIM}(SSOT / OpenRouter / LiteLLM)${RESET}\n`);
 
-    // Local context
-    const localCtx = r.local.selfHosted ? 'n/a' : formatContextMd(r.local.contextWindow);
+  const colName = 24;
+  const colCtx = 6;
+  const colCost = 15;
 
-    // API context (prefer OpenRouter, fallback LiteLLM)
-    let apiCtx = '?';
-    const orCtx = r.orMatch?.contextWindow || 0;
-    const llCtx = r.llMatch?.contextWindow || 0;
-    if (orCtx > 0 && llCtx > 0 && !valuesAgree(orCtx, llCtx, CONTEXT_TOLERANCE)) {
-      apiCtx = `${formatContextMd(Math.min(orCtx, llCtx))}\u2013${formatContextMd(Math.max(orCtx, llCtx))}`;
-    } else if (orCtx > 0) {
-      apiCtx = formatContextMd(orCtx);
-    } else if (llCtx > 0) {
-      apiCtx = formatContextMd(llCtx);
-    } else if (r.local.selfHosted) {
-      apiCtx = 'n/a';
-    }
+  // Column header
+  console.log(
+    `  ${DIM}${pad('Model', colName + 10)}  ${rpad('Ctx', colCtx)} ${rpad('OR', colCtx)} ${rpad('LL', colCtx)}  ${pad('Cost(SSOT)', colCost)} ${pad('Cost(OR)', colCost)} ${pad('Cost(LL)', colCost)}${RESET}`,
+  );
+  console.log(
+    `  ${DIM}${'─'.repeat(colName + 10)}  ${'─'.repeat(colCtx)} ${'─'.repeat(colCtx)} ${'─'.repeat(colCtx)}  ${'─'.repeat(colCost)} ${'─'.repeat(colCost)} ${'─'.repeat(colCost)}${RESET}`,
+  );
 
-    // Local cost
-    let localCost = r.local.selfHosted ? 'self-hosted' : '?';
-    if (!r.local.selfHosted) {
-      // Re-read from markdown for display
-      const mdLine = mdContent.split('\n').find((l) => l.includes(`\`${r.local.id}\``));
-      if (mdLine) {
-        const cols = mdLine.split('|').map((c) => c.trim());
-        if (cols.length >= 6) localCost = cols[5];
+  for (const prov of providers) {
+    const models = byProvider.get(prov);
+    const label = PROVIDER_LABELS[prov] || prov;
+    console.log(`\n  ${BOLD}${label}${RESET}`);
+
+    for (const r of models) {
+      const tc = tierColors[r.local.tier] || DIM;
+      const tl = tierLabels[r.local.tier] || '?';
+
+      // Context: SSOT / OR / LL
+      const localCtx = r.local.selfHosted ? 'n/a' : formatContextMd(r.local.contextWindow);
+      const orCtx = r.local.selfHosted ? 'n/a' : (r.orMatch?.contextWindow > 0 ? formatContextMd(r.orMatch.contextWindow) : '?');
+      const llCtx = r.local.selfHosted ? 'n/a' : (r.llMatch?.contextWindow > 0 ? formatContextMd(r.llMatch.contextWindow) : '?');
+
+      // Color context values that differ from SSOT
+      const orCtxStr = (!r.local.selfHosted && orCtx !== '?' && orCtx !== localCtx) ? `${YELLOW}${orCtx}${RESET}` : orCtx;
+      const llCtxStr = (!r.local.selfHosted && llCtx !== '?' && llCtx !== localCtx) ? `${YELLOW}${llCtx}${RESET}` : llCtx;
+
+      // Cost: SSOT / OR / LL
+      let localCost = r.local.selfHosted ? 'self-hosted' : '?';
+      if (!r.local.selfHosted) {
+        const mdLine = mdContent.split('\n').find((l) => l.includes(`\`${r.local.id}\``));
+        if (mdLine) {
+          const cols = mdLine.split('|').map((c) => c.trim());
+          if (cols.length >= 6) localCost = cols[5];
+        }
       }
-    }
 
-    // API cost (prefer OpenRouter)
-    let apiCost = '?';
-    const orIn = r.orMatch?.inputCostPer1M || 0;
-    const orOut = r.orMatch?.outputCostPer1M || 0;
-    const llIn = r.llMatch?.inputCostPer1M || 0;
-    const llOut = r.llMatch?.outputCostPer1M || 0;
-    if (orIn > 0 || orOut > 0) {
-      apiCost = formatPricingMd(orIn, orOut);
-    } else if (llIn > 0 || llOut > 0) {
-      apiCost = formatPricingMd(llIn, llOut);
-    } else if (r.local.selfHosted) {
-      apiCost = 'self-hosted';
-    }
+      let orCost = r.local.selfHosted ? 'self-hosted' : '?';
+      const orIn = r.orMatch?.inputCostPer1M || 0;
+      const orOut = r.orMatch?.outputCostPer1M || 0;
+      if (!r.local.selfHosted && (orIn > 0 || orOut > 0)) orCost = formatPricingMd(orIn, orOut);
 
-    // Status indicator
-    let status;
-    if (r.local.selfHosted) {
-      status = `${DIM}hosted${RESET}`;
-    } else if (r.changes.length === 0 && (r.found.openrouter || r.found.litellm)) {
-      status = `${GREEN}\u2713${RESET}`;
-    } else if (r.changes.some((c) => c.confidence === 'CONFLICT' || c.confidence === 'SUSPICIOUS')) {
-      status = `${YELLOW}drift${RESET}`;
-    } else if (!r.found.openrouter && !r.found.litellm) {
-      status = `${RED}?${RESET}`;
-    } else {
-      status = `${YELLOW}~${RESET}`;
-    }
+      let llCost = r.local.selfHosted ? 'self-hosted' : '?';
+      const llIn = r.llMatch?.inputCostPer1M || 0;
+      const llOut = r.llMatch?.outputCostPer1M || 0;
+      if (!r.local.selfHosted && (llIn > 0 || llOut > 0)) llCost = formatPricingMd(llIn, llOut);
 
-    // Highlight context differences
-    let ctxColor = '';
-    if (!r.local.selfHosted && apiCtx !== '?' && apiCtx !== localCtx && !apiCtx.includes('\u2013')) {
-      ctxColor = YELLOW;
-    } else if (!r.local.selfHosted && apiCtx.includes('\u2013')) {
-      ctxColor = RED;
-    }
+      // Status indicator
+      let status;
+      if (r.local.selfHosted) {
+        status = `${DIM}hosted${RESET}`;
+      } else if (r.changes.length === 0 && (r.found.openrouter || r.found.litellm)) {
+        status = `${GREEN}\u2713${RESET}`;
+      } else if (r.changes.some((c) => c.confidence === 'CONFLICT' || c.confidence === 'SUSPICIOUS')) {
+        status = `${YELLOW}drift${RESET}`;
+      } else if (!r.found.openrouter && !r.found.litellm) {
+        status = `${RED}?${RESET}`;
+      } else {
+        status = `${YELLOW}~${RESET}`;
+      }
 
-    console.log(
-      `  ${pad(name, colModel)} ${pad(tier, colTier)} ${rpad(localCtx, colCtxLocal)} ${ctxColor ? ctxColor : ''}${rpad(apiCtx, colCtxApi)}${ctxColor ? RESET : ''} ${pad(localCost, colCostLocal)} ${pad(apiCost, colCostApi)} ${status}`,
-    );
+      console.log(
+        `    ${tc}T${r.local.tier}${RESET} ${DIM}${tl}${RESET}  ${pad(r.local.name, colName)} ${rpad(localCtx, colCtx)} ${rpad(orCtxStr, colCtx)} ${rpad(llCtxStr, colCtx)}  ${pad(localCost, colCost)} ${pad(orCost, colCost)} ${pad(llCost, colCost)} ${status}`,
+      );
+    }
   }
 
-  console.log(`\n  ${DIM}Legend: ${GREEN}\u2713${RESET}${DIM}=current  ${YELLOW}drift${RESET}${DIM}=values differ  ${RED}?${RESET}${DIM}=not found  ${DIM}hosted${RESET}${DIM}=self-hosted${RESET}`);
+  console.log(`\n  ${DIM}Legend: ${GREEN}\u2713${RESET}${DIM}=current  ${YELLOW}drift${RESET}${DIM}=values differ  ${RED}?${RESET}${DIM}=not found  ${DIM}hosted${RESET}${DIM}=self-hosted  ${YELLOW}yellow${RESET}${DIM}=ctx differs from SSOT${RESET}`);
 }
 
 // ---------------------------------------------------------------------------
