@@ -1,10 +1,44 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../../components/layout/page-header';
+import { EntityList, EntityCard } from '../../../components/entity';
+import { useSkillsStore } from '../stores/skills-store';
+import { useProjectStore } from '../../../stores/project-store';
 
 export function SkillsListPage() {
+  const navigate = useNavigate();
+  const activeProject = useProjectStore((s) => s.activeProject);
+  const { items, loading, stale, fetchAll } = useSkillsStore();
+
+  useEffect(() => {
+    if (activeProject?.path && stale) {
+      void fetchAll(activeProject.path);
+    }
+  }, [activeProject?.path, stale, fetchAll]);
+
   return (
     <div>
       <PageHeader title="Skills" description="Specialized agent capabilities" />
-      <p className="text-default-500">Coming soon...</p>
+      <EntityList
+        items={items}
+        loading={loading}
+        getKey={(s) => s.id}
+        getSearchText={(s) => `${s.name} ${s.description} ${s.model}`}
+        searchPlaceholder="Search skills..."
+        emptyMessage="No skills found in this project."
+        renderItem={(skill) => (
+          <EntityCard
+            title={skill.name}
+            description={skill.description}
+            chips={skill.model ? [{ label: skill.model.replace('claude-', '').replace(/-\d{8}$/, ''), color: 'accent' as const }] : undefined}
+            meta={skill.version ? `v${skill.version}` : undefined}
+            onPress={() => {
+              const slug = skill.dirPath.split('/').pop() ?? '';
+              navigate(`/skills/${encodeURIComponent(slug)}`);
+            }}
+          />
+        )}
+      />
     </div>
   );
 }

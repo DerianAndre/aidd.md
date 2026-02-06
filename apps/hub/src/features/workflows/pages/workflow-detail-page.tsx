@@ -1,0 +1,74 @@
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from '@heroui/react';
+import { ArrowLeft } from 'lucide-react';
+import { PageHeader } from '../../../components/layout/page-header';
+import { BlockEditor } from '../../../components/editor';
+import { readFile, fileExists } from '../../../lib/tauri';
+import { useProjectStore } from '../../../stores/project-store';
+import { extractTitle, extractDescription } from '../../../lib/markdown';
+
+export function WorkflowDetailPage() {
+  const { name } = useParams<{ name: string }>();
+  const navigate = useNavigate();
+  const activeProject = useProjectStore((s) => s.activeProject);
+  const [content, setContent] = useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!activeProject?.path || !name) return;
+    void (async () => {
+      setLoading(true);
+      const decodedName = decodeURIComponent(name);
+      // Try top-level first, then orchestrators
+      const paths = [
+        `${activeProject.path}/workflows/${decodedName}.md`,
+        `${activeProject.path}/workflows/orchestrators/${decodedName}.md`,
+      ];
+
+      for (const path of paths) {
+        try {
+          const exists = await fileExists(path);
+          if (exists) {
+            const raw = await readFile(path);
+            setContent(raw);
+            setTitle(extractTitle(raw) ?? decodedName);
+            setDescription(extractDescription(raw) ?? '');
+            break;
+          }
+        } catch {
+          // continue to next path
+        }
+      }
+      setLoading(false);
+    })();
+  }, [activeProject?.path, name]);
+
+  if (loading) {
+    return <div className="p-4 text-default-400">Loading...</div>;
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title={title || decodeURIComponent(name ?? '')}
+        description={description}
+        actions={
+          <Button variant="ghost" size="sm" onPress={() => navigate('/workflows')}>
+            <ArrowLeft size={16} /> Back
+          </Button>
+        }
+      />
+
+      {content ? (
+        <div className="rounded-xl border border-default-200">
+          <BlockEditor initialMarkdown={content} editable={false} />
+        </div>
+      ) : (
+        <p className="py-8 text-center text-sm text-default-400">Workflow not found.</p>
+      )}
+    </div>
+  );
+}

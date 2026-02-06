@@ -33,3 +33,16 @@ export function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
   return str.slice(0, maxLength - 1) + '\u2026';
 }
+
+/** Normalize Windows backslashes to forward slashes. */
+export function normalizePath(path: string): string {
+  return path.replace(/\\/g, '/');
+}
+
+/** Extract filename without extension from a path. */
+export function filenameFromPath(path: string): string {
+  const normalized = normalizePath(path);
+  const name = normalized.split('/').pop() ?? '';
+  const dotIdx = name.lastIndexOf('.');
+  return dotIdx > 0 ? name.slice(0, dotIdx) : name;
+}

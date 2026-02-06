@@ -30,24 +30,52 @@ export const router = createBrowserRouter([
         element: lazyPage(() => import('./features/agents/pages/agents-list-page'), 'AgentsListPage'),
       },
       {
+        path: 'agents/:name',
+        element: lazyPage(() => import('./features/agents/pages/agent-detail-page'), 'AgentDetailPage'),
+      },
+      {
         path: 'rules',
         element: lazyPage(() => import('./features/rules/pages/rules-list-page'), 'RulesListPage'),
+      },
+      {
+        path: 'rules/:name',
+        element: lazyPage(() => import('./features/rules/pages/rule-editor-page'), 'RuleEditorPage'),
       },
       {
         path: 'skills',
         element: lazyPage(() => import('./features/skills/pages/skills-list-page'), 'SkillsListPage'),
       },
       {
+        path: 'skills/:name',
+        element: lazyPage(() => import('./features/skills/pages/skill-detail-page'), 'SkillDetailPage'),
+      },
+      {
+        path: 'skills/:name/edit',
+        element: lazyPage(() => import('./features/skills/pages/skill-editor-page'), 'SkillEditorPage'),
+      },
+      {
         path: 'workflows',
         element: lazyPage(() => import('./features/workflows/pages/workflows-list-page'), 'WorkflowsListPage'),
+      },
+      {
+        path: 'workflows/:name',
+        element: lazyPage(() => import('./features/workflows/pages/workflow-detail-page'), 'WorkflowDetailPage'),
       },
       {
         path: 'templates',
         element: lazyPage(() => import('./features/templates/pages/templates-list-page'), 'TemplatesListPage'),
       },
       {
+        path: 'templates/:name',
+        element: lazyPage(() => import('./features/templates/pages/template-editor-page'), 'TemplateEditorPage'),
+      },
+      {
         path: 'knowledge',
         element: lazyPage(() => import('./features/knowledge/pages/knowledge-page'), 'KnowledgePage'),
+      },
+      {
+        path: 'knowledge/edit/*',
+        element: lazyPage(() => import('./features/knowledge/pages/knowledge-editor-page'), 'KnowledgeEditorPage'),
       },
       {
         path: 'sessions',
