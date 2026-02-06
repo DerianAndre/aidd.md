@@ -39,8 +39,8 @@ export const useMcpServersStore = create<McpServersStoreState>((set, get) => ({
       const results: McpPackageStatus[] = [];
 
       for (const pkg of MCP_PACKAGES) {
-        const pkgJsonPath = `${root}/mcps/${pkg.dir}/package.json`;
-        const distPath = `${root}/mcps/${pkg.dir}/dist/index.js`;
+        const pkgJsonPath = `${root}/${pkg.location}/${pkg.dir}/package.json`;
+        const distPath = `${root}/${pkg.location}/${pkg.dir}/dist/index.js`;
 
         let version = '0.0.0';
         try {

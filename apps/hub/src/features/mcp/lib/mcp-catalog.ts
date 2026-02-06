@@ -22,8 +22,12 @@ export interface McpPromptInfo {
 export interface McpPackageInfo {
   name: string;
   dir: string;
+  /** Parent directory: 'mcps' for MCP servers, 'packages' for support libs */
+  location: 'mcps' | 'packages';
   description: string;
   role: string;
+  /** Whether this package is a runnable MCP server */
+  isServer: boolean;
   tools: McpToolInfo[];
   resources: McpResourceInfo[];
   prompts: McpPromptInfo[];
@@ -34,12 +38,14 @@ export interface McpPackageInfo {
 // ---------------------------------------------------------------------------
 
 export const MCP_PACKAGES: McpPackageInfo[] = [
-  // ── Shared ──────────────────────────────────────────────────────────────
+  // ── Shared (support library — NOT an MCP server) ─────────────────────────
   {
     name: '@aidd.md/mcp-shared',
     dir: 'shared',
+    location: 'packages',
     description: 'Types, utilities, and server factory shared across all MCP packages',
     role: 'Foundation',
+    isServer: false,
     tools: [],
     resources: [],
     prompts: [],
@@ -49,8 +55,10 @@ export const MCP_PACKAGES: McpPackageInfo[] = [
   {
     name: '@aidd.md/mcp-core',
     dir: 'mcp-aidd-core',
+    location: 'mcps',
     description: 'Guidance, routing, knowledge — the decision-making brain',
     role: 'The Brain',
+    isServer: true,
     tools: [
       // bootstrap
       { name: 'aidd_detect_project', description: 'Scan for AIDD framework markers and parse package.json for stack detection' },
@@ -90,8 +98,10 @@ export const MCP_PACKAGES: McpPackageInfo[] = [
   {
     name: '@aidd.md/mcp-memory',
     dir: 'mcp-aidd-memory',
+    location: 'mcps',
     description: 'Persistence, sessions, evolution, analytics — the long-term memory',
     role: 'The Memory',
+    isServer: true,
     tools: [
       // session
       { name: 'aidd_session', description: 'Manage development sessions', multiAction: true, actions: ['start', 'update', 'end', 'get', 'list'] },
@@ -138,8 +148,10 @@ export const MCP_PACKAGES: McpPackageInfo[] = [
   {
     name: '@aidd.md/mcp-tools',
     dir: 'mcp-aidd-tools',
+    location: 'mcps',
     description: 'Validation, enforcement, CI/CD — the execution layer (Phase 6-10)',
     role: 'The Hands',
+    isServer: true,
     tools: [],
     resources: [],
     prompts: [],
@@ -149,8 +161,10 @@ export const MCP_PACKAGES: McpPackageInfo[] = [
   {
     name: '@aidd.md/mcp',
     dir: 'mcp-aidd',
+    location: 'mcps',
     description: 'All tools in one process — convenience package for single-server setups',
     role: 'Monolithic',
+    isServer: true,
     tools: [], // aggregates core + memory + tools at runtime
     resources: [],
     prompts: [],
@@ -160,6 +174,9 @@ export const MCP_PACKAGES: McpPackageInfo[] = [
 // ---------------------------------------------------------------------------
 // Derived helpers
 // ---------------------------------------------------------------------------
+
+/** Only MCP server packages (excludes support libs like shared) */
+export const MCP_SERVERS = MCP_PACKAGES.filter((p) => p.isServer);
 
 /** All tools across all packages (excluding monolithic aggregate) */
 export function getAllTools(): (McpToolInfo & { packageName: string })[] {
@@ -192,5 +209,6 @@ export function getCatalogStats() {
     totalResources: resources.length,
     totalPrompts: prompts.length,
     totalPackages: MCP_PACKAGES.length,
+    totalServers: MCP_SERVERS.length,
   };
 }

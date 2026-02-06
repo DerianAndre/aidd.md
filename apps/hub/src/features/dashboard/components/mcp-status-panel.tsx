@@ -5,7 +5,7 @@ import { Cpu, ArrowRight } from 'lucide-react';
 import { McpPackageMiniCard } from './mcp-package-mini-card';
 import { useMcpServersStore } from '../../mcp/stores/mcp-servers-store';
 import { useMcpHealthStore } from '../../mcp/stores/mcp-health-store';
-import { MCP_PACKAGES } from '../../mcp/lib/mcp-catalog';
+import { MCP_SERVERS } from '../../mcp/lib/mcp-catalog';
 import { useProjectStore } from '../../../stores/project-store';
 import { ROUTES } from '../../../lib/constants';
 
@@ -51,7 +51,7 @@ export function McpStatusPanel() {
             <Cpu size={18} />
           </div>
           <span className="text-sm font-semibold text-foreground">MCP Engine</span>
-          <Chip size="sm" variant="soft" color={builtCount === MCP_PACKAGES.length ? 'success' : 'warning'}>
+          <Chip size="sm" variant="soft" color={builtCount === MCP_SERVERS.length ? 'success' : 'warning'}>
             {builtCount} built
           </Chip>
           {runningCount > 0 && (
@@ -69,8 +69,8 @@ export function McpStatusPanel() {
       </div>
 
       {/* Package grid */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        {MCP_PACKAGES.map((pkg) => {
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {MCP_SERVERS.map((pkg) => {
           const status = packages.find((p) => p.dir === pkg.dir);
           const serverId = DIR_TO_SERVER_ID[pkg.dir];
           const server = serverId ? servers.find((s) => s.id === serverId) : undefined;

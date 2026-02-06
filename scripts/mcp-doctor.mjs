@@ -611,9 +611,9 @@ if (existsSync(aiddDir)) {
 }
 
 // =========================================================================
-// 8. Integrations
+// 8. MCPs Installed
 // =========================================================================
-console.log(`\n${DIM}Integrations${RESET}`);
+console.log(`\n${DIM}MCPs Installed${RESET}`);
 
 const home = homedir();
 
@@ -760,14 +760,39 @@ if (discoveredServers.size === 0) {
 // --- Detect installed AI agents/editors ---
 console.log(`\n${DIM}Installed Agents${RESET}`);
 
-/** Agent registry: name → { displayName, detectPaths, category } */
+/**
+ * Check if a directory is a real agent install (not just a skills/ dir
+ * created by the Vercel skills CLI installer).
+ * Returns true if the dir has files or subdirs beyond just "skills/".
+ */
+function isRealAgentDir(dirPath) {
+  if (!existsSync(dirPath)) return false;
+  try {
+    const st = statSync(dirPath);
+    if (!st.isDirectory()) return true; // file existence = real
+    const entries = readdirSync(dirPath);
+    // If the directory only contains "skills", it was created by the skills installer
+    if (entries.length === 1 && entries[0] === 'skills') return false;
+    // If empty, not real
+    if (entries.length === 0) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Agent registry. Each entry uses `require` files for strict detection:
+ * - paths: directories to check (must pass isRealAgentDir)
+ * - files: specific files whose existence confirms the agent (bypasses dir check)
+ */
 const agentRegistry = [
   { name: 'claude-code', displayName: 'Claude Code', category: 'CLI', paths: [resolve(home, '.claude')] },
   { name: 'cursor', displayName: 'Cursor', category: 'IDE', paths: [resolve(home, '.cursor')] },
-  { name: 'windsurf', displayName: 'Windsurf', category: 'IDE', paths: [resolve(home, '.codeium', 'windsurf')] },
+  { name: 'windsurf', displayName: 'Windsurf', category: 'IDE', paths: [resolve(home, '.codeium', 'windsurf')], files: [resolve(home, '.codeium', 'windsurf', 'settings.json')] },
   { name: 'codex', displayName: 'Codex', category: 'CLI', paths: [resolve(home, '.codex')] },
-  { name: 'gemini-cli', displayName: 'Gemini CLI', category: 'CLI', paths: [resolve(home, '.gemini')] },
-  { name: 'github-copilot', displayName: 'GitHub Copilot', category: 'Extension', paths: [resolve(home, '.copilot'), resolve(root, '.github')] },
+  { name: 'gemini-cli', displayName: 'Gemini CLI', category: 'CLI', paths: [], files: [resolve(home, '.gemini', 'settings.json'), resolve(home, '.gemini', 'GEMINI.md')] },
+  { name: 'github-copilot', displayName: 'GitHub Copilot', category: 'Extension', paths: [], files: [resolve(home, '.copilot', 'config.json'), resolve(root, '.github', 'copilot-instructions.md')] },
   { name: 'amp', displayName: 'Amp', category: 'CLI', paths: [resolve(home, '.config', 'amp')] },
   { name: 'cline', displayName: 'Cline', category: 'Extension', paths: [resolve(home, '.cline')] },
   { name: 'roo', displayName: 'Roo Code', category: 'Extension', paths: [resolve(home, '.roo')] },
@@ -775,12 +800,12 @@ const agentRegistry = [
   { name: 'goose', displayName: 'Goose', category: 'CLI', paths: [resolve(home, '.config', 'goose')] },
   { name: 'opencode', displayName: 'OpenCode', category: 'CLI', paths: [resolve(home, '.config', 'opencode')] },
   { name: 'trae', displayName: 'Trae', category: 'IDE', paths: [resolve(home, '.trae')] },
-  { name: 'continue', displayName: 'Continue', category: 'Extension', paths: [resolve(home, '.continue'), resolve(root, '.continue')] },
+  { name: 'continue', displayName: 'Continue', category: 'Extension', paths: [resolve(home, '.continue')], files: [resolve(home, '.continue', 'config.json')] },
   { name: 'kiro-cli', displayName: 'Kiro CLI', category: 'CLI', paths: [resolve(home, '.kiro')] },
   { name: 'droid', displayName: 'Droid', category: 'CLI', paths: [resolve(home, '.factory')] },
   { name: 'augment', displayName: 'Augment', category: 'Extension', paths: [resolve(home, '.augment')] },
   { name: 'junie', displayName: 'Junie', category: 'IDE', paths: [resolve(home, '.junie')] },
-  { name: 'antigravity', displayName: 'Antigravity', category: 'Extension', paths: [resolve(home, '.gemini', 'antigravity'), resolve(root, '.agent')] },
+  { name: 'antigravity', displayName: 'Antigravity', category: 'Extension', paths: [resolve(home, '.gemini', 'antigravity')] },
   { name: 'openclaw', displayName: 'OpenClaw', category: 'CLI', paths: [resolve(home, '.openclaw'), resolve(home, '.clawdbot'), resolve(home, '.moltbot')] },
   { name: 'zencoder', displayName: 'Zencoder', category: 'Extension', paths: [resolve(home, '.zencoder')] },
   { name: 'neovate', displayName: 'Neovate', category: 'Extension', paths: [resolve(home, '.neovate')] },
@@ -789,7 +814,12 @@ const agentRegistry = [
   { name: 'mistral-vibe', displayName: 'Mistral Vibe', category: 'CLI', paths: [resolve(home, '.vibe')] },
 ];
 
-const installedAgents = agentRegistry.filter((a) => a.paths.some((p) => existsSync(p)));
+const installedAgents = agentRegistry.filter((a) => {
+  // Check specific files first (strongest signal)
+  if (a.files?.some((f) => existsSync(f))) return true;
+  // Check directories (must have more than just skills/)
+  return a.paths.some((p) => isRealAgentDir(p));
+});
 
 if (installedAgents.length === 0) {
   info('No AI agents detected');

@@ -22,7 +22,7 @@ export type {
 } from '@aidd.md/mcp-shared';
 
 // Inlined to avoid pulling Node.js `fs` from @aidd.md/mcp-shared into Vite browser bundle.
-// Must stay in sync with mcps/shared/src/types.ts → DEFAULT_CONFIG.
+// Must stay in sync with packages/shared/src/types.ts → DEFAULT_CONFIG.
 export const DEFAULT_CONFIG: _AiddConfig = {
   evolution: {
     enabled: true,
