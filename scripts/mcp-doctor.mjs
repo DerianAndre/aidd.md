@@ -438,7 +438,7 @@ const mcpsDir = resolve(root, 'mcps');
 const pkgsDir = resolve(root, 'packages');
 const packages = [
   { name: '@aidd.md/mcp-shared', baseDir: pkgsDir, dir: 'shared', dist: 'dist/index.js', src: 'src' },
-  { name: '@aidd.md/mcp', baseDir: mcpsDir, dir: 'mcp-aidd', dist: 'dist/index.js', src: 'src' },
+  { name: '@aidd.md/mcp-engine', baseDir: mcpsDir, dir: 'mcp-aidd-engine', dist: 'dist/index.js', src: 'src' },
   { name: '@aidd.md/mcp-core', baseDir: mcpsDir, dir: 'mcp-aidd-core', dist: 'dist/index.js', src: 'src' },
   { name: '@aidd.md/mcp-memory', baseDir: mcpsDir, dir: 'mcp-aidd-memory', dist: 'dist/index.js', src: 'src' },
   { name: '@aidd.md/mcp-tools', baseDir: mcpsDir, dir: 'mcp-aidd-tools', dist: 'dist/index.js', src: 'src' },
@@ -498,7 +498,7 @@ if (flags.fix && (stalePackages.length > 0 || unbuiltPackages.length > 0)) {
 const sdkLocations = [
   resolve(root, 'node_modules/@modelcontextprotocol/sdk/package.json'),
   resolve(pkgsDir, 'shared/node_modules/@modelcontextprotocol/sdk/package.json'),
-  resolve(mcpsDir, 'mcp-aidd/node_modules/@modelcontextprotocol/sdk/package.json'),
+  resolve(mcpsDir, 'mcp-aidd-engine/node_modules/@modelcontextprotocol/sdk/package.json'),
 ];
 const sdkPath = sdkLocations.find((p) => existsSync(p));
 if (sdkPath) {

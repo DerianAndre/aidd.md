@@ -16,7 +16,7 @@ try {
 
   const packages = [
     { baseDir: pkgsDir, dir: 'shared', dist: 'dist/index.js' },
-    { baseDir: mcpsDir, dir: 'mcp-aidd', dist: 'dist/index.js' },
+    { baseDir: mcpsDir, dir: 'mcp-aidd-engine', dist: 'dist/index.js' },
     { baseDir: mcpsDir, dir: 'mcp-aidd-core', dist: 'dist/index.js' },
     { baseDir: mcpsDir, dir: 'mcp-aidd-memory', dist: 'dist/index.js' },
     { baseDir: mcpsDir, dir: 'mcp-aidd-tools', dist: 'dist/index.js' },
