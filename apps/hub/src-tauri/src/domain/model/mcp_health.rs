@@ -28,6 +28,8 @@ pub struct DiscoveredMcp {
     pub config_path: String,
     pub command: Option<String>,
     pub args: Option<Vec<String>>,
+    /// URL for HTTP/SSE transport servers (no command/args).
+    pub url: Option<String>,
     pub is_aidd: bool,
 }
 

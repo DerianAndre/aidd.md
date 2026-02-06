@@ -251,6 +251,7 @@ export interface DiscoveredMcp {
   config_path: string;
   command: string | null;
   args: string[] | null;
+  url: string | null;
   is_aidd: boolean;
 }
 

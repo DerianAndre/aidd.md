@@ -27,7 +27,7 @@ export function DiscoveredMcpCard({ entry, hubServer }: DiscoveredMcpCardProps) 
 
   const commandPreview = entry.command
     ? [entry.command, ...(entry.args ?? [])].join(' ')
-    : null;
+    : entry.url ?? null;
 
   return (
     <div className="flex items-center justify-between gap-3 rounded-lg border border-default-200 bg-content1 px-3 py-2">
