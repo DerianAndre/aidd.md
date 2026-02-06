@@ -1,18 +1,23 @@
 #!/usr/bin/env node
 /**
- * Model Matrix Update — Fetches latest model data from OpenRouter API
- * and compares with the local model matrix to detect changes.
- * Usage: node scripts/model-matrix-update.mjs
+ * Model Matrix Update — Fetches latest model data from OpenRouter API,
+ * auto-updates metadata (context windows, pricing) in both the markdown SSOT
+ * and TypeScript runtime, and reports new models from tracked providers.
+ *
+ * Usage:
+ *   pnpm mcp:models:update             # fetch + auto-update files
+ *   pnpm mcp:models:update --dry-run   # report only, no file writes
  *
  * Note: This script uses fetch() (built into Node 22) to call a public API.
  * No user input is passed to any shell command — safe from injection.
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
+const dryRun = process.argv.includes('--dry-run');
 
 const GREEN = '\x1b[32m';
 const RED = '\x1b[31m';
@@ -22,6 +27,10 @@ const DIM = '\x1b[2m';
 const BOLD = '\x1b[1m';
 const RESET = '\x1b[0m';
 const PREFIX = '[aidd.md]';
+
+// File paths
+const MD_PATH = resolve(root, 'templates/model-matrix.md');
+const TS_PATH = resolve(root, 'mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts');
 
 // Tracked providers and their OpenRouter prefixes
 const TRACKED_PROVIDERS = {
@@ -46,26 +55,80 @@ const PROVIDER_SLUG_MAP = {
 };
 
 // ---------------------------------------------------------------------------
+// Formatting helpers
+// ---------------------------------------------------------------------------
+
+function formatCostValue(val) {
+  if (val === 0) return '$0';
+  const r = Math.round(val * 100) / 100;
+  if (r >= 1 && r % 1 === 0) return `$${r}`;
+  if (r >= 0.1) return `$${r.toFixed(2)}`;
+  if (val >= 0.01) return `$${val.toFixed(3)}`;
+  return `$${val.toFixed(4)}`;
+}
+
+function formatPricingMd(input, output) {
+  return `${formatCostValue(input)} / ${formatCostValue(output)}`;
+}
+
+function formatContextMd(ctx) {
+  if (ctx <= 0) return '?';
+  const k = Math.round(ctx / 1000);
+  return k >= 1000 ? `${Math.round(k / 1000)}M` : `${k}K`;
+}
+
+function formatContextTs(ctx) {
+  return `${Math.round(ctx / 1000)}_000`;
+}
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// ---------------------------------------------------------------------------
+// Normalize model IDs for cross-platform comparison
+// ---------------------------------------------------------------------------
+
+/**
+ * Normalizes model IDs to handle naming differences between our matrix and
+ * OpenRouter's registry:
+ *   - claude-opus-4-6        → claude-opus-4.6    (version hyphens → dots)
+ *   - claude-sonnet-4-5-20250929 → claude-sonnet-4.5  (strip date suffix)
+ *   - mistral-large-latest   → mistral-large       (strip -latest)
+ */
+function normalizeModelId(id) {
+  return id
+    .toLowerCase()
+    .replace(/-\d{8}$/, '')          // Strip YYYYMMDD date suffixes
+    .replace(/-latest$/, '')          // Strip -latest suffix
+    .replace(/(\d)-(\d)/g, '$1.$2');  // Version hyphens → dots (4-6 → 4.6)
+}
+
+// ---------------------------------------------------------------------------
 // Parse local TypeScript matrix
 // ---------------------------------------------------------------------------
 
 function parseLocalModels() {
-  const tsPath = resolve(root, 'mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts');
-  if (!existsSync(tsPath)) return [];
+  if (!existsSync(TS_PATH)) return [];
 
-  const content = readFileSync(tsPath, 'utf-8');
+  const content = readFileSync(TS_PATH, 'utf-8');
   const models = [];
   const entryPattern = /\{\s*id:\s*'([^']+)',\s*provider:\s*'([^']+)',\s*name:\s*'([^']+)',\s*tier:\s*(\d)/g;
   let match;
 
   while ((match = entryPattern.exec(content)) !== null) {
-    const selfHostedMatch = content.slice(match.index, match.index + 500).match(/selfHosted:\s*true/);
+    const endIdx = content.indexOf('},', match.index);
+    const block = content.slice(match.index, endIdx > -1 ? endIdx + 2 : match.index + 500);
+    const ctxMatch = block.match(/contextWindow:\s*([\d_]+)/);
+    const selfHosted = !!block.match(/selfHosted:\s*true/);
+
     models.push({
       id: match[1],
       provider: match[2],
       name: match[3],
       tier: parseInt(match[4], 10),
-      selfHosted: !!selfHostedMatch,
+      contextWindow: ctxMatch ? parseInt(ctxMatch[1].replace(/_/g, ''), 10) : 0,
+      selfHosted,
     });
   }
 
@@ -76,20 +139,18 @@ function parseLocalModels() {
 // Fetch from OpenRouter API (public, no auth required)
 // ---------------------------------------------------------------------------
 
-const OPENROUTER_API = 'https://openrouter.ai/api/v1/models';
-
 async function fetchOpenRouterModels() {
   console.log(`  ${DIM}Fetching models from OpenRouter API...${RESET}`);
 
-  const response = await fetch(OPENROUTER_API, {
-    headers: { 'Accept': 'application/json' },
+  const res = await fetch('https://openrouter.ai/api/v1/models', {
+    headers: { Accept: 'application/json' },
   });
 
-  if (!response.ok) {
-    throw new Error(`OpenRouter API returned ${response.status}: ${response.statusText}`);
+  if (!res.ok) {
+    throw new Error(`OpenRouter API returned ${res.status}: ${res.statusText}`);
   }
 
-  const data = await response.json();
+  const data = await res.json();
   return data.data || [];
 }
 
@@ -104,16 +165,15 @@ function filterTrackedModels(openRouterModels) {
     for (const [, config] of Object.entries(TRACKED_PROVIDERS)) {
       if (model.id.startsWith(config.prefix)) {
         const pricing = model.pricing || {};
-        const inputCost = parseFloat(pricing.prompt || '0') * 1_000_000;
-        const outputCost = parseFloat(pricing.completion || '0') * 1_000_000;
 
         tracked.push({
           openRouterId: model.id,
           providerDisplay: config.display,
           name: model.name || model.id,
           contextLength: model.context_length || 0,
-          inputCostPer1M: inputCost,
-          outputCostPer1M: outputCost,
+          inputCostPer1M: parseFloat(pricing.prompt || '0') * 1_000_000,
+          outputCostPer1M: parseFloat(pricing.completion || '0') * 1_000_000,
+          created: model.created || 0,
         });
         break;
       }
@@ -124,13 +184,14 @@ function filterTrackedModels(openRouterModels) {
 }
 
 // ---------------------------------------------------------------------------
-// Compare local vs remote
+// Compare local vs remote — detect metadata changes
 // ---------------------------------------------------------------------------
 
-function compareModels(localModels, remoteModels) {
-  const matchedModels = [];
+function compareModels(localModels, remoteModels, mdContent) {
+  const matched = [];
   const missingFromRemote = [];
-  const newModelsFromTrackedProviders = [];
+  const changes = [];
+  const mdLines = mdContent.split('\n');
 
   for (const local of localModels) {
     if (local.selfHosted) continue;
@@ -138,78 +199,195 @@ function compareModels(localModels, remoteModels) {
     const prefix = PROVIDER_SLUG_MAP[local.provider];
     if (!prefix) continue;
 
-    const remoteMatch = remoteModels.find(r => {
+    const nLocal = normalizeModelId(local.id);
+
+    const remote = remoteModels.find(r => {
       const rid = r.openRouterId.toLowerCase();
-      const lid = local.id.toLowerCase();
-      return rid === `${prefix}${lid}` || rid.includes(lid);
+      if (!rid.startsWith(prefix)) return false;
+
+      const ridShort = rid.slice(prefix.length);
+
+      // Exact match (pre-normalization)
+      if (ridShort === local.id.toLowerCase()) return true;
+
+      // Normalized match
+      const nRemote = normalizeModelId(ridShort);
+      if (nLocal === nRemote) return true;
+
+      // Prefix match (handles mistral-large matching mistral-large-2411)
+      if (nRemote.startsWith(nLocal) || nLocal.startsWith(nRemote)) return true;
+
+      return false;
     });
 
-    if (remoteMatch) {
-      matchedModels.push({ local, remote: remoteMatch });
+    if (remote) {
+      matched.push({ local, remote });
+
+      // Detect metadata changes by comparing formatted values
+      for (const line of mdLines) {
+        if (!line.includes(`\`${local.id}\``)) continue;
+        const cols = line.split('|').map(c => c.trim());
+        if (cols.length < 7) break;
+
+        const curCtx = cols[4];
+        const curCost = cols[5];
+        const newCtx = formatContextMd(remote.contextLength);
+        const newCost = formatPricingMd(remote.inputCostPer1M, remote.outputCostPer1M);
+
+        const ctxChanged = remote.contextLength > 0 && curCtx !== newCtx;
+        const costChanged = remote.inputCostPer1M > 0 && curCost !== newCost;
+
+        if (ctxChanged || costChanged) {
+          changes.push({
+            id: local.id,
+            name: local.name,
+            ctxChanged, oldCtx: curCtx, newCtx,
+            costChanged, oldCost: curCost, newCost,
+            newContextWindow: remote.contextLength,
+          });
+        }
+        break;
+      }
     } else {
       missingFromRemote.push(local);
     }
   }
 
-  // Find new models from tracked providers not in our matrix
-  const localIds = new Set(localModels.map(m => m.id.toLowerCase()));
+  // New models from tracked providers not in our matrix
+  const normalizedLocalIds = localModels.map(m => normalizeModelId(m.id));
 
-  const significantModels = remoteModels.filter(r => {
-    if (r.inputCostPer1M === 0 && r.outputCostPer1M === 0) return false;
-    return true;
-  });
+  const newModels = remoteModels
+    .filter(r => r.inputCostPer1M > 0 || r.outputCostPer1M > 0)
+    .filter(r => {
+      const shortId = r.openRouterId.split('/').slice(1).join('/').toLowerCase();
+      const nRemote = normalizeModelId(shortId);
+      return !normalizedLocalIds.some(nLocal =>
+        nRemote === nLocal ||
+        nRemote.startsWith(nLocal) ||
+        nLocal.startsWith(nRemote),
+      );
+    })
+    .sort((a, b) => b.created - a.created); // Latest first
 
-  for (const remote of significantModels) {
-    const shortId = remote.openRouterId.split('/').slice(1).join('/').toLowerCase();
-    const isKnown = [...localIds].some(id =>
-      shortId.includes(id) || id.includes(shortId)
-    );
-    if (!isKnown) {
-      newModelsFromTrackedProviders.push(remote);
+  return { matched, missingFromRemote, newModels, changes };
+}
+
+// ---------------------------------------------------------------------------
+// Apply updates to markdown SSOT
+// ---------------------------------------------------------------------------
+
+function applyMarkdownUpdates(changes) {
+  let content = readFileSync(MD_PATH, 'utf-8');
+  const eol = content.includes('\r\n') ? '\r\n' : '\n';
+  const lines = content.split(eol);
+
+  for (const c of changes) {
+    for (let i = 0; i < lines.length; i++) {
+      if (!lines[i].includes(`\`${c.id}\``)) continue;
+      const cols = lines[i].split('|');
+      if (cols.length < 7) break;
+      if (c.ctxChanged) cols[4] = ` ${c.newCtx} `;
+      if (c.costChanged) cols[5] = ` ${c.newCost} `;
+      lines[i] = cols.join('|');
+      break;
     }
   }
 
-  return { matchedModels, missingFromRemote, newModelsFromTrackedProviders };
+  // Update Last Updated date
+  const today = new Date().toISOString().split('T')[0];
+  content = lines.join(eol).replace(
+    /\*\*Last Updated\*\*:\s*\d{4}-\d{2}-\d{2}/,
+    `**Last Updated**: ${today}`,
+  );
+
+  writeFileSync(MD_PATH, content);
+}
+
+// ---------------------------------------------------------------------------
+// Apply updates to TypeScript runtime
+// ---------------------------------------------------------------------------
+
+function applyTypeScriptUpdates(changes) {
+  let content = readFileSync(TS_PATH, 'utf-8');
+  let updated = false;
+
+  for (const c of changes) {
+    if (!c.ctxChanged) continue;
+    const re = new RegExp(
+      `(id:\\s*'${escapeRegex(c.id)}'[\\s\\S]*?contextWindow:\\s*)[\\d_]+`,
+    );
+    const next = content.replace(re, `$1${formatContextTs(c.newContextWindow)}`);
+    if (next !== content) {
+      content = next;
+      updated = true;
+    }
+  }
+
+  if (updated) writeFileSync(TS_PATH, content);
 }
 
 // ---------------------------------------------------------------------------
 // Display report
 // ---------------------------------------------------------------------------
 
-function displayReport(report) {
+function displayReport({ matched, missingFromRemote, newModels, changes }) {
   console.log(`\n${BOLD}Matched Models${RESET}\n`);
-  console.log(`  ${GREEN}\u2713${RESET} ${report.matchedModels.length} local models found on OpenRouter`);
+  console.log(`  ${GREEN}\u2713${RESET} ${matched.length} local models matched on OpenRouter`);
 
-  if (report.missingFromRemote.length > 0) {
-    console.log(`\n${BOLD}${YELLOW}Models Not Found on OpenRouter${RESET}\n`);
-    for (const m of report.missingFromRemote) {
+  // Metadata updates
+  if (changes.length > 0) {
+    const label = dryRun ? `${YELLOW}Updates Available` : `${GREEN}Auto-Updated`;
+    const icon = dryRun ? YELLOW : GREEN;
+    console.log(`\n${BOLD}${label}${RESET}\n`);
+    for (const c of changes) {
+      if (c.ctxChanged) {
+        console.log(`  ${icon}\u2192${RESET} ${c.name}: context ${c.oldCtx} \u2192 ${c.newCtx}`);
+      }
+      if (c.costChanged) {
+        console.log(`  ${icon}\u2192${RESET} ${c.name}: pricing ${c.oldCost} \u2192 ${c.newCost}`);
+      }
+    }
+    if (dryRun) {
+      console.log(`\n  ${DIM}Run without --dry-run to apply these updates.${RESET}`);
+    }
+  }
+
+  // Models not found on OpenRouter
+  if (missingFromRemote.length > 0) {
+    console.log(`\n${BOLD}${YELLOW}Not Found on OpenRouter${RESET}\n`);
+    for (const m of missingFromRemote) {
       console.log(`  ${YELLOW}!${RESET} ${m.id} (${m.provider}) \u2014 may be deprecated, renamed, or not on OpenRouter`);
     }
   }
 
-  if (report.newModelsFromTrackedProviders.length > 0) {
-    console.log(`\n${BOLD}${CYAN}New Models from Tracked Providers${RESET}\n`);
+  // New models — sorted by created date, latest first
+  if (newModels.length > 0) {
+    console.log(`\n${BOLD}${CYAN}New Models from Tracked Providers${RESET} ${DIM}(latest first)${RESET}\n`);
 
     const grouped = {};
-    for (const m of report.newModelsFromTrackedProviders) {
-      if (!grouped[m.providerDisplay]) grouped[m.providerDisplay] = [];
-      grouped[m.providerDisplay].push(m);
+    for (const m of newModels) {
+      (grouped[m.providerDisplay] ??= []).push(m);
     }
 
-    for (const [provider, models] of Object.entries(grouped)) {
+    // Sort provider groups by their most recent model
+    const sortedProviders = Object.entries(grouped)
+      .sort(([, a], [, b]) => b[0].created - a[0].created);
+
+    for (const [provider, models] of sortedProviders) {
       console.log(`  ${BOLD}${provider}${RESET}`);
-      const sorted = models
-        .sort((a, b) => b.inputCostPer1M - a.inputCostPer1M)
-        .slice(0, 5);
-      for (const m of sorted) {
+      const top = models.slice(0, 8);
+      for (const m of top) {
         const cost = m.inputCostPer1M > 0
           ? `$${m.inputCostPer1M.toFixed(2)}/$${m.outputCostPer1M.toFixed(2)} per 1M`
           : 'free';
         const ctx = m.contextLength > 0 ? `${Math.round(m.contextLength / 1000)}K ctx` : '? ctx';
-        console.log(`    ${DIM}${m.openRouterId} \u2014 ${m.name} (${ctx}, ${cost})${RESET}`);
+        const date = m.created > 0
+          ? new Date(m.created * 1000).toISOString().split('T')[0]
+          : '?';
+        console.log(`    ${DIM}[${date}] ${m.openRouterId} \u2014 ${m.name} (${ctx}, ${cost})${RESET}`);
       }
-      if (models.length > 5) {
-        console.log(`    ${DIM}... and ${models.length - 5} more${RESET}`);
+      if (models.length > 8) {
+        console.log(`    ${DIM}... and ${models.length - 8} more${RESET}`);
       }
     }
   }
@@ -219,27 +397,38 @@ function displayReport(report) {
 // Main
 // ---------------------------------------------------------------------------
 
-console.log(`\n${BOLD}${PREFIX} Model Matrix Update Check${RESET}\n`);
+console.log(`\n${BOLD}${PREFIX} Model Matrix Update${dryRun ? ' (dry run)' : ''}${RESET}\n`);
 
 try {
   const localModels = parseLocalModels();
   console.log(`  ${GREEN}\u2713${RESET} Local matrix: ${localModels.length} models`);
 
-  const remoteModels = await fetchOpenRouterModels();
-  const trackedRemote = filterTrackedModels(remoteModels);
-  console.log(`  ${GREEN}\u2713${RESET} OpenRouter: ${remoteModels.length} total, ${trackedRemote.length} from tracked providers`);
+  const allRemote = await fetchOpenRouterModels();
+  const tracked = filterTrackedModels(allRemote);
+  console.log(`  ${GREEN}\u2713${RESET} OpenRouter: ${allRemote.length} total, ${tracked.length} from tracked providers`);
 
-  const report = compareModels(localModels, trackedRemote);
+  const mdContent = existsSync(MD_PATH) ? readFileSync(MD_PATH, 'utf-8') : '';
+  const report = compareModels(localModels, tracked, mdContent);
+
+  // Auto-update files when changes detected (unless --dry-run)
+  if (report.changes.length > 0 && !dryRun) {
+    applyMarkdownUpdates(report.changes);
+    applyTypeScriptUpdates(report.changes);
+  }
+
   displayReport(report);
 
-  const hasUpdates = report.missingFromRemote.length > 0 || report.newModelsFromTrackedProviders.length > 0;
-  console.log(`\n${BOLD}${PREFIX} Summary${RESET}: ${hasUpdates ? `${YELLOW}Updates available` : `${GREEN}Matrix is current`}${RESET}`);
-
-  if (hasUpdates) {
-    console.log(`\n${DIM}To update: edit templates/model-matrix.md (SSOT) then update model-matrix.ts to match.${RESET}`);
-    console.log(`${DIM}Run pnpm mcp:models:sync to verify sync after edits.${RESET}\n`);
+  // Summary
+  if (report.changes.length > 0 && !dryRun) {
+    console.log(`\n${BOLD}${PREFIX}${RESET} ${GREEN}${report.changes.length} model(s) auto-updated in both files${RESET}`);
+    console.log(`${DIM}Run: pnpm mcp:models:sync && pnpm mcp:typecheck && pnpm mcp:build${RESET}\n`);
+  } else if (report.changes.length > 0 && dryRun) {
+    console.log(`\n${BOLD}${PREFIX}${RESET} ${YELLOW}Updates available \u2014 run without --dry-run to apply${RESET}\n`);
+  } else if (report.newModels.length > 0) {
+    console.log(`\n${BOLD}${PREFIX}${RESET} ${YELLOW}New models available \u2014 review above and add to matrix if needed${RESET}`);
+    console.log(`${DIM}Edit templates/model-matrix.md (SSOT), then update model-matrix.ts to match.${RESET}\n`);
   } else {
-    console.log('');
+    console.log(`\n${BOLD}${PREFIX}${RESET} ${GREEN}Matrix is current${RESET}\n`);
   }
 } catch (err) {
   console.log(`  ${RED}\u2717${RESET} Failed: ${err.message}`);

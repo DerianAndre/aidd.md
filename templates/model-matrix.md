@@ -43,32 +43,32 @@ Use the **minimum tier that produces correct output**. Escalate when:
 
 | Provider | Model | Model ID | Context | Cost (in/out per 1M tokens) | Status |
 |----------|-------|----------|---------|----------------------------|--------|
-| Anthropic | Claude Opus 4.6 | `claude-opus-4-6` | 200K | $15 / $75 | active |
+| Anthropic | Claude Opus 4.6 | `claude-opus-4-6` | 1M | $5 / $25 | active |
 | OpenAI | o3 | `o3` | 200K | $10 / $40 | active |
-| OpenAI | GPT-5.2 | `gpt-5.2` | 128K | $10 / $30 | active |
-| Google | Gemini 3 Pro | `gemini-3-pro` | 200K | $2 / $12 | active |
-| xAI | Grok 4.1 | `grok-4.1` | 128K | ~$5 / $15 | active |
-| DeepSeek | DeepSeek V3 | `deepseek-v3` | 128K | $0.27 / $1.10 | active |
+| OpenAI | GPT-5.2 | `gpt-5.2` | 400K | $1.75 / $14 | active |
+| Google | Gemini 3 Pro | `gemini-3-pro` | 66K | $2 / $12 | active |
+| xAI | Grok 4.1 | `grok-4.1` | 2M | $0.20 / $0.50 | active |
+| DeepSeek | DeepSeek V3 | `deepseek-v3` | 164K | $0.27 / $0.41 | active |
 
 ### Tier 2 — STANDARD (Implementation, Integration, Coding)
 
 | Provider | Model | Model ID | Context | Cost (in/out per 1M tokens) | Status |
 |----------|-------|----------|---------|----------------------------|--------|
-| Anthropic | Claude Sonnet 4.5 | `claude-sonnet-4-5-20250929` | 200K | $3 / $15 | active |
-| OpenAI | GPT-4.5 | `gpt-4.5` | 128K | $5 / $15 | active |
-| Google | Gemini 2.5 Pro | `gemini-2.5-pro` | 100K | $1.25 / $5 | active |
+| Anthropic | Claude Sonnet 4.5 | `claude-sonnet-4-5-20250929` | 1M | $3 / $15 | active |
+| OpenAI | GPT-4.5 | `gpt-4.5` | 8K | $30 / $60 | active |
+| Google | Gemini 2.5 Pro | `gemini-2.5-pro` | 1M | $1.25 / $10 | active |
 | Meta | Llama 4 Maverick | `llama-4-maverick` | 128K | self-hosted | active |
-| Mistral | Mistral Large | `mistral-large-latest` | 128K | $2 / $6 | active |
+| Mistral | Mistral Large | `mistral-large-latest` | 262K | $0.50 / $1.50 | active |
 
 ### Tier 3 — LOW (Boilerplate, Formatting, Simple Tasks)
 
 | Provider | Model | Model ID | Context | Cost (in/out per 1M tokens) | Status |
 |----------|-------|----------|---------|----------------------------|--------|
-| Anthropic | Claude Haiku 4.5 | `claude-haiku-4-5-20251001` | 100K | $1 / $5 | active |
-| Google | Gemini 2.5 Flash | `gemini-2.5-flash` | 100K | $0.075 / $0.30 | active |
-| Google | Gemini 2.5 Flash-Lite | `gemini-2.5-flash-lite` | 100K | $0.10 / $0.40 | active |
+| Anthropic | Claude Haiku 4.5 | `claude-haiku-4-5-20251001` | 200K | $1 / $5 | active |
+| Google | Gemini 2.5 Flash | `gemini-2.5-flash` | 33K | $0.30 / $2.50 | active |
+| Google | Gemini 2.5 Flash-Lite | `gemini-2.5-flash-lite` | 1M | $0.10 / $0.40 | active |
 | Meta | Llama 4 Scout | `llama-4-scout` | 128K | self-hosted | active |
-| Mistral | Mistral Small | `mistral-small-latest` | 32K | $0.20 / $0.60 | active |
+| Mistral | Mistral Small | `mistral-small-latest` | 33K | $0.10 / $0.30 | active |
 
 ---
 
