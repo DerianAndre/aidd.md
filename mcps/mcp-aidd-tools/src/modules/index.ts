@@ -1,7 +1,13 @@
 import type { AiddModule } from '@aidd.md/mcp-shared';
-
-// Module stubs — will be implemented in Phase 6-7
-// Each module directory (validation/, enforcement/, execution/, ci/) will export an AiddModule
+import { validationModule } from './validation/index.js';
+import { enforcementModule } from './enforcement/index.js';
+import { executionModule } from './execution/index.js';
+import { ciModule } from './ci/index.js';
 
 /** All tools modules. */
-export const toolsModules: AiddModule[] = [];
+export const toolsModules: AiddModule[] = [
+  validationModule,
+  enforcementModule,
+  executionModule,
+  ciModule,
+];
