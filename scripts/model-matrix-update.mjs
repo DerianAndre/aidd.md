@@ -82,6 +82,44 @@ const LL_PROVIDER_NAMES = {
   mistral: ['mistral'],
 };
 
+// ---------------------------------------------------------------------------
+// Cost-based tier inference for new model suggestions
+// ---------------------------------------------------------------------------
+
+/**
+ * Infer a suggested tier from pricing data alone (no model names).
+ * Uses output cost per 1M tokens as the primary signal — it correlates
+ * more strongly with model capability than input cost.
+ *
+ * Thresholds derived from current matrix (Feb 2026):
+ *   Tier 1 output range: $10–$40  (except DeepSeek V3 outlier at $1.10)
+ *   Tier 2 output range: $5–$15
+ *   Tier 3 output range: $0–$5
+ *
+ * Returns { tier, costTier, signal } — always a SUGGESTION, never auto-applied.
+ */
+function inferTierFromCost(inputCostPer1M, outputCostPer1M) {
+  const outCost = outputCostPer1M || 0;
+  const inCost = inputCostPer1M || 0;
+
+  // Free / self-hosted → Tier 3
+  if (outCost === 0 && inCost === 0) {
+    return { tier: 3, costTier: '$', signal: 'free' };
+  }
+
+  // Primary signal: output cost per 1M tokens
+  if (outCost > 0) {
+    if (outCost > 10) return { tier: 1, costTier: '$$$', signal: `out=${formatCostValue(outCost)}/1M` };
+    if (outCost > 2)  return { tier: 2, costTier: '$$',  signal: `out=${formatCostValue(outCost)}/1M` };
+    return { tier: 3, costTier: '$', signal: `out=${formatCostValue(outCost)}/1M` };
+  }
+
+  // Fallback: input cost only (some APIs only expose input pricing)
+  if (inCost > 5) return { tier: 1, costTier: '$$$', signal: `in=${formatCostValue(inCost)}/1M` };
+  if (inCost > 1) return { tier: 2, costTier: '$$',  signal: `in=${formatCostValue(inCost)}/1M` };
+  return { tier: 3, costTier: '$', signal: `in=${formatCostValue(inCost)}/1M` };
+}
+
 // Tracked providers for new model discovery
 const TRACKED_PROVIDERS = {
   anthropic: { prefix: 'anthropic/', display: 'Anthropic' },
@@ -527,14 +565,21 @@ function discoverNewModels(localModels, orAllModels) {
     for (const [, config] of Object.entries(TRACKED_PROVIDERS)) {
       if (model.id.startsWith(config.prefix)) {
         const pricing = model.pricing || {};
-        tracked.push({
+        const inputCostPer1M = parseFloat(pricing.prompt || '0') * 1_000_000;
+          const outputCostPer1M = parseFloat(pricing.completion || '0') * 1_000_000;
+          const tierSuggestion = inferTierFromCost(inputCostPer1M, outputCostPer1M);
+
+          tracked.push({
           openRouterId: model.id,
           providerDisplay: config.display,
           name: model.name || model.id,
           contextLength: model.context_length || 0,
-          inputCostPer1M: parseFloat(pricing.prompt || '0') * 1_000_000,
-          outputCostPer1M: parseFloat(pricing.completion || '0') * 1_000_000,
+          inputCostPer1M,
+          outputCostPer1M,
           created: model.created || 0,
+          suggestedTier: tierSuggestion.tier,
+          suggestedCostTier: tierSuggestion.costTier,
+          tierSignal: tierSuggestion.signal,
         });
         break;
       }
@@ -735,7 +780,7 @@ function displayReport(results, newModels) {
 
   // New models from tracked providers
   if (newModels.length > 0) {
-    console.log(`\n${BOLD}${CYAN}New Models from Tracked Providers${RESET} ${DIM}(latest first)${RESET}\n`);
+    console.log(`\n${BOLD}${CYAN}New Models from Tracked Providers${RESET} ${DIM}(latest first, with cost-based tier suggestions)${RESET}\n`);
 
     const grouped = {};
     for (const m of newModels) {
@@ -746,26 +791,34 @@ function displayReport(results, newModels) {
       ([, a], [, b]) => b[0].created - a[0].created,
     );
 
+    const tierColors = { 1: RED, 2: YELLOW, 3: GREEN };
+    const tierLabels = { 1: 'HIGH', 2: 'STD', 3: 'LOW' };
+
     for (const [provider, models] of sortedProviders) {
       console.log(`  ${BOLD}${provider}${RESET}`);
       const top = models.slice(0, 8);
       for (const m of top) {
         const cost =
           m.inputCostPer1M > 0
-            ? `$${m.inputCostPer1M.toFixed(2)}/$${m.outputCostPer1M.toFixed(2)} per 1M`
+            ? `${formatCostValue(m.inputCostPer1M)}/${formatCostValue(m.outputCostPer1M)} per 1M`
             : 'free';
         const ctx =
           m.contextLength > 0 ? `${Math.round(m.contextLength / 1000)}K ctx` : '? ctx';
         const date =
           m.created > 0 ? new Date(m.created * 1000).toISOString().split('T')[0] : '?';
+        const tierColor = tierColors[m.suggestedTier] || DIM;
+        const tierLabel = tierLabels[m.suggestedTier] || '?';
         console.log(
-          `    ${DIM}[${date}] ${m.openRouterId} \u2014 ${m.name} (${ctx}, ${cost})${RESET}`,
+          `    ${tierColor}T${m.suggestedTier}${RESET} ${DIM}[${date}] ${m.openRouterId} \u2014 ${m.name} (${ctx}, ${cost}) ${tierColor}${tierLabel} ${m.suggestedCostTier}${RESET} ${DIM}(${m.tierSignal})${RESET}`,
         );
       }
       if (models.length > 8) {
         console.log(`    ${DIM}... and ${models.length - 8} more${RESET}`);
       }
     }
+
+    console.log(`\n  ${DIM}Tier suggestions are cost-based (output $/1M): >$10 \u2192 T1, $2\u2013$10 \u2192 T2, <$2 \u2192 T3${RESET}`);
+    console.log(`  ${DIM}Review and add to templates/model-matrix.md, then mirror to model-matrix.ts${RESET}`);
   }
 }
 
