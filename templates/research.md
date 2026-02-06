@@ -26,11 +26,11 @@ Conduct deep research on a topic through systematic multi-source investigation. 
 
 ## Sub-Agent Roles
 
-| Role | Responsibility |
-|------|---------------|
-| **Researcher** | Searches across multiple source types (web, documentation, academic, community). Extracts key claims and data points. Maintains source provenance for every piece of information. |
-| **Analyst** | Cross-references claims across sources. Identifies contradictions, consensus, and gaps. Evaluates source credibility and recency. Quantifies confidence levels. |
-| **Technical Writer** | Synthesizes findings into the BLUF-6 output format. Ensures clarity, precision, and actionability. Separates facts from interpretation. |
+| Role                 | Responsibility                                                                                                                                                                    |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Researcher**       | Searches across multiple source types (web, documentation, academic, community). Extracts key claims and data points. Maintains source provenance for every piece of information. |
+| **Analyst**          | Cross-references claims across sources. Identifies contradictions, consensus, and gaps. Evaluates source credibility and recency. Quantifies confidence levels.                   |
+| **Technical Writer** | Synthesizes findings into the BLUF-6 output format. Ensures clarity, precision, and actionability. Separates facts from interpretation.                                           |
 
 ---
 
@@ -49,13 +49,13 @@ Articulate precisely:
 
 Search across these source categories (as applicable):
 
-| Source Type | Examples | Priority |
-|------------|----------|----------|
-| **Official Documentation** | Library docs, API references, specs | Highest |
-| **Current Web** | Blog posts, articles (prefer current year) | High |
-| **Community Resources** | GitHub issues, Stack Overflow, Discord, forums | Medium |
-| **Academic/Technical Papers** | Research papers, RFCs, design documents | Medium |
-| **Codebase** | Existing project code, dependencies, configurations | High |
+| Source Type                   | Examples                                            | Priority |
+| ----------------------------- | --------------------------------------------------- | -------- |
+| **Official Documentation**    | Library docs, API references, specs                 | Highest  |
+| **Current Web**               | Blog posts, articles (prefer current year)          | High     |
+| **Community Resources**       | GitHub issues, Stack Overflow, Discord, forums      | Medium   |
+| **Academic/Technical Papers** | Research papers, RFCs, design documents             | Medium   |
+| **Codebase**                  | Existing project code, dependencies, configurations | High     |
 
 For each source, record:
 - URL or file path
@@ -83,7 +83,7 @@ For each significant claim:
 
 - Is the chosen approach aligned with where the ecosystem is heading?
 - Check for upcoming deprecations, breaking changes, or migration paths
-- Verify the approach works with detected project versions (see `spec/version-protocol.md`)
+- Verify the approach works with detected project versions (see `specs/version-protocol.md`)
 
 ### Step 6: Risk Identification
 
@@ -118,8 +118,8 @@ Context, background, and current state of the topic. What the reader needs to kn
 Table of sources consulted with credibility assessment:
 
 | Source | Type | Date | Credibility | Key Contribution |
-|--------|------|------|-------------|-----------------|
-| | | | | |
+| ------ | ---- | ---- | ----------- | ---------------- |
+|        |      |      |             |                  |
 
 #### 4. Synthesis
 Detailed findings organized by sub-question or theme. Each claim attributed to source(s). Contradictions and consensus areas noted.
@@ -134,13 +134,13 @@ What remains uncertain. What additional research would be needed. What assumptio
 
 ## Tools
 
-| Tool | Purpose |
-|---|---|
-| `WebSearch` | Trends, comparisons, ecosystem state, current year verification |
-| Context7 MCP | Framework-specific docs (when available) |
-| `aidd_query_tkb` | Project's Technology Knowledge Base entries |
-| `aidd_tech_compatibility` | Verify stack compatibility with TKB data |
-| Project `package.json` | Version-locked constraints (ground truth) |
+| Tool                      | Purpose                                                         |
+| ------------------------- | --------------------------------------------------------------- |
+| `WebSearch`               | Trends, comparisons, ecosystem state, current year verification |
+| Context7 MCP              | Framework-specific docs (when available)                        |
+| `aidd_query_tkb`          | Project's Technology Knowledge Base entries                     |
+| `aidd_tech_compatibility` | Verify stack compatibility with TKB data                        |
+| Project `package.json`    | Version-locked constraints (ground truth)                       |
 
 ---
 
@@ -157,7 +157,7 @@ When research is complete, produce a structured summary:
 - **Open Questions**: [what remains uncertain]
 ```
 
-This artifact feeds directly into the Plan phase (`spec/asdd-lifecycle.md` Phase 3).
+This artifact feeds directly into the Plan phase (`specs/asdd-lifecycle.md` Phase 3).
 
 **Gate**: Present findings as a trade-off matrix. User chooses approach → proceed to Plan.
 
@@ -179,25 +179,25 @@ This artifact feeds directly into the Plan phase (`spec/asdd-lifecycle.md` Phase
 
 ## Anti-Patterns
 
-| Anti-Pattern | Description | Mitigation |
-|-------------|-------------|------------|
-| **Single-Source Conclusion** | Basing findings on one source only | Require minimum 3 sources for primary claims; flag single-source findings explicitly |
-| **Outdated Information** | Using old docs/posts when newer versions exist | Always check publication date; prefer current year; search for up-to-date sources |
-| **Confirmation Bias** | Only searching for sources that support a preconceived answer | Actively search for contradicting viewpoints; include a "counter-arguments" section |
-| **Opinion as Fact** | Presenting interpretation without attribution | Every claim must cite its source; interpretations must be labeled as such |
-| **Source Laundering** | Multiple sources citing the same original source, counted as independent | Trace claims to their origin; do not count derivative sources as independent |
-| **Recency Bias** | Assuming newer always means better | Evaluate whether newer information actually supersedes older findings or just adds noise |
-| **Scope Drift** | Following interesting tangents beyond the research question | Refer back to Step 1; note tangents as "areas for future research" in Unknown Factors |
+| Anti-Pattern                 | Description                                                              | Mitigation                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| **Single-Source Conclusion** | Basing findings on one source only                                       | Require minimum 3 sources for primary claims; flag single-source findings explicitly     |
+| **Outdated Information**     | Using old docs/posts when newer versions exist                           | Always check publication date; prefer current year; search for up-to-date sources        |
+| **Confirmation Bias**        | Only searching for sources that support a preconceived answer            | Actively search for contradicting viewpoints; include a "counter-arguments" section      |
+| **Opinion as Fact**          | Presenting interpretation without attribution                            | Every claim must cite its source; interpretations must be labeled as such                |
+| **Source Laundering**        | Multiple sources citing the same original source, counted as independent | Trace claims to their origin; do not count derivative sources as independent             |
+| **Recency Bias**             | Assuming newer always means better                                       | Evaluate whether newer information actually supersedes older findings or just adds noise |
+| **Scope Drift**              | Following interesting tangents beyond the research question              | Refer back to Step 1; note tangents as "areas for future research" in Unknown Factors    |
 
 ---
 
 ## Cross-References
 
 - **Previous phase (Brainstorming)**: `templates/brainstorming.md`
-- **Next phase (Plan)**: `spec/asdd-lifecycle.md`
+- **Next phase (Plan)**: `specs/asdd-lifecycle.md`
 - **Orchestration pipeline**: `workflows/orchestrators/architect-mode.md`
-- **BLUF-6 format**: `spec/bluf-6.md`
+- **BLUF-6 format**: `specs/bluf-6.md`
 - **Knowledge Architect skill**: `skills/knowledge-architect/SKILL.md`
 - **Technology selection workflow**: `workflows/technology-selection.md`
-- **Version verification**: `spec/version-protocol.md`
+- **Version verification**: `specs/version-protocol.md`
 - **Global rules**: `rules/global.md`

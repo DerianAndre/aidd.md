@@ -31,28 +31,28 @@ refactor(core): extract transform logic into TransformExecutor service
 
 ## Commit Types
 
-| Type       | Description                                        | Triggers Release |
-| ---------- | -------------------------------------------------- | ---------------- |
-| `feat`     | New feature or capability                          | minor            |
-| `fix`      | Bug fix                                            | patch            |
-| `docs`     | Documentation only (specs, ADRs, guides, READMEs)  | no               |
-| `refactor` | Code restructuring with no behavior change          | no               |
-| `test`     | Adding or updating tests                            | no               |
-| `chore`    | Build tooling, CI, dependency updates, housekeeping | no               |
-| `perf`     | Performance improvement with no behavior change     | patch            |
-| `style`    | Formatting, whitespace, missing semicolons (no logic change) | no      |
+| Type       | Description                                                  | Triggers Release |
+| ---------- | ------------------------------------------------------------ | ---------------- |
+| `feat`     | New feature or capability                                    | minor            |
+| `fix`      | Bug fix                                                      | patch            |
+| `docs`     | Documentation only (specs, ADRs, guides, READMEs)            | no               |
+| `refactor` | Code restructuring with no behavior change                   | no               |
+| `test`     | Adding or updating tests                                     | no               |
+| `chore`    | Build tooling, CI, dependency updates, housekeeping          | no               |
+| `perf`     | Performance improvement with no behavior change              | patch            |
+| `style`    | Formatting, whitespace, missing semicolons (no logic change) | no               |
 
 ---
 
 ## Branch Strategy
 
-| Branch       | Purpose                          | Merges Into | Protection        |
-| ------------ | -------------------------------- | ----------- | ----------------- |
-| `main`       | Stable, release-ready code       | —           | Protected, no force push |
-| `feature/*`  | New features                     | `main`      | Via pull request  |
-| `fix/*`      | Bug fixes                        | `main`      | Via pull request  |
-| `docs/*`     | Documentation changes            | `main`      | Via pull request  |
-| `refactor/*` | Large-scale refactoring          | `main`      | Via pull request  |
+| Branch       | Purpose                    | Merges Into | Protection               |
+| ------------ | -------------------------- | ----------- | ------------------------ |
+| `main`       | Stable, release-ready code | —           | Protected, no force push |
+| `feature/*`  | New features               | `main`      | Via pull request         |
+| `fix/*`      | Bug fixes                  | `main`      | Via pull request         |
+| `docs/*`     | Documentation changes      | `main`      | Via pull request         |
+| `refactor/*` | Large-scale refactoring    | `main`      | Via pull request         |
 
 ### Branch Naming
 
@@ -119,7 +119,7 @@ These rules CANNOT be overridden:
 
 ---
 
-**Cross-references:** [spec/asdd-lifecycle.md](../spec/asdd-lifecycle.md) (COMMIT_SPEC and COMMIT_IMPL phases), [rules/security.md](security.md) (no secrets in version control)
+**Cross-references:** [specs/asdd-lifecycle.md](../specs/asdd-lifecycle.md) (COMMIT_SPEC and COMMIT_IMPL phases), [rules/security.md](security.md) (no secrets in version control)
 
 **Version:** 1.0.0
 **Last Updated:** 2026-02-04

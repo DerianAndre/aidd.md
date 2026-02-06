@@ -8,8 +8,10 @@ import type {
   ContentEntry,
   MarketplaceFilters,
   MarketplaceStats,
+  ContentType,
   SortOption,
 } from './types';
+import { TAB_CONTENT_TYPE_MAP } from './constants';
 
 // ── Search ──────────────────────────────────────────────────────
 
@@ -44,10 +46,11 @@ function filterMcpServers(
 function filterContent(
   entries: ContentEntry[],
   filters: MarketplaceFilters,
+  contentType?: ContentType,
 ): ContentEntry[] {
   return entries.filter((entry) => {
+    if (contentType && entry.contentType !== contentType) return false;
     if (!matchesSearch(entry, filters.search)) return false;
-    if (filters.contentTypes.length > 0 && !filters.contentTypes.includes(entry.contentType)) return false;
     if (filters.tags.length > 0 && !filters.tags.every((t) => entry.tags.includes(t))) return false;
     if (filters.onlyOfficial && !entry.official) return false;
     if (filters.onlyTrending && !entry.trending) return false;
@@ -87,8 +90,17 @@ export function filterAndSort(
     const filtered = filterMcpServers(mcpServers, filters);
     return sortEntries(filtered, filters.sort);
   }
-  const filtered = filterContent(content, filters);
+  const contentType = TAB_CONTENT_TYPE_MAP[filters.tab];
+  const filtered = filterContent(content, filters, contentType);
   return sortEntries(filtered, filters.sort);
+}
+
+export function countByContentType(content: ContentEntry[]): Record<ContentType, number> {
+  const counts = {} as Record<ContentType, number>;
+  for (const entry of content) {
+    counts[entry.contentType] = (counts[entry.contentType] ?? 0) + 1;
+  }
+  return counts;
 }
 
 export function computeStats(

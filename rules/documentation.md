@@ -57,14 +57,14 @@ docs/
 
 ### Folder Responsibilities
 
-| Folder               | Contains                                      | Naming Convention              |
-| -------------------- | --------------------------------------------- | ------------------------------ |
-| `docs/architecture/` | ADRs, system design, file maps                | `001-decision-name.md` (ADRs) |
-| `docs/features/`     | Feature specs, roadmap, checklists, ideas     | `feature-name.md`             |
-| `docs/guides/`       | Getting started, configuration, tutorials     | `topic-name.md`               |
-| `docs/plans/active/` | Plans currently being implemented             | `feature-name.md`             |
-| `docs/plans/done/`   | Completed plans (archived)                    | `YYYY-MM-DD-feature-name.md`  |
-| `docs/specs/`        | Formal specs (API contracts, data formats)    | `spec-name.md`                |
+| Folder               | Contains                                   | Naming Convention             |
+| -------------------- | ------------------------------------------ | ----------------------------- |
+| `docs/architecture/` | ADRs, system design, file maps             | `001-decision-name.md` (ADRs) |
+| `docs/features/`     | Feature specs, roadmap, checklists, ideas  | `feature-name.md`             |
+| `docs/guides/`       | Getting started, configuration, tutorials  | `topic-name.md`               |
+| `docs/plans/active/` | Plans currently being implemented          | `feature-name.md`             |
+| `docs/plans/done/`   | Completed plans (archived)                 | `YYYY-MM-DD-feature-name.md`  |
+| `docs/specs/`        | Formal specs (API contracts, data formats) | `spec-name.md`                |
 
 ---
 
@@ -140,7 +140,7 @@ Plans track implementation work from inception to completion.
 
 ---
 
-**Cross-references:** [spec/asdd-lifecycle.md](../spec/asdd-lifecycle.md) (PLAN and COMMIT_SPEC phases), [rules/global.md](global.md) (evidence-first, communication standards)
+**Cross-references:** [specs/asdd-lifecycle.md](../specs/asdd-lifecycle.md) (PLAN and COMMIT_SPEC phases), [rules/global.md](global.md) (evidence-first, communication standards)
 
 **Version:** 1.0.0
 **Last Updated:** 2026-02-04

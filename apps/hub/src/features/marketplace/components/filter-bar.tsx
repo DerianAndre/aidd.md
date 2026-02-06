@@ -1,13 +1,12 @@
 import { SearchField, Select, ListBox, Label, Button, Chip } from '@heroui/react';
 import { LayoutGrid, List, X } from 'lucide-react';
 import type { Key } from 'react';
-import { MCP_CATEGORIES, CONTENT_TYPES, SORT_OPTIONS } from '../lib/constants';
+import { MCP_CATEGORIES, SORT_OPTIONS } from '../lib/constants';
 import type {
   MarketplaceFilters,
   SortOption,
   ViewMode,
   McpCategory,
-  ContentType,
 } from '../lib/types';
 import { cn } from '../../../lib/utils';
 
@@ -18,7 +17,6 @@ export interface FilterBarProps {
   onSortChange: (sort: SortOption) => void;
   onViewModeChange: (mode: ViewMode) => void;
   onCategoryToggle: (cat: McpCategory) => void;
-  onContentTypeToggle: (ct: ContentType) => void;
   onOfficialToggle: () => void;
   onTrendingToggle: () => void;
   onClearFilters: () => void;
@@ -31,14 +29,12 @@ export function FilterBar({
   onSortChange,
   onViewModeChange,
   onCategoryToggle,
-  onContentTypeToggle,
   onOfficialToggle,
   onTrendingToggle,
   onClearFilters,
 }: FilterBarProps) {
   const hasActiveFilters =
     filters.mcpCategories.length > 0 ||
-    filters.contentTypes.length > 0 ||
     filters.onlyOfficial ||
     filters.onlyTrending;
 
@@ -117,31 +113,18 @@ export function FilterBar({
 
       {/* Row 2: Filter chips */}
       <div className="flex flex-wrap items-center gap-2">
-        {isMcpTab
-          ? MCP_CATEGORIES.map((cat) => (
-              <Chip
-                key={cat.value}
-                size="sm"
-                variant="soft"
-                color={filters.mcpCategories.includes(cat.value) ? 'accent' : 'default'}
-                onClick={() => onCategoryToggle(cat.value)}
-                className="cursor-pointer transition-colors hover:opacity-80"
-              >
-                {cat.label}
-              </Chip>
-            ))
-          : CONTENT_TYPES.map((ct) => (
-              <Chip
-                key={ct.value}
-                size="sm"
-                variant="soft"
-                color={filters.contentTypes.includes(ct.value) ? 'accent' : 'default'}
-                onClick={() => onContentTypeToggle(ct.value)}
-                className="cursor-pointer transition-colors hover:opacity-80"
-              >
-                {ct.label}
-              </Chip>
-            ))}
+        {isMcpTab && MCP_CATEGORIES.map((cat) => (
+          <Chip
+            key={cat.value}
+            size="sm"
+            variant="soft"
+            color={filters.mcpCategories.includes(cat.value) ? 'accent' : 'default'}
+            onClick={() => onCategoryToggle(cat.value)}
+            className="cursor-pointer transition-colors hover:opacity-80"
+          >
+            {cat.label}
+          </Chip>
+        ))}
 
         <Chip
           size="sm"

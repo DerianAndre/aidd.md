@@ -24,9 +24,9 @@ Conduct a read-only audit of code, architecture, or systems to identify patterns
 
 ## Sub-Agent Roles
 
-| Role | Responsibility |
-|------|---------------|
-| **Auditor** | Systematically reads and catalogs code within scope. Identifies deviations from conventions, potential bugs, and structural issues. Measures quantitative metrics. |
+| Role              | Responsibility                                                                                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Auditor**       | Systematically reads and catalogs code within scope. Identifies deviations from conventions, potential bugs, and structural issues. Measures quantitative metrics.       |
 | **Domain Expert** | Interprets findings in the context of the project's architecture, business rules, and design decisions. Distinguishes intentional trade-offs from accidental complexity. |
 
 ---
@@ -100,14 +100,14 @@ Ordered by impact-to-effort ratio. Each recommendation includes: what to do, why
 
 ## Anti-Patterns
 
-| Anti-Pattern | Description | Mitigation |
-|-------------|-------------|------------|
-| **Drive-By Fixing** | Making changes during analysis instead of documenting findings | Enforce strict read-only discipline; all changes go into recommendations |
-| **Scope Creep** | Analysis expands beyond defined boundaries | Refer back to Step 1 scope definition; note out-of-scope observations separately |
-| **Opinion Without Evidence** | Stating subjective preferences as findings | Every finding must reference specific code locations and explain the concrete risk |
-| **Missing Quantitative Data** | Relying only on qualitative observations | Always include measurable metrics; numbers ground the analysis in reality |
-| **Severity Inflation** | Marking everything as Critical or High | Use the full severity range; reserve Critical for production-risk issues |
-| **Recommendation Without Context** | Suggesting changes without considering trade-offs | Each recommendation must acknowledge effort, risk, and dependencies |
+| Anti-Pattern                       | Description                                                    | Mitigation                                                                         |
+| ---------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Drive-By Fixing**                | Making changes during analysis instead of documenting findings | Enforce strict read-only discipline; all changes go into recommendations           |
+| **Scope Creep**                    | Analysis expands beyond defined boundaries                     | Refer back to Step 1 scope definition; note out-of-scope observations separately   |
+| **Opinion Without Evidence**       | Stating subjective preferences as findings                     | Every finding must reference specific code locations and explain the concrete risk |
+| **Missing Quantitative Data**      | Relying only on qualitative observations                       | Always include measurable metrics; numbers ground the analysis in reality          |
+| **Severity Inflation**             | Marking everything as Critical or High                         | Use the full severity range; reserve Critical for production-risk issues           |
+| **Recommendation Without Context** | Suggesting changes without considering trade-offs              | Each recommendation must acknowledge effort, risk, and dependencies                |
 
 ---
 
@@ -115,6 +115,6 @@ Ordered by impact-to-effort ratio. Each recommendation includes: what to do, why
 
 - **Workflow**: `workflows/analyze.md`
 - **Audit workflow**: `workflows/audit.md`
-- **BLUF-6 format**: `spec/bluf-6.md`
+- **BLUF-6 format**: `specs/bluf-6.md`
 - **Global rules**: `rules/global.md`
 - **Security rules**: `rules/security.md`

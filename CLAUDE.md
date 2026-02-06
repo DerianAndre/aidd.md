@@ -30,7 +30,7 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 - **rules/** — Domain-specific rules (global, orchestrator, frontend, backend, etc.)
 - **skills/** — Specialized agent capabilities with SKILL.md + validation scripts
 - **workflows/** — Step-by-step guides for complex multi-agent tasks
-- **spec/** — AIDD standard specifications (ASDD lifecycle, memory layer, heuristics, etc.)
+- **specs/** — AIDD standard specifications (ASDD lifecycle, memory layer, heuristics, etc.)
 - **knowledge/** — Technology Knowledge Base (TKB) entries
 - **templates/** — Task routing and decision templates
 - **packages/** — Shared libraries and CLI
@@ -46,17 +46,17 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 
 ## Commands
 
-| Command | Purpose |
-|---------|---------|
-| `pnpm mcp:setup` | Full setup: install deps, build packages, init .aidd/ |
-| `pnpm mcp:build` | Build all MCP packages |
-| `pnpm mcp:dev` | Watch mode for MCP development |
-| `pnpm mcp:test` | Run MCP tests |
-| `pnpm mcp:typecheck` | TypeScript type checking |
-| `pnpm mcp:clean` | Clean build artifacts |
-| `pnpm mcp:status` | Detailed package build status |
-| `pnpm mcp:doctor` | Full diagnostic (supports `--json`, `--fix`, `--deep`, `--quiet`, `--no-runtime`, `--no-color`) |
-| `pnpm mcp:check` | Single-line status for startup |
+| Command              | Purpose                                                                                         |
+| -------------------- | ----------------------------------------------------------------------------------------------- |
+| `pnpm mcp:setup`     | Full setup: install deps, build packages, init .aidd/                                           |
+| `pnpm mcp:build`     | Build all MCP packages                                                                          |
+| `pnpm mcp:dev`       | Watch mode for MCP development                                                                  |
+| `pnpm mcp:test`      | Run MCP tests                                                                                   |
+| `pnpm mcp:typecheck` | TypeScript type checking                                                                        |
+| `pnpm mcp:clean`     | Clean build artifacts                                                                           |
+| `pnpm mcp:status`    | Detailed package build status                                                                   |
+| `pnpm mcp:doctor`    | Full diagnostic (supports `--json`, `--fix`, `--deep`, `--quiet`, `--no-runtime`, `--no-color`) |
+| `pnpm mcp:check`     | Single-line status for startup                                                                  |
 
 ---
 

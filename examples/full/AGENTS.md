@@ -23,7 +23,7 @@
 Entry point for all tasks. Validates context (>90% confidence required), classifies work by domain and complexity, queries memory for prior decisions and mistakes, and delegates to specialized roles. Uses the highest model tier for planning.
 
 ### Architect
-System design and technical decision-making. Defines architecture, evaluates trade-offs, produces ADRs, and validates structural integrity. Consults `spec/` documents for formal specifications.
+System design and technical decision-making. Defines architecture, evaluates trade-offs, produces ADRs, and validates structural integrity. Consults `specs/` documents for formal specifications.
 
 ### Builder
 Implementation role. Writes code, creates files, integrates components. Follows all rules in `rules/` hierarchy. Executes skills from `skills/` when specialized work is required.
@@ -52,7 +52,7 @@ AGENTS.md (Single Source of Truth)
     |   |-- decisions.json (Architecture decisions)
     |   |-- mistakes.json (Errors and corrections)
     |   \-- conventions.json (Discovered conventions)
-    \-- spec/
+    \-- specs/
         \-- (Formal specifications and ADRs)
 ```
 
@@ -62,11 +62,11 @@ AGENTS.md (Single Source of Truth)
 
 Optimize cost and quality via tiered model usage:
 
-| Tier | Label | Tasks |
-|------|-------|-------|
-| 1 | HIGH | Architecture, security, planning, spec writing |
-| 2 | STANDARD | Implementation, integration, API design |
-| 3 | LOW | Tests, boilerplate, formatting, i18n, docs |
+| Tier | Label    | Tasks                                          |
+| ---- | -------- | ---------------------------------------------- |
+| 1    | HIGH     | Architecture, security, planning, spec writing |
+| 2    | STANDARD | Implementation, integration, API design        |
+| 3    | LOW      | Tests, boilerplate, formatting, i18n, docs     |
 
 ---
 

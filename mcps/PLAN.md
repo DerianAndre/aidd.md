@@ -73,14 +73,14 @@ Usage: `npx @aidd.md/mcp-engine` — no global install, no copying.
 
 Dual-backend approach inspired by claude-mem's production patterns:
 
-| Data Type | Backend | Reason |
-|-----------|---------|--------|
-| Decisions, conventions, mistakes | JSON in `ai/memory/` | Git-visible, team-shared, diffable |
-| Session state, observations | SQLite in `.aidd/data.db` | Transient, high-write, concurrent, gitignored |
-| Branch context | JSON in `.aidd/branches/` | Git-visible per decision |
-| Analytics, TKB cache | SQLite in `.aidd/data.db` | Aggregation queries, indexed search |
-| Evolution log, drafts | JSON in `.aidd/evolution/`, `.aidd/drafts/` | Audit trail, human-reviewable |
-| Search index | SQLite FTS5 | Full-text search performance |
+| Data Type                        | Backend                                     | Reason                                        |
+| -------------------------------- | ------------------------------------------- | --------------------------------------------- |
+| Decisions, conventions, mistakes | JSON in `ai/memory/`                        | Git-visible, team-shared, diffable            |
+| Session state, observations      | SQLite in `.aidd/data.db`                   | Transient, high-write, concurrent, gitignored |
+| Branch context                   | JSON in `.aidd/branches/`                   | Git-visible per decision                      |
+| Analytics, TKB cache             | SQLite in `.aidd/data.db`                   | Aggregation queries, indexed search           |
+| Evolution log, drafts            | JSON in `.aidd/evolution/`, `.aidd/drafts/` | Audit trail, human-reviewable                 |
+| Search index                     | SQLite FTS5                                 | Full-text search performance                  |
 
 SQLite is optional — JSON backend provides zero-dependency fallback via `StorageBackend` interface.
 
@@ -411,78 +411,78 @@ interface StorageBackend {
 
 ### Core: The Brain (17 tools)
 
-| # | Tool | Purpose | Annotations |
-|---|------|---------|-------------|
-| 1 | `aidd_detect_project` | Scan directory for AIDD markers + parse package.json stack | readOnly |
-| 2 | `aidd_get_config` | Return active MCP configuration | readOnly |
-| 3 | `aidd_bootstrap` | One-call conversation start: project + agents + rules + memory + suggestions | readOnly |
-| 4 | `aidd_classify_task` | Task → agent roles, workflows, templates (decision-tree.md) | readOnly |
-| 5 | `aidd_get_routing_table` | Complete routing table from templates/routing.md | readOnly |
-| 6 | `aidd_query_tkb` | Filter/search TKB by category, maturity, keyword, use case | readOnly |
-| 7 | `aidd_get_tkb_entry` | Full content of a specific TKB entry | readOnly |
-| 8 | `aidd_get_agent` | Agent SKILL.md with parsed frontmatter | readOnly |
-| 9 | `aidd_get_competency_matrix` | Cross-agent expertise matrix | readOnly |
-| 10 | `aidd_apply_heuristics` | Run a decision through AIDD's 10 heuristics | readOnly |
-| 11 | `aidd_tech_compatibility` | Stack compatibility analysis with scores | readOnly |
-| 12 | `aidd_suggest_next` | Context-aware next step suggestions with pre-filled tool args | readOnly |
-| 13 | `aidd_optimize_context` | Token-budget-aware context filtering | readOnly |
-| 14 | `aidd_scaffold` | Initialize AIDD in a project (minimal/standard/full) | write |
+| #   | Tool                         | Purpose                                                                      | Annotations |
+| --- | ---------------------------- | ---------------------------------------------------------------------------- | ----------- |
+| 1   | `aidd_detect_project`        | Scan directory for AIDD markers + parse package.json stack                   | readOnly    |
+| 2   | `aidd_get_config`            | Return active MCP configuration                                              | readOnly    |
+| 3   | `aidd_bootstrap`             | One-call conversation start: project + agents + rules + memory + suggestions | readOnly    |
+| 4   | `aidd_classify_task`         | Task → agent roles, workflows, templates (decision-tree.md)                  | readOnly    |
+| 5   | `aidd_get_routing_table`     | Complete routing table from templates/routing.md                             | readOnly    |
+| 6   | `aidd_query_tkb`             | Filter/search TKB by category, maturity, keyword, use case                   | readOnly    |
+| 7   | `aidd_get_tkb_entry`         | Full content of a specific TKB entry                                         | readOnly    |
+| 8   | `aidd_get_agent`             | Agent SKILL.md with parsed frontmatter                                       | readOnly    |
+| 9   | `aidd_get_competency_matrix` | Cross-agent expertise matrix                                                 | readOnly    |
+| 10  | `aidd_apply_heuristics`      | Run a decision through AIDD's 10 heuristics                                  | readOnly    |
+| 11  | `aidd_tech_compatibility`    | Stack compatibility analysis with scores                                     | readOnly    |
+| 12  | `aidd_suggest_next`          | Context-aware next step suggestions with pre-filled tool args                | readOnly    |
+| 13  | `aidd_optimize_context`      | Token-budget-aware context filtering                                         | readOnly    |
+| 14  | `aidd_scaffold`              | Initialize AIDD in a project (minimal/standard/full)                         | write       |
 
 ### Memory: The Memory (27 tools)
 
-| # | Tool | Purpose | Annotations |
-|---|------|---------|-------------|
-| 1 | `aidd_session` | Multi-action: start, update, end, get, list (Layer 1) + session threading | write |
-| 2 | `aidd_branch` | Multi-action: get, save, promote, list, merge (Layer 2) | write |
-| 3 | `aidd_memory_search` | 3-layer L1: compact index search (~50-100 tokens/result) | readOnly |
-| 4 | `aidd_memory_context` | 3-layer L2: timeline view around a specific entry | readOnly |
-| 5 | `aidd_memory_get` | 3-layer L3: fetch full details by IDs (batch) | readOnly |
-| 6 | `aidd_memory_add_decision` | Record architectural decision with rationale | write |
-| 7 | `aidd_memory_add_mistake` | Record mistake with root cause + fix + prevention | write |
-| 8 | `aidd_memory_add_convention` | Record project convention with examples | write |
-| 9 | `aidd_observation` | Record typed observation with discoveryTokens (pattern, insight, etc.) | write |
-| 10 | `aidd_memory_prune` | Remove outdated entries | destructive |
-| 11 | `aidd_lifecycle_get` | ASDD 8-phase definition with entry/exit criteria | readOnly |
-| 12 | `aidd_lifecycle_init` | Initialize new ASDD session | write |
-| 13 | `aidd_lifecycle_advance` | Advance phase after verifying exit criteria | write |
-| 14 | `aidd_lifecycle_status` | Current lifecycle session state | readOnly |
-| 15 | `aidd_lifecycle_list` | List all lifecycle sessions | readOnly |
-| 16 | `aidd_evolution_analyze` | Analyze sessions, identify patterns, generate candidates | readOnly |
-| 17 | `aidd_evolution_status` | Engine learnings + pending changes | readOnly |
-| 18 | `aidd_evolution_review` | Review auto-changes before/after apply | readOnly |
-| 19 | `aidd_evolution_revert` | Undo an auto-applied change | destructive |
-| 20 | `aidd_draft_create` | Generate draft artifact in `.aidd/drafts/` | write |
-| 21 | `aidd_draft_list` | List pending drafts with confidence scores | readOnly |
-| 22 | `aidd_draft_approve` | Promote draft to AIDD directory | write |
-| 23 | `aidd_model_performance` | AI provider/model performance metrics | readOnly |
-| 24 | `aidd_model_compare` | Side-by-side model comparison | readOnly |
-| 25 | `aidd_model_recommend` | Task-type-aware model recommendation | readOnly |
-| 26 | `aidd_diagnose_error` | Search memory for similar past mistakes + fixes | readOnly |
-| 27 | `aidd_project_health` | Data-driven health score from analytics | readOnly |
+| #   | Tool                         | Purpose                                                                   | Annotations |
+| --- | ---------------------------- | ------------------------------------------------------------------------- | ----------- |
+| 1   | `aidd_session`               | Multi-action: start, update, end, get, list (Layer 1) + session threading | write       |
+| 2   | `aidd_branch`                | Multi-action: get, save, promote, list, merge (Layer 2)                   | write       |
+| 3   | `aidd_memory_search`         | 3-layer L1: compact index search (~50-100 tokens/result)                  | readOnly    |
+| 4   | `aidd_memory_context`        | 3-layer L2: timeline view around a specific entry                         | readOnly    |
+| 5   | `aidd_memory_get`            | 3-layer L3: fetch full details by IDs (batch)                             | readOnly    |
+| 6   | `aidd_memory_add_decision`   | Record architectural decision with rationale                              | write       |
+| 7   | `aidd_memory_add_mistake`    | Record mistake with root cause + fix + prevention                         | write       |
+| 8   | `aidd_memory_add_convention` | Record project convention with examples                                   | write       |
+| 9   | `aidd_observation`           | Record typed observation with discoveryTokens (pattern, insight, etc.)    | write       |
+| 10  | `aidd_memory_prune`          | Remove outdated entries                                                   | destructive |
+| 11  | `aidd_lifecycle_get`         | ASDD 8-phase definition with entry/exit criteria                          | readOnly    |
+| 12  | `aidd_lifecycle_init`        | Initialize new ASDD session                                               | write       |
+| 13  | `aidd_lifecycle_advance`     | Advance phase after verifying exit criteria                               | write       |
+| 14  | `aidd_lifecycle_status`      | Current lifecycle session state                                           | readOnly    |
+| 15  | `aidd_lifecycle_list`        | List all lifecycle sessions                                               | readOnly    |
+| 16  | `aidd_evolution_analyze`     | Analyze sessions, identify patterns, generate candidates                  | readOnly    |
+| 17  | `aidd_evolution_status`      | Engine learnings + pending changes                                        | readOnly    |
+| 18  | `aidd_evolution_review`      | Review auto-changes before/after apply                                    | readOnly    |
+| 19  | `aidd_evolution_revert`      | Undo an auto-applied change                                               | destructive |
+| 20  | `aidd_draft_create`          | Generate draft artifact in `.aidd/drafts/`                                | write       |
+| 21  | `aidd_draft_list`            | List pending drafts with confidence scores                                | readOnly    |
+| 22  | `aidd_draft_approve`         | Promote draft to AIDD directory                                           | write       |
+| 23  | `aidd_model_performance`     | AI provider/model performance metrics                                     | readOnly    |
+| 24  | `aidd_model_compare`         | Side-by-side model comparison                                             | readOnly    |
+| 25  | `aidd_model_recommend`       | Task-type-aware model recommendation                                      | readOnly    |
+| 26  | `aidd_diagnose_error`        | Search memory for similar past mistakes + fixes                           | readOnly    |
+| 27  | `aidd_project_health`        | Data-driven health score from analytics                                   | readOnly    |
 
 ### Tools: The Hands (19 tools)
 
-| # | Tool | Purpose | Annotations |
-|---|------|---------|-------------|
-| 1 | `aidd_validate_mermaid` | Validate Mermaid diagram syntax | readOnly |
-| 2 | `aidd_validate_openapi` | Validate OpenAPI specification | readOnly |
-| 3 | `aidd_validate_sql` | Validate SQL syntax and patterns | readOnly |
-| 4 | `aidd_validate_tests` | Validate test file structure and coverage | readOnly |
-| 5 | `aidd_validate_dockerfile` | Validate Dockerfile best practices | readOnly |
-| 6 | `aidd_validate_i18n` | Validate internationalization files | readOnly |
-| 7 | `aidd_validate_tkb_entry` | Validate TKB entry format | readOnly |
-| 8 | `aidd_validate_design_tokens` | Validate design token files | readOnly |
-| 9 | `aidd_audit_accessibility` | WCAG accessibility audit | readOnly |
-| 10 | `aidd_audit_performance` | Performance audit by framework | readOnly |
-| 11 | `aidd_scan_secrets` | Scan for exposed secrets | readOnly |
-| 12 | `aidd_check_compliance` | Check code against AIDD rules | readOnly |
-| 13 | `aidd_verify_version` | 4-step Version Verification Protocol | readOnly |
-| 14 | `aidd_check_quality_gates` | Validate ASDD quality gates | readOnly |
-| 15 | `aidd_explain_violation` | Explain why a rule exists with examples | readOnly |
-| 16 | `aidd_generate_commit_message` | Analyze changes → conventional commit | readOnly |
-| 17 | `aidd_plan_migration` | Framework upgrade plan with guardrails | readOnly |
-| 18 | `aidd_ci_report` | CI/CD compliance report (github/json/markdown) | readOnly |
-| 19 | `aidd_ci_diff_check` | Check only changed files for compliance | readOnly |
+| #   | Tool                           | Purpose                                        | Annotations |
+| --- | ------------------------------ | ---------------------------------------------- | ----------- |
+| 1   | `aidd_validate_mermaid`        | Validate Mermaid diagram syntax                | readOnly    |
+| 2   | `aidd_validate_openapi`        | Validate OpenAPI specification                 | readOnly    |
+| 3   | `aidd_validate_sql`            | Validate SQL syntax and patterns               | readOnly    |
+| 4   | `aidd_validate_tests`          | Validate test file structure and coverage      | readOnly    |
+| 5   | `aidd_validate_dockerfile`     | Validate Dockerfile best practices             | readOnly    |
+| 6   | `aidd_validate_i18n`           | Validate internationalization files            | readOnly    |
+| 7   | `aidd_validate_tkb_entry`      | Validate TKB entry format                      | readOnly    |
+| 8   | `aidd_validate_design_tokens`  | Validate design token files                    | readOnly    |
+| 9   | `aidd_audit_accessibility`     | WCAG accessibility audit                       | readOnly    |
+| 10  | `aidd_audit_performance`       | Performance audit by framework                 | readOnly    |
+| 11  | `aidd_scan_secrets`            | Scan for exposed secrets                       | readOnly    |
+| 12  | `aidd_check_compliance`        | Check code against AIDD rules                  | readOnly    |
+| 13  | `aidd_verify_version`          | 4-step Version Verification Protocol           | readOnly    |
+| 14  | `aidd_check_quality_gates`     | Validate ASDD quality gates                    | readOnly    |
+| 15  | `aidd_explain_violation`       | Explain why a rule exists with examples        | readOnly    |
+| 16  | `aidd_generate_commit_message` | Analyze changes → conventional commit          | readOnly    |
+| 17  | `aidd_plan_migration`          | Framework upgrade plan with guardrails         | readOnly    |
+| 18  | `aidd_ci_report`               | CI/CD compliance report (github/json/markdown) | readOnly    |
+| 19  | `aidd_ci_diff_check`           | Check only changed files for compliance        | readOnly    |
 
 ---
 
@@ -585,14 +585,14 @@ interface StorageBackend {
 
 ### Evolution Types
 
-| Observation | Auto-Improvement |
-|-------------|------------------|
-| Agent X better for task type Y | Update routing weights |
-| Skill combo A+B > A alone | Update agent skill sets |
-| Rule violation always reverted | Elevate rule severity |
-| Tools X→Y→Z always together | Create compound workflow |
-| TKB entry X = fewer mistakes | Promote TKB entry |
-| Recurring mistake pattern | Draft new rule/convention |
+| Observation                        | Auto-Improvement             |
+| ---------------------------------- | ---------------------------- |
+| Agent X better for task type Y     | Update routing weights       |
+| Skill combo A+B > A alone          | Update agent skill sets      |
+| Rule violation always reverted     | Elevate rule severity        |
+| Tools X→Y→Z always together        | Create compound workflow     |
+| TKB entry X = fewer mistakes       | Promote TKB entry            |
+| Recurring mistake pattern          | Draft new rule/convention    |
 | Model A outperforms B for frontend | Update model recommendations |
 
 ---
@@ -602,7 +602,7 @@ interface StorageBackend {
 ### Bundled Content (build time)
 
 A build script copies AIDD framework files into the npm package:
-- AGENTS.md, spec/, rules/, skills/, workflows/, templates/, knowledge/
+- AGENTS.md, specs/, rules/, skills/, workflows/, templates/, knowledge/
 
 ### Project Detection (runtime)
 
@@ -614,16 +614,16 @@ A build script copies AIDD framework files into the npm package:
 
 ### Merge Strategy (default: `"merge"`)
 
-| Content | Behavior |
-|---------|----------|
-| AGENTS.md | Project wins entirely (SSOT) |
-| Rules | Project overrides by filename, additions included |
-| Skills | Project overrides by agent name |
-| Workflows | Project overrides by filename |
-| Templates | Project overrides by filename |
-| Knowledge | Merged by path, project overrides bundled |
-| Memory | Project-only (never from bundled) |
-| Spec | Bundled-only (specs define the standard) |
+| Content   | Behavior                                          |
+| --------- | ------------------------------------------------- |
+| AGENTS.md | Project wins entirely (SSOT)                      |
+| Rules     | Project overrides by filename, additions included |
+| Skills    | Project overrides by agent name                   |
+| Workflows | Project overrides by filename                     |
+| Templates | Project overrides by filename                     |
+| Knowledge | Merged by path, project overrides bundled         |
+| Memory    | Project-only (never from bundled)                 |
+| Specs     | Bundled-only (specs define the standard)          |
 
 ---
 
@@ -631,15 +631,15 @@ A build script copies AIDD framework files into the npm package:
 
 Proven patterns to port from the EnXingaPay MCP implementation:
 
-| Pattern | Source | Adaptation |
-|---------|--------|------------|
-| Server factory | `mcp-shared/src/server.ts` | `createAiddServer()` with error handling |
-| Response helpers | `mcp-shared/src/response.ts` | `createTextResult()`, `createJsonResult()`, `createErrorResult()` |
-| FS utilities | `mcp-shared/src/fs.ts` | `readFileOrNull()`, `readJsonFile()`, `writeJsonFile()` |
-| Path resolution | `mcp-shared/src/paths.ts` | `findProjectRoot()`, `fromRoot()`, `paths` |
-| Session state | `mcp-memory/tools/memory-session.ts` | Multi-action tool (get/start/update/end) |
-| Branch context | `mcp-memory/tools/memory-branch.ts` | Multi-action tool (get/save/promote/list/merge) |
-| Mistake tracking | `mcp-memory/tools/memory-mistakes.ts` | Occurrence counting, similarity matching |
+| Pattern          | Source                                | Adaptation                                                        |
+| ---------------- | ------------------------------------- | ----------------------------------------------------------------- |
+| Server factory   | `mcp-shared/src/server.ts`            | `createAiddServer()` with error handling                          |
+| Response helpers | `mcp-shared/src/response.ts`          | `createTextResult()`, `createJsonResult()`, `createErrorResult()` |
+| FS utilities     | `mcp-shared/src/fs.ts`                | `readFileOrNull()`, `readJsonFile()`, `writeJsonFile()`           |
+| Path resolution  | `mcp-shared/src/paths.ts`             | `findProjectRoot()`, `fromRoot()`, `paths`                        |
+| Session state    | `mcp-memory/tools/memory-session.ts`  | Multi-action tool (get/start/update/end)                          |
+| Branch context   | `mcp-memory/tools/memory-branch.ts`   | Multi-action tool (get/save/promote/list/merge)                   |
+| Mistake tracking | `mcp-memory/tools/memory-mistakes.ts` | Occurrence counting, similarity matching                          |
 
 ---
 
@@ -647,131 +647,131 @@ Proven patterns to port from the EnXingaPay MCP implementation:
 
 ### Phase 1: Foundation
 
-| # | Task | Package |
-|---|------|---------|
-| 1 | Initialize `mcps/` workspace with pnpm workspace config | root |
-| 2 | Types, server factory, response helpers, FS utils, paths, logger, schemas | shared |
-| 3 | Monolithic package: server skeleton, transport (stdio + HTTP) | mcp-aidd |
-| 4 | Core split package: setup, server skeleton | mcp-aidd-core |
-| 5 | Content bundling build script | scripts |
+| #   | Task                                                                      | Package       |
+| --- | ------------------------------------------------------------------------- | ------------- |
+| 1   | Initialize `mcps/` workspace with pnpm workspace config                   | root          |
+| 2   | Types, server factory, response helpers, FS utils, paths, logger, schemas | shared        |
+| 3   | Monolithic package: server skeleton, transport (stdio + HTTP)             | mcp-aidd      |
+| 4   | Core split package: setup, server skeleton                                | mcp-aidd-core |
+| 5   | Content bundling build script                                             | scripts       |
 
 ### Phase 2: Core Brain
 
-| # | Task | Module |
-|---|------|--------|
-| 6 | detect_project, get_config, bootstrap | bootstrap |
-| 7 | classify_task, routing_table (implements decision-tree.md) | routing |
-| 8 | TKB indexing, query engine, get_agent, competency_matrix | knowledge |
-| 9 | apply_heuristics, suggest_next, tech_compatibility | guidance |
-| 10 | optimize_context + **ContextBuilder pipeline** (token-budget-aware progressive disclosure) | context |
-| 11 | AIDD project initialization | scaffold |
-| 12 | Resources + Prompts for core | core |
+| #   | Task                                                                                       | Module    |
+| --- | ------------------------------------------------------------------------------------------ | --------- |
+| 6   | detect_project, get_config, bootstrap                                                      | bootstrap |
+| 7   | classify_task, routing_table (implements decision-tree.md)                                 | routing   |
+| 8   | TKB indexing, query engine, get_agent, competency_matrix                                   | knowledge |
+| 9   | apply_heuristics, suggest_next, tech_compatibility                                         | guidance  |
+| 10  | optimize_context + **ContextBuilder pipeline** (token-budget-aware progressive disclosure) | context   |
+| 11  | AIDD project initialization                                                                | scaffold  |
+| 12  | Resources + Prompts for core                                                               | core      |
 
 ### Phase 3: Memory Foundation
 
-| # | Task | Module |
-|---|------|--------|
-| 13 | Memory split package: setup, server skeleton | mcp-aidd-memory |
-| 13.5 | **Storage backend abstraction**: `StorageBackend` interface, JSON backend (zero-dep), SQLite backend (FTS5 + WAL), factory (auto-select with fallback), migrations | storage |
-| 14 | Multi-action session tool (Layer 1) **+ session threading** (`memorySessionId`, `parentSessionId`) | session |
-| 15 | Multi-action branch tool (Layer 2) | branch |
-| 16 | **3-layer search**: `aidd_memory_search` (compact index), `aidd_memory_context` (timeline), `aidd_memory_get` (batch full details) + CRUD for decisions/mistakes/conventions | memory |
-| 16.5 | **Observation system**: `aidd_observation` tool — typed observations with `discoveryTokens` ROI tracking | observation |
-| 17 | ASDD sessions, phase validation (Layer 3) | lifecycle |
+| #    | Task                                                                                                                                                                         | Module          |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| 13   | Memory split package: setup, server skeleton                                                                                                                                 | mcp-aidd-memory |
+| 13.5 | **Storage backend abstraction**: `StorageBackend` interface, JSON backend (zero-dep), SQLite backend (FTS5 + WAL), factory (auto-select with fallback), migrations           | storage         |
+| 14   | Multi-action session tool (Layer 1) **+ session threading** (`memorySessionId`, `parentSessionId`)                                                                           | session         |
+| 15   | Multi-action branch tool (Layer 2)                                                                                                                                           | branch          |
+| 16   | **3-layer search**: `aidd_memory_search` (compact index), `aidd_memory_context` (timeline), `aidd_memory_get` (batch full details) + CRUD for decisions/mistakes/conventions | memory          |
+| 16.5 | **Observation system**: `aidd_observation` tool — typed observations with `discoveryTokens` ROI tracking                                                                     | observation     |
+| 17   | ASDD sessions, phase validation (Layer 3)                                                                                                                                    | lifecycle       |
 
 ### Phase 4: Evolution Engine
 
-| # | Task | Module |
-|---|------|--------|
-| 18 | Passive tracking (tool usage, violations, TKB queries, model perf) — **use SQLite backend for aggregation** | analytics |
-| 19 | Session recording, pattern recognition, **ROI-weighted confidence scoring via discoveryTokens** | evolution |
-| 20 | Auto-apply engine, snapshots, rollback, log | evolution |
-| 21 | Content authoring: create drafts, list, approve/reject | drafts |
-| 22 | aidd_model_performance, aidd_model_compare, aidd_model_recommend | analytics |
+| #   | Task                                                                                                        | Module    |
+| --- | ----------------------------------------------------------------------------------------------------------- | --------- |
+| 18  | Passive tracking (tool usage, violations, TKB queries, model perf) — **use SQLite backend for aggregation** | analytics |
+| 19  | Session recording, pattern recognition, **ROI-weighted confidence scoring via discoveryTokens**             | evolution |
+| 20  | Auto-apply engine, snapshots, rollback, log                                                                 | evolution |
+| 21  | Content authoring: create drafts, list, approve/reject                                                      | drafts    |
+| 22  | aidd_model_performance, aidd_model_compare, aidd_model_recommend                                            | analytics |
 
 ### Phase 5: Diagnostics
 
-| # | Task | Module |
-|---|------|--------|
-| 23 | diagnose_error (mistake matching), project_health (data-driven score) | diagnostics |
+| #   | Task                                                                  | Module      |
+| --- | --------------------------------------------------------------------- | ----------- |
+| 23  | diagnose_error (mistake matching), project_health (data-driven score) | diagnostics |
 
 ### Phase 6: Tools Foundation
 
-| # | Task | Module |
-|---|------|--------|
-| 24 | Tools split package: setup, server skeleton | mcp-aidd-tools |
-| 25 | ValidationIssue interface, common utils | validation |
-| 26 | Port 11 validators from `skills/*/scripts/` to pure functions | validation |
-| 27 | Register all 11 validation tools | validation |
+| #   | Task                                                          | Module         |
+| --- | ------------------------------------------------------------- | -------------- |
+| 24  | Tools split package: setup, server skeleton                   | mcp-aidd-tools |
+| 25  | ValidationIssue interface, common utils                       | validation     |
+| 26  | Port 11 validators from `skills/*/scripts/` to pure functions | validation     |
+| 27  | Register all 11 validation tools                              | validation     |
 
 ### Phase 7: Enforcement + Execution
 
-| # | Task | Module |
-|---|------|--------|
-| 28 | Compliance checker, version verifier, quality gates, violation explainer | enforcement |
-| 29 | Commit message generator, migration planner | execution |
-| 30 | CI mode: report generation (github/json/markdown), diff-check | ci |
+| #   | Task                                                                     | Module      |
+| --- | ------------------------------------------------------------------------ | ----------- |
+| 28  | Compliance checker, version verifier, quality gates, violation explainer | enforcement |
+| 29  | Commit message generator, migration planner                              | execution   |
+| 30  | CI mode: report generation (github/json/markdown), diff-check            | ci          |
 
 ### Phase 8: Monolithic Integration
 
-| # | Task | Package |
-|---|------|---------|
-| 31 | Wire all modules into monolithic package | mcp-aidd |
-| 32 | Verify all 60 tools register correctly | mcp-aidd |
-| 33 | Verify cross-module direct function calls | mcp-aidd |
+| #   | Task                                      | Package  |
+| --- | ----------------------------------------- | -------- |
+| 31  | Wire all modules into monolithic package  | mcp-aidd |
+| 32  | Verify all 60 tools register correctly    | mcp-aidd |
+| 33  | Verify cross-module direct function calls | mcp-aidd |
 
 ### Phase 8.5: Hook Templates (Optional Automation)
 
-| # | Task | Deliverable |
-|---|------|-------------|
+| #    | Task                                                                                                                                                                        | Deliverable                    |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
 | 33.5 | Claude Code hook templates: `session-start.mjs` (context injection via `aidd_bootstrap`), `post-tool-use.mjs` (observation capture), `session-end.mjs` (summary generation) | `templates/hooks/claude-code/` |
-| 33.6 | Cursor integration template: `.cursorrules` with AIDD context | `templates/hooks/cursor/` |
-| 33.7 | Hook installation documentation + setup script | `templates/hooks/README.md` |
+| 33.6 | Cursor integration template: `.cursorrules` with AIDD context                                                                                                               | `templates/hooks/cursor/`      |
+| 33.7 | Hook installation documentation + setup script                                                                                                                              | `templates/hooks/README.md`    |
 
 ### Phase 9: Testing
 
-| # | Task | Scope |
-|---|------|-------|
-| 34 | Unit tests for shared (content-loader, project-detector, FS utils) | shared |
-| 35 | Unit tests per module (routing, TKB, memory, evolution, validators) | all |
-| 36 | Integration tests: stdio transport (spawn + stdin/stdout) | all |
-| 37 | Integration tests: HTTP transport (request/response) | all |
-| 38 | MCP Inspector testing (manual verification) | all |
+| #   | Task                                                                | Scope  |
+| --- | ------------------------------------------------------------------- | ------ |
+| 34  | Unit tests for shared (content-loader, project-detector, FS utils)  | shared |
+| 35  | Unit tests per module (routing, TKB, memory, evolution, validators) | all    |
+| 36  | Integration tests: stdio transport (spawn + stdin/stdout)           | all    |
+| 37  | Integration tests: HTTP transport (request/response)                | all    |
+| 38  | MCP Inspector testing (manual verification)                         | all    |
 
 ### Phase 10: Documentation & Polish
 
-| # | Task | Deliverable |
-|---|------|-------------|
-| 39 | Architecture overview | `mcps/README.md` |
-| 40 | README.md for each package | per-package |
-| 41 | Update adapter docs | `adapters/claude/README.md` |
-| 42 | Usage examples and configuration guide | docs |
-| 43 | DX commands documentation | root package.json |
+| #   | Task                                   | Deliverable                 |
+| --- | -------------------------------------- | --------------------------- |
+| 39  | Architecture overview                  | `mcps/README.md`            |
+| 40  | README.md for each package             | per-package                 |
+| 41  | Update adapter docs                    | `adapters/claude/README.md` |
+| 42  | Usage examples and configuration guide | docs                        |
+| 43  | DX commands documentation              | root package.json           |
 
 ---
 
 ## 12. Key Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Approach C | Monolithic + split | Simple default OR granular control |
-| npm distribution | `npx` packages | Standard MCP pattern, auto-updates |
-| 5-layer memory | Session → Branch → Lifecycle → Permanent → Evolution | Complete coverage |
-| AI model tracking | Per-session recording | Real-world benchmarking |
-| Shared package | `@aidd.md/mcp-shared` | DRY: factory, helpers, utils, types |
-| EnXingaPay patterns | Server factory, FS, memory | Proven, not reinventing |
-| Hybrid content | Bundle + project override | Works anywhere |
-| Hybrid storage | SQLite (sessions, analytics, search) + JSON (decisions, evolution) | Performance where needed, Git visibility where it matters |
-| 3-layer search | search → context → get | ~10x token savings vs full-entry retrieval (claude-mem pattern) |
-| Session threading | `memorySessionId` + `parentSessionId` | Memory continuity across reconnects (claude-mem pattern) |
-| Typed observations | Extensible `ObservationType` union with `discoveryTokens` ROI | Rich data for evolution engine pattern recognition |
-| Token-budget context | `ContextBudget` with progressive disclosure | Smarter context injection within token limits |
-| Privacy tags | `<private>` tag stripping before storage | Prevent accidental credential/PII exposure in memory |
-| Optional hooks | Templates in `templates/hooks/` | Zero-friction automation without sacrificing portability |
-| Confidence thresholds | Default 90% | Safe automation |
-| Draft pipeline | `.aidd/drafts/` | Review before changes land |
-| Pure validators | Refactored from scripts | Same code in MCP + CI |
-| tsup | Build system | Fast, ESM + CJS, clean config |
+| Decision              | Choice                                                             | Rationale                                                       |
+| --------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------- |
+| Approach C            | Monolithic + split                                                 | Simple default OR granular control                              |
+| npm distribution      | `npx` packages                                                     | Standard MCP pattern, auto-updates                              |
+| 5-layer memory        | Session → Branch → Lifecycle → Permanent → Evolution               | Complete coverage                                               |
+| AI model tracking     | Per-session recording                                              | Real-world benchmarking                                         |
+| Shared package        | `@aidd.md/mcp-shared`                                              | DRY: factory, helpers, utils, types                             |
+| EnXingaPay patterns   | Server factory, FS, memory                                         | Proven, not reinventing                                         |
+| Hybrid content        | Bundle + project override                                          | Works anywhere                                                  |
+| Hybrid storage        | SQLite (sessions, analytics, search) + JSON (decisions, evolution) | Performance where needed, Git visibility where it matters       |
+| 3-layer search        | search → context → get                                             | ~10x token savings vs full-entry retrieval (claude-mem pattern) |
+| Session threading     | `memorySessionId` + `parentSessionId`                              | Memory continuity across reconnects (claude-mem pattern)        |
+| Typed observations    | Extensible `ObservationType` union with `discoveryTokens` ROI      | Rich data for evolution engine pattern recognition              |
+| Token-budget context  | `ContextBudget` with progressive disclosure                        | Smarter context injection within token limits                   |
+| Privacy tags          | `<private>` tag stripping before storage                           | Prevent accidental credential/PII exposure in memory            |
+| Optional hooks        | Templates in `templates/hooks/`                                    | Zero-friction automation without sacrificing portability        |
+| Confidence thresholds | Default 90%                                                        | Safe automation                                                 |
+| Draft pipeline        | `.aidd/drafts/`                                                    | Review before changes land                                      |
+| Pure validators       | Refactored from scripts                                            | Same code in MCP + CI                                           |
+| tsup                  | Build system                                                       | Fast, ESM + CJS, clean config                                   |
 
 ---
 
@@ -779,35 +779,35 @@ Proven patterns to port from the EnXingaPay MCP implementation:
 
 ### AIDD Framework
 
-| File | Used By |
-|------|---------|
-| `rules/decision-tree.md` | Core: routing classifier |
-| `spec/asdd-lifecycle.md` | Memory: lifecycle phases |
-| `spec/memory-layer.md` | Memory: schemas |
-| `spec/heuristics.md` | Core: 10 heuristics |
-| `spec/version-protocol.md` | Tools: version verifier |
-| `spec/bluf-6.md` | Core: prompts |
-| `templates/routing.md` | Core: routing table |
-| `rules/interfaces.md` | Memory: evolution contracts |
-| `skills/system-architect/scripts/validate-mermaid.ts` | Tools: validator pattern |
+| File                                                  | Used By                     |
+| ----------------------------------------------------- | --------------------------- |
+| `rules/decision-tree.md`                              | Core: routing classifier    |
+| `specs/asdd-lifecycle.md`                             | Memory: lifecycle phases    |
+| `specs/memory-layer.md`                               | Memory: schemas             |
+| `specs/heuristics.md`                                 | Core: 10 heuristics         |
+| `specs/version-protocol.md`                           | Tools: version verifier     |
+| `specs/bluf-6.md`                                     | Core: prompts               |
+| `templates/routing.md`                                | Core: routing table         |
+| `rules/interfaces.md`                                 | Memory: evolution contracts |
+| `skills/system-architect/scripts/validate-mermaid.ts` | Tools: validator pattern    |
 
 ### MCP References
 
-| File | Purpose |
-|------|---------|
-| `researchs/repos/skills/skills/mcp-builder/reference/node_mcp_server.md` | MCP SDK patterns |
+| File                                                                        | Purpose                  |
+| --------------------------------------------------------------------------- | ------------------------ |
+| `researchs/repos/skills/skills/mcp-builder/reference/node_mcp_server.md`    | MCP SDK patterns         |
 | `researchs/repos/skills/skills/mcp-builder/reference/mcp_best_practices.md` | Tool naming, annotations |
 
 ### EnXingaPay Patterns
 
-| File | Pattern |
-|------|---------|
-| `packages/shared/src/server.ts` | Server factory |
-| `packages/shared/src/fs.ts` | FS utilities |
-| `packages/shared/src/paths.ts` | Path resolution |
+| File                                                | Pattern              |
+| --------------------------------------------------- | -------------------- |
+| `packages/shared/src/server.ts`                     | Server factory       |
+| `packages/shared/src/fs.ts`                         | FS utilities         |
+| `packages/shared/src/paths.ts`                      | Path resolution      |
 | `mcps/mcp-aidd-memory/src/modules/session/index.ts` | Session multi-action |
-| `mcps/mcp-aidd-memory/src/modules/branch/index.ts` | Branch multi-action |
-| `mcps/mcp-aidd-memory/src/modules/memory/index.ts` | Mistake tracking |
+| `mcps/mcp-aidd-memory/src/modules/branch/index.ts`  | Branch multi-action  |
+| `mcps/mcp-aidd-memory/src/modules/memory/index.ts`  | Mistake tracking     |
 
 ---
 
@@ -840,23 +840,23 @@ Proven patterns to port from the EnXingaPay MCP implementation:
 
 ## Summary
 
-| Package | npm | Tools | Identity |
-|---------|-----|-------|----------|
-| Engine | `@aidd.md/mcp-engine` | 63 | All-in-one (recommended) |
-| Core | `@aidd.md/mcp-core` | 17 | The Brain |
-| Memory | `@aidd.md/mcp-memory` | 27 | The Memory |
-| Tools | `@aidd.md/mcp-tools` | 19 | The Hands |
-| Shared | `@aidd.md/mcp-shared` | — | Types, factory, utils, storage |
-| **Total** | | **63 tools** | + 13 resources, 5 prompts, CI mode, hook templates |
+| Package   | npm                   | Tools        | Identity                                           |
+| --------- | --------------------- | ------------ | -------------------------------------------------- |
+| Engine    | `@aidd.md/mcp-engine` | 63           | All-in-one (recommended)                           |
+| Core      | `@aidd.md/mcp-core`   | 17           | The Brain                                          |
+| Memory    | `@aidd.md/mcp-memory` | 27           | The Memory                                         |
+| Tools     | `@aidd.md/mcp-tools`  | 19           | The Hands                                          |
+| Shared    | `@aidd.md/mcp-shared` | —            | Types, factory, utils, storage                     |
+| **Total** |                       | **63 tools** | + 13 resources, 5 prompts, CI mode, hook templates |
 
 ### Key Improvements (from claude-mem analysis)
 
-| Improvement | Impact | Source |
-|-------------|--------|--------|
-| 3-layer search (search → context → get) | ~10x token savings | claude-mem |
-| Hybrid storage (SQLite + JSON) | Performance + Git visibility | claude-mem + AIDD |
-| Token-budget context injection | Smarter context within limits | claude-mem |
-| Session threading | Memory continuity across sessions | claude-mem |
-| Typed observations with discoveryTokens | ROI tracking for evolution | claude-mem |
-| Privacy tag stripping | Credential/PII protection | claude-mem |
-| Optional hook templates | Zero-friction automation | claude-mem |
+| Improvement                             | Impact                            | Source            |
+| --------------------------------------- | --------------------------------- | ----------------- |
+| 3-layer search (search → context → get) | ~10x token savings                | claude-mem        |
+| Hybrid storage (SQLite + JSON)          | Performance + Git visibility      | claude-mem + AIDD |
+| Token-budget context injection          | Smarter context within limits     | claude-mem        |
+| Session threading                       | Memory continuity across sessions | claude-mem        |
+| Typed observations with discoveryTokens | ROI tracking for evolution        | claude-mem        |
+| Privacy tag stripping                   | Credential/PII protection         | claude-mem        |
+| Optional hook templates                 | Zero-friction automation          | claude-mem        |

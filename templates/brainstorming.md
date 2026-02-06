@@ -26,11 +26,11 @@ Apply a Diverge-Analyze-Converge-Document pattern to generate, evaluate, and sel
 
 ## Sub-Agent Roles
 
-| Role | Responsibility |
-|------|---------------|
-| **Product Analyst** | Defines the problem space, user impact, and success metrics. Challenges assumptions about what users actually need. |
+| Role                 | Responsibility                                                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Product Analyst**  | Defines the problem space, user impact, and success metrics. Challenges assumptions about what users actually need.            |
 | **System Architect** | Evaluates technical feasibility, integration complexity, and architectural alignment. Identifies constraints and dependencies. |
-| **UX Researcher** | Assesses usability, developer experience, and interaction patterns. Advocates for simplicity and consistency. |
+| **UX Researcher**    | Assesses usability, developer experience, and interaction patterns. Advocates for simplicity and consistency.                  |
 
 ---
 
@@ -76,15 +76,15 @@ Generate **at least 3 distinct approaches**. Rules:
 
 Evaluate each option against these criteria:
 
-| Criteria | Weight | Option A | Option B | Option C |
-|----------|--------|----------|----------|----------|
-| Feasibility (can we build it?) | High | | | |
-| Complexity (effort to implement) | High | | | |
-| Maintainability (long-term cost) | Medium | | | |
-| UX Impact (user value) | High | | | |
-| Performance (runtime cost) | Medium | | | |
-| Security (risk surface) | Medium | | | |
-| Alignment (fits existing patterns) | Medium | | | |
+| Criteria                           | Weight | Option A | Option B | Option C |
+| ---------------------------------- | ------ | -------- | -------- | -------- |
+| Feasibility (can we build it?)     | High   |          |          |          |
+| Complexity (effort to implement)   | High   |          |          |          |
+| Maintainability (long-term cost)   | Medium |          |          |          |
+| UX Impact (user value)             | High   |          |          |          |
+| Performance (runtime cost)         | Medium |          |          |          |
+| Security (risk surface)            | Medium |          |          |          |
+| Alignment (fits existing patterns) | Medium |          |          |          |
 
 Score each cell: Strong (++), Adequate (+), Neutral (0), Weak (-), Disqualifying (--)
 
@@ -125,7 +125,7 @@ When brainstorming is complete, produce a structured summary:
 - **Recommended Approach**: [1 paragraph]
 ```
 
-This artifact feeds directly into the Research phase (`templates/research.md`) or the Plan phase (`spec/asdd-lifecycle.md` Phase 3).
+This artifact feeds directly into the Research phase (`templates/research.md`) or the Plan phase (`specs/asdd-lifecycle.md` Phase 3).
 
 ---
 
@@ -142,14 +142,14 @@ This artifact feeds directly into the Research phase (`templates/research.md`) o
 
 ## Anti-Patterns
 
-| Anti-Pattern | Description | Mitigation |
-|-------------|-------------|------------|
-| **Anchoring** | Fixating on the first idea generated | Force yourself to generate all options before evaluating any |
-| **Premature Convergence** | Selecting an approach before exploring alternatives | Enforce the "3 options minimum" rule strictly |
-| **NFR Blindness** | Ignoring non-functional requirements (performance, security, maintainability) | Use the full comparison matrix; do not skip criteria |
-| **Bikeshedding** | Spending disproportionate time on trivial details | Time-box each phase; focus analysis on high-weight criteria |
-| **Groupthink** | All options are variations of the same core idea | Require at least one option that challenges the dominant assumption |
-| **Analysis Paralysis** | Over-analyzing without reaching a decision | Set a decision deadline; "good enough" with iteration beats "perfect" |
+| Anti-Pattern              | Description                                                                   | Mitigation                                                            |
+| ------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **Anchoring**             | Fixating on the first idea generated                                          | Force yourself to generate all options before evaluating any          |
+| **Premature Convergence** | Selecting an approach before exploring alternatives                           | Enforce the "3 options minimum" rule strictly                         |
+| **NFR Blindness**         | Ignoring non-functional requirements (performance, security, maintainability) | Use the full comparison matrix; do not skip criteria                  |
+| **Bikeshedding**          | Spending disproportionate time on trivial details                             | Time-box each phase; focus analysis on high-weight criteria           |
+| **Groupthink**            | All options are variations of the same core idea                              | Require at least one option that challenges the dominant assumption   |
+| **Analysis Paralysis**    | Over-analyzing without reaching a decision                                    | Set a decision deadline; "good enough" with iteration beats "perfect" |
 
 ---
 
@@ -160,6 +160,6 @@ This artifact feeds directly into the Research phase (`templates/research.md`) o
 - **Workflow**: `workflows/product.md`
 - **Decision tree**: `rules/decision-tree.md`
 - **System Architect skill**: `skills/system-architect/SKILL.md`
-- **BLUF-6 output format**: `spec/bluf-6.md`
+- **BLUF-6 output format**: `specs/bluf-6.md`
 - **Technology selection workflow**: `workflows/technology-selection.md`
-- **ASDD lifecycle**: `spec/asdd-lifecycle.md`
+- **ASDD lifecycle**: `specs/asdd-lifecycle.md`

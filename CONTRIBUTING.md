@@ -35,16 +35,16 @@ Thank you for your interest in contributing to AIDD. This document provides guid
 
 ## 2. Types of Contributions
 
-| Type | Location | Description |
-|------|----------|-------------|
-| Rule | `rules/` | Immutable constraint files (prescriptive, MUST follow) |
-| Skill | `skills/<name>/SKILL.md` | Specialized agent capabilities with optional scripts |
-| Workflow | `workflows/` | Multi-step procedures for common tasks |
-| Template | `templates/` | Task-specific development templates |
-| Spec | `spec/` | Formal specification documents (descriptive reference) |
-| Knowledge | `knowledge/<domain>/` | Technology Knowledge Base entries |
-| Adapter | `adapters/<ide>/` | IDE/AI integration guides |
-| Example | `examples/` | Example project setups |
+| Type      | Location                 | Description                                            |
+| --------- | ------------------------ | ------------------------------------------------------ |
+| Rule      | `rules/`                 | Immutable constraint files (prescriptive, MUST follow) |
+| Skill     | `skills/<name>/SKILL.md` | Specialized agent capabilities with optional scripts   |
+| Workflow  | `workflows/`             | Multi-step procedures for common tasks                 |
+| Template  | `templates/`             | Task-specific development templates                    |
+| Specs     | `specs/`                 | Formal specification documents (descriptive reference) |
+| Knowledge | `knowledge/<domain>/`    | Technology Knowledge Base entries                      |
+| Adapter   | `adapters/<ide>/`        | IDE/AI integration guides                              |
+| Example   | `examples/`              | Example project setups                                 |
 
 ---
 
@@ -81,7 +81,7 @@ Rules are immutable constraints that apply across all contexts. Place in `rules/
 **Guidelines**:
 - Rules use imperative language (MUST, MUST NOT, SHOULD)
 - Each constraint must be independently verifiable
-- Reference `spec/` documents for detailed rationale
+- Reference `specs/` documents for detailed rationale
 - Update `AGENTS.md` Golden Rules section if adding a universal constraint
 
 ---

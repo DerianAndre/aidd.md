@@ -120,7 +120,7 @@ function getFullFiles(): FileToCreate[] {
   return [
     ...getStandardFiles(),
     {
-      path: 'spec/README.md',
+      path: 'specs/README.md',
       content: '# Specifications\n\nAIDD standard specifications: lifecycle, heuristics, memory.\n',
     },
     {

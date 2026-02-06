@@ -46,13 +46,13 @@ Claude Code hooks can be configured in `.claude/settings.json` or project-level 
 
 ### Recommended Hooks
 
-| Hook Event | Matcher | Indicator |
-|---|---|---|
-| PreToolUse | `Read` (when path matches `rules/`) | `[aidd.md] Rule - Applied <filename>` |
-| PreToolUse | `Read` (when path matches `spec/`) | `[aidd.md] Spec - Using <filename>` |
-| PreToolUse | `Read` (when path matches `templates/`) | `[aidd.md] Template - Loaded <filename>` |
-| PreToolUse | `Read` (when path matches `skills/`) | `[aidd.md] Agent - <skill-name>` |
-| PreToolUse | `Task` | `[aidd.md] Orchestrator - Dispatching subagent` |
+| Hook Event | Matcher                                 | Indicator                                       |
+| ---------- | --------------------------------------- | ----------------------------------------------- |
+| PreToolUse | `Read` (when path matches `rules/`)     | `[aidd.md] Rule - Applied <filename>`           |
+| PreToolUse | `Read` (when path matches `specs/`)     | `[aidd.md] Spec - Using <filename>`             |
+| PreToolUse | `Read` (when path matches `templates/`) | `[aidd.md] Template - Loaded <filename>`        |
+| PreToolUse | `Read` (when path matches `skills/`)    | `[aidd.md] Agent - <skill-name>`                |
+| PreToolUse | `Task`                                  | `[aidd.md] Orchestrator - Dispatching subagent` |
 
 ---
 
@@ -72,6 +72,6 @@ When hooks are not configured, the orchestrator LLM should emit indicators manua
 ## Cross-References
 
 - **Indicator catalog**: `rules/orchestrator.md` Section 6
-- **ASDD phase indicators**: `spec/asdd-lifecycle.md` (per-phase)
+- **ASDD phase indicators**: `specs/asdd-lifecycle.md` (per-phase)
 - **Architect mode stage indicators**: `workflows/orchestrators/architect-mode.md` (per-stage)
 - **Claude Code hooks docs**: https://docs.anthropic.com/en/docs/claude-code/hooks

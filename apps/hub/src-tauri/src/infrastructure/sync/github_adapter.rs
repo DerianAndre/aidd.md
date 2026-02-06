@@ -109,7 +109,7 @@ impl GitHubAdapter {
 
 /// Extract a zip archive, stripping the top-level directory GitHub adds.
 /// Only extracts framework-relevant directories: rules/, skills/, knowledge/,
-/// workflows/, templates/, spec/, and top-level files like AGENTS.md.
+/// workflows/, templates/, specs/, and top-level files like AGENTS.md.
 fn extract_zip(data: &[u8], target_dir: &Path) -> Result<(), String> {
     let cursor = std::io::Cursor::new(data);
     let mut archive = zip::ZipArchive::new(cursor)
@@ -117,7 +117,7 @@ fn extract_zip(data: &[u8], target_dir: &Path) -> Result<(), String> {
 
     // Framework categories to extract
     let categories = [
-        "rules/", "skills/", "knowledge/", "workflows/", "templates/", "spec/",
+        "rules/", "skills/", "knowledge/", "workflows/", "templates/", "specs/",
     ];
     // Top-level files to extract
     let top_files = ["AGENTS.md", "CONTRIBUTING.md", "README.md"];

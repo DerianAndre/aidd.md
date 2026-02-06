@@ -4,9 +4,10 @@ import type { MarketplaceEntry } from '../lib/types';
 export interface MarketplaceTableProps {
   entries: MarketplaceEntry[];
   onEntryClick: (entry: MarketplaceEntry) => void;
+  usingFallback?: boolean;
 }
 
-export function MarketplaceTable({ entries, onEntryClick }: MarketplaceTableProps) {
+export function MarketplaceTable({ entries, onEntryClick, usingFallback }: MarketplaceTableProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -16,7 +17,7 @@ export function MarketplaceTable({ entries, onEntryClick }: MarketplaceTableProp
             <th className="pb-2 px-2 font-medium">Name</th>
             <th className="pb-2 px-2 font-medium">Author</th>
             <th className="pb-2 px-2 font-medium">Type</th>
-            <th className="pb-2 pl-2 pr-3 font-medium text-right">Installs</th>
+            {!usingFallback && <th className="pb-2 pl-2 pr-3 font-medium text-right">Installs</th>}
           </tr>
         </thead>
         <tbody>
@@ -43,9 +44,11 @@ export function MarketplaceTable({ entries, onEntryClick }: MarketplaceTableProp
                 <td className="py-3 px-2 text-default-500">
                   {typeLabel}
                 </td>
-                <td className="py-3 pl-2 pr-3 text-right text-default-500">
-                  {formatInstallCount(entry.installCount)}
-                </td>
+                {!usingFallback && (
+                  <td className="py-3 pl-2 pr-3 text-right text-default-500">
+                    {formatInstallCount(entry.installCount)}
+                  </td>
+                )}
               </tr>
             );
           })}

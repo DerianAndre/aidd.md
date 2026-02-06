@@ -6,9 +6,10 @@ import type { MarketplaceEntry } from '../lib/types';
 export interface MarketplaceCardProps {
   entry: MarketplaceEntry;
   onPress: () => void;
+  usingFallback?: boolean;
 }
 
-export function MarketplaceCard({ entry, onPress }: MarketplaceCardProps) {
+export function MarketplaceCard({ entry, onPress, usingFallback }: MarketplaceCardProps) {
   const categoryLabel = entry.type === 'mcp-server'
     ? entry.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
     : entry.contentType.charAt(0).toUpperCase() + entry.contentType.slice(1);
@@ -51,9 +52,11 @@ export function MarketplaceCard({ entry, onPress }: MarketplaceCardProps) {
       </Card.Header>
       <Card.Footer className="pt-0 flex items-center justify-between">
         <span className="text-[10px] text-default-400">{entry.author}</span>
-        <span className="text-[10px] font-medium text-default-500">
-          {formatInstallCount(entry.installCount)} installs
-        </span>
+        {!usingFallback && entry.installCount > 0 && (
+          <span className="text-[10px] font-medium text-default-500">
+            {formatInstallCount(entry.installCount)} installs
+          </span>
+        )}
       </Card.Footer>
     </Card>
   );

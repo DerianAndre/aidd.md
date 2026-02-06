@@ -31,13 +31,13 @@ Break down every task into the AIDD triad:
 
 Before entering any execution phase, classify the user's request to determine the optimal entry point:
 
-| Signal | Entry Point | Reference |
-|---|---|---|
-| Vague idea, "I want to build..." | Brainstorming | `templates/brainstorming.md` |
-| Clear feature, needs research | Research | `templates/research.md` |
-| Defined requirements, ready to plan | ASDD Phase 3 — PLAN | `spec/asdd-lifecycle.md` |
-| Existing plan, ready to build | ASDD Phase 5 — EXECUTE | `spec/asdd-lifecycle.md` |
-| Bug report or issue | Issue Tracking | `spec/asdd-lifecycle.md` Phase 3B |
+| Signal                              | Entry Point            | Reference                          |
+| ----------------------------------- | ---------------------- | ---------------------------------- |
+| Vague idea, "I want to build..."    | Brainstorming          | `templates/brainstorming.md`       |
+| Clear feature, needs research       | Research               | `templates/research.md`            |
+| Defined requirements, ready to plan | ASDD Phase 3 — PLAN    | `specs/asdd-lifecycle.md`          |
+| Existing plan, ready to build       | ASDD Phase 5 — EXECUTE | `specs/asdd-lifecycle.md`          |
+| Bug report or issue                 | Issue Tracking         | `specs/asdd-lifecycle.md` Phase 3B |
 
 **Default assumption**: Enter at Brainstorming unless the user demonstrates sufficient clarity to skip ahead.
 
@@ -45,13 +45,13 @@ Before entering any execution phase, classify the user's request to determine th
 
 When ANY of these keywords appear with low context (< 2 sentences of specific requirements), automatically enter Brainstorming Step 0 (Elicit Requirements):
 
-| Keywords | Auto-Entry |
-|---|---|
-| "new feature", "build", "create", "add" | → Brainstorming Step 0 |
-| "plan", "planning", "roadmap" | → Brainstorming Step 0 |
-| "brainstorm", "brainstorming", "ideate" | → Brainstorming Step 0 |
+| Keywords                                    | Auto-Entry             |
+| ------------------------------------------- | ---------------------- |
+| "new feature", "build", "create", "add"     | → Brainstorming Step 0 |
+| "plan", "planning", "roadmap"               | → Brainstorming Step 0 |
+| "brainstorm", "brainstorming", "ideate"     | → Brainstorming Step 0 |
 | "improve", "enhance", "optimize", "upgrade" | → Brainstorming Step 0 |
-| "redesign", "rethink", "rearchitect" | → Brainstorming Step 0 |
+| "redesign", "rethink", "rearchitect"        | → Brainstorming Step 0 |
 
 **Context sufficiency check**: If the user provides < 90% clarity (fewer than 3 of: what, why, who, constraints, scope), enter Step 0 automatically.
 
@@ -94,10 +94,10 @@ STOP. Do not proceed with implementation. Formulate precise, high-density questi
 
 **If context is sufficient (≥ 90%):**
 
-1. **Consult Memory Layer** — Check `memory/decisions.json`, `memory/mistakes.json`, `memory/conventions.json` for relevant context. See `spec/memory-layer.md`.
-2. **Run Version Verification** — Execute the 4-step protocol from `spec/version-protocol.md`.
+1. **Consult Memory Layer** — Check `memory/decisions.json`, `memory/mistakes.json`, `memory/conventions.json` for relevant context. See `specs/memory-layer.md`.
+2. **Run Version Verification** — Execute the 4-step protocol from `specs/version-protocol.md`.
 3. **Select Template** — Consult `templates/routing.md` for task-to-template mapping.
-4. **Follow ASDD Lifecycle** — For non-trivial tasks, follow the 8-phase lifecycle from `spec/asdd-lifecycle.md`.
+4. **Follow ASDD Lifecycle** — For non-trivial tasks, follow the 8-phase lifecycle from `specs/asdd-lifecycle.md`.
 
 Output a **Master Execution Plan** using the following format:
 
@@ -110,12 +110,12 @@ Output a **Master Execution Plan** using the following format:
 
 Each major phase ends with a user decision gate before proceeding:
 
-| Phase | Gate Options |
-|---|---|
+| Phase         | Gate Options                                                                            |
+| ------------- | --------------------------------------------------------------------------------------- |
 | Brainstorming | `[Keep Brainstorming]` · `[Move to Research]` · `[Move to Plan]` · `[Accept & Execute]` |
-| Research | `[Findings Accepted]` · `[More Research Needed]` · `[Re-brainstorm]` |
-| Plan | `[Approve]` · `[Revise]` · `[Reject & Re-brainstorm]` |
-| Execute | `[Continue]` · `[Pause & Reassess]` (on divergence or blocker) |
+| Research      | `[Findings Accepted]` · `[More Research Needed]` · `[Re-brainstorm]`                    |
+| Plan          | `[Approve]` · `[Revise]` · `[Reject & Re-brainstorm]`                                   |
+| Execute       | `[Continue]` · `[Pause & Reassess]` (on divergence or blocker)                          |
 
 **Rule**: Never proceed past a gate without explicit or implied user consent. If the user's intent is clear, the gate can be passed implicitly.
 
@@ -127,18 +127,18 @@ Emit structured indicators at key orchestration points to provide situational aw
 
 **Format**: `[aidd.md] <Category> - <Action> <target>`
 
-| Category | Action | When | Example |
-|---|---|---|---|
-| Orchestrator | Invoked | Agent role activated | `[aidd.md] Orchestrator - Invoked system-architect` |
-| Orchestrator | Classified | Intake classification done | `[aidd.md] Orchestrator - Classified → Brainstorm` |
-| Spec | Using | Spec/lifecycle referenced | `[aidd.md] Spec - Using asdd-lifecycle` |
-| Agent | Activated | Skill engaged | `[aidd.md] Agent - design-architect` |
-| Workflow | Started | Orchestrator workflow begun | `[aidd.md] Workflow - architect-mode` |
-| Rule | Applied | Domain rule loaded | `[aidd.md] Rule - Applied frontend` |
-| Phase | Entered | ASDD phase transition | `[aidd.md] Phase - Entered EXECUTE` |
-| Gate | Waiting | Decision gate reached | `[aidd.md] Gate - Waiting (Plan approval)` |
-| Template | Loaded | Template selected | `[aidd.md] Template - Loaded brainstorming` |
-| Memory | Consulted | Memory layer queried | `[aidd.md] Memory - Consulted decisions.json` |
+| Category     | Action     | When                        | Example                                             |
+| ------------ | ---------- | --------------------------- | --------------------------------------------------- |
+| Orchestrator | Invoked    | Agent role activated        | `[aidd.md] Orchestrator - Invoked system-architect` |
+| Orchestrator | Classified | Intake classification done  | `[aidd.md] Orchestrator - Classified → Brainstorm`  |
+| Specs        | Using      | Spec/lifecycle referenced   | `[aidd.md] Specs - Using asdd-lifecycle`            |
+| Agent        | Activated  | Skill engaged               | `[aidd.md] Agent - design-architect`                |
+| Workflow     | Started    | Orchestrator workflow begun | `[aidd.md] Workflow - architect-mode`               |
+| Rule         | Applied    | Domain rule loaded          | `[aidd.md] Rule - Applied frontend`                 |
+| Phase        | Entered    | ASDD phase transition       | `[aidd.md] Phase - Entered EXECUTE`                 |
+| Gate         | Waiting    | Decision gate reached       | `[aidd.md] Gate - Waiting (Plan approval)`          |
+| Template     | Loaded     | Template selected           | `[aidd.md] Template - Loaded brainstorming`         |
+| Memory       | Consulted  | Memory layer queried        | `[aidd.md] Memory - Consulted decisions.json`       |
 
 **Emission rules**:
 - Emit at the START of each action. One indicator per line.

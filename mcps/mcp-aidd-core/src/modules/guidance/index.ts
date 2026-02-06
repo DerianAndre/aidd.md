@@ -140,11 +140,11 @@ export const guidanceModule: AiddModule = {
 
   register(server: McpServer, context: ModuleContext) {
     // -----------------------------------------------------------------------
-    // Resource: aidd://spec/heuristics
+    // Resource: aidd://specs/heuristics
     // -----------------------------------------------------------------------
     server.registerResource(
       'heuristics',
-      'aidd://spec/heuristics',
+      'aidd://specs/heuristics',
       { description: 'AIDD operating heuristics (10 decision principles)', mimeType: 'text/markdown' },
       async (uri) => {
         const specs = context.contentLoader.getIndex().spec;
@@ -369,7 +369,7 @@ export const guidanceModule: AiddModule = {
 
         if (!heuristicsCache || heuristicsCache.length === 0) {
           return createErrorResult(
-            'Heuristics file (spec/heuristics.md) not found. Use aidd_scaffold to initialize.',
+            'Heuristics file (specs/heuristics.md) not found. Use aidd_scaffold to initialize.',
           );
         }
 

@@ -1,7 +1,18 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, Chip, Spinner, Button, Skeleton } from '@heroui/react';
-import { RefreshCw, Server, FileText } from 'lucide-react';
+import {
+  RefreshCw,
+  Server,
+  Bot,
+  ShieldCheck,
+  Zap,
+  BookOpen,
+  GitBranch,
+  FileText,
+  FileCode,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { MarketplaceCard } from '../components/marketplace-card';
@@ -9,11 +20,18 @@ import { MarketplaceTable } from '../components/marketplace-table';
 import { FilterBar } from '../components/filter-bar';
 import { StatCards } from '../components/stat-cards';
 import { useMarketplaceStore } from '../stores/marketplace-store';
+import { TAB_CONTENT_TYPE_MAP } from '../lib/constants';
 import type { MarketplaceEntry, MarketplaceTab } from '../lib/types';
 
-const TAB_META: Record<MarketplaceTab, { label: string; icon: typeof Server }> = {
+const TAB_META: Record<MarketplaceTab, { label: string; icon: LucideIcon }> = {
   'mcp-servers': { label: 'MCP Servers', icon: Server },
-  'content': { label: 'Skills & Content', icon: FileText },
+  'agents': { label: 'Agents', icon: Bot },
+  'rules': { label: 'Rules', icon: ShieldCheck },
+  'skills': { label: 'Skills', icon: Zap },
+  'knowledge': { label: 'Knowledge', icon: BookOpen },
+  'workflows': { label: 'Workflows', icon: GitBranch },
+  'templates': { label: 'Templates', icon: FileText },
+  'spec': { label: 'Spec', icon: FileCode },
 };
 
 const SKELETON_COUNT = 6;
@@ -30,7 +48,7 @@ export function MarketplacePage() {
   const filteredEntries = useMarketplaceStore((s) => s.filteredEntries);
   const stats = useMarketplaceStore((s) => s.stats);
   const mcpServers = useMarketplaceStore((s) => s.mcpServers);
-  const content = useMarketplaceStore((s) => s.content);
+  const contentCounts = useMarketplaceStore((s) => s.contentCounts);
 
   // Actions
   const setTab = useMarketplaceStore((s) => s.setTab);
@@ -38,7 +56,6 @@ export function MarketplacePage() {
   const setSort = useMarketplaceStore((s) => s.setSort);
   const setViewMode = useMarketplaceStore((s) => s.setViewMode);
   const toggleCategory = useMarketplaceStore((s) => s.toggleCategory);
-  const toggleContentType = useMarketplaceStore((s) => s.toggleContentType);
   const toggleOfficial = useMarketplaceStore((s) => s.toggleOfficial);
   const toggleTrending = useMarketplaceStore((s) => s.toggleTrending);
   const clearFilters = useMarketplaceStore((s) => s.clearFilters);
@@ -93,7 +110,10 @@ export function MarketplacePage() {
             {(Object.keys(TAB_META) as MarketplaceTab[]).map((tab) => {
               const meta = TAB_META[tab];
               const Icon = meta.icon;
-              const count = tab === 'mcp-servers' ? mcpServers.length : content.length;
+              const contentType = TAB_CONTENT_TYPE_MAP[tab];
+              const count = tab === 'mcp-servers'
+                ? mcpServers.length
+                : (contentType ? (contentCounts[contentType] ?? 0) : 0);
               return (
                 <Tabs.Tab key={tab} id={tab}>
                   <span className="flex items-center gap-1.5">
@@ -121,7 +141,6 @@ export function MarketplacePage() {
                 onSortChange={setSort}
                 onViewModeChange={setViewMode}
                 onCategoryToggle={toggleCategory}
-                onContentTypeToggle={toggleContentType}
                 onOfficialToggle={toggleOfficial}
                 onTrendingToggle={toggleTrending}
                 onClearFilters={clearFilters}
@@ -145,6 +164,7 @@ export function MarketplacePage() {
                         key={entry.slug}
                         entry={entry}
                         onPress={() => handleEntryClick(entry)}
+                        usingFallback={usingFallback}
                       />
                     ))}
                   </div>
@@ -152,6 +172,7 @@ export function MarketplacePage() {
                   <MarketplaceTable
                     entries={filteredEntries}
                     onEntryClick={handleEntryClick}
+                    usingFallback={usingFallback}
                   />
                 )
               )}

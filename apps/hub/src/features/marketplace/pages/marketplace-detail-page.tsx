@@ -17,7 +17,7 @@ import { TagCloud } from '../components/tag-cloud';
 import { useMarketplaceStore } from '../stores/marketplace-store';
 import { formatInstallCount } from '../lib/catalog-helpers';
 import { MCP_CATEGORIES, CONTENT_TYPES, COMPATIBILITY_TARGETS } from '../lib/constants';
-import type { McpServerEntry, ContentEntry } from '../lib/types';
+import type { McpServerEntry, ContentEntry, MarketplaceTab } from '../lib/types';
 
 export function MarketplaceDetailPage() {
   const { type, slug } = useParams<{ type: string; slug: string }>();
@@ -25,6 +25,7 @@ export function MarketplaceDetailPage() {
 
   const fetchCatalog = useMarketplaceStore((s) => s.fetchCatalog);
   const loading = useMarketplaceStore((s) => s.loading);
+  const usingFallback = useMarketplaceStore((s) => s.usingFallback);
   const getEntryBySlug = useMarketplaceStore((s) => s.getEntryBySlug);
   const toggleTag = useMarketplaceStore((s) => s.toggleTag);
 
@@ -57,7 +58,31 @@ export function MarketplaceDetailPage() {
   }
 
   const isMcp = entry.type === 'mcp-server';
-  const tabLabel = isMcp ? 'MCP Servers' : 'Skills & Content';
+
+  // Resolve the tab label from content type
+  const TAB_LABELS: Record<MarketplaceTab, string> = {
+    'mcp-servers': 'MCP Servers',
+    'agents': 'Agents',
+    'rules': 'Rules',
+    'skills': 'Skills',
+    'knowledge': 'Knowledge',
+    'workflows': 'Workflows',
+    'templates': 'Templates',
+    'spec': 'Spec',
+  };
+  const CONTENT_TYPE_TO_TAB: Record<string, MarketplaceTab> = {
+    agent: 'agents',
+    rule: 'rules',
+    skill: 'skills',
+    knowledge: 'knowledge',
+    workflow: 'workflows',
+    template: 'templates',
+    spec: 'spec',
+  };
+  const resolvedTab: MarketplaceTab = isMcp
+    ? 'mcp-servers'
+    : CONTENT_TYPE_TO_TAB[(entry as ContentEntry).contentType] ?? 'skills';
+  const tabLabel = TAB_LABELS[resolvedTab];
 
   const categoryLabel = isMcp
     ? MCP_CATEGORIES.find((c) => c.value === (entry as McpServerEntry).category)?.label ?? entry.type
@@ -126,16 +151,20 @@ export function MarketplaceDetailPage() {
           </div>
 
           {/* Long description / markdown */}
-          <div className="rounded-lg border border-default-200 bg-default-50 p-4">
-            <div className="prose prose-sm max-w-none text-default-700">
-              {entry.longDescription ?? entry.description}
+          {(entry.longDescription || (!isMcp && (entry as ContentEntry).markdownContent)) && (
+            <div className="rounded-lg border border-default-200 bg-default-50 p-4">
+              {entry.longDescription && (
+                <div className="prose prose-sm max-w-none text-default-700">
+                  {entry.longDescription}
+                </div>
+              )}
+              {!isMcp && (entry as ContentEntry).markdownContent && (
+                <div className="whitespace-pre-wrap text-sm text-default-600">
+                  {(entry as ContentEntry).markdownContent}
+                </div>
+              )}
             </div>
-            {!isMcp && (entry as ContentEntry).markdownContent && (
-              <div className="mt-4 whitespace-pre-wrap text-sm text-default-600">
-                {(entry as ContentEntry).markdownContent}
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Features list (MCP only) */}
           {isMcp && (entry as McpServerEntry).features.length > 0 && (
@@ -221,10 +250,12 @@ export function MarketplaceDetailPage() {
               <span className="text-xs text-default-400">Author</span>
               <p className="text-sm font-medium text-foreground">{entry.author}</p>
             </div>
-            <div>
-              <span className="text-xs text-default-400">Installs</span>
-              <p className="text-sm font-medium text-foreground">{formatInstallCount(entry.installCount)}</p>
-            </div>
+            {!usingFallback && entry.installCount > 0 && (
+              <div>
+                <span className="text-xs text-default-400">Installs</span>
+                <p className="text-sm font-medium text-foreground">{formatInstallCount(entry.installCount)}</p>
+              </div>
+            )}
             <div>
               <span className="text-xs text-default-400">Updated</span>
               <p className="text-sm text-default-600">{entry.updatedAt}</p>

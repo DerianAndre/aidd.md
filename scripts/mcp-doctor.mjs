@@ -703,9 +703,9 @@ if (existsSync(workflowsDir)) {
 const specDir = resolve(root, 'spec');
 if (existsSync(specDir)) {
   const count = countFiles(specDir, '.md');
-  pass(`spec/ (${count} files)`);
+  pass(`specs/ (${count} files)`);
 } else {
-  warn('spec/ missing');
+  warn('specs/ missing');
 }
 
 const templatesDir = resolve(root, 'templates');

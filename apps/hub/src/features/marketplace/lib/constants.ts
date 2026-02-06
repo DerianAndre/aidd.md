@@ -2,13 +2,13 @@
 // Marketplace constants
 // ---------------------------------------------------------------------------
 
-import type { McpCategory, ContentType, SortOption, MarketplaceFilters } from './types';
+import type { McpCategory, ContentType, SortOption, MarketplaceFilters, MarketplaceTab } from './types';
 
 // ── Registry URLs ───────────────────────────────────────────────
 
 export const REGISTRY_BASE = 'https://raw.githubusercontent.com/aidd-md/registry/main';
-export const MCP_REGISTRY_URL = `${REGISTRY_BASE}/mcp-servers.json`;
-export const CONTENT_REGISTRY_URL = `${REGISTRY_BASE}/content.json`;
+export const MCP_REGISTRY_URL = `${REGISTRY_BASE}/dist/mcp-servers.json`;
+export const CONTENT_REGISTRY_URL = `${REGISTRY_BASE}/dist/content.json`;
 
 // ── MCP Categories ──────────────────────────────────────────────
 
@@ -29,12 +29,26 @@ export const MCP_CATEGORIES: { value: McpCategory; label: string }[] = [
 // ── Content Types ───────────────────────────────────────────────
 
 export const CONTENT_TYPES: { value: ContentType; label: string }[] = [
+  { value: 'agent', label: 'Agents' },
   { value: 'skill', label: 'Skills' },
   { value: 'workflow', label: 'Workflows' },
   { value: 'rule', label: 'Rules' },
   { value: 'template', label: 'Templates' },
   { value: 'knowledge', label: 'Knowledge' },
+  { value: 'spec', label: 'Spec' },
 ];
+
+// ── Tab → ContentType mapping ───────────────────────────────────
+
+export const TAB_CONTENT_TYPE_MAP: Partial<Record<MarketplaceTab, ContentType>> = {
+  agents: 'agent',
+  rules: 'rule',
+  skills: 'skill',
+  knowledge: 'knowledge',
+  workflows: 'workflow',
+  templates: 'template',
+  spec: 'spec',
+};
 
 // ── Sort Options ────────────────────────────────────────────────
 
@@ -71,7 +85,6 @@ export const DEFAULT_FILTERS: MarketplaceFilters = {
   sort: 'popular',
   viewMode: 'grid',
   mcpCategories: [],
-  contentTypes: [],
   tags: [],
   onlyOfficial: false,
   onlyTrending: false,

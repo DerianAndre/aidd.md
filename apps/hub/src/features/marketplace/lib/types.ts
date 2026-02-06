@@ -4,7 +4,15 @@
 
 // ── Tab & View ──────────────────────────────────────────────────
 
-export type MarketplaceTab = 'mcp-servers' | 'content';
+export type MarketplaceTab =
+  | 'mcp-servers'
+  | 'agents'
+  | 'rules'
+  | 'skills'
+  | 'knowledge'
+  | 'workflows'
+  | 'templates'
+  | 'spec';
 export type ViewMode = 'grid' | 'list';
 export type SortOption = 'popular' | 'trending' | 'newest' | 'alphabetical';
 
@@ -23,7 +31,7 @@ export type McpCategory =
   | 'security'
   | 'other';
 
-export type ContentType = 'skill' | 'workflow' | 'rule' | 'template' | 'knowledge';
+export type ContentType = 'agent' | 'skill' | 'workflow' | 'rule' | 'template' | 'knowledge' | 'spec';
 export type TransportType = 'stdio' | 'sse' | 'http';
 
 // ── MCP Server Entry ────────────────────────────────────────────
@@ -86,7 +94,6 @@ export interface MarketplaceFilters {
   sort: SortOption;
   viewMode: ViewMode;
   mcpCategories: McpCategory[];
-  contentTypes: ContentType[];
   tags: string[];
   onlyOfficial: boolean;
   onlyTrending: boolean;

@@ -56,7 +56,7 @@ Every complex response MUST follow this 6-part structure. Simple responses use p
 - **Discrepancy Mandate**: If a suboptimal premise is detected, destroy it logically before proceeding.
 - **Peer-like Tone**: High-performance partner. Rigor adapted to domain.
 
-See `spec/bluf-6.md` for full specification and examples.
+See `specs/bluf-6.md` for full specification and examples.
 
 ### Evidence Hierarchy
 
@@ -103,7 +103,7 @@ Before finalizing any architectural decision or code review, check for:
 
 ## Decision Heuristics
 
-10 heuristics for evidence-based decision making. See `spec/heuristics.md` for full details.
+10 heuristics for evidence-based decision making. See `specs/heuristics.md` for full details.
 
 1. **Zero Trust**: Never accept premises as absolute truths. Validate against raw data.
 2. **First Principles**: Deconstruct to fundamental laws. Avoid weak analogies.
@@ -144,7 +144,7 @@ These rules CANNOT be overridden by skills, workflows, or user requests:
 4. ✅ **Never use `any` type** in TypeScript without a documented exception.
 5. ✅ **Never use `SELECT *`** in production SQL queries.
 6. ✅ **Legibility > Cleverness** (Reject "code golf"; optimize for the next developer).
-7. ✅ **Version Verification** — Run the 4-step version protocol before generating code. See `spec/version-protocol.md`.
+7. ✅ **Version Verification** — Run the 4-step version protocol before generating code. See `specs/version-protocol.md`.
 8. ✅ **Code Style** — Follow naming conventions, import patterns, and TypeScript standards. See `rules/code-style.md`.
 9. ✅ **Documentation** — Follow normalized document pattern and folder structure. See `rules/documentation.md`.
 

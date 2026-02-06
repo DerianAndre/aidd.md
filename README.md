@@ -110,7 +110,7 @@ Immutable constraints — prescriptive, MUST follow:
 
 Formal reference documents — descriptive, detailed rationale:
 
-| Spec                  | Content                                                     |
+| Specs                 | Content                                                     |
 | --------------------- | ----------------------------------------------------------- |
 | `asdd-lifecycle.md`   | 8-phase AI-Spec-Driven Development lifecycle                |
 | `bluf-6.md`           | 6-part communication protocol                               |
@@ -156,7 +156,7 @@ PLANNING (Tier 1)          EXECUTION (Tier 2)         CLOSURE
 4. COMMIT_SPEC (spec doc)
 ```
 
-See `spec/asdd-lifecycle.md` for full details.
+See `specs/asdd-lifecycle.md` for full details.
 
 ---
 
@@ -171,7 +171,7 @@ aidd.md/
 ├── CHANGELOG.md                 # Version history
 ├── package.json                 # Validation script dependencies
 │
-├── spec/                        # Formal specifications (5)
+├── specs/                        # Formal specifications (5)
 │   ├── asdd-lifecycle.md
 │   ├── bluf-6.md
 │   ├── heuristics.md

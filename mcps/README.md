@@ -99,17 +99,17 @@ Ready to use.
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `pnpm mcp:setup` | **Full setup**: install deps + build + init `.aidd/` + verify |
-| `pnpm mcp:build` | Build all MCP packages |
-| `pnpm mcp:dev` | Watch mode for development |
-| `pnpm mcp:test` | Run MCP tests |
-| `pnpm mcp:typecheck` | TypeScript type checking |
-| `pnpm mcp:clean` | Clean build artifacts |
-| `pnpm mcp:status` | Quick check — are packages built? |
-| `pnpm mcp:doctor` | Full diagnostic of MCP environment (supports `--json`, `--fix`, `--deep`, `--quiet`, `--no-runtime`, `--no-color`) |
-| `pnpm mcp:check` | Single-line status (for AI agent startup) |
+| Command              | Description                                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `pnpm mcp:setup`     | **Full setup**: install deps + build + init `.aidd/` + verify                                                      |
+| `pnpm mcp:build`     | Build all MCP packages                                                                                             |
+| `pnpm mcp:dev`       | Watch mode for development                                                                                         |
+| `pnpm mcp:test`      | Run MCP tests                                                                                                      |
+| `pnpm mcp:typecheck` | TypeScript type checking                                                                                           |
+| `pnpm mcp:clean`     | Clean build artifacts                                                                                              |
+| `pnpm mcp:status`    | Quick check — are packages built?                                                                                  |
+| `pnpm mcp:doctor`    | Full diagnostic of MCP environment (supports `--json`, `--fix`, `--deep`, `--quiet`, `--no-runtime`, `--no-color`) |
+| `pnpm mcp:check`     | Single-line status (for AI agent startup)                                                                          |
 
 ### Typical workflow
 
@@ -187,78 +187,78 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 
 ### Core: The Brain (17 tools)
 
-| Tool | Purpose |
-|------|---------|
-| `aidd_detect_project` | Scan directory for AIDD markers + parse package.json stack |
-| `aidd_get_config` | Return active MCP configuration |
-| `aidd_bootstrap` | One-call conversation start: project + agents + rules + memory + suggestions |
-| `aidd_classify_task` | Task description → agent roles, workflows, templates |
-| `aidd_get_routing_table` | Complete task→agent→workflow routing table |
-| `aidd_query_tkb` | Filter/search Technology Knowledge Base by category, maturity, keyword |
-| `aidd_get_tkb_entry` | Full content of a specific TKB entry |
-| `aidd_get_agent` | Agent SKILL.md with parsed frontmatter |
-| `aidd_get_competency_matrix` | Cross-agent expertise matrix |
-| `aidd_apply_heuristics` | Run a decision through AIDD's 10 heuristics |
-| `aidd_tech_compatibility` | Stack compatibility analysis with scores |
-| `aidd_suggest_next` | Context-aware next step suggestions with pre-filled tool args |
-| `aidd_optimize_context` | Token-budget-aware context filtering |
-| `aidd_scaffold` | Initialize AIDD in a project (minimal/standard/full) |
+| Tool                         | Purpose                                                                      |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| `aidd_detect_project`        | Scan directory for AIDD markers + parse package.json stack                   |
+| `aidd_get_config`            | Return active MCP configuration                                              |
+| `aidd_bootstrap`             | One-call conversation start: project + agents + rules + memory + suggestions |
+| `aidd_classify_task`         | Task description → agent roles, workflows, templates                         |
+| `aidd_get_routing_table`     | Complete task→agent→workflow routing table                                   |
+| `aidd_query_tkb`             | Filter/search Technology Knowledge Base by category, maturity, keyword       |
+| `aidd_get_tkb_entry`         | Full content of a specific TKB entry                                         |
+| `aidd_get_agent`             | Agent SKILL.md with parsed frontmatter                                       |
+| `aidd_get_competency_matrix` | Cross-agent expertise matrix                                                 |
+| `aidd_apply_heuristics`      | Run a decision through AIDD's 10 heuristics                                  |
+| `aidd_tech_compatibility`    | Stack compatibility analysis with scores                                     |
+| `aidd_suggest_next`          | Context-aware next step suggestions with pre-filled tool args                |
+| `aidd_optimize_context`      | Token-budget-aware context filtering                                         |
+| `aidd_scaffold`              | Initialize AIDD in a project (minimal/standard/full)                         |
 
 ### Memory: The Memory (27 tools)
 
-| Tool | Purpose |
-|------|---------|
-| `aidd_session` | Multi-action session state (start/update/end/get/list) + session threading |
-| `aidd_branch` | Multi-action branch context (get/save/promote/list/merge) |
-| `aidd_memory_search` | 3-layer L1: compact index search (~50-100 tokens/result) |
-| `aidd_memory_context` | 3-layer L2: timeline view around a specific entry |
-| `aidd_memory_get` | 3-layer L3: fetch full details by IDs (batch) |
-| `aidd_memory_add_decision` | Record architectural decision with rationale |
-| `aidd_memory_add_mistake` | Record mistake with root cause + fix + prevention |
-| `aidd_memory_add_convention` | Record project convention with examples |
-| `aidd_observation` | Record typed observation with discoveryTokens ROI tracking |
-| `aidd_memory_prune` | Remove outdated memory entries |
-| `aidd_lifecycle_get` | ASDD 8-phase definition with entry/exit criteria |
-| `aidd_lifecycle_init` | Initialize new ASDD lifecycle session |
-| `aidd_lifecycle_advance` | Advance phase after verifying exit criteria |
-| `aidd_lifecycle_status` | Current lifecycle session state |
-| `aidd_lifecycle_list` | List all lifecycle sessions |
-| `aidd_evolution_analyze` | Analyze sessions, identify patterns, generate candidates |
-| `aidd_evolution_status` | Engine learnings + pending changes |
-| `aidd_evolution_review` | Review auto-changes before/after apply |
-| `aidd_evolution_revert` | Undo an auto-applied change |
-| `aidd_draft_create` | Generate draft artifact (rule, skill, TKB, workflow) |
-| `aidd_draft_list` | List pending drafts with confidence scores |
-| `aidd_draft_approve` | Promote draft to AIDD directory |
-| `aidd_model_performance` | AI provider/model performance metrics |
-| `aidd_model_compare` | Side-by-side model comparison across dimensions |
-| `aidd_model_recommend` | Task-type-aware model recommendation |
-| `aidd_diagnose_error` | Search memory for similar past mistakes + fixes |
-| `aidd_project_health` | Data-driven health score from analytics |
+| Tool                         | Purpose                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `aidd_session`               | Multi-action session state (start/update/end/get/list) + session threading |
+| `aidd_branch`                | Multi-action branch context (get/save/promote/list/merge)                  |
+| `aidd_memory_search`         | 3-layer L1: compact index search (~50-100 tokens/result)                   |
+| `aidd_memory_context`        | 3-layer L2: timeline view around a specific entry                          |
+| `aidd_memory_get`            | 3-layer L3: fetch full details by IDs (batch)                              |
+| `aidd_memory_add_decision`   | Record architectural decision with rationale                               |
+| `aidd_memory_add_mistake`    | Record mistake with root cause + fix + prevention                          |
+| `aidd_memory_add_convention` | Record project convention with examples                                    |
+| `aidd_observation`           | Record typed observation with discoveryTokens ROI tracking                 |
+| `aidd_memory_prune`          | Remove outdated memory entries                                             |
+| `aidd_lifecycle_get`         | ASDD 8-phase definition with entry/exit criteria                           |
+| `aidd_lifecycle_init`        | Initialize new ASDD lifecycle session                                      |
+| `aidd_lifecycle_advance`     | Advance phase after verifying exit criteria                                |
+| `aidd_lifecycle_status`      | Current lifecycle session state                                            |
+| `aidd_lifecycle_list`        | List all lifecycle sessions                                                |
+| `aidd_evolution_analyze`     | Analyze sessions, identify patterns, generate candidates                   |
+| `aidd_evolution_status`      | Engine learnings + pending changes                                         |
+| `aidd_evolution_review`      | Review auto-changes before/after apply                                     |
+| `aidd_evolution_revert`      | Undo an auto-applied change                                                |
+| `aidd_draft_create`          | Generate draft artifact (rule, skill, TKB, workflow)                       |
+| `aidd_draft_list`            | List pending drafts with confidence scores                                 |
+| `aidd_draft_approve`         | Promote draft to AIDD directory                                            |
+| `aidd_model_performance`     | AI provider/model performance metrics                                      |
+| `aidd_model_compare`         | Side-by-side model comparison across dimensions                            |
+| `aidd_model_recommend`       | Task-type-aware model recommendation                                       |
+| `aidd_diagnose_error`        | Search memory for similar past mistakes + fixes                            |
+| `aidd_project_health`        | Data-driven health score from analytics                                    |
 
 ### Tools: The Hands (19 tools)
 
-| Tool | Purpose |
-|------|---------|
-| `aidd_validate_mermaid` | Validate Mermaid diagram syntax |
-| `aidd_validate_openapi` | Validate OpenAPI specification |
-| `aidd_validate_sql` | Validate SQL syntax and patterns |
-| `aidd_validate_tests` | Validate test file structure and coverage |
-| `aidd_validate_dockerfile` | Validate Dockerfile best practices |
-| `aidd_validate_i18n` | Validate internationalization files |
-| `aidd_validate_tkb_entry` | Validate TKB entry format |
-| `aidd_validate_design_tokens` | Validate design token files |
-| `aidd_audit_accessibility` | WCAG accessibility audit |
-| `aidd_audit_performance` | Performance audit by framework |
-| `aidd_scan_secrets` | Scan for exposed secrets |
-| `aidd_check_compliance` | Check code against AIDD rules |
-| `aidd_verify_version` | 4-step Version Verification Protocol |
-| `aidd_check_quality_gates` | Validate ASDD quality gates |
-| `aidd_explain_violation` | Explain why a rule exists with examples |
-| `aidd_generate_commit_message` | Analyze changes → conventional commit |
-| `aidd_plan_migration` | Framework upgrade plan with guardrails |
-| `aidd_ci_report` | CI/CD compliance report (github/json/markdown) |
-| `aidd_ci_diff_check` | Check only changed files for compliance |
+| Tool                           | Purpose                                        |
+| ------------------------------ | ---------------------------------------------- |
+| `aidd_validate_mermaid`        | Validate Mermaid diagram syntax                |
+| `aidd_validate_openapi`        | Validate OpenAPI specification                 |
+| `aidd_validate_sql`            | Validate SQL syntax and patterns               |
+| `aidd_validate_tests`          | Validate test file structure and coverage      |
+| `aidd_validate_dockerfile`     | Validate Dockerfile best practices             |
+| `aidd_validate_i18n`           | Validate internationalization files            |
+| `aidd_validate_tkb_entry`      | Validate TKB entry format                      |
+| `aidd_validate_design_tokens`  | Validate design token files                    |
+| `aidd_audit_accessibility`     | WCAG accessibility audit                       |
+| `aidd_audit_performance`       | Performance audit by framework                 |
+| `aidd_scan_secrets`            | Scan for exposed secrets                       |
+| `aidd_check_compliance`        | Check code against AIDD rules                  |
+| `aidd_verify_version`          | 4-step Version Verification Protocol           |
+| `aidd_check_quality_gates`     | Validate ASDD quality gates                    |
+| `aidd_explain_violation`       | Explain why a rule exists with examples        |
+| `aidd_generate_commit_message` | Analyze changes → conventional commit          |
+| `aidd_plan_migration`          | Framework upgrade plan with guardrails         |
+| `aidd_ci_report`               | CI/CD compliance report (github/json/markdown) |
+| `aidd_ci_diff_check`           | Check only changed files for compliance        |
 
 ---
 
@@ -363,11 +363,11 @@ ai_provider: {
 
 Three tools provide analytics:
 
-| Tool | What it does |
-|------|-------------|
+| Tool                     | What it does                                                              |
+| ------------------------ | ------------------------------------------------------------------------- |
 | `aidd_model_performance` | Metrics for a specific model: compliance scores, reverts, test pass rates |
-| `aidd_model_compare` | Side-by-side comparison of 2+ models across quality, compliance, reverts |
-| `aidd_model_recommend` | Given a task type, recommend the best model from historical data |
+| `aidd_model_compare`     | Side-by-side comparison of 2+ models across quality, compliance, reverts  |
+| `aidd_model_recommend`   | Given a task type, recommend the best model from historical data          |
 
 This data is **real-world benchmarking** — not synthetic tests, but actual development session outcomes.
 
@@ -388,13 +388,13 @@ The autonomous evolution engine learns from every completed session and improves
 
 ### What It Evolves
 
-| Observation | Auto-Improvement |
-|-------------|------------------|
-| Agent X better for task type Y | Update routing weights |
-| Skill combo A+B > A alone | Update agent skill sets |
-| Rule violation always reverted | Elevate rule severity |
-| Tools X→Y→Z always together | Create compound workflow |
-| Recurring mistake pattern | Draft new rule/convention |
+| Observation                        | Auto-Improvement             |
+| ---------------------------------- | ---------------------------- |
+| Agent X better for task type Y     | Update routing weights       |
+| Skill combo A+B > A alone          | Update agent skill sets      |
+| Rule violation always reverted     | Elevate rule severity        |
+| Tools X→Y→Z always together        | Create compound workflow     |
+| Recurring mistake pattern          | Draft new rule/convention    |
 | Model A outperforms B for frontend | Update model recommendations |
 
 ### Safeguards
@@ -412,7 +412,7 @@ The autonomous evolution engine learns from every completed session and improves
 ### Bundled Content (build time)
 
 AIDD framework content ships inside the npm packages:
-- AGENTS.md, spec/, rules/, skills/, workflows/, templates/, knowledge/
+- AGENTS.md, specs/, rules/, skills/, workflows/, templates/, knowledge/
 
 ### Project Detection (runtime)
 
@@ -425,16 +425,16 @@ The MCP scans for project-level AIDD files:
 
 ### Merge Strategy
 
-| Content | Behavior |
-|---------|----------|
-| AGENTS.md | Project wins entirely (SSOT) |
-| Rules | Project overrides by filename, additions included |
-| Skills | Project overrides by agent name |
-| Workflows | Project overrides by filename |
-| Templates | Project overrides by filename |
-| Knowledge | Merged by path, project entries override bundled |
-| Memory | Project-only (never from bundled) |
-| Spec | Bundled-only (specs define the standard) |
+| Content   | Behavior                                          |
+| --------- | ------------------------------------------------- |
+| AGENTS.md | Project wins entirely (SSOT)                      |
+| Rules     | Project overrides by filename, additions included |
+| Skills    | Project overrides by agent name                   |
+| Workflows | Project overrides by filename                     |
+| Templates | Project overrides by filename                     |
+| Knowledge | Merged by path, project entries override bundled  |
+| Memory    | Project-only (never from bundled)                 |
+| Specs     | Bundled-only (specs define the standard)          |
 
 ---
 
@@ -442,16 +442,16 @@ The MCP scans for project-level AIDD files:
 
 ### Environment Variables
 
-| Variable | Values | Default |
-|----------|--------|---------|
-| `AIDD_TRANSPORT` | `stdio`, `streamable-http` | `stdio` |
-| `AIDD_PROJECT_PATH` | Path to project | Current directory |
-| `AIDD_PORT` | Port number | `3100` |
-| `AIDD_LOG_LEVEL` | `debug`, `info`, `warn`, `error` | `info` |
-| `AIDD_CONTENT_OVERRIDE_MODE` | `merge`, `project_only`, `bundled_only` | `merge` |
-| `AIDD_EVOLUTION_ENABLED` | `true`, `false` | `true` |
-| `AIDD_EVOLUTION_THRESHOLD` | `0-100` | `90` |
-| `AIDD_MODE` | `engine`, `core`, `memory`, `tools` | `engine` |
+| Variable                     | Values                                  | Default           |
+| ---------------------------- | --------------------------------------- | ----------------- |
+| `AIDD_TRANSPORT`             | `stdio`, `streamable-http`              | `stdio`           |
+| `AIDD_PROJECT_PATH`          | Path to project                         | Current directory |
+| `AIDD_PORT`                  | Port number                             | `3100`            |
+| `AIDD_LOG_LEVEL`             | `debug`, `info`, `warn`, `error`        | `info`            |
+| `AIDD_CONTENT_OVERRIDE_MODE` | `merge`, `project_only`, `bundled_only` | `merge`           |
+| `AIDD_EVOLUTION_ENABLED`     | `true`, `false`                         | `true`            |
+| `AIDD_EVOLUTION_THRESHOLD`   | `0-100`                                 | `90`              |
+| `AIDD_MODE`                  | `engine`, `core`, `memory`, `tools`     | `engine`          |
 
 ### Project Config (`.aidd/config.json`)
 
@@ -708,7 +708,7 @@ aidd.md Framework — Content and structure
   ✅ skills/ (11 agents)
   ✅ knowledge/ (9 domains, 106 entries)
   ✅ workflows/ (9 files + 5 orchestrators)
-  ✅ spec/ (6 files)
+  ✅ specs/ (6 files)
   ✅ templates/ (23 files)
 
 Skills Validation — Frontmatter integrity
@@ -734,22 +734,22 @@ Installed Agents — Detected AI editors/CLIs
 
 #### Doctor flags
 
-| Flag | Description |
-|------|-------------|
-| `--json` | Output structured JSON (for CI/scripting) |
-| `--fix` | Auto-fix common issues (rebuild stale packages, create `.aidd/`) |
-| `--deep` | Run slow checks (TypeScript type checking) |
-| `--quiet` | Only show failures and warnings |
-| `--no-runtime` | Skip process detection (faster) |
-| `--no-color` | Disable ANSI colors (also respects `NO_COLOR` env) |
+| Flag           | Description                                                      |
+| -------------- | ---------------------------------------------------------------- |
+| `--json`       | Output structured JSON (for CI/scripting)                        |
+| `--fix`        | Auto-fix common issues (rebuild stale packages, create `.aidd/`) |
+| `--deep`       | Run slow checks (TypeScript type checking)                       |
+| `--quiet`      | Only show failures and warnings                                  |
+| `--no-runtime` | Skip process detection (faster)                                  |
+| `--no-color`   | Disable ANSI colors (also respects `NO_COLOR` env)               |
 
 #### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| `0` | All checks passed |
-| `1` | Warnings only (everything works, optional setup pending) |
-| `2` | Errors detected (action required) |
+| Code | Meaning                                                  |
+| ---- | -------------------------------------------------------- |
+| `0`  | All checks passed                                        |
+| `1`  | Warnings only (everything works, optional setup pending) |
+| `2`  | Errors detected (action required)                        |
 
 ### Single-line check (for AI startup)
 
@@ -767,28 +767,28 @@ Use this in CLAUDE.md startup protocol or similar automation.
 
 ## Resources (MCP Protocol)
 
-| URI Pattern | Description |
-|-------------|-------------|
-| `aidd://agents` | AGENTS.md (SSOT) |
-| `aidd://spec/{name}` | Spec documents |
-| `aidd://rules/{name}` | Individual rules |
-| `aidd://skills/{agent}` | Skill definitions |
-| `aidd://workflows/{name}` | Workflow procedures |
-| `aidd://templates/{name}` | Task templates |
-| `aidd://knowledge/{category}/{entry}` | TKB entries |
-| `aidd://memory/decisions` | Project decisions |
-| `aidd://memory/mistakes` | Project mistakes |
-| `aidd://memory/conventions` | Project conventions |
-| `aidd://evolution/status` | Evolution engine state |
-| `aidd://models/analytics` | AI model performance data |
-| `aidd://enforcement/guardrails` | All guardrails from rules |
+| URI Pattern                           | Description               |
+| ------------------------------------- | ------------------------- |
+| `aidd://agents`                       | AGENTS.md (SSOT)          |
+| `aidd://specs/{name}`                 | Spec documents            |
+| `aidd://rules/{name}`                 | Individual rules          |
+| `aidd://skills/{agent}`               | Skill definitions         |
+| `aidd://workflows/{name}`             | Workflow procedures       |
+| `aidd://templates/{name}`             | Task templates            |
+| `aidd://knowledge/{category}/{entry}` | TKB entries               |
+| `aidd://memory/decisions`             | Project decisions         |
+| `aidd://memory/mistakes`              | Project mistakes          |
+| `aidd://memory/conventions`           | Project conventions       |
+| `aidd://evolution/status`             | Evolution engine state    |
+| `aidd://models/analytics`             | AI model performance data |
+| `aidd://enforcement/guardrails`       | All guardrails from rules |
 
 ## Prompts (MCP Protocol)
 
-| Prompt | Description |
-|--------|-------------|
-| `aidd_plan_task` | Plan using AIDD orchestrator + BLUF-6 format |
-| `aidd_select_technology` | TKB-driven technology comparison |
-| `aidd_review_code` | Rule-based code review |
-| `aidd_start_feature` | Full ASDD 8-phase lifecycle guide |
-| `aidd_security_audit` | OWASP-based security audit |
+| Prompt                   | Description                                  |
+| ------------------------ | -------------------------------------------- |
+| `aidd_plan_task`         | Plan using AIDD orchestrator + BLUF-6 format |
+| `aidd_select_technology` | TKB-driven technology comparison             |
+| `aidd_review_code`       | Rule-based code review                       |
+| `aidd_start_feature`     | Full ASDD 8-phase lifecycle guide            |
+| `aidd_security_audit`    | OWASP-based security audit                   |

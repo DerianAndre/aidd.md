@@ -13,11 +13,10 @@ import type {
   SortOption,
   ViewMode,
   McpCategory,
-  ContentType,
 } from '../lib/types';
 import { DEFAULT_FILTERS } from '../lib/constants';
 import { fetchMcpRegistry, fetchContentRegistry } from '../lib/registry';
-import { filterAndSort, computeStats } from '../lib/catalog-helpers';
+import { filterAndSort, computeStats, countByContentType } from '../lib/catalog-helpers';
 
 // ── Store interface ─────────────────────────────────────────────
 
@@ -38,6 +37,7 @@ interface MarketplaceStoreState {
   // Derived
   filteredEntries: MarketplaceEntry[];
   stats: MarketplaceStats;
+  contentCounts: Record<string, number>;
 
   // Actions
   fetchCatalog: () => Promise<void>;
@@ -47,7 +47,6 @@ interface MarketplaceStoreState {
   setSort: (sort: SortOption) => void;
   setViewMode: (mode: ViewMode) => void;
   toggleCategory: (cat: McpCategory) => void;
-  toggleContentType: (ct: ContentType) => void;
   toggleTag: (tag: string) => void;
   toggleOfficial: () => void;
   toggleTrending: () => void;
@@ -72,6 +71,7 @@ function recompute(
   return {
     filteredEntries: filterAndSort(mcpServers, content, filters),
     stats: computeStats(mcpServers, content),
+    contentCounts: countByContentType(content),
   };
 }
 
@@ -92,6 +92,7 @@ export const useMarketplaceStore = create<MarketplaceStoreState>((set, get) => (
   filters: { ...DEFAULT_FILTERS },
   filteredEntries: [],
   stats: EMPTY_STATS,
+  contentCounts: {},
 
   // Fetch from registry (or fallback)
   fetchCatalog: async () => {
@@ -160,13 +161,6 @@ export const useMarketplaceStore = create<MarketplaceStoreState>((set, get) => (
   toggleCategory: (cat) => {
     set((s) => {
       const filters = { ...s.filters, mcpCategories: toggleInArray(s.filters.mcpCategories, cat) };
-      return { filters, ...recompute(s.mcpServers, s.content, filters) };
-    });
-  },
-
-  toggleContentType: (ct) => {
-    set((s) => {
-      const filters = { ...s.filters, contentTypes: toggleInArray(s.filters.contentTypes, ct) };
       return { filters, ...recompute(s.mcpServers, s.content, filters) };
     });
   },

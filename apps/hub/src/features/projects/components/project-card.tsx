@@ -1,6 +1,6 @@
-import { Card, Button, Chip } from '@heroui/react';
-import { Check, X, Trash2, FolderOpen } from 'lucide-react';
-import type { ProjectInfo } from '../../../lib/tauri';
+import { Card, Button, Chip } from "@heroui/react";
+import { Check, X, Trash2, FolderOpen } from "lucide-react";
+import type { ProjectInfo } from "../../../lib/tauri";
 
 interface ProjectCardProps {
   project: ProjectInfo;
@@ -9,21 +9,26 @@ interface ProjectCardProps {
   onRemove: () => void;
 }
 
-const MARKER_LABELS: { key: keyof ProjectInfo['markers']; label: string }[] = [
-  { key: 'agents_md', label: 'AGENTS.md' },
-  { key: 'rules', label: 'Rules' },
-  { key: 'skills', label: 'Skills' },
-  { key: 'workflows', label: 'Workflows' },
-  { key: 'templates', label: 'Templates' },
-  { key: 'knowledge', label: 'Knowledge' },
-  { key: 'spec', label: 'Spec' },
-  { key: 'aidd_dir', label: '.aidd/' },
-  { key: 'memory', label: 'Memory' },
+const MARKER_LABELS: { key: keyof ProjectInfo["markers"]; label: string }[] = [
+  { key: "agents_md", label: "AGENTS.md" },
+  { key: "rules", label: "Rules" },
+  { key: "skills", label: "Skills" },
+  { key: "workflows", label: "Workflows" },
+  { key: "templates", label: "Templates" },
+  { key: "knowledge", label: "Knowledge" },
+  { key: "specs", label: "Specs" },
+  { key: "aidd_dir", label: ".aidd/" },
+  { key: "memory", label: "Memory" },
 ];
 
-export function ProjectCard({ project, isActive, onSetActive, onRemove }: ProjectCardProps) {
+export function ProjectCard({
+  project,
+  isActive,
+  onSetActive,
+  onRemove,
+}: ProjectCardProps) {
   return (
-    <Card className={isActive ? 'border-2 border-primary' : ''}>
+    <Card className={isActive ? "border-2 border-primary" : ""}>
       <Card.Header>
         <div className="flex w-full items-start justify-between">
           <div className="flex items-center gap-2">
@@ -36,7 +41,9 @@ export function ProjectCard({ project, isActive, onSetActive, onRemove }: Projec
             </div>
           </div>
           {isActive && (
-            <Chip size="sm" variant="soft" color="success">Active</Chip>
+            <Chip size="sm" variant="soft" color="success">
+              Active
+            </Chip>
           )}
         </div>
       </Card.Header>
@@ -47,7 +54,7 @@ export function ProjectCard({ project, isActive, onSetActive, onRemove }: Projec
               key={key}
               size="sm"
               variant="soft"
-              color={project.markers[key] ? 'success' : 'default'}
+              color={project.markers[key] ? "success" : "default"}
             >
               <span className="flex items-center gap-0.5">
                 {project.markers[key] ? <Check size={12} /> : <X size={12} />}

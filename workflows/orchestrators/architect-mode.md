@@ -35,19 +35,19 @@ Coordinate the full brainstorm → research → plan → execute → complete pi
 
 ### Stage 0: Intake (Tier 1 — inline)
 
-**Indicator**: `[aidd.md] Orchestrator - Classified → <entry point>`
+**Indicator**: `[aidd.md] Workflows: Orchestrator - Architect Mode → <entry point>`
 **Task:** Classify the user's request to determine the optimal entry point.
 **Input:** User's initial request.
 **Output:** Entry point classification.
 **Reference:** `rules/orchestrator.md` → Section 4 (Intake Classification)
 
-| Signal | Entry Point |
-|---|---|
-| Vague idea, "I want to build..." | → Stage 1 (Brainstorm) |
-| Clear feature, needs research | → Stage 2 (Research) |
-| Defined requirements, ready to plan | → Stage 3 (Plan) |
-| Existing plan, ready to build | → Stage 5 (Execute) |
-| Bug report or issue | → Stage 3B (Issue) |
+| Signal                              | Entry Point            |
+| ----------------------------------- | ---------------------- |
+| Vague idea, "I want to build..."    | → Stage 1 (Brainstorm) |
+| Clear feature, needs research       | → Stage 2 (Research)   |
+| Defined requirements, ready to plan | → Stage 3 (Plan)       |
+| Existing plan, ready to build       | → Stage 5 (Execute)    |
+| Bug report or issue                 | → Stage 3B (Issue)     |
 
 **Default:** Enter at Stage 1 unless the user demonstrates clarity.
 
@@ -95,7 +95,7 @@ Tier 1 orchestrator synthesizes findings into a trade-off matrix.
 **Task:** Produce an atomic, idempotent, executable plan document.
 **Input:** Brainstorm Summary + Research Summary (or just clear requirements).
 **Output:** Plan document at `docs/plans/active/<YYYY-MM-DD>-<feature>.md`.
-**Reference:** `spec/asdd-lifecycle.md` → Phases 1-3
+**Reference:** `specs/asdd-lifecycle.md` → Phases 1-3
 
 The plan document includes:
 - Context (problem statement, research reference)
@@ -112,7 +112,7 @@ The plan document includes:
 **Task:** Create structured issue document for bug reports or tracked problems.
 **Input:** Bug report or problem description.
 **Output:** Issue at `docs/issues/<YYYY-MM-DD>-<feature>.md`.
-**Reference:** `spec/asdd-lifecycle.md` → Phase 3B
+**Reference:** `specs/asdd-lifecycle.md` → Phase 3B
 
 ---
 
@@ -121,7 +121,7 @@ The plan document includes:
 **Task:** Version-control the plan before any implementation.
 **Input:** Approved plan document.
 **Output:** Git commit (`docs(scope): add plan for <feature>`).
-**Reference:** `spec/asdd-lifecycle.md` → Phase 4
+**Reference:** `specs/asdd-lifecycle.md` → Phase 4
 
 Steps:
 1. Check current branch — suggest `feature/<name>` or `fix/<name>` if on `main`
@@ -135,7 +135,7 @@ Steps:
 **Task:** Implement the plan with verification at each step.
 **Input:** Committed plan document.
 **Output:** Working implementation.
-**Reference:** `spec/asdd-lifecycle.md` → Phase 5
+**Reference:** `specs/asdd-lifecycle.md` → Phase 5
 
 Dispatch strategy:
 - Assign model per the plan's Tier column
@@ -154,7 +154,7 @@ See `templates/model-matrix.md` → Parallel Dispatch Pattern for execution exam
 **Task:** Verify, clean up, and archive.
 **Input:** Completed implementation.
 **Output:** Clean commit, passing checks, archived plan.
-**Reference:** `spec/asdd-lifecycle.md` → Phases 6-8
+**Reference:** `specs/asdd-lifecycle.md` → Phases 6-8
 
 Task-to-tier assignment:
 - Run typecheck/lint/tests → Tier 3
@@ -177,15 +177,15 @@ Checklist:
 
 ## Artifacts Produced
 
-| Artifact | Stage | Location |
-|---|---|---|
-| Brainstorm Summary | 1 | Inline (conversation) or `docs/plans/active/` |
-| Research Summary | 2 | Inline (conversation) or `docs/plans/active/` |
-| Plan Document | 3 | `docs/plans/active/<YYYY-MM-DD>-<feature>.md` |
-| Issue Document | 3B | `docs/issues/<YYYY-MM-DD>-<feature>.md` |
-| Spec Commit | 4 | Git history |
-| Implementation | 5 | Source files per plan |
-| Implementation Commit | 6 | Git history |
+| Artifact              | Stage | Location                                      |
+| --------------------- | ----- | --------------------------------------------- |
+| Brainstorm Summary    | 1     | Inline (conversation) or `docs/plans/active/` |
+| Research Summary      | 2     | Inline (conversation) or `docs/plans/active/` |
+| Plan Document         | 3     | `docs/plans/active/<YYYY-MM-DD>-<feature>.md` |
+| Issue Document        | 3B    | `docs/issues/<YYYY-MM-DD>-<feature>.md`       |
+| Spec Commit           | 4     | Git history                                   |
+| Implementation        | 5     | Source files per plan                         |
+| Implementation Commit | 6     | Git history                                   |
 
 ---
 
@@ -203,12 +203,12 @@ Checklist:
 
 ## Cost Estimation
 
-| Tier | Stages | Est. Tokens | Cost | Total |
-|---|---|---|---|---|
-| **Tier 1** | 3 (Intake, Brainstorm, Plan) | ~30,000 | See model-matrix.md | ~$0.45 |
-| **Tier 2** | 2 (Research, Execute complex) | ~25,000 | See model-matrix.md | ~$0.08 |
-| **Tier 3** | 2 (Commit Plan, Execute simple, Completion) | ~15,000 | See model-matrix.md | ~$0.02 |
-| **Total** | **7 stages** | **~70,000 tokens** | **Mixed** | **~$0.55** |
+| Tier       | Stages                                      | Est. Tokens        | Cost                | Total      |
+| ---------- | ------------------------------------------- | ------------------ | ------------------- | ---------- |
+| **Tier 1** | 3 (Intake, Brainstorm, Plan)                | ~30,000            | See model-matrix.md | ~$0.45     |
+| **Tier 2** | 2 (Research, Execute complex)               | ~25,000            | See model-matrix.md | ~$0.08     |
+| **Tier 3** | 2 (Commit Plan, Execute simple, Completion) | ~15,000            | See model-matrix.md | ~$0.02     |
+| **Total**  | **7 stages**                                | **~70,000 tokens** | **Mixed**           | **~$0.55** |
 
 Costs assume typical feature complexity. Actual costs vary based on research depth and implementation scope.
 

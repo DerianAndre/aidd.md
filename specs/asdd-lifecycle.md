@@ -69,19 +69,19 @@ Core principle: **specification and implementation are separate commits**. The s
 
 Each implementation step MUST include a model assignment column:
 
-| # | Task | Files | Complexity | Tier | Status |
-|---|---|---|---|---|---|
-| 1 | [Atomic task] | `src/...` | High | 1 | pending |
-| 2 | [Atomic task] | `src/...` | Standard | 2 | pending |
-| 3 | [Atomic task] | `src/...` | Low | 3 | pending |
+| #   | Task          | Files     | Complexity | Tier | Status  |
+| --- | ------------- | --------- | ---------- | ---- | ------- |
+| 1   | [Atomic task] | `src/...` | High       | 1    | pending |
+| 2   | [Atomic task] | `src/...` | Standard   | 2    | pending |
+| 3   | [Atomic task] | `src/...` | Low        | 3    | pending |
 
 #### File Convention
 
-| Scope | Path |
-|---|---|
-| Single feature | `docs/plans/active/<YYYY-MM-DD>-<feature>.md` |
+| Scope              | Path                                                                  |
+| ------------------ | --------------------------------------------------------------------- |
+| Single feature     | `docs/plans/active/<YYYY-MM-DD>-<feature>.md`                         |
 | Multi-part feature | `docs/plans/active/<YYYY-MM-DD>-01-<feature-part-a>.md`, `...-02-...` |
-| Related issue | `docs/issues/<YYYY-MM-DD>-<feature>.md` |
+| Related issue      | `docs/issues/<YYYY-MM-DD>-<feature>.md`                               |
 
 **Gate**: User reviews plan → `[Approve]` | `[Revise]` | `[Reject & Re-brainstorm]`
 
@@ -178,18 +178,18 @@ Execution:
 
 #### Completion Task-to-Model Assignment
 
-| Task | Tier | Rationale |
-|---|---|---|
-| Run typecheck/lint | 3 | Mechanical — run command, report result |
-| Run test suite | 3 | Mechanical — run command, report result |
-| Analyze test failures | 2 → 1 | Depends on failure complexity; escalate if needed |
-| Write missing tests (simple) | 3 | Pure functions, no mocks, obvious assertions |
-| Write missing tests (complex) | 2 → 1 | Integration tests, mocked boundaries, edge cases |
-| Update plan status | 3 | File edit — mechanical |
-| Move plan to `done/` | 3 | File operation — mechanical |
-| Draft commit message | 2 | Needs to summarize changes accurately |
-| Create PR | 2 | Needs coherent summary and test plan |
-| Final architecture review | 1 | Verify implementation matches architectural intent |
+| Task                          | Tier  | Rationale                                          |
+| ----------------------------- | ----- | -------------------------------------------------- |
+| Run typecheck/lint            | 3     | Mechanical — run command, report result            |
+| Run test suite                | 3     | Mechanical — run command, report result            |
+| Analyze test failures         | 2 → 1 | Depends on failure complexity; escalate if needed  |
+| Write missing tests (simple)  | 3     | Pure functions, no mocks, obvious assertions       |
+| Write missing tests (complex) | 2 → 1 | Integration tests, mocked boundaries, edge cases   |
+| Update plan status            | 3     | File edit — mechanical                             |
+| Move plan to `done/`          | 3     | File operation — mechanical                        |
+| Draft commit message          | 2     | Needs to summarize changes accurately              |
+| Create PR                     | 2     | Needs coherent summary and test plan               |
+| Final architecture review     | 1     | Verify implementation matches architectural intent |
 
 **Exit criteria**: Clean typecheck, clean lint, all targeted tests pass, spec is current.
 
@@ -211,11 +211,11 @@ Execution:
 
 The lifecycle maps to intelligence tiers to optimize effort allocation:
 
-| Phases | Tier | Effort | Rationale |
-|--------|------|--------|-----------|
-| SYNC, STORY, PLAN, COMMIT_SPEC | Tier 1 (HIGH) | Architecture, analysis, planning | Errors here cascade. Maximum rigor required. |
-| EXECUTE | Tier 2 (STANDARD) | Implementation, integration | Follow the plan. Creativity within constraints. |
-| TEST, VERIFY, COMMIT_IMPL | Tier 3 (LOW) | Tests, validation, formatting | Mechanical verification. Low ambiguity. |
+| Phases                         | Tier              | Effort                           | Rationale                                       |
+| ------------------------------ | ----------------- | -------------------------------- | ----------------------------------------------- |
+| SYNC, STORY, PLAN, COMMIT_SPEC | Tier 1 (HIGH)     | Architecture, analysis, planning | Errors here cascade. Maximum rigor required.    |
+| EXECUTE                        | Tier 2 (STANDARD) | Implementation, integration      | Follow the plan. Creativity within constraints. |
+| TEST, VERIFY, COMMIT_IMPL      | Tier 3 (LOW)      | Tests, validation, formatting    | Mechanical verification. Low ambiguity.         |
 
 Tier transitions are not rigid. If execution reveals architectural issues, escalate back to Tier 1 for re-planning.
 
@@ -279,5 +279,5 @@ If at any point the implementation diverges from the spec, the workflow loops ba
 - **Model tier assignments**: `templates/model-matrix.md`
 - **Task routing**: `templates/routing.md`
 - **Orchestrator rules**: `rules/orchestrator.md`
-- **BLUF-6 output format**: `spec/bluf-6.md`
-- **Memory layer**: `spec/memory-layer.md`
+- **BLUF-6 output format**: `specs/bluf-6.md`
+- **Memory layer**: `specs/memory-layer.md`

@@ -15,9 +15,9 @@
 
 ## Sub-Agent Roles
 
-| Role | Focus |
-|------|-------|
-| **Senior Reviewer** | Architecture, design patterns, business logic |
+| Role                 | Focus                                          |
+| -------------------- | ---------------------------------------------- |
+| **Senior Reviewer**  | Architecture, design patterns, business logic  |
 | **Security Auditor** | Vulnerability scanning, input validation, auth |
 
 ## Review Order (Priority)
@@ -32,13 +32,13 @@
 
 ## Severity Levels
 
-| Level | Description | Action Required |
-|-------|-------------|----------------|
-| **Blocker** | Security vulnerabilities, data loss risk, broken functionality | Must fix before merge |
-| **Critical** | Architecture violations, missing tests for critical paths | Should fix before merge |
-| **Major** | Code quality issues, missing edge cases | Fix in this PR or tracked follow-up |
-| **Minor** | Naming, minor style improvements | Nice to have |
-| **Suggestion** | Alternative approaches, future considerations | Optional |
+| Level          | Description                                                    | Action Required                     |
+| -------------- | -------------------------------------------------------------- | ----------------------------------- |
+| **Blocker**    | Security vulnerabilities, data loss risk, broken functionality | Must fix before merge               |
+| **Critical**   | Architecture violations, missing tests for critical paths      | Should fix before merge             |
+| **Major**      | Code quality issues, missing edge cases                        | Fix in this PR or tracked follow-up |
+| **Minor**      | Naming, minor style improvements                               | Nice to have                        |
+| **Suggestion** | Alternative approaches, future considerations                  | Optional                            |
 
 ## Process
 
@@ -122,4 +122,4 @@
 - **Testing rules**: `rules/testing.md`
 - **Code style rules**: `rules/code-style.md`
 - **Security rules**: `rules/security.md`
-- **BLUF-6 format**: `spec/bluf-6.md`
+- **BLUF-6 format**: `specs/bluf-6.md`

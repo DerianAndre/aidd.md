@@ -15,10 +15,10 @@
 
 ## Sub-Agent Roles
 
-| Role | Focus |
-|------|-------|
-| **Security Architect** | Threat modeling, security patterns, architecture review |
-| **Vulnerability Analyst** | Code review, dependency audit, configuration analysis |
+| Role                      | Focus                                                   |
+| ------------------------- | ------------------------------------------------------- |
+| **Security Architect**    | Threat modeling, security patterns, architecture review |
+| **Vulnerability Analyst** | Code review, dependency audit, configuration analysis   |
 
 ## Process
 
@@ -154,4 +154,4 @@
 - **Security rules**: `rules/security.md`
 - **OWASP knowledge**: `knowledge/security/standards/owasp-2026.md`
 - **Dependency scanning**: `knowledge/security/dependency-scanning/`
-- **BLUF-6 format**: `spec/bluf-6.md`
+- **BLUF-6 format**: `specs/bluf-6.md`

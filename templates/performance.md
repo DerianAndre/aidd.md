@@ -24,10 +24,10 @@ Identify and resolve performance bottlenecks through a disciplined, measurement-
 
 ## Sub-Agent Roles
 
-| Role | Responsibility |
-|------|---------------|
-| **Performance Engineer** | Profiles the system, identifies bottlenecks using data, proposes targeted optimizations. Measures each change independently and reports impact. |
-| **Frontend/Backend Engineer** | Implements the optimizations within the appropriate layer. Ensures changes do not regress functionality or other performance metrics. |
+| Role                          | Responsibility                                                                                                                                  |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Performance Engineer**      | Profiles the system, identifies bottlenecks using data, proposes targeted optimizations. Measures each change independently and reports impact. |
+| **Frontend/Backend Engineer** | Implements the optimizations within the appropriate layer. Ensures changes do not regress functionality or other performance metrics.           |
 
 ---
 
@@ -87,9 +87,9 @@ Produce a performance report:
 Overall improvement in 2-3 sentences. Key numbers: before and after for the primary metric.
 
 #### Optimization Log
-| Optimization | Bottleneck | Before | After | Improvement | Commit |
-|-------------|-----------|--------|-------|-------------|--------|
-| Description | What was slow | Metric | Metric | Percentage | Hash |
+| Optimization | Bottleneck    | Before | After  | Improvement | Commit |
+| ------------ | ------------- | ------ | ------ | ----------- | ------ |
+| Description  | What was slow | Metric | Metric | Percentage  | Hash   |
 
 #### Remaining Opportunities
 Bottlenecks identified but not addressed, with estimated impact and effort.
@@ -109,14 +109,14 @@ Bottlenecks identified but not addressed, with estimated impact and effort.
 
 ## Anti-Patterns
 
-| Anti-Pattern | Description | Mitigation |
-|-------------|-------------|------------|
-| **Premature Optimization** | Optimizing code that is not a measured bottleneck | Always profile first. Optimize only what the data shows is slow. |
-| **Optimizing Without Measuring** | Making "performance improvements" without before/after data | Every optimization must have a baseline metric and a post-change measurement. |
-| **Breaking Functionality for Speed** | Sacrificing correctness or maintainability for performance gains | Run the full test suite after every optimization. Performance is not worth bugs. |
-| **Micro-Optimizing Non-Bottlenecks** | Spending time on nanosecond gains in code that runs once | Focus on the critical path. A 50% improvement on a 1ms operation saves 0.5ms. |
-| **Caching Without Invalidation** | Adding caches without a clear invalidation strategy | Every cache must define: what triggers invalidation, TTL, and stale data tolerance. |
-| **Batching All Changes** | Making multiple optimizations before measuring | One change at a time. Batching makes it impossible to know which change helped. |
+| Anti-Pattern                         | Description                                                      | Mitigation                                                                          |
+| ------------------------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **Premature Optimization**           | Optimizing code that is not a measured bottleneck                | Always profile first. Optimize only what the data shows is slow.                    |
+| **Optimizing Without Measuring**     | Making "performance improvements" without before/after data      | Every optimization must have a baseline metric and a post-change measurement.       |
+| **Breaking Functionality for Speed** | Sacrificing correctness or maintainability for performance gains | Run the full test suite after every optimization. Performance is not worth bugs.    |
+| **Micro-Optimizing Non-Bottlenecks** | Spending time on nanosecond gains in code that runs once         | Focus on the critical path. A 50% improvement on a 1ms operation saves 0.5ms.       |
+| **Caching Without Invalidation**     | Adding caches without a clear invalidation strategy              | Every cache must define: what triggers invalidation, TTL, and stale data tolerance. |
+| **Batching All Changes**             | Making multiple optimizations before measuring                   | One change at a time. Batching makes it impossible to know which change helped.     |
 
 ---
 
@@ -126,5 +126,5 @@ Bottlenecks identified but not addressed, with estimated impact and effort.
 - **Frontend rules**: `rules/frontend.md`
 - **Backend rules**: `rules/backend.md`
 - **Testing rules**: `rules/testing.md`
-- **BLUF-6 format**: `spec/bluf-6.md`
+- **BLUF-6 format**: `specs/bluf-6.md`
 - **Caching knowledge**: `knowledge/data/caching/`

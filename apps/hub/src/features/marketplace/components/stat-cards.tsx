@@ -45,17 +45,19 @@ export function StatCards({ stats, usingFallback }: StatCardsProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
-          <div className="rounded-lg bg-default-100 p-2 text-default-500">
-            <Download size={18} strokeWidth={1.5} />
+        {!usingFallback && (
+          <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
+            <div className="rounded-lg bg-default-100 p-2 text-default-500">
+              <Download size={18} strokeWidth={1.5} />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-foreground">
+                {formatInstallCount(stats.totalInstalls)}
+              </p>
+              <p className="text-[10px] text-default-400">Total Installs</p>
+            </div>
           </div>
-          <div>
-            <p className="text-lg font-bold text-foreground">
-              {formatInstallCount(stats.totalInstalls)}
-            </p>
-            <p className="text-[10px] text-default-400">Total Installs</p>
-          </div>
-        </div>
+        )}
 
         <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
           <div className="rounded-lg bg-default-100 p-2 text-default-500">
