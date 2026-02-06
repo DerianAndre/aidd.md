@@ -23,14 +23,14 @@ export function SkillsListPage() {
         items={items}
         loading={loading}
         getKey={(s) => s.id}
-        getSearchText={(s) => `${s.name} ${s.description} ${s.model}`}
+        getSearchText={(s) => `${s.name} ${s.description} tier ${s.tier}`}
         searchPlaceholder="Search skills..."
         emptyMessage="No skills found in this project."
         renderItem={(skill) => (
           <EntityCard
             title={skill.name}
             description={skill.description}
-            chips={skill.model ? [{ label: skill.model.replace('claude-', '').replace(/-\d{8}$/, ''), color: 'accent' as const }] : undefined}
+            chips={skill.tier > 0 ? [{ label: `Tier ${skill.tier}`, color: skill.tier === 1 ? 'accent' as const : skill.tier === 2 ? 'success' as const : 'warning' as const }] : undefined}
             meta={skill.version ? `v${skill.version}` : undefined}
             onPress={() => {
               const slug = skill.dirPath.split('/').pop() ?? '';

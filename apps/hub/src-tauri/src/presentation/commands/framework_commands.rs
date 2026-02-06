@@ -20,13 +20,15 @@ pub async fn get_framework_version(
     ctx.framework_service.get_version()
 }
 
-/// List all entities in a framework category.
+/// List all entities in a framework category, optionally merging project-level content.
 #[tauri::command]
 pub async fn list_framework_entities(
     category: String,
+    project_path: Option<String>,
     ctx: State<'_, AppContext>,
 ) -> Result<Vec<FrameworkEntity>, String> {
-    ctx.framework_service.list_entities(&category)
+    ctx.framework_service
+        .list_entities_with_project(&category, project_path.as_deref())
 }
 
 /// Read a specific framework entity by category and name.

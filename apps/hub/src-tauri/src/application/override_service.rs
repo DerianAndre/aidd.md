@@ -233,6 +233,7 @@ impl OverrideService {
                 frontmatter: serde_json::Value::Object(serde_json::Map::new()),
                 content,
                 last_modified,
+                source: "override".to_string(),
             });
         }
 

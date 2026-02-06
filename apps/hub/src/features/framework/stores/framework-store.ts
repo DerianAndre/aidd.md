@@ -28,7 +28,7 @@ interface FrameworkStoreState {
 
   // Actions
   initialize: () => Promise<void>;
-  fetchCategory: (category: FrameworkCategory) => Promise<void>;
+  fetchCategory: (category: FrameworkCategory, projectPath?: string) => Promise<void>;
   readEntity: (category: FrameworkCategory, name: string) => Promise<FrameworkEntity>;
   saveEntity: (category: FrameworkCategory, name: string, content: string) => Promise<void>;
   removeEntity: (category: FrameworkCategory, name: string) => Promise<void>;
@@ -76,14 +76,14 @@ export const useFrameworkStore = create<FrameworkStoreState>((set, get) => ({
     }
   },
 
-  fetchCategory: async (category) => {
+  fetchCategory: async (category, projectPath) => {
     const state = get();
     if (state.loading[category]) return;
     if (!state.stale[category] && state.entities[category].length > 0) return;
 
     set((s) => ({ loading: { ...s.loading, [category]: true } }));
     try {
-      const items = await listFrameworkEntities(category);
+      const items = await listFrameworkEntities(category, projectPath);
       set((s) => ({
         entities: { ...s.entities, [category]: items },
         loading: { ...s.loading, [category]: false },

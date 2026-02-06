@@ -14,12 +14,12 @@ const SKILL_FIELDS: FieldDefinition[] = [
   { type: 'text', key: 'description', label: 'Description', placeholder: 'What this skill does' },
   {
     type: 'select',
-    key: 'model',
-    label: 'Model',
+    key: 'tier',
+    label: 'Tier',
     options: [
-      { label: 'Opus 4.6', value: 'claude-opus-4-6' },
-      { label: 'Sonnet 4.5', value: 'claude-sonnet-4-5-20250929' },
-      { label: 'Haiku 4.5', value: 'claude-haiku-4-5-20251001' },
+      { label: 'Tier 1 (HIGH)', value: '1' },
+      { label: 'Tier 2 (STANDARD)', value: '2' },
+      { label: 'Tier 3 (LOW)', value: '3' },
     ],
   },
   { type: 'text', key: 'version', label: 'Version', placeholder: '1.0.0' },

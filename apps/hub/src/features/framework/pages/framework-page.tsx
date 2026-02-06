@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { useFrameworkStore, CATEGORIES } from '../stores/framework-store';
+import { useProjectStore } from '../../../stores/project-store';
+import { KnowledgeTreeView } from '../components/knowledge-tree-view';
 import type { FrameworkCategory } from '../../../lib/tauri';
 import type { LucideIcon } from 'lucide-react';
 
@@ -31,6 +33,7 @@ export function FrameworkPage() {
   const navigate = useNavigate();
   const tab = (CATEGORIES.includes(category as FrameworkCategory) ? category : 'rules') as FrameworkCategory;
 
+  const activeProject = useProjectStore((s) => s.activeProject);
   const entities = useFrameworkStore((s) => s.entities);
   const loading = useFrameworkStore((s) => s.loading);
   const stale = useFrameworkStore((s) => s.stale);
@@ -46,6 +49,8 @@ export function FrameworkPage() {
   const doSync = useFrameworkStore((s) => s.doSync);
   const toggleAutoSync = useFrameworkStore((s) => s.toggleAutoSync);
 
+  const invalidateAll = useFrameworkStore((s) => s.invalidateAll);
+
   // Initialize framework path on mount
   useEffect(() => {
     if (!frameworkPath) {
@@ -53,12 +58,17 @@ export function FrameworkPage() {
     }
   }, [frameworkPath, initialize]);
 
-  // Fetch current tab's data
+  // Re-fetch when project changes
+  useEffect(() => {
+    invalidateAll();
+  }, [activeProject?.path, invalidateAll]);
+
+  // Fetch current tab's data (global framework + active project)
   useEffect(() => {
     if (stale[tab]) {
-      void fetchCategory(tab);
+      void fetchCategory(tab, activeProject?.path);
     }
-  }, [tab, stale, fetchCategory]);
+  }, [tab, stale, fetchCategory, activeProject?.path]);
 
   const handleTabChange = (key: string | number) => {
     navigate(`/framework/${String(key)}`);
@@ -206,14 +216,19 @@ export function FrameworkPage() {
                     <Icon size={40} className="mb-3" />
                     <p className="text-sm">No {meta.label.toLowerCase()} found</p>
                     <p className="mt-1 text-xs">
-                      Add .md files to ~/.aidd/framework/{cat}/
+                      Add .md files to the project&apos;s {cat}/ directory or sync the global framework
                     </p>
                   </div>
+                ) : cat === 'knowledge' ? (
+                  <KnowledgeTreeView
+                    entities={entities[cat]}
+                    onEntityClick={(name) => handleEntityClick(cat, name)}
+                  />
                 ) : (
                   <div className="grid gap-2">
                     {entities[cat].map((entity) => (
                       <button
-                        key={entity.name}
+                        key={`${entity.source}-${entity.name}`}
                         type="button"
                         className="flex items-center justify-between rounded-lg border border-default-200 bg-default-50 px-4 py-3 text-left transition-colors hover:bg-default-100"
                         onClick={() => handleEntityClick(cat, entity.name)}
@@ -228,9 +243,15 @@ export function FrameworkPage() {
                             </p>
                           )}
                         </div>
-                        <Chip size="sm" variant="soft" color="default">
-                          .md
-                        </Chip>
+                        <div className="flex items-center gap-1.5">
+                          <Chip
+                            size="sm"
+                            variant="soft"
+                            color={entity.source === 'project' ? 'accent' : 'default'}
+                          >
+                            {entity.source}
+                          </Chip>
+                        </div>
                       </button>
                     ))}
                   </div>

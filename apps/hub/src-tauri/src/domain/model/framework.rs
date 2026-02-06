@@ -16,6 +16,8 @@ pub struct FrameworkEntity {
     pub frontmatter: serde_json::Value,
     pub content: String,
     pub last_modified: String,
+    /// Where this entity comes from: "global" (~/.aidd/framework) or "project" (project root).
+    pub source: String,
 }
 
 /// Valid framework categories.

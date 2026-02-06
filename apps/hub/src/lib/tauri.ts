@@ -104,6 +104,7 @@ export interface FrameworkEntity {
   frontmatter: Record<string, string>;
   content: string;
   last_modified: string;
+  source: string;
 }
 
 export const getFrameworkPath = () =>
@@ -112,8 +113,8 @@ export const getFrameworkPath = () =>
 export const getFrameworkVersion = () =>
   invoke<string | null>('get_framework_version');
 
-export const listFrameworkEntities = (category: FrameworkCategory) =>
-  invoke<FrameworkEntity[]>('list_framework_entities', { category });
+export const listFrameworkEntities = (category: FrameworkCategory, projectPath?: string) =>
+  invoke<FrameworkEntity[]>('list_framework_entities', { category, projectPath: projectPath ?? null });
 
 export const readFrameworkEntity = (category: FrameworkCategory, name: string) =>
   invoke<FrameworkEntity>('read_framework_entity', { category, name });

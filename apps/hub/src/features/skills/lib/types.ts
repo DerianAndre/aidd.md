@@ -1,7 +1,7 @@
 import type { BaseEntity } from '../../../stores/create-entity-store';
 
 export interface SkillEntity extends BaseEntity {
-  model: string;
+  tier: number;
   version: string;
   license: string;
   compatibility: string;

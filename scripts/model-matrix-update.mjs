@@ -732,22 +732,29 @@ function displayReport(results, newModels) {
     console.log(`  ${DIM}Use --force to apply if you've confirmed these are correct.${RESET}`);
   }
 
-  // Conflicts (sources disagree)
+  // Conflicts (sources disagree — show as min–max range)
   const conflicts = results.filter((r) =>
     r.changes.some((c) => c.confidence === 'CONFLICT'),
   );
 
   if (conflicts.length > 0) {
-    console.log(`\n${BOLD}${RED}Conflicts${RESET} ${DIM}(sources disagree \u2014 NOT auto-updated)${RESET}\n`);
+    console.log(`\n${BOLD}${RED}Conflicts${RESET} ${DIM}(sources disagree \u2014 shown as min\u2013max range)${RESET}\n`);
     for (const r of conflicts) {
       for (const c of r.changes.filter((c) => c.confidence === 'CONFLICT')) {
-        console.log(`  ${RED}\u2717${RESET} ${r.local.name} ${c.field}:`);
-        console.log(`    ${DIM}Current:    ${c.oldValue}${RESET}`);
-        console.log(`    ${DIM}OpenRouter: ${c.orValue}${RESET}`);
-        console.log(`    ${DIM}LiteLLM:    ${c.llValue}${RESET}`);
+        if (c.field === 'context') {
+          const orNum = c.orRaw || 0;
+          const llNum = c.llRaw || 0;
+          const minCtx = formatContextMd(Math.min(orNum, llNum));
+          const maxCtx = formatContextMd(Math.max(orNum, llNum));
+          console.log(`  ${RED}\u2717${RESET} ${r.local.name}: ${c.field} ${c.oldValue} \u2192 ${minCtx}\u2013${maxCtx} ${DIM}(OR: ${c.orValue}, LL: ${c.llValue})${RESET}`);
+        } else if (c.field === 'pricing') {
+          console.log(`  ${RED}\u2717${RESET} ${r.local.name}: ${c.field} ${c.oldValue} \u2192 ${DIM}OR: ${c.orValue} | LL: ${c.llValue}${RESET}`);
+        } else {
+          console.log(`  ${RED}\u2717${RESET} ${r.local.name}: ${c.field} ${c.oldValue} ${DIM}(OR: ${c.orValue}, LL: ${c.llValue})${RESET}`);
+        }
       }
     }
-    console.log(`\n  ${DIM}Review manually and update templates/model-matrix.md if needed.${RESET}`);
+    console.log(`\n  ${DIM}Review ranges and pick the correct value in templates/model-matrix.md${RESET}`);
   }
 
   // Unverified (single source only)

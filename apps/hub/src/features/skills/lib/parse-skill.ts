@@ -26,7 +26,7 @@ export function parseSkillContent(
     content: body,
     frontmatter,
     lastModified: new Date().toISOString(),
-    model: frontmatter['model'] ?? '',
+    tier: parseInt(frontmatter['tier'] ?? '2', 10),
     version: frontmatter['version'] ?? '',
     license: frontmatter['license'] ?? '',
     compatibility: frontmatter['compatibility'] ?? '',
