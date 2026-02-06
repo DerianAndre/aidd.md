@@ -1,15 +1,20 @@
 #!/usr/bin/env node
 /**
- * Model Matrix Update — Fetches latest model data from OpenRouter API,
- * auto-updates metadata (context windows, pricing) in both the markdown SSOT
- * and TypeScript runtime, and reports new models from tracked providers.
+ * Model Matrix Update — Dual-source consensus system.
+ * Fetches model data from OpenRouter API + LiteLLM GitHub dataset,
+ * cross-validates values, and only auto-updates when both sources agree.
  *
  * Usage:
- *   pnpm mcp:models:update             # fetch + auto-update files
+ *   pnpm mcp:models:update             # fetch + auto-update (consensus only)
  *   pnpm mcp:models:update --dry-run   # report only, no file writes
+ *   pnpm mcp:models:update --force     # apply even single-source / conflicting data
  *
- * Note: This script uses fetch() (built into Node 22) to call a public API.
- * No user input is passed to any shell command — safe from injection.
+ * Consensus rules:
+ *   Both sources agree (within tolerance)  → auto-update (HIGH confidence)
+ *   Sources disagree                       → flag conflict, do NOT auto-update
+ *   Only one source has data               → report as unverified, do NOT auto-update
+ *
+ * Note: Uses fetch() (Node 22 built-in). No user input passed to shell commands.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -18,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
 const dryRun = process.argv.includes('--dry-run');
+const force = process.argv.includes('--force');
 
 const GREEN = '\x1b[32m';
 const RED = '\x1b[31m';
@@ -32,7 +38,43 @@ const PREFIX = '[aidd.md]';
 const MD_PATH = resolve(root, 'templates/model-matrix.md');
 const TS_PATH = resolve(root, 'mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts');
 
-// Tracked providers and their OpenRouter prefixes
+// ---------------------------------------------------------------------------
+// Consensus thresholds
+// ---------------------------------------------------------------------------
+
+/** Context window values within 15% of each other are considered "agreeing" */
+const CONTEXT_TOLERANCE = 0.15;
+
+/** Pricing values within 25% of each other are considered "agreeing" */
+const PRICE_TOLERANCE = 0.25;
+
+// ---------------------------------------------------------------------------
+// Provider mappings
+// ---------------------------------------------------------------------------
+
+// OpenRouter provider slug prefixes
+const OR_PROVIDER_PREFIXES = {
+  anthropic: 'anthropic/',
+  openai: 'openai/',
+  google: 'google/',
+  xai: 'x-ai/',
+  deepseek: 'deepseek/',
+  meta: 'meta-llama/',
+  mistral: 'mistralai/',
+};
+
+// LiteLLM provider names (litellm_provider field)
+const LL_PROVIDER_NAMES = {
+  anthropic: ['anthropic'],
+  openai: ['openai', 'text-completion-openai'],
+  google: ['gemini', 'vertex_ai', 'vertex_ai_beta'],
+  xai: ['xai'],
+  deepseek: ['deepseek'],
+  meta: ['fireworks_ai', 'together_ai', 'groq'],
+  mistral: ['mistral'],
+};
+
+// Tracked providers for new model discovery
 const TRACKED_PROVIDERS = {
   anthropic: { prefix: 'anthropic/', display: 'Anthropic' },
   openai: { prefix: 'openai/', display: 'OpenAI' },
@@ -41,17 +83,6 @@ const TRACKED_PROVIDERS = {
   deepseek: { prefix: 'deepseek/', display: 'DeepSeek' },
   'meta-llama': { prefix: 'meta-llama/', display: 'Meta' },
   mistralai: { prefix: 'mistralai/', display: 'Mistral' },
-};
-
-// Map our local provider names to OpenRouter slug prefixes
-const PROVIDER_SLUG_MAP = {
-  anthropic: 'anthropic/',
-  openai: 'openai/',
-  google: 'google/',
-  xai: 'x-ai/',
-  deepseek: 'deepseek/',
-  meta: 'meta-llama/',
-  mistral: 'mistralai/',
 };
 
 // ---------------------------------------------------------------------------
@@ -89,13 +120,6 @@ function escapeRegex(str) {
 // Normalize model IDs for cross-platform comparison
 // ---------------------------------------------------------------------------
 
-/**
- * Normalizes model IDs to handle naming differences between our matrix and
- * OpenRouter's registry:
- *   - claude-opus-4-6        → claude-opus-4.6    (version hyphens → dots)
- *   - claude-sonnet-4-5-20250929 → claude-sonnet-4.5  (strip date suffix)
- *   - mistral-large-latest   → mistral-large       (strip -latest)
- */
 function normalizeModelId(id) {
   return id
     .toLowerCase()
@@ -136,11 +160,11 @@ function parseLocalModels() {
 }
 
 // ---------------------------------------------------------------------------
-// Fetch from OpenRouter API (public, no auth required)
+// Source 1: OpenRouter API (public, no auth required)
 // ---------------------------------------------------------------------------
 
-async function fetchOpenRouterModels() {
-  console.log(`  ${DIM}Fetching models from OpenRouter API...${RESET}`);
+async function fetchOpenRouter() {
+  console.log(`  ${DIM}Fetching from OpenRouter API...${RESET}`);
 
   const res = await fetch('https://openrouter.ai/api/v1/models', {
     headers: { Accept: 'application/json' },
@@ -151,21 +175,326 @@ async function fetchOpenRouterModels() {
   }
 
   const data = await res.json();
-  return data.data || [];
+  const allModels = data.data || [];
+
+  // Index by normalized short ID for quick lookup
+  const index = new Map();
+
+  for (const model of allModels) {
+    const parts = model.id.split('/');
+    const shortId = parts.length > 1 ? parts.slice(1).join('/') : model.id;
+    const pricing = model.pricing || {};
+
+    const entry = {
+      fullId: model.id,
+      shortId,
+      name: model.name || model.id,
+      contextWindow: model.context_length || 0,
+      inputCostPer1M: parseFloat(pricing.prompt || '0') * 1_000_000,
+      outputCostPer1M: parseFloat(pricing.completion || '0') * 1_000_000,
+      created: model.created || 0,
+    };
+
+    // Index by multiple keys for flexible matching
+    index.set(shortId.toLowerCase(), entry);
+    index.set(normalizeModelId(shortId), entry);
+  }
+
+  return { allModels, index };
 }
 
 // ---------------------------------------------------------------------------
-// Filter to tracked providers
+// Source 2: LiteLLM model_prices_and_context_window.json (GitHub)
 // ---------------------------------------------------------------------------
 
-function filterTrackedModels(openRouterModels) {
-  const tracked = [];
+async function fetchLiteLLM() {
+  console.log(`  ${DIM}Fetching from LiteLLM GitHub dataset...${RESET}`);
 
-  for (const model of openRouterModels) {
+  const url = 'https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json';
+  const res = await fetch(url, {
+    headers: { Accept: 'application/json' },
+  });
+
+  if (!res.ok) {
+    throw new Error(`LiteLLM fetch returned ${res.status}: ${res.statusText}`);
+  }
+
+  const data = await res.json();
+
+  // Index by multiple normalized keys
+  const index = new Map();
+
+  for (const [key, val] of Object.entries(data)) {
+    if (typeof val !== 'object' || val === null) continue;
+
+    // Extract context window (prefer max_input_tokens, fallback to max_tokens)
+    const contextWindow = val.max_input_tokens || val.max_tokens || 0;
+
+    // Cost per token → cost per 1M tokens
+    const inputCostPer1M = (val.input_cost_per_token || 0) * 1_000_000;
+    const outputCostPer1M = (val.output_cost_per_token || 0) * 1_000_000;
+
+    const entry = {
+      key,
+      provider: val.litellm_provider || '',
+      contextWindow,
+      inputCostPer1M,
+      outputCostPer1M,
+    };
+
+    // Index by bare key and by stripping provider prefix
+    index.set(key.toLowerCase(), entry);
+    const normalized = normalizeModelId(key);
+    index.set(normalized, entry);
+
+    // Also index without provider prefix (e.g., "anthropic/claude-3" → "claude-3")
+    if (key.includes('/')) {
+      const bare = key.split('/').slice(1).join('/');
+      index.set(bare.toLowerCase(), entry);
+      index.set(normalizeModelId(bare), entry);
+    }
+  }
+
+  return { index };
+}
+
+// ---------------------------------------------------------------------------
+// Match a local model against both source indexes
+// ---------------------------------------------------------------------------
+
+function findInSource(localModel, sourceIndex, providerPrefixMap) {
+  const { id, provider } = localModel;
+  const nLocal = normalizeModelId(id);
+
+  // 1. Direct lookup by local ID
+  const direct = sourceIndex.get(id.toLowerCase());
+  if (direct) return direct;
+
+  // 2. Normalized lookup
+  const norm = sourceIndex.get(nLocal);
+  if (norm) return norm;
+
+  // 3. Provider-prefixed lookup (for LiteLLM keys like "anthropic/claude-opus-4-6")
+  if (providerPrefixMap) {
+    const prefixes = providerPrefixMap[provider] || [];
+    for (const pfx of prefixes) {
+      const prefixed = sourceIndex.get(`${pfx}/${id}`.toLowerCase());
+      if (prefixed) return prefixed;
+      const prefixedNorm = sourceIndex.get(normalizeModelId(`${pfx}/${id}`));
+      if (prefixedNorm) return prefixedNorm;
+    }
+  }
+
+  // 4. Prefix match (handles mistral-large matching mistral-large-2411)
+  for (const [key, entry] of sourceIndex) {
+    const nKey = normalizeModelId(key);
+    if (nKey.startsWith(nLocal) || nLocal.startsWith(nKey)) {
+      // Avoid overly loose matches — require at least 60% overlap
+      const minLen = Math.min(nLocal.length, nKey.length);
+      const maxLen = Math.max(nLocal.length, nKey.length);
+      if (minLen / maxLen > 0.6) return entry;
+    }
+  }
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Consensus logic
+// ---------------------------------------------------------------------------
+
+function valuesAgree(a, b, tolerance) {
+  if (a === 0 || b === 0) return false; // Can't compare if one is missing
+  const ratio = Math.abs(a - b) / Math.max(a, b);
+  return ratio <= tolerance;
+}
+
+function resolveConsensus(orValue, llValue, tolerance) {
+  const orValid = orValue != null && orValue > 0;
+  const llValid = llValue != null && llValue > 0;
+
+  if (orValid && llValid) {
+    if (valuesAgree(orValue, llValue, tolerance)) {
+      // Both agree — use average (slightly favoring LiteLLM which tends to be more accurate)
+      const avg = Math.round((orValue + llValue) / 2);
+      return { value: avg, confidence: 'HIGH', sources: 'both' };
+    }
+    return { orValue, llValue, confidence: 'CONFLICT', sources: 'both' };
+  }
+
+  if (orValid) {
+    return { value: orValue, confidence: 'UNVERIFIED', sources: 'openrouter' };
+  }
+
+  if (llValid) {
+    return { value: llValue, confidence: 'UNVERIFIED', sources: 'litellm' };
+  }
+
+  return { confidence: 'NONE', sources: 'none' };
+}
+
+// ---------------------------------------------------------------------------
+// Compare local models against both sources
+// ---------------------------------------------------------------------------
+
+function compareModels(localModels, orIndex, llIndex, mdContent) {
+  const mdLines = mdContent.split('\n');
+  const results = [];
+
+  for (const local of localModels) {
+    if (local.selfHosted) continue;
+
+    // Find model in both sources
+    const orMatch = findInSource(local, orIndex, {
+      anthropic: ['anthropic'],
+      openai: ['openai'],
+      google: ['google'],
+      xai: ['x-ai'],
+      deepseek: ['deepseek'],
+      meta: ['meta-llama'],
+      mistral: ['mistralai'],
+    });
+
+    const llMatch = findInSource(local, llIndex, LL_PROVIDER_NAMES);
+
+    const found = { openrouter: !!orMatch, litellm: !!llMatch };
+
+    // Get current markdown values for comparison
+    let curCtx = '';
+    let curCost = '';
+    for (const line of mdLines) {
+      if (!line.includes(`\`${local.id}\``)) continue;
+      const cols = line.split('|').map((c) => c.trim());
+      if (cols.length >= 7) {
+        curCtx = cols[4];
+        curCost = cols[5];
+      }
+      break;
+    }
+
+    // Context window consensus
+    const ctxConsensus = resolveConsensus(
+      orMatch?.contextWindow,
+      llMatch?.contextWindow,
+      CONTEXT_TOLERANCE,
+    );
+
+    // Pricing consensus (input)
+    const inputConsensus = resolveConsensus(
+      orMatch?.inputCostPer1M,
+      llMatch?.inputCostPer1M,
+      PRICE_TOLERANCE,
+    );
+
+    // Pricing consensus (output)
+    const outputConsensus = resolveConsensus(
+      orMatch?.outputCostPer1M,
+      llMatch?.outputCostPer1M,
+      PRICE_TOLERANCE,
+    );
+
+    // Determine if changes exist
+    const changes = [];
+
+    // Context window change detection
+    if (ctxConsensus.confidence === 'HIGH' && ctxConsensus.value > 0) {
+      const newCtxStr = formatContextMd(ctxConsensus.value);
+      if (curCtx && curCtx !== newCtxStr) {
+        changes.push({
+          field: 'context',
+          oldValue: curCtx,
+          newValue: newCtxStr,
+          newRaw: ctxConsensus.value,
+          confidence: 'HIGH',
+        });
+      }
+    } else if (ctxConsensus.confidence === 'CONFLICT') {
+      changes.push({
+        field: 'context',
+        oldValue: curCtx,
+        orValue: formatContextMd(ctxConsensus.orValue),
+        llValue: formatContextMd(ctxConsensus.llValue),
+        orRaw: ctxConsensus.orValue,
+        llRaw: ctxConsensus.llValue,
+        confidence: 'CONFLICT',
+      });
+    } else if (ctxConsensus.confidence === 'UNVERIFIED' && ctxConsensus.value > 0) {
+      const newCtxStr = formatContextMd(ctxConsensus.value);
+      if (curCtx && curCtx !== newCtxStr) {
+        changes.push({
+          field: 'context',
+          oldValue: curCtx,
+          newValue: newCtxStr,
+          newRaw: ctxConsensus.value,
+          confidence: 'UNVERIFIED',
+          source: ctxConsensus.sources,
+        });
+      }
+    }
+
+    // Pricing change detection
+    if (inputConsensus.confidence === 'HIGH' && outputConsensus.confidence === 'HIGH') {
+      const newCostStr = formatPricingMd(inputConsensus.value, outputConsensus.value);
+      if (curCost && curCost !== newCostStr) {
+        changes.push({
+          field: 'pricing',
+          oldValue: curCost,
+          newValue: newCostStr,
+          newInputRaw: inputConsensus.value,
+          newOutputRaw: outputConsensus.value,
+          confidence: 'HIGH',
+        });
+      }
+    } else if (inputConsensus.confidence === 'CONFLICT' || outputConsensus.confidence === 'CONFLICT') {
+      changes.push({
+        field: 'pricing',
+        oldValue: curCost,
+        orValue: orMatch ? formatPricingMd(orMatch.inputCostPer1M, orMatch.outputCostPer1M) : '?',
+        llValue: llMatch ? formatPricingMd(llMatch.inputCostPer1M, llMatch.outputCostPer1M) : '?',
+        confidence: 'CONFLICT',
+      });
+    } else if (
+      (inputConsensus.confidence === 'UNVERIFIED' || outputConsensus.confidence === 'UNVERIFIED') &&
+      (inputConsensus.value > 0 || outputConsensus.value > 0)
+    ) {
+      const inVal = inputConsensus.value || 0;
+      const outVal = outputConsensus.value || 0;
+      if (inVal > 0 && outVal > 0) {
+        const newCostStr = formatPricingMd(inVal, outVal);
+        if (curCost && curCost !== newCostStr) {
+          changes.push({
+            field: 'pricing',
+            oldValue: curCost,
+            newValue: newCostStr,
+            confidence: 'UNVERIFIED',
+            source: inputConsensus.sources || outputConsensus.sources,
+          });
+        }
+      }
+    }
+
+    results.push({
+      local,
+      found,
+      changes,
+    });
+  }
+
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// Discover new models from OpenRouter (tracked providers)
+// ---------------------------------------------------------------------------
+
+function discoverNewModels(localModels, orAllModels) {
+  const normalizedLocalIds = localModels.map((m) => normalizeModelId(m.id));
+
+  const tracked = [];
+  for (const model of orAllModels) {
     for (const [, config] of Object.entries(TRACKED_PROVIDERS)) {
       if (model.id.startsWith(config.prefix)) {
         const pricing = model.pricing || {};
-
         tracked.push({
           openRouterId: model.id,
           providerDisplay: config.display,
@@ -180,187 +509,183 @@ function filterTrackedModels(openRouterModels) {
     }
   }
 
-  return tracked;
-}
-
-// ---------------------------------------------------------------------------
-// Compare local vs remote — detect metadata changes
-// ---------------------------------------------------------------------------
-
-function compareModels(localModels, remoteModels, mdContent) {
-  const matched = [];
-  const missingFromRemote = [];
-  const changes = [];
-  const mdLines = mdContent.split('\n');
-
-  for (const local of localModels) {
-    if (local.selfHosted) continue;
-
-    const prefix = PROVIDER_SLUG_MAP[local.provider];
-    if (!prefix) continue;
-
-    const nLocal = normalizeModelId(local.id);
-
-    const remote = remoteModels.find(r => {
-      const rid = r.openRouterId.toLowerCase();
-      if (!rid.startsWith(prefix)) return false;
-
-      const ridShort = rid.slice(prefix.length);
-
-      // Exact match (pre-normalization)
-      if (ridShort === local.id.toLowerCase()) return true;
-
-      // Normalized match
-      const nRemote = normalizeModelId(ridShort);
-      if (nLocal === nRemote) return true;
-
-      // Prefix match (handles mistral-large matching mistral-large-2411)
-      if (nRemote.startsWith(nLocal) || nLocal.startsWith(nRemote)) return true;
-
-      return false;
-    });
-
-    if (remote) {
-      matched.push({ local, remote });
-
-      // Detect metadata changes by comparing formatted values
-      for (const line of mdLines) {
-        if (!line.includes(`\`${local.id}\``)) continue;
-        const cols = line.split('|').map(c => c.trim());
-        if (cols.length < 7) break;
-
-        const curCtx = cols[4];
-        const curCost = cols[5];
-        const newCtx = formatContextMd(remote.contextLength);
-        const newCost = formatPricingMd(remote.inputCostPer1M, remote.outputCostPer1M);
-
-        const ctxChanged = remote.contextLength > 0 && curCtx !== newCtx;
-        const costChanged = remote.inputCostPer1M > 0 && curCost !== newCost;
-
-        if (ctxChanged || costChanged) {
-          changes.push({
-            id: local.id,
-            name: local.name,
-            ctxChanged, oldCtx: curCtx, newCtx,
-            costChanged, oldCost: curCost, newCost,
-            newContextWindow: remote.contextLength,
-          });
-        }
-        break;
-      }
-    } else {
-      missingFromRemote.push(local);
-    }
-  }
-
-  // New models from tracked providers not in our matrix
-  const normalizedLocalIds = localModels.map(m => normalizeModelId(m.id));
-
-  const newModels = remoteModels
-    .filter(r => r.inputCostPer1M > 0 || r.outputCostPer1M > 0)
-    .filter(r => {
+  return tracked
+    .filter((r) => r.inputCostPer1M > 0 || r.outputCostPer1M > 0)
+    .filter((r) => {
       const shortId = r.openRouterId.split('/').slice(1).join('/').toLowerCase();
       const nRemote = normalizeModelId(shortId);
-      return !normalizedLocalIds.some(nLocal =>
-        nRemote === nLocal ||
-        nRemote.startsWith(nLocal) ||
-        nLocal.startsWith(nRemote),
+      return !normalizedLocalIds.some(
+        (nLocal) =>
+          nRemote === nLocal ||
+          nRemote.startsWith(nLocal) ||
+          nLocal.startsWith(nRemote),
       );
     })
-    .sort((a, b) => b.created - a.created); // Latest first
-
-  return { matched, missingFromRemote, newModels, changes };
+    .sort((a, b) => b.created - a.created);
 }
 
 // ---------------------------------------------------------------------------
-// Apply updates to markdown SSOT
+// Apply consensus-approved updates to markdown SSOT
 // ---------------------------------------------------------------------------
 
-function applyMarkdownUpdates(changes) {
+function applyMarkdownUpdates(results) {
   let content = readFileSync(MD_PATH, 'utf-8');
   const eol = content.includes('\r\n') ? '\r\n' : '\n';
   const lines = content.split(eol);
+  let applied = 0;
 
-  for (const c of changes) {
+  for (const r of results) {
+    const highChanges = r.changes.filter(
+      (c) => c.confidence === 'HIGH' || (force && c.confidence === 'UNVERIFIED'),
+    );
+    if (highChanges.length === 0) continue;
+
     for (let i = 0; i < lines.length; i++) {
-      if (!lines[i].includes(`\`${c.id}\``)) continue;
+      if (!lines[i].includes(`\`${r.local.id}\``)) continue;
       const cols = lines[i].split('|');
       if (cols.length < 7) break;
-      if (c.ctxChanged) cols[4] = ` ${c.newCtx} `;
-      if (c.costChanged) cols[5] = ` ${c.newCost} `;
+
+      for (const c of highChanges) {
+        if (c.field === 'context' && c.newValue) {
+          cols[4] = ` ${c.newValue} `;
+          applied++;
+        }
+        if (c.field === 'pricing' && c.newValue) {
+          cols[5] = ` ${c.newValue} `;
+          applied++;
+        }
+      }
+
       lines[i] = cols.join('|');
       break;
     }
   }
 
-  // Update Last Updated date
-  const today = new Date().toISOString().split('T')[0];
-  content = lines.join(eol).replace(
-    /\*\*Last Updated\*\*:\s*\d{4}-\d{2}-\d{2}/,
-    `**Last Updated**: ${today}`,
-  );
+  if (applied > 0) {
+    // Update Last Updated date
+    const today = new Date().toISOString().split('T')[0];
+    content = lines.join(eol).replace(
+      /\*\*Last Updated\*\*:\s*\d{4}-\d{2}-\d{2}/,
+      `**Last Updated**: ${today}`,
+    );
+    writeFileSync(MD_PATH, content);
+  }
 
-  writeFileSync(MD_PATH, content);
+  return applied;
 }
 
 // ---------------------------------------------------------------------------
-// Apply updates to TypeScript runtime
+// Apply consensus-approved updates to TypeScript runtime
 // ---------------------------------------------------------------------------
 
-function applyTypeScriptUpdates(changes) {
+function applyTypeScriptUpdates(results) {
   let content = readFileSync(TS_PATH, 'utf-8');
-  let updated = false;
+  let applied = 0;
 
-  for (const c of changes) {
-    if (!c.ctxChanged) continue;
-    const re = new RegExp(
-      `(id:\\s*'${escapeRegex(c.id)}'[\\s\\S]*?contextWindow:\\s*)[\\d_]+`,
+  for (const r of results) {
+    const ctxChange = r.changes.find(
+      (c) =>
+        c.field === 'context' &&
+        (c.confidence === 'HIGH' || (force && c.confidence === 'UNVERIFIED')),
     );
-    const next = content.replace(re, `$1${formatContextTs(c.newContextWindow)}`);
+    if (!ctxChange || !ctxChange.newRaw) continue;
+
+    const re = new RegExp(
+      `(id:\\s*'${escapeRegex(r.local.id)}'[\\s\\S]*?contextWindow:\\s*)[\\d_]+`,
+    );
+    const next = content.replace(re, `$1${formatContextTs(ctxChange.newRaw)}`);
     if (next !== content) {
       content = next;
-      updated = true;
+      applied++;
     }
   }
 
-  if (updated) writeFileSync(TS_PATH, content);
+  if (applied > 0) writeFileSync(TS_PATH, content);
+  return applied;
 }
 
 // ---------------------------------------------------------------------------
 // Display report
 // ---------------------------------------------------------------------------
 
-function displayReport({ matched, missingFromRemote, newModels, changes }) {
-  console.log(`\n${BOLD}Matched Models${RESET}\n`);
-  console.log(`  ${GREEN}\u2713${RESET} ${matched.length} local models matched on OpenRouter`);
+function displayReport(results, newModels) {
+  const matchedCount = results.filter((r) => r.found.openrouter || r.found.litellm).length;
+  const bothCount = results.filter((r) => r.found.openrouter && r.found.litellm).length;
+  const orOnlyCount = results.filter((r) => r.found.openrouter && !r.found.litellm).length;
+  const llOnlyCount = results.filter((r) => !r.found.openrouter && r.found.litellm).length;
+  const neitherCount = results.filter((r) => !r.found.openrouter && !r.found.litellm).length;
 
-  // Metadata updates
-  if (changes.length > 0) {
-    const label = dryRun ? `${YELLOW}Updates Available` : `${GREEN}Auto-Updated`;
-    const icon = dryRun ? YELLOW : GREEN;
-    console.log(`\n${BOLD}${label}${RESET}\n`);
-    for (const c of changes) {
-      if (c.ctxChanged) {
-        console.log(`  ${icon}\u2192${RESET} ${c.name}: context ${c.oldCtx} \u2192 ${c.newCtx}`);
-      }
-      if (c.costChanged) {
-        console.log(`  ${icon}\u2192${RESET} ${c.name}: pricing ${c.oldCost} \u2192 ${c.newCost}`);
+  console.log(`\n${BOLD}Model Coverage${RESET}\n`);
+  console.log(`  ${GREEN}\u2713${RESET} Both sources:    ${bothCount} models`);
+  if (orOnlyCount) console.log(`  ${YELLOW}!${RESET} OpenRouter only: ${orOnlyCount} models`);
+  if (llOnlyCount) console.log(`  ${YELLOW}!${RESET} LiteLLM only:    ${llOnlyCount} models`);
+  if (neitherCount) console.log(`  ${RED}\u2717${RESET} Neither source:  ${neitherCount} models`);
+
+  // Consensus updates (HIGH confidence)
+  const highChanges = results.filter((r) =>
+    r.changes.some((c) => c.confidence === 'HIGH'),
+  );
+
+  if (highChanges.length > 0) {
+    const label = dryRun ? `${YELLOW}Consensus Updates Available` : `${GREEN}Consensus Auto-Updated`;
+    console.log(`\n${BOLD}${label}${RESET} ${DIM}(both sources agree)${RESET}\n`);
+    for (const r of highChanges) {
+      for (const c of r.changes.filter((c) => c.confidence === 'HIGH')) {
+        console.log(`  ${GREEN}\u2713${RESET} ${r.local.name}: ${c.field} ${c.oldValue} \u2192 ${c.newValue}`);
       }
     }
     if (dryRun) {
-      console.log(`\n  ${DIM}Run without --dry-run to apply these updates.${RESET}`);
+      console.log(`\n  ${DIM}Run without --dry-run to apply consensus updates.${RESET}`);
     }
   }
 
-  // Models not found on OpenRouter
-  if (missingFromRemote.length > 0) {
-    console.log(`\n${BOLD}${YELLOW}Not Found on OpenRouter${RESET}\n`);
-    for (const m of missingFromRemote) {
-      console.log(`  ${YELLOW}!${RESET} ${m.id} (${m.provider}) \u2014 may be deprecated, renamed, or not on OpenRouter`);
+  // Conflicts (sources disagree)
+  const conflicts = results.filter((r) =>
+    r.changes.some((c) => c.confidence === 'CONFLICT'),
+  );
+
+  if (conflicts.length > 0) {
+    console.log(`\n${BOLD}${RED}Conflicts${RESET} ${DIM}(sources disagree \u2014 NOT auto-updated)${RESET}\n`);
+    for (const r of conflicts) {
+      for (const c of r.changes.filter((c) => c.confidence === 'CONFLICT')) {
+        console.log(`  ${RED}\u2717${RESET} ${r.local.name} ${c.field}:`);
+        console.log(`    ${DIM}Current:    ${c.oldValue}${RESET}`);
+        console.log(`    ${DIM}OpenRouter: ${c.orValue}${RESET}`);
+        console.log(`    ${DIM}LiteLLM:    ${c.llValue}${RESET}`);
+      }
+    }
+    console.log(`\n  ${DIM}Review manually and update templates/model-matrix.md if needed.${RESET}`);
+  }
+
+  // Unverified (single source only)
+  const unverified = results.filter((r) =>
+    r.changes.some((c) => c.confidence === 'UNVERIFIED'),
+  );
+
+  if (unverified.length > 0) {
+    const label = force && !dryRun ? `${YELLOW}Force-Applied (Unverified)` : `${YELLOW}Unverified Changes`;
+    console.log(`\n${BOLD}${label}${RESET} ${DIM}(single source only \u2014 ${force ? 'applied with --force' : 'NOT auto-updated'})${RESET}\n`);
+    for (const r of unverified) {
+      for (const c of r.changes.filter((c) => c.confidence === 'UNVERIFIED')) {
+        const src = c.source === 'openrouter' ? 'OR' : 'LL';
+        console.log(`  ${YELLOW}?${RESET} ${r.local.name}: ${c.field} ${c.oldValue} \u2192 ${c.newValue} ${DIM}(${src} only)${RESET}`);
+      }
+    }
+    if (!force) {
+      console.log(`\n  ${DIM}Use --force to apply single-source updates anyway.${RESET}`);
     }
   }
 
-  // New models — sorted by created date, latest first
+  // Models not found in either source
+  const notFound = results.filter((r) => !r.found.openrouter && !r.found.litellm && !r.local.selfHosted);
+  if (notFound.length > 0) {
+    console.log(`\n${BOLD}${YELLOW}Not Found in Either Source${RESET}\n`);
+    for (const r of notFound) {
+      console.log(`  ${YELLOW}!${RESET} ${r.local.id} (${r.local.provider}) \u2014 may use non-standard naming`);
+    }
+  }
+
+  // New models from tracked providers
   if (newModels.length > 0) {
     console.log(`\n${BOLD}${CYAN}New Models from Tracked Providers${RESET} ${DIM}(latest first)${RESET}\n`);
 
@@ -369,22 +694,25 @@ function displayReport({ matched, missingFromRemote, newModels, changes }) {
       (grouped[m.providerDisplay] ??= []).push(m);
     }
 
-    // Sort provider groups by their most recent model
-    const sortedProviders = Object.entries(grouped)
-      .sort(([, a], [, b]) => b[0].created - a[0].created);
+    const sortedProviders = Object.entries(grouped).sort(
+      ([, a], [, b]) => b[0].created - a[0].created,
+    );
 
     for (const [provider, models] of sortedProviders) {
       console.log(`  ${BOLD}${provider}${RESET}`);
       const top = models.slice(0, 8);
       for (const m of top) {
-        const cost = m.inputCostPer1M > 0
-          ? `$${m.inputCostPer1M.toFixed(2)}/$${m.outputCostPer1M.toFixed(2)} per 1M`
-          : 'free';
-        const ctx = m.contextLength > 0 ? `${Math.round(m.contextLength / 1000)}K ctx` : '? ctx';
-        const date = m.created > 0
-          ? new Date(m.created * 1000).toISOString().split('T')[0]
-          : '?';
-        console.log(`    ${DIM}[${date}] ${m.openRouterId} \u2014 ${m.name} (${ctx}, ${cost})${RESET}`);
+        const cost =
+          m.inputCostPer1M > 0
+            ? `$${m.inputCostPer1M.toFixed(2)}/$${m.outputCostPer1M.toFixed(2)} per 1M`
+            : 'free';
+        const ctx =
+          m.contextLength > 0 ? `${Math.round(m.contextLength / 1000)}K ctx` : '? ctx';
+        const date =
+          m.created > 0 ? new Date(m.created * 1000).toISOString().split('T')[0] : '?';
+        console.log(
+          `    ${DIM}[${date}] ${m.openRouterId} \u2014 ${m.name} (${ctx}, ${cost})${RESET}`,
+        );
       }
       if (models.length > 8) {
         console.log(`    ${DIM}... and ${models.length - 8} more${RESET}`);
@@ -397,41 +725,100 @@ function displayReport({ matched, missingFromRemote, newModels, changes }) {
 // Main
 // ---------------------------------------------------------------------------
 
-console.log(`\n${BOLD}${PREFIX} Model Matrix Update${dryRun ? ' (dry run)' : ''}${RESET}\n`);
+const modeLabel = dryRun ? ' (dry run)' : force ? ' (force)' : '';
+console.log(`\n${BOLD}${PREFIX} Model Matrix Update${modeLabel}${RESET}\n`);
+console.log(`  ${DIM}Dual-source consensus: OpenRouter API + LiteLLM GitHub${RESET}\n`);
 
 try {
   const localModels = parseLocalModels();
   console.log(`  ${GREEN}\u2713${RESET} Local matrix: ${localModels.length} models`);
 
-  const allRemote = await fetchOpenRouterModels();
-  const tracked = filterTrackedModels(allRemote);
-  console.log(`  ${GREEN}\u2713${RESET} OpenRouter: ${allRemote.length} total, ${tracked.length} from tracked providers`);
+  // Fetch both sources in parallel
+  const [orResult, llResult] = await Promise.allSettled([
+    fetchOpenRouter(),
+    fetchLiteLLM(),
+  ]);
+
+  const orOk = orResult.status === 'fulfilled';
+  const llOk = llResult.status === 'fulfilled';
+
+  if (!orOk && !llOk) {
+    console.log(`  ${RED}\u2717${RESET} Both sources failed:`);
+    console.log(`    OpenRouter: ${orResult.reason?.message || 'unknown error'}`);
+    console.log(`    LiteLLM:    ${llResult.reason?.message || 'unknown error'}`);
+    console.log(`\n  ${DIM}The offline sync check still works: pnpm mcp:models:sync${RESET}\n`);
+    process.exit(1);
+  }
+
+  if (!orOk) {
+    console.log(`  ${YELLOW}!${RESET} OpenRouter API failed: ${orResult.reason?.message || 'unknown error'}`);
+    console.log(`  ${DIM}Continuing with LiteLLM only (no new model discovery)${RESET}`);
+  } else {
+    const or = orResult.value;
+    console.log(`  ${GREEN}\u2713${RESET} OpenRouter: ${or.allModels.length} models fetched`);
+  }
+
+  if (!llOk) {
+    console.log(`  ${YELLOW}!${RESET} LiteLLM fetch failed: ${llResult.reason?.message || 'unknown error'}`);
+    console.log(`  ${DIM}Continuing with OpenRouter only (reduced confidence)${RESET}`);
+  } else {
+    console.log(`  ${GREEN}\u2713${RESET} LiteLLM: ${llResult.value.index.size} model entries loaded`);
+  }
+
+  const orIndex = orOk ? orResult.value.index : new Map();
+  const llIndex = llOk ? llResult.value.index : new Map();
 
   const mdContent = existsSync(MD_PATH) ? readFileSync(MD_PATH, 'utf-8') : '';
-  const report = compareModels(localModels, tracked, mdContent);
+  const results = compareModels(localModels, orIndex, llIndex, mdContent);
 
-  // Auto-update files when changes detected (unless --dry-run)
-  if (report.changes.length > 0 && !dryRun) {
-    applyMarkdownUpdates(report.changes);
-    applyTypeScriptUpdates(report.changes);
+  // Apply consensus updates (unless --dry-run)
+  const hasHighChanges = results.some((r) => r.changes.some((c) => c.confidence === 'HIGH'));
+  const hasForceChanges = force && results.some((r) => r.changes.some((c) => c.confidence === 'UNVERIFIED'));
+
+  if ((hasHighChanges || hasForceChanges) && !dryRun) {
+    const mdApplied = applyMarkdownUpdates(results);
+    const tsApplied = applyTypeScriptUpdates(results);
+    if (mdApplied > 0 || tsApplied > 0) {
+      console.log(`\n  ${GREEN}\u2713${RESET} Applied ${mdApplied} markdown + ${tsApplied} TypeScript updates`);
+    }
   }
 
-  displayReport(report);
+  // Discover new models (OpenRouter only — has created dates)
+  const newModels = orOk ? discoverNewModels(localModels, orResult.value.allModels) : [];
+
+  displayReport(results, newModels);
 
   // Summary
-  if (report.changes.length > 0 && !dryRun) {
-    console.log(`\n${BOLD}${PREFIX}${RESET} ${GREEN}${report.changes.length} model(s) auto-updated in both files${RESET}`);
-    console.log(`${DIM}Run: pnpm mcp:models:sync && pnpm mcp:typecheck && pnpm mcp:build${RESET}\n`);
-  } else if (report.changes.length > 0 && dryRun) {
-    console.log(`\n${BOLD}${PREFIX}${RESET} ${YELLOW}Updates available \u2014 run without --dry-run to apply${RESET}\n`);
-  } else if (report.newModels.length > 0) {
-    console.log(`\n${BOLD}${PREFIX}${RESET} ${YELLOW}New models available \u2014 review above and add to matrix if needed${RESET}`);
-    console.log(`${DIM}Edit templates/model-matrix.md (SSOT), then update model-matrix.ts to match.${RESET}\n`);
+  const totalChanges = results.reduce(
+    (acc, r) => acc + r.changes.filter((c) => c.confidence === 'HIGH').length,
+    0,
+  );
+  const totalConflicts = results.reduce(
+    (acc, r) => acc + r.changes.filter((c) => c.confidence === 'CONFLICT').length,
+    0,
+  );
+  const totalUnverified = results.reduce(
+    (acc, r) => acc + r.changes.filter((c) => c.confidence === 'UNVERIFIED').length,
+    0,
+  );
+
+  console.log();
+  if (totalChanges > 0 && !dryRun) {
+    console.log(`${PREFIX} ${GREEN}${totalChanges} consensus update(s) applied${RESET}`);
+    console.log(`${DIM}Run: pnpm mcp:models:sync && pnpm mcp:typecheck && pnpm mcp:build${RESET}`);
+  } else if (totalChanges > 0 && dryRun) {
+    console.log(`${PREFIX} ${YELLOW}${totalChanges} consensus update(s) available \u2014 run without --dry-run${RESET}`);
+  } else if (totalConflicts > 0 || totalUnverified > 0) {
+    console.log(`${PREFIX} ${YELLOW}${totalConflicts} conflict(s), ${totalUnverified} unverified \u2014 review above${RESET}`);
+  } else if (newModels.length > 0) {
+    console.log(`${PREFIX} ${YELLOW}New models available \u2014 review above and add to matrix if needed${RESET}`);
+    console.log(`${DIM}Edit templates/model-matrix.md (SSOT), then update model-matrix.ts to match.${RESET}`);
   } else {
-    console.log(`\n${BOLD}${PREFIX}${RESET} ${GREEN}Matrix is current${RESET}\n`);
+    console.log(`${PREFIX} ${GREEN}Matrix is current \u2014 both sources confirm${RESET}`);
   }
+  console.log();
 } catch (err) {
   console.log(`  ${RED}\u2717${RESET} Failed: ${err.message}`);
-  console.log(`  ${DIM}The local sync check (pnpm mcp:models:sync) works offline.${RESET}\n`);
+  console.log(`  ${DIM}The offline sync check still works: pnpm mcp:models:sync${RESET}\n`);
   process.exit(1);
 }
