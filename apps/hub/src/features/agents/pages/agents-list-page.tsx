@@ -54,9 +54,9 @@ export function AgentsListPage() {
             Individual Agents ({individualAgents.length})
           </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {individualAgents.map((agent) => (
+            {individualAgents.map((agent, i) => (
               <AgentCard
-                key={agent.name}
+                key={`${agent.name}-${i}`}
                 agent={agent}
                 onPress={() => navigate(`/agents/${agentSlug(agent.name)}`)}
               />
@@ -71,9 +71,9 @@ export function AgentsListPage() {
             Orchestrators ({orchestrators.length})
           </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {orchestrators.map((agent) => (
+            {orchestrators.map((agent, i) => (
               <AgentCard
-                key={agent.name}
+                key={`${agent.name}-${i}`}
                 agent={agent}
                 onPress={() => navigate(`/agents/${agentSlug(agent.name)}`)}
               />

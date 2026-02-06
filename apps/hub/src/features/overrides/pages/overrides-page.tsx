@@ -185,9 +185,9 @@ export function OverridesPage() {
                 <EmptyState message="No agents found. Ensure AGENTS.md exists in the global framework." />
               ) : (
                 <div className="grid gap-2">
-                  {agents.filter((a) => a.type === 'agent').map((agent) => (
+                  {agents.filter((a) => a.type === 'agent').map((agent, i) => (
                     <div
-                      key={agent.name}
+                      key={`${agent.name}-${i}`}
                       className="flex items-center justify-between rounded-lg border border-default-200 bg-default-50 px-4 py-3"
                     >
                       <div className="flex items-center gap-3">
