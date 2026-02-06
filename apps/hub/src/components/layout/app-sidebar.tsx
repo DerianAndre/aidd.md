@@ -20,6 +20,7 @@ import {
   Terminal,
   Settings,
   Plug,
+  Layers,
   PanelLeftClose,
   PanelLeft,
 } from 'lucide-react';
@@ -54,6 +55,7 @@ const NAV_GROUPS = [
       { label: 'Sessions', path: ROUTES.SESSIONS, icon: History },
       { label: 'Observations', path: ROUTES.OBSERVATIONS, icon: Eye },
       { label: 'Permanent Memory', path: ROUTES.MEMORY, icon: Brain },
+      { label: 'Overrides', path: ROUTES.OVERRIDES, icon: Layers },
     ],
   },
   {

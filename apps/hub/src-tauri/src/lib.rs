@@ -5,7 +5,7 @@ mod presentation;
 
 use std::sync::Arc;
 
-use application::{FrameworkService, IntegrationService, McpService, ProjectService};
+use application::{FrameworkService, IntegrationService, McpService, OverrideService, ProjectService};
 use infrastructure::filesystem::FileAdapter;
 use infrastructure::persistence::JsonStore;
 
@@ -16,6 +16,7 @@ pub struct AppContext {
     pub framework_service: Arc<FrameworkService>,
     pub integration_service: Arc<IntegrationService>,
     pub mcp_service: Arc<McpService>,
+    pub override_service: Arc<OverrideService>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -38,6 +39,10 @@ pub fn run() {
     let integration_service = Arc::new(
         IntegrationService::new(json_store.aidd_dir()),
     );
+    let override_service = Arc::new(OverrideService::new(
+        &json_store.aidd_dir().join("framework"),
+        file_adapter.clone(),
+    ));
     let process_manager = infrastructure::process::McpProcessManager::new();
     let mcp_service = Arc::new(McpService::new(process_manager));
 
@@ -46,6 +51,7 @@ pub fn run() {
         framework_service,
         integration_service,
         mcp_service,
+        override_service,
     };
 
     tauri::Builder::default()
@@ -78,6 +84,13 @@ pub fn run() {
             presentation::commands::integration_commands::remove_integration,
             presentation::commands::integration_commands::check_integrations,
             presentation::commands::integration_commands::list_integration_types,
+            // Project overrides
+            presentation::commands::override_commands::get_project_overrides,
+            presentation::commands::override_commands::set_agent_override,
+            presentation::commands::override_commands::add_project_rule,
+            presentation::commands::override_commands::remove_project_rule,
+            presentation::commands::override_commands::list_project_rules,
+            presentation::commands::override_commands::get_effective_entities,
             // MCP server management (DDD)
             presentation::commands::mcp_commands::start_mcp_server,
             presentation::commands::mcp_commands::stop_mcp_server,

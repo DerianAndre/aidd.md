@@ -36,6 +36,7 @@ export const ROUTES = {
   MCP_PLAYGROUND: '/mcp-playground',
   CONFIG: '/config',
   INTEGRATIONS: '/integrations',
+  OVERRIDES: '/overrides',
   ADAPTERS: '/adapters',
 } as const;
 

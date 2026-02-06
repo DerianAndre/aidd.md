@@ -146,6 +146,44 @@ export const syncFramework = (version?: string) =>
 export const setAutoSync = (enabled: boolean) =>
   invoke<void>('set_auto_sync', { enabled });
 
+// Project overrides
+export interface AgentOverrides {
+  disabled: string[];
+}
+
+export interface ProjectOverrides {
+  project_path: string;
+  agents: AgentOverrides;
+  rule_count: number;
+  skill_count: number;
+}
+
+export interface EffectiveEntity {
+  name: string;
+  category: string;
+  source: 'global' | 'override';
+  enabled: boolean;
+  content: string | null;
+}
+
+export const getProjectOverrides = (projectPath: string) =>
+  invoke<ProjectOverrides>('get_project_overrides', { projectPath });
+
+export const setAgentOverride = (projectPath: string, agent: string, enabled: boolean) =>
+  invoke<void>('set_agent_override', { projectPath, agent, enabled });
+
+export const addProjectRule = (projectPath: string, name: string, content: string) =>
+  invoke<void>('add_project_rule', { projectPath, name, content });
+
+export const removeProjectRule = (projectPath: string, name: string) =>
+  invoke<void>('remove_project_rule', { projectPath, name });
+
+export const listProjectRules = (projectPath: string) =>
+  invoke<FrameworkEntity[]>('list_project_rules', { projectPath });
+
+export const getEffectiveEntities = (projectPath: string, category: FrameworkCategory) =>
+  invoke<EffectiveEntity[]>('get_effective_entities', { projectPath, category });
+
 // Integration management
 export type IntegrationTool = 'claude_code' | 'cursor' | 'vscode' | 'gemini';
 
