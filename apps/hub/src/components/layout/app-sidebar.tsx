@@ -24,6 +24,7 @@ import {
   Layers,
   PanelLeftClose,
   PanelLeft,
+  Store,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useNavigationStore } from '../../stores/navigation-store';
@@ -37,6 +38,12 @@ const NAV_GROUPS = [
     items: [
       { label: 'Dashboard', path: ROUTES.DASHBOARD, icon: LayoutDashboard },
       { label: 'Projects', path: ROUTES.PROJECTS, icon: FolderKanban },
+    ],
+  },
+  {
+    label: 'Explore',
+    items: [
+      { label: 'Marketplace', path: ROUTES.MARKETPLACE, icon: Store },
     ],
   },
   {

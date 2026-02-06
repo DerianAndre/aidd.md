@@ -125,6 +125,15 @@ export const router = createBrowserRouter([
         path: 'diagnostics',
         element: lazyPage(() => import('./features/diagnostics/pages/diagnostics-page'), 'DiagnosticsPage'),
       },
+      // Marketplace
+      {
+        path: 'marketplace',
+        element: lazyPage(() => import('./features/marketplace/pages/marketplace-page'), 'MarketplacePage'),
+      },
+      {
+        path: 'marketplace/:type/:slug',
+        element: lazyPage(() => import('./features/marketplace/pages/marketplace-detail-page'), 'MarketplaceDetailPage'),
+      },
       {
         path: 'mcp',
         element: lazyPage(() => import('./features/mcp/pages/mcp-overview-page'), 'McpOverviewPage'),

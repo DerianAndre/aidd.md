@@ -32,6 +32,8 @@ export const ROUTES = {
   EVOLUTION: '/evolution',
   DRAFTS: '/drafts',
   DIAGNOSTICS: '/diagnostics',
+  MARKETPLACE: '/marketplace',
+  MARKETPLACE_DETAIL: '/marketplace/:type/:slug',
   MCP: '/mcp',
   MCP_HEALTH: '/mcp-health',
   MCP_SERVERS: '/mcp-servers',
