@@ -32,6 +32,7 @@ export const ROUTES = {
   EVOLUTION: '/evolution',
   DRAFTS: '/drafts',
   DIAGNOSTICS: '/diagnostics',
+  MCP_HEALTH: '/mcp-health',
   MCP_SERVERS: '/mcp-servers',
   MCP_PLAYGROUND: '/mcp-playground',
   CONFIG: '/config',

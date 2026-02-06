@@ -5,6 +5,7 @@ import { StatCard } from '../components/stat-card';
 import { RecentSessionsWidget } from '../components/recent-sessions-widget';
 import { HealthWidget } from '../components/health-widget';
 import { MemoryWidget } from '../components/memory-widget';
+import { McpHealthWidget } from '../../mcp-health/components/mcp-health-widget';
 import { useAnalyticsStore } from '../../analytics/stores/analytics-store';
 import { useDiagnosticsStore } from '../../diagnostics/stores/diagnostics-store';
 import { useDraftsStore } from '../../drafts/stores/drafts-store';
@@ -72,6 +73,12 @@ export function DashboardPage() {
           <div className="rounded-xl border border-default-200 bg-default-50 p-4">
             <h3 className="mb-3 text-sm font-semibold text-default-600">Project Health</h3>
             <HealthWidget />
+          </div>
+
+          {/* MCP Status */}
+          <div className="rounded-xl border border-default-200 bg-default-50 p-4">
+            <h3 className="mb-3 text-sm font-semibold text-default-600">MCP Status</h3>
+            <McpHealthWidget />
           </div>
 
           {/* Memory */}

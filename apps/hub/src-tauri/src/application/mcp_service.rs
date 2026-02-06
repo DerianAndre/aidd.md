@@ -1,13 +1,15 @@
+use std::sync::Arc;
+
 use crate::domain::model::{McpServer, McpServerMode};
 use crate::domain::ports::inbound::McpPort;
 use crate::infrastructure::process::McpProcessManager;
 
 pub struct McpService {
-    process_manager: McpProcessManager,
+    process_manager: Arc<McpProcessManager>,
 }
 
 impl McpService {
-    pub fn new(process_manager: McpProcessManager) -> Self {
+    pub fn new(process_manager: Arc<McpProcessManager>) -> Self {
         Self { process_manager }
     }
 }

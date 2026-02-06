@@ -126,6 +126,10 @@ export const router = createBrowserRouter([
         element: lazyPage(() => import('./features/diagnostics/pages/diagnostics-page'), 'DiagnosticsPage'),
       },
       {
+        path: 'mcp-health',
+        element: lazyPage(() => import('./features/mcp-health/pages/mcp-health-page'), 'McpHealthPage'),
+      },
+      {
         path: 'mcp-servers',
         element: lazyPage(() => import('./features/mcp-servers/pages/mcp-servers-page'), 'McpServersPage'),
       },

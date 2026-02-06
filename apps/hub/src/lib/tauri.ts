@@ -240,6 +240,39 @@ export const stopAllMcpServers = () =>
 export const getMcpServers = () =>
   invoke<McpServer[]>('get_mcp_servers');
 
+// MCP health scanning
+export type McpToolSource = 'claude_code' | 'cursor' | 'vscode' | 'gemini';
+export type McpConfigScope = 'global' | 'project';
+
+export interface DiscoveredMcp {
+  name: string;
+  tool: McpToolSource;
+  scope: McpConfigScope;
+  config_path: string;
+  command: string | null;
+  args: string[] | null;
+  is_aidd: boolean;
+}
+
+export interface McpHealthSummary {
+  total_discovered: number;
+  aidd_count: number;
+  third_party_count: number;
+  tools_with_config: string[];
+  hub_running: number;
+  hub_stopped: number;
+  hub_error: number;
+}
+
+export interface McpHealthReport {
+  discovered: DiscoveredMcp[];
+  hub_servers: McpServer[];
+  summary: McpHealthSummary;
+}
+
+export const scanMcpHealth = (projectPath?: string) =>
+  invoke<McpHealthReport>('scan_mcp_health', { projectPath: projectPath ?? null });
+
 // File watcher
 export interface FileChangeEvent {
   event_type: 'created' | 'modified' | 'deleted';

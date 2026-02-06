@@ -16,6 +16,7 @@ import {
   Dna,
   FileStack,
   Activity,
+  HeartPulse,
   Server,
   Terminal,
   Settings,
@@ -70,6 +71,7 @@ const NAV_GROUPS = [
   {
     label: 'System',
     items: [
+      { label: 'MCP Health', path: ROUTES.MCP_HEALTH, icon: HeartPulse },
       { label: 'MCP Servers', path: ROUTES.MCP_SERVERS, icon: Server },
       { label: 'MCP Playground', path: ROUTES.MCP_PLAYGROUND, icon: Terminal },
       { label: 'Config', path: ROUTES.CONFIG, icon: Settings },

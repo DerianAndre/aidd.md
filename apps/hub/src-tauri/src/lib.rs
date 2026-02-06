@@ -5,7 +5,7 @@ mod presentation;
 
 use std::sync::Arc;
 
-use application::{FrameworkService, IntegrationService, McpService, OverrideService, ProjectService};
+use application::{FrameworkService, IntegrationService, McpService, McpHealthService, OverrideService, ProjectService};
 use infrastructure::filesystem::FileAdapter;
 use infrastructure::persistence::JsonStore;
 
@@ -16,6 +16,7 @@ pub struct AppContext {
     pub framework_service: Arc<FrameworkService>,
     pub integration_service: Arc<IntegrationService>,
     pub mcp_service: Arc<McpService>,
+    pub mcp_health_service: Arc<McpHealthService>,
     pub override_service: Arc<OverrideService>,
 }
 
@@ -43,14 +44,17 @@ pub fn run() {
         &json_store.aidd_dir().join("framework"),
         file_adapter.clone(),
     ));
-    let process_manager = infrastructure::process::McpProcessManager::new();
-    let mcp_service = Arc::new(McpService::new(process_manager));
+    let process_manager = Arc::new(infrastructure::process::McpProcessManager::new());
+    let mcp_service = Arc::new(McpService::new(process_manager.clone()));
+    let config_scanner = infrastructure::integrations::McpConfigScanner::new();
+    let mcp_health_service = Arc::new(McpHealthService::new(config_scanner, process_manager));
 
     let ctx = AppContext {
         project_service,
         framework_service,
         integration_service,
         mcp_service,
+        mcp_health_service,
         override_service,
     };
 
@@ -96,6 +100,8 @@ pub fn run() {
             presentation::commands::mcp_commands::stop_mcp_server,
             presentation::commands::mcp_commands::stop_all_mcp_servers,
             presentation::commands::mcp_commands::get_mcp_servers,
+            // MCP health scanning
+            presentation::commands::mcp_health_commands::scan_mcp_health,
             // Filesystem
             presentation::commands::filesystem_commands::read_file,
             presentation::commands::filesystem_commands::write_file,
