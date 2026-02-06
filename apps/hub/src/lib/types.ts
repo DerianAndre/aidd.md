@@ -42,3 +42,136 @@ export interface NavGroup {
   label: string;
   items: NavItem[];
 }
+
+// ---------------------------------------------------------------------------
+// Memory layer types (matching JSON file shapes in .aidd/ and ai/memory/)
+// ---------------------------------------------------------------------------
+
+/** ai/memory/decisions.json entries */
+export interface DecisionEntry {
+  id: string;
+  decision: string;
+  reasoning: string;
+  alternatives?: string[];
+  context?: string;
+  createdAt: string;
+  sessionId?: string;
+}
+
+/** ai/memory/mistakes.json entries */
+export interface MistakeEntry {
+  id: string;
+  error: string;
+  rootCause: string;
+  fix: string;
+  prevention: string;
+  occurrences: number;
+  createdAt: string;
+  lastSeenAt: string;
+  sessionId?: string;
+}
+
+/** ai/memory/conventions.json entries */
+export interface ConventionEntry {
+  id: string;
+  convention: string;
+  example: string;
+  rationale?: string;
+  createdAt: string;
+  sessionId?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Evolution types (from .aidd/evolution/)
+// ---------------------------------------------------------------------------
+
+export type EvolutionType =
+  | 'routing_weight'
+  | 'skill_combo'
+  | 'rule_elevation'
+  | 'compound_workflow'
+  | 'tkb_promotion'
+  | 'new_convention'
+  | 'model_recommendation';
+
+export type EvolutionAction = 'auto_applied' | 'drafted' | 'pending' | 'reverted' | 'rejected';
+
+export interface EvolutionCandidate {
+  id: string;
+  type: EvolutionType;
+  title: string;
+  description: string;
+  confidence: number;
+  sessionCount: number;
+  evidence: string[];
+  discoveryTokensTotal: number;
+  suggestedAction: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EvolutionLogEntry {
+  id: string;
+  candidateId: string;
+  action: EvolutionAction;
+  title: string;
+  confidence: number;
+  snapshot?: string;
+  timestamp: string;
+}
+
+// ---------------------------------------------------------------------------
+// Drafts types (from .aidd/drafts/)
+// ---------------------------------------------------------------------------
+
+export type DraftCategory = 'rules' | 'knowledge' | 'skills' | 'workflows';
+export type DraftStatus = 'pending' | 'approved' | 'rejected';
+
+export interface DraftEntry {
+  id: string;
+  category: DraftCategory;
+  title: string;
+  filename: string;
+  confidence: number;
+  source: 'evolution' | 'manual';
+  evolutionCandidateId?: string;
+  status: DraftStatus;
+  createdAt: string;
+  updatedAt: string;
+  approvedAt?: string;
+  rejectedReason?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Analytics types (computed client-side from completed sessions)
+// ---------------------------------------------------------------------------
+
+export interface ModelMetrics {
+  provider: string;
+  model: string;
+  modelId: string;
+  sessionsCount: number;
+  avgComplianceScore: number;
+  avgReverts: number;
+  avgReworks: number;
+  testPassRate: number;
+  positiveRate: number;
+  taskTypes: Record<string, number>;
+}
+
+// ---------------------------------------------------------------------------
+// Diagnostics types (computed client-side)
+// ---------------------------------------------------------------------------
+
+export interface HealthScore {
+  overall: number;
+  categories: {
+    sessionSuccess: number;
+    complianceAvg: number;
+    errorRecurrence: number;
+    modelConsistency: number;
+    memoryUtilization: number;
+  };
+  sessionsAnalyzed: number;
+  recommendations: string[];
+}

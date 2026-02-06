@@ -46,3 +46,30 @@ export function filenameFromPath(path: string): string {
   const dotIdx = name.lastIndexOf('.');
   return dotIdx > 0 ? name.slice(0, dotIdx) : name;
 }
+
+/** Format milliseconds as a human-readable duration (e.g., "1h 23m"). */
+export function formatDuration(ms: number): string {
+  if (ms < 1000) return '<1s';
+  const sec = Math.floor(ms / 1000);
+  const min = Math.floor(sec / 60);
+  const hr = Math.floor(min / 60);
+  if (hr > 0) return `${hr}h ${min % 60}m`;
+  if (min > 0) return `${min}m`;
+  return `${sec}s`;
+}
+
+/** Format an ISO date string as a short date (e.g., "Feb 5, 2026"). */
+export function formatDate(isoStr: string): string {
+  return new Date(isoStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+/** Map a 0-100 score to a semantic color. */
+export function scoreColor(score: number): 'success' | 'warning' | 'danger' {
+  if (score >= 70) return 'success';
+  if (score >= 40) return 'warning';
+  return 'danger';
+}

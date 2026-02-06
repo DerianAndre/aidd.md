@@ -82,6 +82,10 @@ export const router = createBrowserRouter([
         element: lazyPage(() => import('./features/memory/pages/sessions-page'), 'SessionsPage'),
       },
       {
+        path: 'sessions/:id',
+        element: lazyPage(() => import('./features/memory/pages/session-detail-page'), 'SessionDetailPage'),
+      },
+      {
         path: 'observations',
         element: lazyPage(() => import('./features/memory/pages/observations-page'), 'ObservationsPage'),
       },
