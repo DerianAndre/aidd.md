@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Card, Chip, Button } from '@heroui/react';
-import { ChevronDown, ChevronUp, Wrench, BookOpen, MessageSquare } from 'lucide-react';
+import { Card, Chip, Button, Spinner } from '@heroui/react';
+import { ChevronDown, ChevronUp, Wrench, BookOpen, MessageSquare, Play, Square } from 'lucide-react';
 import type { McpPackageInfo } from '../lib/mcp-catalog';
 import type { McpPackageStatus } from '../stores/mcp-servers-store';
+import type { McpServer } from '../../../lib/tauri';
 
 const ROLE_COLORS: Record<string, 'accent' | 'success' | 'warning' | 'danger' | 'default'> = {
   'The Brain': 'accent',
@@ -12,17 +13,48 @@ const ROLE_COLORS: Record<string, 'accent' | 'success' | 'warning' | 'danger' | 
   'Foundation': 'default',
 };
 
+/** Maps package dir to the server id used by the Rust backend. */
+const DIR_TO_SERVER_ID: Record<string, string> = {
+  'mcp-aidd': 'monolithic',
+  'mcp-aidd-core': 'core',
+  'mcp-aidd-memory': 'memory',
+  'mcp-aidd-tools': 'tools',
+};
+
 interface PackageCardProps {
   info: McpPackageInfo;
   status?: McpPackageStatus;
+  server?: McpServer;
+  onStart?: (serverId: string) => Promise<void>;
+  onStop?: (serverId: string) => Promise<void>;
 }
 
-export function PackageCard({ info, status }: PackageCardProps) {
+export function PackageCard({ info, status, server, onStart, onStop }: PackageCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [busy, setBusy] = useState(false);
   const toolCount = info.tools.length;
   const resourceCount = info.resources.length;
   const promptCount = info.prompts.length;
   const totalItems = toolCount + resourceCount + promptCount;
+
+  const serverId = DIR_TO_SERVER_ID[info.dir];
+  const canManage = !!serverId;
+  const isRunning = server?.status === 'running';
+  const hasError = server?.status === 'error';
+
+  const handleToggle = async () => {
+    if (!serverId) return;
+    setBusy(true);
+    try {
+      if (isRunning) {
+        await onStop?.(serverId);
+      } else {
+        await onStart?.(serverId);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Card className="border border-default-200 bg-default-50">
@@ -41,6 +73,12 @@ export function PackageCard({ info, status }: PackageCardProps) {
           <Card.Description className="mt-0.5">{info.description}</Card.Description>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          {isRunning && (
+            <Chip size="sm" variant="soft" color="success">Running</Chip>
+          )}
+          {hasError && (
+            <Chip size="sm" variant="soft" color="danger">Error</Chip>
+          )}
           <Chip size="sm" variant="soft" color={ROLE_COLORS[info.role] ?? 'default'}>
             {info.role}
           </Chip>
@@ -51,6 +89,16 @@ export function PackageCard({ info, status }: PackageCardProps) {
       </Card.Header>
 
       <Card.Content>
+        {/* Server info */}
+        {server && isRunning && server.pid && (
+          <div className="mb-2 flex items-center gap-2 text-xs text-default-500">
+            <span>PID: {server.pid}</span>
+          </div>
+        )}
+        {server?.error && (
+          <p className="mb-2 text-xs text-danger">{server.error}</p>
+        )}
+
         {/* Counts row */}
         <div className="flex items-center gap-3 text-xs text-default-500">
           {toolCount > 0 && (
@@ -137,6 +185,24 @@ export function PackageCard({ info, status }: PackageCardProps) {
           </div>
         )}
       </Card.Content>
+
+      {/* Server controls */}
+      {canManage && (
+        <Card.Footer className="flex gap-2">
+          {busy ? (
+            <Spinner size="sm" />
+          ) : (
+            <Button
+              size="sm"
+              variant={isRunning ? 'danger' : 'primary'}
+              onPress={() => void handleToggle()}
+            >
+              {isRunning ? <Square size={14} /> : <Play size={14} />}
+              {isRunning ? 'Stop' : 'Start'}
+            </Button>
+          )}
+        </Card.Footer>
+      )}
     </Card>
   );
 }

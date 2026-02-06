@@ -5,15 +5,17 @@ mod presentation;
 
 use std::sync::Arc;
 
-use application::{FrameworkService, IntegrationService, ProjectService};
+use application::{FrameworkService, IntegrationService, McpService, ProjectService};
 use infrastructure::filesystem::FileAdapter;
 use infrastructure::persistence::JsonStore;
+
 
 /// Shared application context — injected as Tauri managed state.
 pub struct AppContext {
     pub project_service: Arc<ProjectService>,
     pub framework_service: Arc<FrameworkService>,
     pub integration_service: Arc<IntegrationService>,
+    pub mcp_service: Arc<McpService>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -36,11 +38,14 @@ pub fn run() {
     let integration_service = Arc::new(
         IntegrationService::new(json_store.aidd_dir()),
     );
+    let process_manager = infrastructure::process::McpProcessManager::new();
+    let mcp_service = Arc::new(McpService::new(process_manager));
 
     let ctx = AppContext {
         project_service,
         framework_service,
         integration_service,
+        mcp_service,
     };
 
     tauri::Builder::default()
@@ -68,6 +73,11 @@ pub fn run() {
             presentation::commands::integration_commands::remove_integration,
             presentation::commands::integration_commands::check_integrations,
             presentation::commands::integration_commands::list_integration_types,
+            // MCP server management (DDD)
+            presentation::commands::mcp_commands::start_mcp_server,
+            presentation::commands::mcp_commands::stop_mcp_server,
+            presentation::commands::mcp_commands::stop_all_mcp_servers,
+            presentation::commands::mcp_commands::get_mcp_servers,
             // Filesystem
             presentation::commands::filesystem_commands::read_file,
             presentation::commands::filesystem_commands::write_file,

@@ -154,6 +154,32 @@ export const checkIntegrations = (projectPath: string) =>
 export const listIntegrationTypes = () =>
   invoke<IntegrationTool[]>('list_integration_types');
 
+// MCP server management
+export type McpServerMode = 'tool_launched' | 'hub_hosted';
+export type McpServerStatus = 'stopped' | 'running' | 'error';
+
+export interface McpServer {
+  id: string;
+  name: string;
+  mode: McpServerMode;
+  status: McpServerStatus;
+  pid: number | null;
+  started_at: string | null;
+  error: string | null;
+}
+
+export const startMcpServer = (pkg: string, mode: McpServerMode) =>
+  invoke<McpServer>('start_mcp_server', { package: pkg, mode });
+
+export const stopMcpServer = (serverId: string) =>
+  invoke<void>('stop_mcp_server', { serverId });
+
+export const stopAllMcpServers = () =>
+  invoke<void>('stop_all_mcp_servers');
+
+export const getMcpServers = () =>
+  invoke<McpServer[]>('get_mcp_servers');
+
 // File watcher
 export interface FileChangeEvent {
   event_type: 'created' | 'modified' | 'deleted';
