@@ -5,7 +5,7 @@ description: >-
   Generates DDL (Data Definition Language) with strict normalization (3NF), naming conventions, and integrity constraints.
   Use when asked to "create a table", "design a schema", "write SQL", "optimize database structure", 
   "data modeling", or "DB normalization".
-model: claude-claude-sonnet-4-5-4-5
+tier: 2
 version: 1.0.0
 license: MIT
 ---

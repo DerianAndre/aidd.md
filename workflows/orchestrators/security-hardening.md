@@ -30,9 +30,9 @@ Perform comprehensive security assessment and remediation across the entire appl
 
 ## Workflow Stages
 
-### Phase 1: Initial Scanning (Opus)
+### Phase 1: Initial Scanning (Tier 1)
 
-**1. OWASP Top 10 Scan:** `security-architect` (Opus)
+**1. OWASP Top 10 Scan:** `security-architect` (Tier 1)
 
 - **Task:** Comprehensive vulnerability scan against OWASP Top 10 (2025)
 - **Input:** Complete codebase, configuration files
@@ -41,9 +41,9 @@ Perform comprehensive security assessment and remediation across the entire appl
   - Priority matrix (P0-critical, P1-high, P2-medium, P3-low)
   - Attack vectors identified
 
-### Phase 2: Domain-Specific Analysis (Opus + Sonnet)
+### Phase 2: Domain-Specific Analysis (Tier 1 + Tier 2)
 
-**2. Test Coverage Analysis:** `quality-engineer` (Haiku)
+**2. Test Coverage Analysis:** `quality-engineer` (Tier 3)
 
 - **Task:** Identify untested code paths, especially security-critical functions
 - **Input:** Test suite, codebase
@@ -52,7 +52,7 @@ Perform comprehensive security assessment and remediation across the entire appl
   - Security-critical functions without tests
   - Recommended test additions
 
-**3. API Security Review:** `contract-architect` (Opus)
+**3. API Security Review:** `contract-architect` (Tier 1)
 
 - **Task:** Validate API security (authentication, authorization, rate limiting)
 - **Input:** OpenAPI spec, authentication implementation
@@ -62,7 +62,7 @@ Perform comprehensive security assessment and remediation across the entire appl
   - Authentication/authorization gaps
   - Rate limiting recommendations
 
-**4. Database Security Audit:** `data-architect` (Sonnet)
+**4. Database Security Audit:** `data-architect` (Tier 2)
 
 - **Task:** SQL injection prevention, access control, encryption verification
 - **Input:** Database schema, query patterns, access controls
@@ -72,7 +72,7 @@ Perform comprehensive security assessment and remediation across the entire appl
   - Role-based access control (RBAC) review
   - Encryption at rest/in transit status
 
-**5. Infrastructure Security:** `platform-engineer` (Sonnet)
+**5. Infrastructure Security:** `platform-engineer` (Tier 2)
 
 - **Task:** Infrastructure hardening (Docker, K8s, CI/CD security)
 - **Input:** Infrastructure as Code, deployment configs
@@ -82,9 +82,9 @@ Perform comprehensive security assessment and remediation across the entire appl
   - Network policy recommendations
   - Container security scan
 
-### Phase 3: Remediation (Sonnet + Haiku)
+### Phase 3: Remediation (Tier 2 + Tier 3)
 
-**6. Generate Remediation Plan:** `security-architect` (Opus)
+**6. Generate Remediation Plan:** `security-architect` (Tier 1)
 
 - **Task:** Synthesize all findings, create prioritized remediation roadmap
 - **Input:** All security reports from stages 1-5
@@ -94,9 +94,9 @@ Perform comprehensive security assessment and remediation across the entire appl
   - Code snippets for common fixes
   - Verification checklist
 
-### Phase 4: Verification (Opus)
+### Phase 4: Verification (Tier 1)
 
-**7. Final Security Verification:** `security-architect` (Opus)
+**7. Final Security Verification:** `security-architect` (Tier 1)
 
 - **Task:** Re-scan after remediation, validate all fixes
 - **Input:** Updated codebase, remediation evidence
@@ -168,12 +168,12 @@ urity-critical functions
 
 ## Cost Estimation
 
-| Model      | Stages                                          | Est. Tokens        | Cost (per 1M)         | Total      |
+| Tier | Stages | Est. Tokens | Cost | Total |
 | ---------- | ----------------------------------------------- | ------------------ | --------------------- | ---------- |
-| **Opus**   | 4 (Scan, API Review, Remediation, Verification) | ~30,000            | $5 input / $25 output | ~$0.25     |
-| **Sonnet** | 2 (DB Audit, Infrastructure)                    | ~15,000            | $3 input / $15 output | ~$0.05     |
-| **Haiku**  | 1 (Coverage Analysis)                           | ~5,000             | $1 input / $5 output  | ~$0.01     |
-| **Total**  | **7 stages**                                    | **~50,000 tokens** | **Mixed**             | **~$0.31** |
+| **Tier 1** | 4 (Scan, API Review, Remediation, Verification) | ~30,000 | See model-matrix.md | ~$0.25 |
+| **Tier 2** | 2 (DB Audit, Infrastructure) | ~15,000 | See model-matrix.md | ~$0.05 |
+| **Tier 3** | 1 (Coverage Analysis) | ~5,000 | See model-matrix.md | ~$0.01 |
+| **Total** | **7 stages** | **~50,000 tokens** | **Mixed** | **~$0.31** |
 
 ---
 

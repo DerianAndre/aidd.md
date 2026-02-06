@@ -4,10 +4,21 @@
 
 ---
 
+## Pre-Check: Context Sufficiency
+
+Before entering the main decision tree, assess whether the request has enough context to proceed:
+
+1. **Scan** for brainstorming trigger keywords (see `rules/orchestrator.md` Section 4 — Auto-Trigger Keywords)
+2. **Assess** context clarity: does the request specify what, why, who, constraints?
+3. If clarity < 90% (fewer than 3 of: what, why, who, constraints, scope): → `templates/brainstorming.md` Step 0 (Elicit Requirements)
+4. If clarity >= 90%: → Continue to the Pattern Matching below
+
+---
+
 ## Principle: Pattern Matching → Node Activation
 
-**Input:** User request (natural language)  
-**Process:** Extract keywords/intent → Match to decision rules  
+**Input:** User request (natural language)
+**Process:** Extract keywords/intent → Match to decision rules
 **Output:** Activate specific node(s) in optimal sequence
 
 ---

@@ -95,7 +95,7 @@ Skills are specialized agent capabilities. Each lives in `skills/<name>/`.
 ---
 name: skill-name
 description: When to use this skill
-model: claude-opus-4-6|claude-sonnet-4-5|claude-haiku-4-5
+tier: 1|2|3
 ---
 ```
 

@@ -5,7 +5,7 @@ description: >-
   Focuses on GitHub Actions, Docker, health checks, and rollback strategies.
   Use for "setup CI/CD", "deployment", "infrastructure", "Docker", "CI/CD pipeline", 
   "orchestration", or "automation tasks".
-model: claude-claude-sonnet-4-5-4-5
+tier: 2
 version: 1.0.0
 license: MIT
 ---

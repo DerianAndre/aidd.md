@@ -5,7 +5,7 @@ description: >-
   Use this skill for defining REST API contracts, endpoints, schemas, and governance.
   Recommended when user asks for "API design", "OpenAPI spec", "Swagger definition", 
   "REST documentation", "API endpoints", or "contract-first development".
-model: claude-opus-4-6
+tier: 1
 version: 1.1.0
 license: MIT
 ---

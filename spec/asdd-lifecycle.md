@@ -30,6 +30,7 @@ Core principle: **specification and implementation are separate commits**. The s
 
 ### PHASE 1 — SYNC
 
+**Indicator**: `[aidd.md] Phase - Entered SYNC`
 **Objective**: Achieve full situational awareness of the project state.
 
 - Read project AGENTS.md (if present) as the source of truth for agent configuration.
@@ -42,6 +43,7 @@ Core principle: **specification and implementation are separate commits**. The s
 
 ### PHASE 2 — STORY
 
+**Indicator**: `[aidd.md] Phase - Entered STORY`
 **Objective**: Define the feature from the user's perspective with testable acceptance criteria.
 
 - Write a user story: `As a [user], I want [goal], so that [benefit]`.
@@ -53,6 +55,7 @@ Core principle: **specification and implementation are separate commits**. The s
 
 ### PHASE 3 — PLAN
 
+**Indicator**: `[aidd.md] Phase - Entered PLAN`
 **Objective**: Decompose the feature into atomic, trackable tasks.
 
 - List every file to create or modify.
@@ -66,11 +69,11 @@ Core principle: **specification and implementation are separate commits**. The s
 
 Each implementation step MUST include a model assignment column:
 
-| # | Task | Files | Complexity | Model | Status |
+| # | Task | Files | Complexity | Tier | Status |
 |---|---|---|---|---|---|
-| 1 | [Atomic task] | `src/...` | High | Opus | pending |
-| 2 | [Atomic task] | `src/...` | Standard | Sonnet | pending |
-| 3 | [Atomic task] | `src/...` | Low | Haiku | pending |
+| 1 | [Atomic task] | `src/...` | High | 1 | pending |
+| 2 | [Atomic task] | `src/...` | Standard | 2 | pending |
+| 3 | [Atomic task] | `src/...` | Low | 3 | pending |
 
 #### File Convention
 
@@ -98,20 +101,22 @@ Each implementation step MUST include a model assignment column:
 
 ### PHASE 4 — COMMIT_SPEC
 
+**Indicator**: `[aidd.md] Phase - Entered COMMIT_SPEC`
 **Objective**: Persist the specification as a versioned artifact.
 
 - Check current branch — suggest `feature/<name>` or `fix/<name>` if on `main`.
 - Write spec document in `docs/plans/active/` or `docs/specs/`.
-- Include: user story, acceptance criteria, task breakdown with model assignments, architecture notes.
+- Include: user story, acceptance criteria, task breakdown with tier assignments, architecture notes.
 - Commit separately from implementation: `docs(scope): add spec for [feature]`.
 - The spec is now the contract. Implementation must satisfy it.
 
-**Model guidance**: This is a mechanical task (Tier 3). Can be delegated to a Haiku subagent.
+**Model guidance**: This is a mechanical task (Tier 3). Can be delegated to a Tier 3 subagent.
 
 **Exit criteria**: Spec committed to version control. No implementation code in this commit.
 
 ### PHASE 5 — EXECUTE
 
+**Indicator**: `[aidd.md] Phase - Entered EXECUTE`
 **Objective**: Implement the feature by following the plan strictly.
 
 - Mark each task as `in_progress` before starting, `completed` when done.
@@ -123,7 +128,7 @@ Each implementation step MUST include a model assignment column:
 
 #### Dispatch Strategy
 
-Assign model tier per-task using the plan's Model column (see `templates/model-matrix.md` for adaptive assignments):
+Assign model tier per-task using the plan's Tier column (see `templates/model-matrix.md` for adaptive assignments):
 
 - Group independent tasks by model tier.
 - Launch parallel subagents where no dependencies exist.
@@ -133,23 +138,24 @@ Assign model tier per-task using the plan's Model column (see `templates/model-m
 ```
 Example — Plan has 6 steps:
 
-  Step 1: Define entities        (High, Opus)     ─┐
-  Step 2: Create migration       (Std, Sonnet)     ├─ parallel (no deps)
-  Step 3: Barrel exports         (Low, Haiku)     ─┘
-  Step 4: Implement use case     (High, Opus)     ← depends on Step 1
-  Step 5: Add API endpoint       (Std, Sonnet)    ← depends on Step 4
-  Step 6: Write unit tests       (Low, Haiku)     ← depends on Step 4
+  Step 1: Define entities        (High, Tier 1)   ─┐
+  Step 2: Create migration       (Std, Tier 2)     ├─ parallel (no deps)
+  Step 3: Barrel exports         (Low, Tier 3)   ─┘
+  Step 4: Implement use case     (High, Tier 1)   ← depends on Step 1
+  Step 5: Add API endpoint       (Std, Tier 2)    ← depends on Step 4
+  Step 6: Write unit tests       (Low, Tier 3)    ← depends on Step 4
 
 Execution:
-  Round 1: [Opus:Step1] + [Sonnet:Step2] + [Haiku:Step3]  (parallel)
-  Round 2: [Opus:Step4]                                     (sequential)
-  Round 3: [Sonnet:Step5] + [Haiku:Step6]                   (parallel)
+  Round 1: [T1:Step1] + [T2:Step2] + [T3:Step3]  (parallel)
+  Round 2: [T1:Step4]                               (sequential)
+  Round 3: [T2:Step5] + [T3:Step6]                  (parallel)
 ```
 
 **Exit criteria**: All planned tasks completed. No untracked changes.
 
 ### PHASE 6 — TEST
 
+**Indicator**: `[aidd.md] Phase - Entered TEST`
 **Objective**: Verify the implementation satisfies all acceptance criteria.
 
 - Write or update test files matching the Given/When/Then criteria from Phase 2.
@@ -161,6 +167,7 @@ Execution:
 
 ### PHASE 7 — VERIFY
 
+**Indicator**: `[aidd.md] Phase - Entered VERIFY`
 **Objective**: Confirm the implementation is production-ready.
 
 - Run `typecheck` to ensure zero TypeScript errors.
@@ -171,23 +178,24 @@ Execution:
 
 #### Completion Task-to-Model Assignment
 
-| Task | Model Tier | Rationale |
+| Task | Tier | Rationale |
 |---|---|---|
-| Run typecheck/lint | 3 (Haiku) | Mechanical — run command, report result |
-| Run test suite | 3 (Haiku) | Mechanical — run command, report result |
+| Run typecheck/lint | 3 | Mechanical — run command, report result |
+| Run test suite | 3 | Mechanical — run command, report result |
 | Analyze test failures | 2 → 1 | Depends on failure complexity; escalate if needed |
-| Write missing tests (simple) | 3 (Haiku) | Pure functions, no mocks, obvious assertions |
+| Write missing tests (simple) | 3 | Pure functions, no mocks, obvious assertions |
 | Write missing tests (complex) | 2 → 1 | Integration tests, mocked boundaries, edge cases |
-| Update plan status | 3 (Haiku) | File edit — mechanical |
-| Move plan to `done/` | 3 (Haiku) | File operation — mechanical |
-| Draft commit message | 2 (Sonnet) | Needs to summarize changes accurately |
-| Create PR | 2 (Sonnet) | Needs coherent summary and test plan |
-| Final architecture review | 1 (Opus) | Verify implementation matches architectural intent |
+| Update plan status | 3 | File edit — mechanical |
+| Move plan to `done/` | 3 | File operation — mechanical |
+| Draft commit message | 2 | Needs to summarize changes accurately |
+| Create PR | 2 | Needs coherent summary and test plan |
+| Final architecture review | 1 | Verify implementation matches architectural intent |
 
 **Exit criteria**: Clean typecheck, clean lint, all targeted tests pass, spec is current.
 
 ### PHASE 8 — COMMIT_IMPL
 
+**Indicator**: `[aidd.md] Phase - Entered COMMIT_IMPL`
 **Objective**: Create the implementation commit with full verification.
 
 - Run full check suite: `typecheck + lint + test + build`.

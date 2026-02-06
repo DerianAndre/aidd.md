@@ -81,9 +81,9 @@ The **Master Orchestrator** is the entry point for all tasks:
 
 Orchestrators optimize cost via tiered model usage:
 
-- **Opus**: Critical planning and architecture decisions
-- **Sonnet**: Complex implementation patterns
-- **Haiku**: Fast operations (code generation, tests, docs)
+- **Tier 1 (HIGH)**: Critical planning and architecture decisions
+- **Tier 2 (STANDARD)**: Complex implementation patterns
+- **Tier 3 (LOW)**: Fast operations (code generation, tests, docs)
 
 ### Skill Structure
 
@@ -93,7 +93,7 @@ Skills are defined in `skills/<name>/SKILL.md` with YAML frontmatter:
 ---
 name: skill-name
 description: When to use this skill
-model: claude-opus-4-6|claude-sonnet-4-5|claude-haiku-4-5
+tier: 1|2|3
 ---
 ```
 

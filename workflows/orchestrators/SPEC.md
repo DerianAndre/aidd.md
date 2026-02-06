@@ -16,7 +16,7 @@ An orchestrator coordinates multiple specialized skills/agents to accomplish com
 
 - Coordinates 3+ skills/agents
 - Has clear input → process → output flow
-- Optimizes model usage (Opus → Sonnet → Haiku)
+- Optimizes model usage (Tier 1 → Tier 2 → Tier 3)
 - Produces concrete artifacts
 - Has measurable success criteria
 
@@ -80,11 +80,11 @@ Sequential stages with skill, model tier, and specific task:
 
 ## Cost Estimation
 
-| Model     | Stages | Est. Tokens   | Cost   |
+| Tier      | Stages | Est. Tokens   | Cost   |
 | --------- | ------ | ------------- | ------ |
-| Opus      | X      | ~Y tokens     | $Z     |
-| Sonnet    | X      | ~Y tokens     | $Z     |
-| Haiku     | X      | ~Y tokens     | $Z     |
+| Tier 1    | X      | ~Y tokens     | $Z     |
+| Tier 2    | X      | ~Y tokens     | $Z     |
+| Tier 3    | X      | ~Y tokens     | $Z     |
 | **Total** | **X**  | **~Y tokens** | **$Z** |
 
 ## Notes
@@ -99,46 +99,46 @@ Optional context, gotchas, or additional guidance.
 ### Sequential (Tiered Execution)
 
 ```
-Opus (Critical Planning)
+Tier 1 (Critical Planning)
   ↓
-Sonnet (Complex Execution)
+Tier 2 (Complex Execution)
   ↓
-Haiku (Fast Operations)
+Tier 3 (Fast Operations)
 ```
 
 **Example:** Feature development
 
-- Opus: Architecture decisions
-- Sonnet: Implementation patterns
-- Haiku: Code generation, tests, deployment
+- Tier 1: Architecture decisions
+- Tier 2: Implementation patterns
+- Tier 3: Code generation, tests, deployment
 
 ### Hybrid (Mixed Execution)
 
 ```
-      Opus (Critical)
+      Tier 1 (Critical)
        ↙     ↘
-  Sonnet   Sonnet (Parallel)
+  Tier 2   Tier 2 (Parallel)
        ↘     ↙
-      Haiku (Fast)
+      Tier 3 (Fast)
 ```
 
 **Example:** Security hardening
 
-- Opus: Initial scan + final verification
-- Sonnet: Remediation strategies
-- Haiku: Test generation
+- Tier 1: Initial scan + final verification
+- Tier 2: Remediation strategies
+- Tier 3: Test generation
 
 ### Parallel (Independent Tasks)
 
 ```
-Opus ←→ Sonnet ←→ Haiku (Concurrent)
+Tier 1 ←→ Tier 2 ←→ Tier 3 (Concurrent)
 ```
 
 **Example:** Documentation sync
 
-- Knowledge-architect (Haiku): Code scanning
-- Contract-architect (Opus): API docs
-- System-architect (Opus): Architecture diagrams
+- Knowledge-architect (Tier 3): Code scanning
+- Contract-architect (Tier 1): API docs
+- System-architect (Tier 1): Architecture diagrams
 
 ---
 
@@ -184,22 +184,22 @@ Perform a comprehensive security audit of REST APIs against OWASP Top 10 (2025).
 
 ## Workflow Stages
 
-1. **Stage 1:** `contract-architect` (Opus)
+1. **Stage 1:** `contract-architect` (Tier 1)
    - Task: Validate OpenAPI spec completeness
    - Input: api-spec.yaml
    - Output: Spec validation report
 
-2. **Stage 2:** `security-architect` (Opus)
+2. **Stage 2:** `security-architect` (Tier 1)
    - Task: OWASP Top 10 vulnerability scan
    - Input: Source code + spec
    - Output: Vulnerability report (JSON)
 
-3. **Stage 3:** `data-architect` (Sonnet)
+3. **Stage 3:** `data-architect` (Tier 2)
    - Task: SQL injection prevention review
    - Input: Database queries
    - Output: Query safety report
 
-4. **Stage 4:** `security-architect` (Opus)
+4. **Stage 4:** `security-architect` (Tier 1)
    - Task: Generate remediation plan
    - Input: All reports
    - Output: security-remediation.md
@@ -220,10 +220,10 @@ Perform a comprehensive security audit of REST APIs against OWASP Top 10 (2025).
 
 ## Cost Estimation
 
-| Model | Stages | Est. Tokens | Cost |
+| Tier | Stages | Est. Tokens | Cost |
 |-------|--------|-------------|------|
-| Opus  | 3      | ~15,000     | $0.23 |
-| Sonnet| 1      | ~5,000      | $0.02 |
+| Tier 1 | 3     | ~15,000     | See model-matrix.md |
+| Tier 2 | 1     | ~5,000      | See model-matrix.md |
 | **Total** | **4** | **~20,000** | **$0.25** |
 ```
 

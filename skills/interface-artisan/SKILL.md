@@ -4,7 +4,7 @@ description: >-
   Generate production-ready React components with accessibility (WCAG 2.1), Tailwind CSS styling, Vitest tests, and Storybook stories.
   Enforces Component-Driven Development (CDD) workflow.
   Use for "create component", "build UI", "React hook", or accessibility audits.
-model: claude-claude-haiku-4-5-4-5
+tier: 3
 version: 1.0.0
 license: MIT
 ---

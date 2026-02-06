@@ -34,9 +34,9 @@ Coordinate end-to-end development of a complete feature from initial architectur
 
 ## Workflow Stages
 
-### Phase 1: Architecture & Design (Opus)
+### Phase 1: Architecture & Design (Tier 1)
 
-**1. System Architecture:** `system-architect` (Opus)
+**1. System Architecture:** `system-architect` (Tier 1)
 
 - **Task:** Create C4 Context and Container diagrams, document architectural decisions
 - **Input:** Feature requirements (user stories, acceptance criteria)
@@ -45,7 +45,7 @@ Coordinate end-to-end development of a complete feature from initial architectur
   - `ADR-XXX.md` - Architectural Decision Records
   - Component interaction map
 
-**2. API Contract Design:** `contract-architect` (Opus)
+**2. API Contract Design:** `contract-architect` (Tier 1)
 
 - **Task:** Define OpenAPI 3.1 specification with complete schemas and endpoints
 - **Input:** Architecture diagrams, component requirements
@@ -54,7 +54,7 @@ Coordinate end-to-end development of a complete feature from initial architectur
   - Endpoint documentation
   - Request/response examples
 
-**3. Data Schema Design:** `data-architect` (Sonnet)
+**3. Data Schema Design:** `data-architect` (Tier 2)
 
 - **Task:** Create normalized database schema (3NF), define migrations
 - **Input:** API specification, data requirements
@@ -63,9 +63,9 @@ Coordinate end-to-end development of a complete feature from initial architectur
   - `migrations/` - Versioned migration scripts
   - Data model ERD
 
-### Phase 2: UI/UX Design (Sonnet)
+### Phase 2: UI/UX Design (Tier 2)
 
-**4. Design System:** `design-architect` (Sonnet)
+**4. Design System:** `design-architect` (Tier 2)
 
 - **Task:** Generate design tokens, component specifications, accessibility targets
 - **Input:** Feature mockups, brand guidelines
@@ -74,7 +74,7 @@ Coordinate end-to-end development of a complete feature from initial architectur
   - Component specs (variants, states)
   - WCAG 2.1 compliance checklist
 
-**5. Component Architecture:** `experience-engineer` (Sonnet)
+**5. Component Architecture:** `experience-engineer` (Tier 2)
 
 - **Task:** Define state management, performance budgets, routing strategy
 - **Input:** Design tokens, API contract
@@ -83,9 +83,9 @@ Coordinate end-to-end development of a complete feature from initial architectur
   - State management plan (Zustand/Redux)
   - Performance budget (bundle size, LCP, FID)
 
-### Phase 3: Implementation (Haiku)
+### Phase 3: Implementation (Tier 3)
 
-**6. UI Components:** `interface-artisan` (Haiku)
+**6. UI Components:** `interface-artisan` (Tier 3)
 
 - **Task:** Build React components with WCAG compliance, Tailwind styling
 - **Input:** Design specs, component architecture
@@ -94,9 +94,9 @@ Coordinate end-to-end development of a complete feature from initial architectur
   - `Component.stories.tsx` - Storybook stories
   - Component documentation
 
-### Phase 4: Quality Assurance (Haiku + Opus)
+### Phase 4: Quality Assurance (Tier 3 + Tier 1)
 
-**7. Test Suites:** `quality-engineer` (Haiku)
+**7. Test Suites:** `quality-engineer` (Tier 3)
 
 - **Task:** Generate comprehensive tests (unit, integration, e2e)
 - **Input:** Components, API endpoints, business logic
@@ -105,7 +105,7 @@ Coordinate end-to-end development of a complete feature from initial architectur
   - `*.spec.ts` - Integration tests
   - Coverage report (target: ≥80%)
 
-**8. Security Audit:** `security-architect` (Opus)
+**8. Security Audit:** `security-architect` (Tier 1)
 
 - **Task:** OWASP Top 10 vulnerability scan, secret detection, dependency audit
 - **Input:** Complete codebase, API spec, database schema
@@ -114,9 +114,9 @@ Coordinate end-to-end development of a complete feature from initial architectur
   - `security-remediation.md` - Fix recommendations
   - Compliance checklist (OWASP 2025)
 
-### Phase 5: Deployment & Operations (Sonnet + Haiku)
+### Phase 5: Deployment & Operations (Tier 2 + Tier 3)
 
-**9. CI/CD Pipeline:** `platform-engineer` (Sonnet)
+**9. CI/CD Pipeline:** `platform-engineer` (Tier 2)
 
 - **Task:** Configure automated deployment with health checks and rollback
 - **Input:** Application code, tests, infrastructure requirements
@@ -126,7 +126,7 @@ Coordinate end-to-end development of a complete feature from initial architectur
   - Health check endpoints
   - Rollback strategy
 
-**10. Documentation:** `knowledge-architect` (Haiku)
+**10. Documentation:** `knowledge-architect` (Tier 3)
 
 - **Task:** Generate API docs, user guides, runbooks, changelog
 - **Input:** All artifacts from previous stages
@@ -248,19 +248,19 @@ Coordinate end-to-end development of a complete feature from initial architectur
 
 ## Cost Estimation
 
-| Model      | Stages                                 | Est. Tokens        | Cost (per 1M)         | Total      |
+| Tier | Stages | Est. Tokens | Cost | Total |
 | ---------- | -------------------------------------- | ------------------ | --------------------- | ---------- |
-| **Opus**   | 3 (Architecture, Contract, Security)   | ~25,000            | $5 input / $25 output | ~$0.20     |
-| **Sonnet** | 4 (Data, Design, Experience, Platform) | ~30,000            | $3 input / $15 output | ~$0.10     |
-| **Haiku**  | 3 (Interface, Quality, Knowledge)      | ~20,000            | $1 input / $5 output  | ~$0.02     |
-| **Total**  | **10 stages**                          | **~75,000 tokens** | **Mixed**             | **~$0.32** |
+| **Tier 1** | 3 (Architecture, Contract, Security) | ~25,000 | See model-matrix.md | ~$0.20 |
+| **Tier 2** | 4 (Data, Design, Experience, Platform) | ~30,000 | See model-matrix.md | ~$0.10 |
+| **Tier 3** | 3 (Interface, Quality, Knowledge) | ~20,000 | See model-matrix.md | ~$0.02 |
+| **Total** | **10 stages** | **~75,000 tokens** | **Mixed** | **~$0.32** |
 
 **Notes:**
 
 - Costs assume typical feature complexity
-- Opus stages are critical decision points
-- Sonnet handles complex implementation
-- Haiku executes well-defined tasks
+- Tier 1 stages are critical decision points
+- Tier 2 handles complex implementation
+- Tier 3 executes well-defined tasks
 
 ---
 

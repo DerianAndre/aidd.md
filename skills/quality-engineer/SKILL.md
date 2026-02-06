@@ -4,7 +4,7 @@ description: >-
   Generate comprehensive test suites with Vitest and React Testing Library.
   Implements AAA pattern (Arrange-Act-Assert), focuses on cyclomatic complexity, and achieves high coverage.
   Use for "write tests", "increase coverage", "test component", "regression test", or quality assurance tasks.
-model: claude-claude-haiku-4-5-4-5
+tier: 3
 version: 1.0.0
 license: MIT
 ---

@@ -101,16 +101,16 @@
 
 **Workflow:**
 
-1. system-architect (Opus) - C4 diagrams, ADRs
-2. contract-architect (Opus) - OpenAPI spec
-3. data-architect (Sonnet) - SQL schema
-4. design-architect (Sonnet) - Design tokens
-5. experience-engineer (Sonnet) - Component architecture
-6. interface-artisan (Haiku) - React components
-7. quality-engineer (Haiku) - Test suites
-8. security-architect (Opus) - OWASP audit
-9. platform-engineer (Sonnet) - CI/CD pipeline
-10. knowledge-architect (Haiku) - Documentation
+1. system-architect (Tier 1) - C4 diagrams, ADRs
+2. contract-architect (Tier 1) - OpenAPI spec
+3. data-architect (Tier 2) - SQL schema
+4. design-architect (Tier 2) - Design tokens
+5. experience-engineer (Tier 2) - Component architecture
+6. interface-artisan (Tier 3) - React components
+7. quality-engineer (Tier 3) - Test suites
+8. security-architect (Tier 1) - OWASP audit
+9. platform-engineer (Tier 2) - CI/CD pipeline
+10. knowledge-architect (Tier 3) - Documentation
 
 **Artifacts:** Architecture diagrams, API specs, database schema, design tokens, React components, tests, security reports, CI/CD configs, documentation.
 
@@ -125,13 +125,13 @@
 
 **Workflow:**
 
-1. security-architect (Opus) - OWASP scan
-2. quality-engineer (Haiku) - Coverage analysis
-3. contract-architect (Opus) - API security review
-4. data-architect (Sonnet) - Database security audit
-5. platform-engineer (Sonnet) - Infrastructure hardening
-6. security-architect (Opus) - Remediation plan
-7. security-architect (Opus) - Final verification
+1. security-architect (Tier 1) - OWASP scan
+2. quality-engineer (Tier 3) - Coverage analysis
+3. contract-architect (Tier 1) - API security review
+4. data-architect (Tier 2) - Database security audit
+5. platform-engineer (Tier 2) - Infrastructure hardening
+6. security-architect (Tier 1) - Remediation plan
+7. security-architect (Tier 1) - Final verification
 
 **Phases:** Scan → Identify → Remediate → Verify
 
@@ -146,19 +146,19 @@
 
 **Workflow:**
 
-1. knowledge-architect (Haiku) - Code scanning
-2. contract-architect (Opus) - API documentation (parallel)
-3. system-architect (Opus) - Architecture diagrams (parallel)
-4. knowledge-architect (Haiku) - User guide (parallel)
-5. knowledge-architect (Haiku) - Developer docs (parallel)
-6. knowledge-architect (Haiku) - Changelog generation
+1. knowledge-architect (Tier 3) - Code scanning
+2. contract-architect (Tier 1) - API documentation (parallel)
+3. system-architect (Tier 1) - Architecture diagrams (parallel)
+4. knowledge-architect (Tier 3) - User guide (parallel)
+5. knowledge-architect (Tier 3) - Developer docs (parallel)
+6. knowledge-architect (Tier 3) - Changelog generation
 
 **Artifacts:** API reference, architecture diagrams, user guides, developer docs, changelog, release notes.
 
 ### Orchestrator Benefits
 
 - **Consistency:** Standardized workflows for complex tasks
-- **Cost Optimization:** Strategic model usage (Opus → Sonnet → Haiku)
+- **Cost Optimization:** Strategic model usage (Tier 1 → Tier 2 → Tier 3)
 - **Quality Assurance:** No missed steps in critical workflows
 - **Productivity:** Single command triggers multi-skill coordination
 - **Traceability:** All artifacts documented with success criteria

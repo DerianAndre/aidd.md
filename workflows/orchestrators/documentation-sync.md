@@ -28,9 +28,9 @@ Ensure all documentation remains synchronized with code changes. Generates and u
 
 ## Workflow Stages
 
-### Phase 1: Code Analysis (Haiku)
+### Phase 1: Code Analysis (Tier 3)
 
-**1. Code Scanning:** `knowledge-architect` (Haiku)
+**1. Code Scanning:** `knowledge-architect` (Tier 3)
 
 - **Task:** Analyze codebase for changes since last documentation update
 - **Input:** Git diff, file tree, recent commits
@@ -40,9 +40,9 @@ Ensure all documentation remains synchronized with code changes. Generates and u
   - Deleted/renamed entities
   - Breaking changes identified
 
-### Phase 2: Documentation Generation (Parallel - Opus + Haiku)
+### Phase 2: Documentation Generation (Parallel - Tier 1 + Tier 3)
 
-**2. API Documentation:** `contract-architect` (Opus)
+**2. API Documentation:** `contract-architect` (Tier 1)
 
 - **Task:** Generate/update API reference from OpenAPI spec and code annotations
 - **Input:** OpenAPI spec, JSDoc/TSDoc comments, route handlers
@@ -52,7 +52,7 @@ Ensure all documentation remains synchronized with code changes. Generates and u
   - Authentication requirements
   - Error codes and handling
 
-**3. Architecture Diagrams:** `system-architect` (Opus)
+**3. Architecture Diagrams:** `system-architect` (Tier 1)
 
 - **Task:** Update C4 diagrams to reflect current architecture
 - **Input:** Code structure, component dependencies, infrastructure config
@@ -62,7 +62,7 @@ Ensure all documentation remains synchronized with code changes. Generates and u
   - Deployment architecture
   - Data flow diagrams
 
-**4. User Guide:** `knowledge-architect` (Haiku)
+**4. User Guide:** `knowledge-architect` (Tier 3)
 
 - **Task:** Update end-user documentation with new features
 - **Input:** Feature specs, UI changes, user stories
@@ -72,7 +72,7 @@ Ensure all documentation remains synchronized with code changes. Generates and u
   - Troubleshooting section
   - FAQ updates
 
-**5. Developer Documentation:** `knowledge-architect` (Haiku)
+**5. Developer Documentation:** `knowledge-architect` (Tier 3)
 
 - **Task:** Update developer onboarding, setup guides, contributing docs
 - **Input:** Package.json, environment config, development workflows
@@ -82,9 +82,9 @@ Ensure all documentation remains synchronized with code changes. Generates and u
   - Code architecture guide
   - Testing documentation
 
-### Phase 3: Changelog & Release Notes (Haiku)
+### Phase 3: Changelog & Release Notes (Tier 3)
 
-**6. Changelog Generation:** `knowledge-architect` (Haiku)
+**6. Changelog Generation:** `knowledge-architect` (Tier 3)
 
 - **Task:** Generate changelog from Git commits and PRs
 - **Input:** Git history, PR descriptions, semantic version
@@ -165,11 +165,11 @@ Ensure all documentation remains synchronized with code changes. Generates and u
 
 ## Cost Estimation
 
-| Model     | Stages                                         | Est. Tokens        | Cost (per 1M)         | Total      |
+| Tier | Stages | Est. Tokens | Cost | Total |
 | --------- | ---------------------------------------------- | ------------------ | --------------------- | ---------- |
-| **Opus**  | 2 (API Docs, Architecture)                     | ~12,000            | $5 input / $25 output | ~$0.10     |
-| **Haiku** | 4 (Code Scan, User Guide, Dev Docs, Changelog) | ~15,000            | $1 input / $5 output  | ~$0.02     |
-| **Total** | **6 stages**                                   | **~27,000 tokens** | **Mixed**             | **~$0.12** |
+| **Tier 1** | 2 (API Docs, Architecture) | ~12,000 | See model-matrix.md | ~$0.10 |
+| **Tier 3** | 4 (Code Scan, User Guide, Dev Docs, Changelog) | ~15,000 | See model-matrix.md | ~$0.02 |
+| **Total** | **6 stages** | **~27,000 tokens** | **Mixed** | **~$0.12** |
 
 **Note:** Stages 2-5 can run in parallel for faster execution.
 

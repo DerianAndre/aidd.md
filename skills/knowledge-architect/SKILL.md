@@ -4,7 +4,7 @@ description: >-
   Curator and maintainer of the Technology Knowledge Base (TKB).
   Ensures accuracy, currency, and schema compliance of all technology entries.
   Use for "add to TKB", "update technology", "validate schema", or "technology review".
-model: claude-claude-haiku-4-5-4-5
+tier: 3
 version: 1.0.0
 license: MIT
 ---

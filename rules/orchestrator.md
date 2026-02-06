@@ -41,6 +41,22 @@ Before entering any execution phase, classify the user's request to determine th
 
 **Default assumption**: Enter at Brainstorming unless the user demonstrates sufficient clarity to skip ahead.
 
+#### Auto-Trigger Keywords
+
+When ANY of these keywords appear with low context (< 2 sentences of specific requirements), automatically enter Brainstorming Step 0 (Elicit Requirements):
+
+| Keywords | Auto-Entry |
+|---|---|
+| "new feature", "build", "create", "add" | → Brainstorming Step 0 |
+| "plan", "planning", "roadmap" | → Brainstorming Step 0 |
+| "brainstorm", "brainstorming", "ideate" | → Brainstorming Step 0 |
+| "improve", "enhance", "optimize", "upgrade" | → Brainstorming Step 0 |
+| "redesign", "rethink", "rearchitect" | → Brainstorming Step 0 |
+
+**Context sufficiency check**: If the user provides < 90% clarity (fewer than 3 of: what, why, who, constraints, scope), enter Step 0 automatically.
+
+**Protocol**: Do NOT start implementing. Ask questions first using the Listen → Probe → Mirror → Challenge → Converge protocol from `templates/brainstorming.md` Step 0.
+
 **See:** [`workflows/orchestrators/architect-mode.md`](../workflows/orchestrators/architect-mode.md) for the full intake-to-completion pipeline.
 
 ### 5. Technology Knowledge Base (TKB) Integration
@@ -102,6 +118,32 @@ Each major phase ends with a user decision gate before proceeding:
 | Execute | `[Continue]` · `[Pause & Reassess]` (on divergence or blocker) |
 
 **Rule**: Never proceed past a gate without explicit or implied user consent. If the user's intent is clear, the gate can be passed implicitly.
+
+---
+
+## 🔔 Status Indicators
+
+Emit structured indicators at key orchestration points to provide situational awareness.
+
+**Format**: `[aidd.md] <Category> - <Action> <target>`
+
+| Category | Action | When | Example |
+|---|---|---|---|
+| Orchestrator | Invoked | Agent role activated | `[aidd.md] Orchestrator - Invoked system-architect` |
+| Orchestrator | Classified | Intake classification done | `[aidd.md] Orchestrator - Classified → Brainstorm` |
+| Spec | Using | Spec/lifecycle referenced | `[aidd.md] Spec - Using asdd-lifecycle` |
+| Agent | Activated | Skill engaged | `[aidd.md] Agent - design-architect` |
+| Workflow | Started | Orchestrator workflow begun | `[aidd.md] Workflow - architect-mode` |
+| Rule | Applied | Domain rule loaded | `[aidd.md] Rule - Applied frontend` |
+| Phase | Entered | ASDD phase transition | `[aidd.md] Phase - Entered EXECUTE` |
+| Gate | Waiting | Decision gate reached | `[aidd.md] Gate - Waiting (Plan approval)` |
+| Template | Loaded | Template selected | `[aidd.md] Template - Loaded brainstorming` |
+| Memory | Consulted | Memory layer queried | `[aidd.md] Memory - Consulted decisions.json` |
+
+**Emission rules**:
+- Emit at the START of each action. One indicator per line.
+- No indicators for trivial/mechanical operations.
+- Indicators are informational — they do not block execution.
 
 ---
 

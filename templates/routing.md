@@ -63,7 +63,7 @@ When no AIDD is detected, match task keywords to local templates:
 
 | Domain | Keywords | Template | Default Tier |
 |--------|----------|---------|-------------|
-| Brainstorming | brainstorm, ideas, plan, design, explore, trade-offs, options | brainstorming.md | 1 |
+| Brainstorming | brainstorm, ideas, plan, design, explore, trade-offs, options, new feature, build, create, add, improve, enhance, ideate, redesign, rethink | brainstorming.md | 1 |
 | Analysis | analyze, audit, review, profile, investigate, diagnose | analysis.md | 1 |
 | Refactoring | refactor, extract, rename, split, cleanup, simplify, decouple | refactoring.md | 1→2 |
 | Frontend | component, UI, layout, style, animation, form, modal, page | frontend.md | 2 |

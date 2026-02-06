@@ -5,7 +5,7 @@ description: >-
   Generate Mermaid.js diagrams for visualization and create Architectural Decision Records (ADRs).
   Use this skill when the user asks to "design", "architect", "diagram" a system, 
   "C4 model", "ADR", or needs high-level system planning.
-model: claude-opus-4-6
+tier: 1
 version: 1.0.0
 license: MIT
 compatibility:

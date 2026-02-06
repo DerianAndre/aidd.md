@@ -4,7 +4,8 @@
 
 **Effort Tier**: 1 (HIGH_EFFORT)
 **AIDD Skill**: `skills/knowledge-architect/SKILL.md` (Technical Research)
-**Model Guidance**: Sonnet subagents for parallel research tasks (web searches, doc lookups, synthesis). Opus orchestrator for cross-referencing, decision-making, and final synthesis.
+**Model Guidance**: Tier 2 subagents for parallel research tasks (web searches, doc lookups, synthesis). Tier 1 orchestrator for cross-referencing, decision-making, and final synthesis.
+**Indicator**: `[aidd.md] Template - Loaded research`
 
 ---
 

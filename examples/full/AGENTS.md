@@ -62,11 +62,11 @@ AGENTS.md (Single Source of Truth)
 
 Optimize cost and quality via tiered model usage:
 
-| Tier | Model | Tasks |
+| Tier | Label | Tasks |
 |------|-------|-------|
-| 1 (High) | Opus | Architecture, security, planning, spec writing |
-| 2 (Standard) | Sonnet | Implementation, integration, API design |
-| 3 (Low) | Haiku | Tests, boilerplate, formatting, i18n, docs |
+| 1 | HIGH | Architecture, security, planning, spec writing |
+| 2 | STANDARD | Implementation, integration, API design |
+| 3 | LOW | Tests, boilerplate, formatting, i18n, docs |
 
 ---
 

@@ -5,7 +5,7 @@ description: >-
   Scans for vulnerabilities: injection flaws, authentication failures, hardcoded secrets, and cryptographic issues.
   Use for "review code", "audit security", "find bugs", "vulnerability scan", 
   "OWASP", "data protection", "encryption", or "pre-deployment checks".
-model: claude-opus-4-6
+tier: 1
 version: 1.0.0
 license: MIT
 ---

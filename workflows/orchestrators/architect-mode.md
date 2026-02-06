@@ -33,8 +33,9 @@ Coordinate the full brainstorm → research → plan → execute → complete pi
 
 ## Workflow Stages
 
-### Stage 0: Intake (Opus — inline)
+### Stage 0: Intake (Tier 1 — inline)
 
+**Indicator**: `[aidd.md] Orchestrator - Classified → <entry point>`
 **Task:** Classify the user's request to determine the optimal entry point.
 **Input:** User's initial request.
 **Output:** Entry point classification.
@@ -52,13 +53,14 @@ Coordinate the full brainstorm → research → plan → execute → complete pi
 
 ---
 
-### Stage 1: Brainstorm (Opus — inline)
+### Stage 1: Brainstorm (Tier 1 — inline)
 
+**Indicator**: `[aidd.md] Workflow - architect-mode (Brainstorm)`
 **Task:** Extract what the user actually needs through structured questioning.
 **Input:** User's initial request + intake classification.
 **Output:** Brainstorm Summary artifact.
 **Reference:** `templates/brainstorming.md`
-**Model:** Orchestrator (Opus) inline. Do NOT delegate to subagents — requires conversational continuity.
+**Model:** Orchestrator (Tier 1) inline. Do NOT delegate to subagents — requires conversational continuity.
 
 Protocol:
 1. Listen → Probe → Mirror → Challenge → Converge (Step 0 from brainstorming template)
@@ -68,26 +70,28 @@ Protocol:
 
 ---
 
-### Stage 2: Research (Sonnet subagents + Opus synthesis)
+### Stage 2: Research (Tier 2 subagents + Tier 1 synthesis)
 
+**Indicator**: `[aidd.md] Workflow - architect-mode (Research)`
 **Task:** Ground decisions in evidence through parallel multi-source investigation.
 **Input:** Brainstorm Summary or clear feature description.
 **Output:** Research Summary with trade-off matrix.
 **Reference:** `templates/research.md`
-**Model:** Dispatch Sonnet subagents in parallel for:
+**Model:** Dispatch Tier 2 subagents in parallel for:
   - Technology scan (competing implementations, OSS projects)
   - Framework best practices (verified against detected versions)
   - Trend validation (ecosystem direction, deprecation timelines)
   - Risk identification (known pitfalls, breaking changes)
 
-Opus orchestrator synthesizes findings into a trade-off matrix.
+Tier 1 orchestrator synthesizes findings into a trade-off matrix.
 
 **Gate:** User chooses approach from trade-off matrix → proceed to Plan.
 
 ---
 
-### Stage 3: Plan (Opus — inline)
+### Stage 3: Plan (Tier 1 — inline)
 
+**Indicator**: `[aidd.md] Workflow - architect-mode (Plan)`
 **Task:** Produce an atomic, idempotent, executable plan document.
 **Input:** Brainstorm Summary + Research Summary (or just clear requirements).
 **Output:** Plan document at `docs/plans/active/<YYYY-MM-DD>-<feature>.md`.
@@ -97,13 +101,13 @@ The plan document includes:
 - Context (problem statement, research reference)
 - Acceptance criteria (Given/When/Then)
 - Architecture decisions
-- Implementation steps with model assignment column
+- Implementation steps with tier assignment column
 - Testing strategy
 - Risks
 
 **Gate:** User reviews plan → `[Approve]` | `[Revise]` | `[Reject & Re-brainstorm]`
 
-### Stage 3B: Issue (Opus — inline, when applicable)
+### Stage 3B: Issue (Tier 1 — inline, when applicable)
 
 **Task:** Create structured issue document for bug reports or tracked problems.
 **Input:** Bug report or problem description.
@@ -112,7 +116,7 @@ The plan document includes:
 
 ---
 
-### Stage 4: Commit Plan (Haiku subagent)
+### Stage 4: Commit Plan (Tier 3 subagent)
 
 **Task:** Version-control the plan before any implementation.
 **Input:** Approved plan document.
@@ -134,7 +138,7 @@ Steps:
 **Reference:** `spec/asdd-lifecycle.md` → Phase 5
 
 Dispatch strategy:
-- Assign model per the plan's Model column
+- Assign model per the plan's Tier column
 - Group independent tasks by tier, launch parallel subagents
 - Sequential execution for dependent tasks
 - Escalate on failure (retry one tier higher)
@@ -152,11 +156,11 @@ See `templates/model-matrix.md` → Parallel Dispatch Pattern for execution exam
 **Output:** Clean commit, passing checks, archived plan.
 **Reference:** `spec/asdd-lifecycle.md` → Phases 6-8
 
-Task-to-model assignment:
-- Run typecheck/lint/tests → Tier 3 (Haiku)
+Task-to-tier assignment:
+- Run typecheck/lint/tests → Tier 3
 - Analyze failures → Tier 2 → 1 (escalate)
-- Draft commit/PR → Tier 2 (Sonnet)
-- Final architecture review → Tier 1 (Opus)
+- Draft commit/PR → Tier 2
+- Final architecture review → Tier 1
 
 Checklist:
 - [ ] All acceptance criteria met
@@ -199,11 +203,11 @@ Checklist:
 
 ## Cost Estimation
 
-| Model | Stages | Est. Tokens | Cost (per 1M) | Total |
+| Tier | Stages | Est. Tokens | Cost | Total |
 |---|---|---|---|---|
-| **Opus** | 3 (Intake, Brainstorm, Plan) | ~30,000 | $15 / $75 | ~$0.45 |
-| **Sonnet** | 2 (Research, Execute complex) | ~25,000 | $3 / $15 | ~$0.08 |
-| **Haiku** | 2 (Commit Plan, Execute simple, Completion) | ~15,000 | $1 / $5 | ~$0.02 |
+| **Tier 1** | 3 (Intake, Brainstorm, Plan) | ~30,000 | See model-matrix.md | ~$0.45 |
+| **Tier 2** | 2 (Research, Execute complex) | ~25,000 | See model-matrix.md | ~$0.08 |
+| **Tier 3** | 2 (Commit Plan, Execute simple, Completion) | ~15,000 | See model-matrix.md | ~$0.02 |
 | **Total** | **7 stages** | **~70,000 tokens** | **Mixed** | **~$0.55** |
 
 Costs assume typical feature complexity. Actual costs vary based on research depth and implementation scope.

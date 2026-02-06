@@ -43,32 +43,32 @@ Use the **minimum tier that produces correct output**. Escalate when:
 
 | Provider | Model | Model ID | Context | Cost (in/out per 1M tokens) | Status |
 |----------|-------|----------|---------|----------------------------|--------|
-| Anthropic | Claude Opus 4.6 | `claude-opus-4-6` | 1M | $5 / $25 | active |
+| Anthropic | Claude Opus 4.6 | `claude-opus-4-6` | 200K | $5 / $25 | active |
 | OpenAI | o3 | `o3` | 200K | $10 / $40 | active |
-| OpenAI | GPT-5.2 | `gpt-5.2` | 400K | $1.75 / $14 | active |
-| Google | Gemini 3 Pro | `gemini-3-pro` | 66K | $2 / $12 | active |
-| xAI | Grok 4.1 | `grok-4.1` | 2M | $0.20 / $0.50 | active |
-| DeepSeek | DeepSeek V3 | `deepseek-v3` | 164K | $0.27 / $0.41 | active |
+| OpenAI | GPT-5.2 | `gpt-5.2` | 128K | $10 / $30 | active |
+| Google | Gemini 3 Pro | `gemini-3-pro` | 200K | $2 / $12 | active |
+| xAI | Grok 4.1 | `grok-4.1` | 128K | ~$5 / $15 | active |
+| DeepSeek | DeepSeek V3 | `deepseek-v3` | 128K | $0.27 / $1.10 | active |
 
 ### Tier 2 — STANDARD (Implementation, Integration, Coding)
 
 | Provider | Model | Model ID | Context | Cost (in/out per 1M tokens) | Status |
 |----------|-------|----------|---------|----------------------------|--------|
-| Anthropic | Claude Sonnet 4.5 | `claude-sonnet-4-5-20250929` | 1M | $3 / $15 | active |
-| OpenAI | GPT-4.5 | `gpt-4.5` | 8K | $30 / $60 | active |
-| Google | Gemini 2.5 Pro | `gemini-2.5-pro` | 1M | $1.25 / $10 | active |
+| Anthropic | Claude Sonnet 4.5 | `claude-sonnet-4-5-20250929` | 200K | $3 / $15 | active |
+| OpenAI | GPT-4.5 | `gpt-4.5` | 128K | $5 / $15 | active |
+| Google | Gemini 2.5 Pro | `gemini-2.5-pro` | 100K | $1.25 / $5 | active |
 | Meta | Llama 4 Maverick | `llama-4-maverick` | 128K | self-hosted | active |
-| Mistral | Mistral Large | `mistral-large-latest` | 262K | $0.50 / $1.50 | active |
+| Mistral | Mistral Large | `mistral-large-latest` | 128K | $2 / $6 | active |
 
 ### Tier 3 — LOW (Boilerplate, Formatting, Simple Tasks)
 
 | Provider | Model | Model ID | Context | Cost (in/out per 1M tokens) | Status |
 |----------|-------|----------|---------|----------------------------|--------|
 | Anthropic | Claude Haiku 4.5 | `claude-haiku-4-5-20251001` | 200K | $1 / $5 | active |
-| Google | Gemini 2.5 Flash | `gemini-2.5-flash` | 33K | $0.30 / $2.50 | active |
-| Google | Gemini 2.5 Flash-Lite | `gemini-2.5-flash-lite` | 1M | $0.10 / $0.40 | active |
+| Google | Gemini 2.5 Flash | `gemini-2.5-flash` | 100K | $0.075 / $0.30 | active |
+| Google | Gemini 2.5 Flash-Lite | `gemini-2.5-flash-lite` | 100K | $0 / $0 | active |
 | Meta | Llama 4 Scout | `llama-4-scout` | 128K | self-hosted | active |
-| Mistral | Mistral Small | `mistral-small-latest` | 33K | $0.10 / $0.30 | active |
+| Mistral | Mistral Small | `mistral-small-latest` | 32K | $0.20 / $0.60 | active |
 
 ---
 
@@ -240,17 +240,54 @@ Example — Phase 5 with 4 implementation steps:
 | Command | Purpose | Network |
 |---------|---------|---------|
 | `pnpm mcp:models:sync` | Validate markdown ↔ TypeScript sync, check deprecations | Offline |
-| `pnpm mcp:models:update` | Fetch latest models from OpenRouter API, report changes | Online |
+| `pnpm mcp:models:update` | Dual-source consensus update (OpenRouter API + LiteLLM GitHub) | Online |
+| `pnpm mcp:models:update --dry-run` | Preview changes without writing files | Online |
+| `pnpm mcp:models:update --force` | Apply unverified and suspicious updates | Online |
 | `pnpm mcp:doctor` | Includes model matrix sync check (quick) | Offline |
+
+### Dual-Source Consensus System
+
+The update script fetches model data from two independent sources and cross-validates before applying changes:
+
+| Source | URL | Data |
+|--------|-----|------|
+| OpenRouter API | `https://openrouter.ai/api/v1/models` | Context windows, pricing, new model discovery |
+| LiteLLM GitHub | `BerriAI/litellm/model_prices_and_context_window.json` | Context windows, pricing (per-token → per-1M) |
+
+**Confidence levels:**
+
+| Level | Condition | Auto-Update? |
+|-------|-----------|--------------|
+| **HIGH** | Both sources agree (within 15% context / 25% pricing) | Yes |
+| **SUSPICIOUS** | Both agree, but change is >2x context or >3x pricing | No (use `--force`) |
+| **CONFLICT** | Sources disagree beyond tolerance | No (manual review) |
+| **UNVERIFIED** | Only one source has data | No (use `--force`) |
+
+The magnitude check (SUSPICIOUS) catches cases where both sources match to the wrong model variant — e.g., both returning data for `gpt-4` instead of `gpt-4.5`.
+
+### Cost-Based Tier Inference
+
+New models discovered from tracked providers receive a **suggested tier** based on pricing data (no model name heuristics — names change across providers). The signal is output cost per 1M tokens:
+
+| Output Cost (per 1M) | Suggested Tier | Cost Tier |
+|----------------------|----------------|-----------|
+| > $10 | 1 (HIGH) | $$$ |
+| $2 – $10 | 2 (STANDARD) | $$ |
+| < $2 | 3 (LOW) | $ |
+| Free / self-hosted | 3 (LOW) | $ |
+
+If only input cost is available, fallback thresholds: >$5 → T1, $1–$5 → T2, <$1 → T3.
+
+These are **suggestions only** — never auto-applied. Human review is required because some models break the cost-capability correlation (e.g., DeepSeek V3 is Tier 1 quality at Tier 3 pricing).
 
 ### Update Workflow
 
-1. Run `pnpm mcp:models:update` to see what changed in the ecosystem
-2. Edit this file (`templates/model-matrix.md`) — add/remove/update models
-3. Mirror changes to `mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts`
-4. Run `pnpm mcp:models:sync` to verify sync
-5. Run `pnpm mcp:typecheck && pnpm mcp:build` to rebuild
-6. Update the **Last Updated** date at the top of this file
+1. Run `pnpm mcp:models:update --dry-run` to preview what changed
+2. Review consensus updates, suspicious items, and conflicts
+3. Run `pnpm mcp:models:update` to apply consensus-approved changes
+4. For conflicts/suspicious items: manually edit this file, then mirror to `model-matrix.ts`
+5. Run `pnpm mcp:models:sync` to verify sync
+6. Run `pnpm mcp:typecheck && pnpm mcp:build` to rebuild
 
 ### When to Update
 

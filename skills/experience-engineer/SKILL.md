@@ -5,7 +5,7 @@ description: >-
   Builds scalable 60fps experiences with elegant, maintainable architectures.
   Use for "state management", "frontend architecture", "performance optimization", "Web APIs",
   "optimistic UI", or "progressive enhancement".
-model: claude-claude-sonnet-4-5-4-5
+tier: 2
 version: 1.0.0
 license: MIT
 ---

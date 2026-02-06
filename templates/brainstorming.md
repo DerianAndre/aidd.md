@@ -4,7 +4,8 @@
 
 **Effort Tier**: 1 (HIGH_EFFORT)
 **AIDD Skill**: `skills/system-architect/SKILL.md` (Strategic Planning)
-**Model Guidance**: Orchestrator (Opus) inline. Do NOT delegate brainstorming to subagents — it requires conversational continuity with the user.
+**Model Guidance**: Orchestrator (Tier 1) inline. Do NOT delegate brainstorming to subagents — it requires conversational continuity with the user.
+**Indicator**: `[aidd.md] Template - Loaded brainstorming`
 
 ---
 

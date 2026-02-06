@@ -5,7 +5,7 @@ description: >-
   Specializes in next-intl, react-i18next, locale routing, translation workflows, and RTL support.
   Use when building multilingual apps, implementing translations, setting up i18n, locale routing,
   pluralization, date/time formatting, or implementing RTL layouts for Arabic/Hebrew.
-model: claude-claude-sonnet-4-5-4-5
+tier: 3
 version: 1.0.0
 license: MIT
 ---
