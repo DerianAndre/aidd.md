@@ -1,4 +1,4 @@
-import { Chip } from '@heroui/react';
+import { Chip } from '@/components/ui/chip';
 
 export interface TagCloudProps {
   tags: string[];
@@ -19,7 +19,6 @@ export function TagCloud({ tags, activeTags = [], onTagClick }: TagCloudProps) {
           <Chip
             key={tag}
             size="sm"
-            variant="soft"
             color={isActive ? 'accent' : 'default'}
             className={onTagClick ? 'cursor-pointer' : undefined}
             onClick={onTagClick ? () => onTagClick(tag) : undefined}

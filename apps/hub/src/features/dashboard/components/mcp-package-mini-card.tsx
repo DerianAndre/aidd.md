@@ -8,8 +8,8 @@ const ROLE_COLORS: Record<string, string> = {
   'The Brain': 'text-accent',
   'The Memory': 'text-success',
   'The Hands': 'text-warning',
-  'Engine': 'text-default-500',
-  'Foundation': 'text-default-500',
+  'Engine': 'text-muted-foreground',
+  'Foundation': 'text-muted-foreground',
 };
 
 const SHORT_ROLES: Record<string, string> = {
@@ -36,7 +36,7 @@ export function McpPackageMiniCard({ info, status, server }: McpPackageMiniCardP
     <button
       type="button"
       onClick={() => navigate(ROUTES.MCP)}
-      className="flex items-center gap-2.5 rounded-lg border border-default-200 bg-default-50/50 px-3 py-2 text-left transition-colors hover:border-primary-300 hover:bg-default-100/50"
+      className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/50 px-3 py-2 text-left transition-colors hover:border-primary hover:bg-accent/50"
     >
       {/* Status dot */}
       <span className="relative flex h-2.5 w-2.5 shrink-0">
@@ -53,10 +53,10 @@ export function McpPackageMiniCard({ info, status, server }: McpPackageMiniCardP
       </span>
 
       <div className="min-w-0">
-        <p className={`text-xs font-semibold ${ROLE_COLORS[info.role] ?? 'text-default-500'}`}>
+        <p className={`text-xs font-semibold ${ROLE_COLORS[info.role] ?? 'text-muted-foreground'}`}>
           {SHORT_ROLES[info.role] ?? info.role}
         </p>
-        <p className="text-[10px] text-default-400">
+        <p className="text-[10px] text-muted-foreground">
           {toolCount > 0 ? `${toolCount} tools` : info.role === 'Foundation' ? 'types' : 'aggregate'}
         </p>
       </div>

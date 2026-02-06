@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Tabs, Card, Chip, Button, Skeleton } from '@heroui/react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Trash2 } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
@@ -29,24 +33,22 @@ export function PermanentMemoryPage() {
       )}
 
       {!loading && (
-        <Tabs>
-          <Tabs.ListContainer>
-            <Tabs.List aria-label="Memory categories">
-              <Tabs.Tab id="decisions">Decisions ({decisions.length})<Tabs.Indicator /></Tabs.Tab>
-              <Tabs.Tab id="mistakes">Mistakes ({mistakes.length})<Tabs.Indicator /></Tabs.Tab>
-              <Tabs.Tab id="conventions">Conventions ({conventions.length})<Tabs.Indicator /></Tabs.Tab>
-            </Tabs.List>
-          </Tabs.ListContainer>
+        <Tabs defaultValue="decisions">
+          <TabsList aria-label="Memory categories">
+            <TabsTrigger value="decisions">Decisions ({decisions.length})</TabsTrigger>
+            <TabsTrigger value="mistakes">Mistakes ({mistakes.length})</TabsTrigger>
+            <TabsTrigger value="conventions">Conventions ({conventions.length})</TabsTrigger>
+          </TabsList>
 
-          <Tabs.Panel id="decisions">
+          <TabsContent value="decisions">
             <DecisionsTab />
-          </Tabs.Panel>
-          <Tabs.Panel id="mistakes">
+          </TabsContent>
+          <TabsContent value="mistakes">
             <MistakesTab />
-          </Tabs.Panel>
-          <Tabs.Panel id="conventions">
+          </TabsContent>
+          <TabsContent value="conventions">
             <ConventionsTab />
-          </Tabs.Panel>
+          </TabsContent>
         </Tabs>
       )}
     </div>
@@ -72,20 +74,20 @@ function DecisionsTab() {
   return (
     <div className="mt-3 space-y-2">
       {decisions.map((d) => (
-        <Card key={d.id} className="border border-default-200 bg-default-50">
-          <Card.Header className="cursor-pointer gap-2" onClick={() => toggle(d.id)}>
+        <Card key={d.id} className="border border-border bg-muted/50">
+          <CardHeader className="cursor-pointer gap-2" onClick={() => toggle(d.id)}>
             <div className="flex w-full items-center justify-between">
               <span className="text-sm font-medium text-foreground">{d.decision}</span>
-              <span className="text-[10px] text-default-400">{formatDate(d.createdAt)}</span>
+              <span className="text-[10px] text-muted-foreground">{formatDate(d.createdAt)}</span>
             </div>
-          </Card.Header>
+          </CardHeader>
           {expanded.has(d.id) && (
-            <Card.Content className="pt-0">
-              <p className="mb-2 text-xs text-default-500">{d.reasoning}</p>
+            <CardContent className="pt-0">
+              <p className="mb-2 text-xs text-muted-foreground">{d.reasoning}</p>
               {d.alternatives && d.alternatives.length > 0 && (
                 <div className="mb-2">
-                  <span className="text-[10px] font-medium uppercase text-default-400">Alternatives:</span>
-                  <ul className="ml-3 list-inside list-disc text-xs text-default-500">
+                  <span className="text-[10px] font-medium uppercase text-muted-foreground">Alternatives:</span>
+                  <ul className="ml-3 list-inside list-disc text-xs text-muted-foreground">
                     {d.alternatives.map((a, i) => <li key={i}>{a}</li>)}
                   </ul>
                 </div>
@@ -95,12 +97,12 @@ function DecisionsTab() {
                   size="sm"
                   variant="ghost"
                   className="text-danger"
-                  onPress={() => activeProject?.path && void removeDecision(activeProject.path, d.id)}
+                  onClick={() => activeProject?.path && void removeDecision(activeProject.path, d.id)}
                 >
                   <Trash2 size={14} /> Remove
                 </Button>
               </div>
-            </Card.Content>
+            </CardContent>
           )}
         </Card>
       ))}
@@ -127,20 +129,20 @@ function MistakesTab() {
   return (
     <div className="mt-3 space-y-2">
       {mistakes.map((m) => (
-        <Card key={m.id} className="border border-default-200 bg-default-50">
-          <Card.Header className="cursor-pointer gap-2" onClick={() => toggle(m.id)}>
+        <Card key={m.id} className="border border-border bg-muted/50">
+          <CardHeader className="cursor-pointer gap-2" onClick={() => toggle(m.id)}>
             <div className="flex w-full items-center justify-between gap-2">
               <span className="text-sm font-medium text-foreground">{m.error}</span>
               <div className="flex items-center gap-2">
-                <Chip size="sm" variant="soft" color={m.occurrences > 2 ? 'danger' : 'warning'}>
+                <Chip size="sm" color={m.occurrences > 2 ? 'danger' : 'warning'}>
                   {m.occurrences}x
                 </Chip>
-                <span className="text-[10px] text-default-400">{formatDate(m.lastSeenAt)}</span>
+                <span className="text-[10px] text-muted-foreground">{formatDate(m.lastSeenAt)}</span>
               </div>
             </div>
-          </Card.Header>
+          </CardHeader>
           {expanded.has(m.id) && (
-            <Card.Content className="pt-0 text-xs text-default-500">
+            <CardContent className="pt-0 text-xs text-muted-foreground">
               <p className="mb-1"><span className="font-medium text-foreground">Root cause:</span> {m.rootCause}</p>
               <p className="mb-1"><span className="font-medium text-foreground">Fix:</span> {m.fix}</p>
               <p className="mb-2"><span className="font-medium text-foreground">Prevention:</span> {m.prevention}</p>
@@ -149,12 +151,12 @@ function MistakesTab() {
                   size="sm"
                   variant="ghost"
                   className="text-danger"
-                  onPress={() => activeProject?.path && void removeMistake(activeProject.path, m.id)}
+                  onClick={() => activeProject?.path && void removeMistake(activeProject.path, m.id)}
                 >
                   <Trash2 size={14} /> Remove
                 </Button>
               </div>
-            </Card.Content>
+            </CardContent>
           )}
         </Card>
       ))}
@@ -181,15 +183,15 @@ function ConventionsTab() {
   return (
     <div className="mt-3 space-y-2">
       {conventions.map((c) => (
-        <Card key={c.id} className="border border-default-200 bg-default-50">
-          <Card.Header className="cursor-pointer gap-2" onClick={() => toggle(c.id)}>
+        <Card key={c.id} className="border border-border bg-muted/50">
+          <CardHeader className="cursor-pointer gap-2" onClick={() => toggle(c.id)}>
             <div className="flex w-full items-center justify-between">
               <span className="text-sm font-medium text-foreground">{c.convention}</span>
-              <span className="text-[10px] text-default-400">{formatDate(c.createdAt)}</span>
+              <span className="text-[10px] text-muted-foreground">{formatDate(c.createdAt)}</span>
             </div>
-          </Card.Header>
+          </CardHeader>
           {expanded.has(c.id) && (
-            <Card.Content className="pt-0 text-xs text-default-500">
+            <CardContent className="pt-0 text-xs text-muted-foreground">
               <p className="mb-1"><span className="font-medium text-foreground">Example:</span> {c.example}</p>
               {c.rationale && (
                 <p className="mb-2"><span className="font-medium text-foreground">Rationale:</span> {c.rationale}</p>
@@ -199,12 +201,12 @@ function ConventionsTab() {
                   size="sm"
                   variant="ghost"
                   className="text-danger"
-                  onPress={() => activeProject?.path && void removeConvention(activeProject.path, c.id)}
+                  onClick={() => activeProject?.path && void removeConvention(activeProject.path, c.id)}
                 >
                   <Trash2 size={14} /> Remove
                 </Button>
               </div>
-            </Card.Content>
+            </CardContent>
           )}
         </Card>
       ))}

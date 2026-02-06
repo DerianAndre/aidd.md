@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/layout/app-layout';
 // Lazy-load all feature pages
 import { lazy, Suspense, type ComponentType } from 'react';
-import { Spinner } from '@heroui/react';
+import { Spinner } from '@/components/ui/spinner';
 
 function lazyPage(importFn: () => Promise<{ [key: string]: ComponentType }>, exportName: string) {
   const LazyComponent = lazy(async () => {

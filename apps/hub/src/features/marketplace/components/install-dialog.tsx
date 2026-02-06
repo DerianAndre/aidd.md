@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { Modal, Button, Select, ListBox, Label, Spinner } from '@heroui/react';
 import { Download, Check, AlertCircle } from 'lucide-react';
-import type { Key } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
 import { INSTALL_TARGETS } from '../lib/constants';
 
 interface InstallDialogProps {
@@ -60,50 +63,46 @@ export function InstallDialog({
   const configPreview = JSON.stringify(configSnippet, null, 2);
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Modal.Header>
-        <div className="flex items-center gap-2">
-          <Download size={18} />
-          <span>Install {entryName}</span>
-        </div>
-      </Modal.Header>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            <div className="flex items-center gap-2">
+              <Download size={18} />
+              <span>Install {entryName}</span>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
 
-      <Modal.Body>
         <div className="flex flex-col gap-4">
           {/* Target Selector */}
           <div className="flex flex-col gap-2">
+            <Label>Target</Label>
             <Select
-              aria-label="Select installation target"
               value={selectedTargetId}
-              onChange={(value: Key | null) => {
-                if (value) setSelectedTargetId(String(value));
-              }}
+              onValueChange={(value) => setSelectedTargetId(value)}
             >
-              <Label>Target</Label>
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox>
-                  {INSTALL_TARGETS.map((target) => (
-                    <ListBox.Item key={target.id} id={target.id} textValue={target.label}>
-                      {target.label}
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Select.Popover>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INSTALL_TARGETS.map((target) => (
+                  <SelectItem key={target.id} value={target.id}>
+                    {target.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
-          <p className="text-sm text-default-500">
-            This will merge the configuration into <code className="rounded bg-default-100 px-1 text-xs">{selectedTarget.configPath}</code>
+          <p className="text-sm text-muted-foreground">
+            This will merge the configuration into <code className="rounded bg-muted px-1 text-xs">{selectedTarget.configPath}</code>
           </p>
 
           {/* Preview */}
           <div className="flex flex-col gap-2">
             <span className="text-sm font-medium">Configuration Preview</span>
-            <pre className="max-h-[300px] overflow-auto rounded-lg bg-default-100 p-3 text-xs text-default-700">
+            <pre className="max-h-[300px] overflow-auto rounded-lg bg-muted p-3 text-xs text-foreground">
               {configPreview}
             </pre>
           </div>
@@ -124,21 +123,20 @@ export function InstallDialog({
             </div>
           )}
         </div>
-      </Modal.Body>
 
-      <Modal.Footer>
-        <Button variant="ghost" onPress={handleClose} isDisabled={installing || installed}>
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          onPress={() => void handleInstall()}
-          isDisabled={installing || installed}
-        >
-          {installing ? <Spinner size="sm" /> : null}
-          {installed ? 'Installed' : 'Install'}
-        </Button>
-      </Modal.Footer>
-    </Modal>
+        <DialogFooter>
+          <Button variant="ghost" onClick={handleClose} disabled={installing || installed}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => void handleInstall()}
+            disabled={installing || installed}
+          >
+            {installing ? <Spinner size="sm" /> : null}
+            {installed ? 'Installed' : 'Install'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

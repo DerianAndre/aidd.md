@@ -32,7 +32,7 @@ export function HealthGauge({ score }: HealthGaugeProps) {
       </ResponsiveContainer>
       <div className="-mt-24 flex flex-col items-center">
         <span className="text-3xl font-bold text-foreground">{score}</span>
-        <span className="text-xs text-default-400">Health Score</span>
+        <span className="text-xs text-muted-foreground">Health Score</span>
       </div>
     </div>
   );

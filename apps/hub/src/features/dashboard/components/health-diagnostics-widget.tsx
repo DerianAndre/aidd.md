@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Skeleton } from '@heroui/react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
 import { useDiagnosticsStore } from '../../diagnostics/stores/diagnostics-store';
 import { useProjectStore } from '../../../stores/project-store';
@@ -33,9 +33,9 @@ export function HealthDiagnosticsWidget() {
   }, [activeProject?.path, stale, fetchDiag]);
 
   return (
-    <div className="rounded-xl border border-default-200 bg-default-50 p-4">
+    <div className="rounded-xl border border-border bg-muted/50 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-default-600">Health & Diagnostics</h3>
+        <h3 className="text-sm font-semibold text-foreground">Health & Diagnostics</h3>
         <Link
           to={ROUTES.DIAGNOSTICS}
           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
@@ -47,7 +47,7 @@ export function HealthDiagnosticsWidget() {
       {loading ? (
         <Skeleton className="h-32 rounded-lg" />
       ) : !healthScore ? (
-        <p className="py-6 text-center text-xs text-default-400">
+        <p className="py-6 text-center text-xs text-muted-foreground">
           No health data. Complete sessions to generate scores.
         </p>
       ) : (
@@ -57,7 +57,7 @@ export function HealthDiagnosticsWidget() {
             <span className={`text-3xl font-bold text-${scoreColor(healthScore.overall)}`}>
               {healthScore.overall}
             </span>
-            <span className="text-sm text-default-400">/100</span>
+            <span className="text-sm text-muted-foreground">/100</span>
           </div>
 
           {/* Sub-score bars */}
@@ -66,14 +66,14 @@ export function HealthDiagnosticsWidget() {
               const value = healthScore.categories[key];
               return (
                 <div key={key} className="flex items-center gap-2">
-                  <span className="w-20 shrink-0 text-xs text-default-500">{label}</span>
-                  <div className="h-1.5 flex-1 rounded-full bg-default-200">
+                  <span className="w-20 shrink-0 text-xs text-muted-foreground">{label}</span>
+                  <div className="h-1.5 flex-1 rounded-full bg-border">
                     <div
                       className={`h-full rounded-full ${barColor(value)}`}
                       style={{ width: `${Math.min(value, 100)}%` }}
                     />
                   </div>
-                  <span className="w-7 shrink-0 text-right text-[10px] font-medium text-default-500">
+                  <span className="w-7 shrink-0 text-right text-[10px] font-medium text-muted-foreground">
                     {value}
                   </span>
                 </div>
@@ -83,9 +83,9 @@ export function HealthDiagnosticsWidget() {
 
           {/* Recommendations */}
           {healthScore.recommendations.length > 0 && (
-            <div className="mt-3 border-t border-default-100 pt-2">
+            <div className="mt-3 border-t border-border pt-2">
               {healthScore.recommendations.slice(0, 2).map((rec, i) => (
-                <p key={i} className="text-[10px] text-default-400">
+                <p key={i} className="text-[10px] text-muted-foreground">
                   &bull; {rec}
                 </p>
               ))}

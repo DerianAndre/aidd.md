@@ -11,8 +11,8 @@ export function MarketplaceTable({ entries, onEntryClick, usingFallback }: Marke
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="border-b border-default-200">
-          <tr className="text-left text-xs text-default-400">
+        <thead className="border-b border-border">
+          <tr className="text-left text-xs text-muted-foreground">
             <th className="pb-2 pl-3 pr-2 font-medium">#</th>
             <th className="pb-2 px-2 font-medium">Name</th>
             <th className="pb-2 px-2 font-medium">Author</th>
@@ -30,22 +30,22 @@ export function MarketplaceTable({ entries, onEntryClick, usingFallback }: Marke
               <tr
                 key={entry.slug}
                 onClick={() => onEntryClick(entry)}
-                className="cursor-pointer border-b border-default-100 transition-colors hover:bg-default-50"
+                className="cursor-pointer border-b border-border transition-colors hover:bg-muted/50"
               >
-                <td className="py-3 pl-3 pr-2 text-default-400">
+                <td className="py-3 pl-3 pr-2 text-muted-foreground">
                   {index + 1}
                 </td>
                 <td className="py-3 px-2 font-medium text-foreground">
                   {entry.name}
                 </td>
-                <td className="py-3 px-2 text-default-500">
+                <td className="py-3 px-2 text-muted-foreground">
                   {entry.author}
                 </td>
-                <td className="py-3 px-2 text-default-500">
+                <td className="py-3 px-2 text-muted-foreground">
                   {typeLabel}
                 </td>
                 {!usingFallback && (
-                  <td className="py-3 pl-2 pr-3 text-right text-default-500">
+                  <td className="py-3 pl-2 pr-3 text-right text-muted-foreground">
                     {formatInstallCount(entry.installCount)}
                   </td>
                 )}

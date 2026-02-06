@@ -27,7 +27,7 @@ export function WorkflowsListPage() {
       {/* Workflows section */}
       {!loading && workflows.length > 0 && (
         <section className="mb-8">
-          <h2 className="mb-3 text-sm font-semibold text-default-600">
+          <h2 className="mb-3 text-sm font-semibold text-foreground">
             Workflows ({workflows.length})
           </h2>
           <EntityList
@@ -50,7 +50,7 @@ export function WorkflowsListPage() {
       {/* Orchestrators section */}
       {!loading && orchestrators.length > 0 && (
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-default-600">
+          <h2 className="mb-3 text-sm font-semibold text-foreground">
             Orchestrators ({orchestrators.length})
           </h2>
           <EntityList

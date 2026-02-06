@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Modal, Button } from '@heroui/react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Plug } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { IntegrationCard } from '../components/integration-card';
@@ -49,7 +50,7 @@ export function IntegrationsPage() {
     return (
       <div>
         <PageHeader title="Integrations" description="1-click AI tool integration" />
-        <div className="flex flex-col items-center py-16 text-default-400">
+        <div className="flex flex-col items-center py-16 text-muted-foreground">
           <Plug size={40} className="mb-3" />
           <p className="text-sm">Select a project first to manage integrations</p>
         </div>
@@ -66,7 +67,7 @@ export function IntegrationsPage() {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="text-sm text-default-400">Loading integration status...</div>
+          <div className="text-sm text-muted-foreground">Loading integration status...</div>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -82,67 +83,60 @@ export function IntegrationsPage() {
         </div>
       )}
 
-      {/* Result modal */}
-      <ResultModal result={lastResult} onClose={clearResult} />
+      {/* Result dialog */}
+      <ResultDialog result={lastResult} onClose={clearResult} />
     </div>
   );
 }
 
-function ResultModal({ result, onClose }: { result: IntegrationResult | null; onClose: () => void }) {
+function ResultDialog({ result, onClose }: { result: IntegrationResult | null; onClose: () => void }) {
   const hasCreated = result ? result.files_created.length > 0 : false;
   const hasModified = result ? result.files_modified.length > 0 : false;
   const hasMessages = result ? result.messages.length > 0 : false;
 
   return (
-    <Modal>
-      <Modal.Backdrop isOpen={!!result} onOpenChange={(open) => { if (!open) onClose(); }}>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[480px]">
-            <Modal.CloseTrigger />
-            <Modal.Header>
-              <Modal.Heading>Integration Result</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              {result && (
-                <>
-                  {hasCreated && (
-                    <div className="mb-3">
-                      <p className="text-xs font-medium text-success-600">Files created:</p>
-                      {result.files_created.map((f) => (
-                        <p key={f} className="truncate text-xs text-default-500" title={f}>{f}</p>
-                      ))}
-                    </div>
-                  )}
-                  {hasModified && (
-                    <div className="mb-3">
-                      <p className="text-xs font-medium text-warning-600">Files modified:</p>
-                      {result.files_modified.map((f) => (
-                        <p key={f} className="truncate text-xs text-default-500" title={f}>{f}</p>
-                      ))}
-                    </div>
-                  )}
-                  {hasMessages && (
-                    <div>
-                      <p className="text-xs font-medium text-default-600">Messages:</p>
-                      {result.messages.map((m, i) => (
-                        <p key={i} className="whitespace-pre-wrap text-xs text-default-500">{m}</p>
-                      ))}
-                    </div>
-                  )}
-                  {!hasCreated && !hasModified && !hasMessages && (
-                    <p className="text-xs text-default-400">No changes were made.</p>
-                  )}
-                </>
-              )}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="primary" size="sm" slot="close">
-                Done
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <Dialog open={!!result} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle>Integration Result</DialogTitle>
+        </DialogHeader>
+        {result && (
+          <div>
+            {hasCreated && (
+              <div className="mb-3">
+                <p className="text-xs font-medium text-emerald-600">Files created:</p>
+                {result.files_created.map((f) => (
+                  <p key={f} className="truncate text-xs text-muted-foreground" title={f}>{f}</p>
+                ))}
+              </div>
+            )}
+            {hasModified && (
+              <div className="mb-3">
+                <p className="text-xs font-medium text-amber-600">Files modified:</p>
+                {result.files_modified.map((f) => (
+                  <p key={f} className="truncate text-xs text-muted-foreground" title={f}>{f}</p>
+                ))}
+              </div>
+            )}
+            {hasMessages && (
+              <div>
+                <p className="text-xs font-medium text-foreground">Messages:</p>
+                {result.messages.map((m, i) => (
+                  <p key={i} className="whitespace-pre-wrap text-xs text-muted-foreground">{m}</p>
+                ))}
+              </div>
+            )}
+            {!hasCreated && !hasModified && !hasMessages && (
+              <p className="text-xs text-muted-foreground">No changes were made.</p>
+            )}
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="default" size="sm" onClick={onClose}>
+            Done
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

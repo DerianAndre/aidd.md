@@ -1,7 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
-  Card, Button, Switch, NumberField, Select, ListBox, Label, Chip, Skeleton, TextField, Input,
-} from '@heroui/react';
+  Card, CardHeader, CardTitle, CardDescription, CardContent,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import {
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+} from '@/components/ui/select';
 import { Save, RotateCcw, X } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { useConfigStore } from '../stores/config-store';
@@ -67,169 +75,169 @@ export function ConfigPage() {
       {/* Action bar */}
       <div className="mb-6 flex items-center gap-2">
         <Button
-          variant="primary"
+          variant="default"
           size="sm"
-          isDisabled={!isDirty || saving}
-          onPress={handleSave}
+          disabled={!isDirty || saving}
+          onClick={handleSave}
         >
           <Save size={14} /> {saving ? 'Saving...' : 'Save'}
         </Button>
         <Button
           variant="outline"
           size="sm"
-          isDisabled={isDefault}
-          onPress={handleReset}
+          disabled={isDefault}
+          onClick={handleReset}
         >
           <RotateCcw size={14} /> Reset to defaults
         </Button>
         {isDirty && (
-          <Chip size="sm" variant="soft" color="warning">Unsaved changes</Chip>
+          <Chip size="sm" color="warning">Unsaved changes</Chip>
         )}
       </div>
 
       <div className="space-y-4">
         {/* Evolution */}
-        <Card className="border border-default-200 bg-default-50">
-          <Card.Header>
-            <Card.Title>Evolution</Card.Title>
-            <Card.Description>Auto-framework mutation settings</Card.Description>
-          </Card.Header>
-          <Card.Content className="space-y-4">
-            <Switch
-              isSelected={local.evolution.enabled}
-              onChange={(val) => update('evolution', 'enabled', val)}
-            >
-              <Switch.Control><Switch.Thumb /></Switch.Control>
+        <Card className="border border-border bg-muted/50">
+          <CardHeader>
+            <CardTitle>Evolution</CardTitle>
+            <CardDescription>Auto-framework mutation settings</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={local.evolution.enabled}
+                onChange={(e) => update('evolution', 'enabled', e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
               <Label className="text-sm">Enabled</Label>
-            </Switch>
-            <Switch
-              isSelected={local.evolution.killSwitch}
-              onChange={(val) => update('evolution', 'killSwitch', val)}
-            >
-              <Switch.Control><Switch.Thumb /></Switch.Control>
-              <Label className="text-sm">Kill switch (disable all mutations)</Label>
-            </Switch>
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-              <NumberField
-                value={local.evolution.autoApplyThreshold}
-                onChange={(val) => update('evolution', 'autoApplyThreshold', val ?? 90)}
-                minValue={0}
-                maxValue={100}
-              >
-                <Label>Auto-apply threshold</Label>
-                <NumberField.Group>
-                  <NumberField.DecrementButton />
-                  <NumberField.Input className="w-20" />
-                  <NumberField.IncrementButton />
-                </NumberField.Group>
-              </NumberField>
-              <NumberField
-                value={local.evolution.draftThreshold}
-                onChange={(val) => update('evolution', 'draftThreshold', val ?? 70)}
-                minValue={0}
-                maxValue={100}
-              >
-                <Label>Draft threshold</Label>
-                <NumberField.Group>
-                  <NumberField.DecrementButton />
-                  <NumberField.Input className="w-20" />
-                  <NumberField.IncrementButton />
-                </NumberField.Group>
-              </NumberField>
-              <NumberField
-                value={local.evolution.learningPeriodSessions}
-                onChange={(val) => update('evolution', 'learningPeriodSessions', val ?? 5)}
-                minValue={1}
-                maxValue={100}
-              >
-                <Label>Learning period (sessions)</Label>
-                <NumberField.Group>
-                  <NumberField.DecrementButton />
-                  <NumberField.Input className="w-20" />
-                  <NumberField.IncrementButton />
-                </NumberField.Group>
-              </NumberField>
             </div>
-          </Card.Content>
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={local.evolution.killSwitch}
+                onChange={(e) => update('evolution', 'killSwitch', e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
+              <Label className="text-sm">Kill switch (disable all mutations)</Label>
+            </div>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+              <div>
+                <Label>Auto-apply threshold</Label>
+                <Input
+                  type="number"
+                  value={local.evolution.autoApplyThreshold}
+                  onChange={(e) => update('evolution', 'autoApplyThreshold', Number(e.target.value) || 90)}
+                  min={0}
+                  max={100}
+                  className="w-24"
+                />
+              </div>
+              <div>
+                <Label>Draft threshold</Label>
+                <Input
+                  type="number"
+                  value={local.evolution.draftThreshold}
+                  onChange={(e) => update('evolution', 'draftThreshold', Number(e.target.value) || 70)}
+                  min={0}
+                  max={100}
+                  className="w-24"
+                />
+              </div>
+              <div>
+                <Label>Learning period (sessions)</Label>
+                <Input
+                  type="number"
+                  value={local.evolution.learningPeriodSessions}
+                  onChange={(e) => update('evolution', 'learningPeriodSessions', Number(e.target.value) || 5)}
+                  min={1}
+                  max={100}
+                  className="w-24"
+                />
+              </div>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Memory */}
-        <Card className="border border-default-200 bg-default-50">
-          <Card.Header>
-            <Card.Title>Memory</Card.Title>
-            <Card.Description>Session history and pruning settings</Card.Description>
-          </Card.Header>
-          <Card.Content className="space-y-4">
-            <Switch
-              isSelected={local.memory.autoPromoteBranchDecisions}
-              onChange={(val) => update('memory', 'autoPromoteBranchDecisions', val)}
-            >
-              <Switch.Control><Switch.Thumb /></Switch.Control>
+        <Card className="border border-border bg-muted/50">
+          <CardHeader>
+            <CardTitle>Memory</CardTitle>
+            <CardDescription>Session history and pruning settings</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={local.memory.autoPromoteBranchDecisions}
+                onChange={(e) => update('memory', 'autoPromoteBranchDecisions', e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
               <Label className="text-sm">Auto-promote branch decisions</Label>
-            </Switch>
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-              <NumberField
-                value={local.memory.maxSessionHistory}
-                onChange={(val) => update('memory', 'maxSessionHistory', val ?? 100)}
-                minValue={10}
-                maxValue={10000}
-                step={10}
-              >
-                <Label>Max session history</Label>
-                <NumberField.Group>
-                  <NumberField.DecrementButton />
-                  <NumberField.Input className="w-24" />
-                  <NumberField.IncrementButton />
-                </NumberField.Group>
-              </NumberField>
-              <NumberField
-                value={local.memory.pruneAfterDays}
-                onChange={(val) => update('memory', 'pruneAfterDays', val ?? 90)}
-                minValue={7}
-                maxValue={365}
-              >
-                <Label>Prune after (days)</Label>
-                <NumberField.Group>
-                  <NumberField.DecrementButton />
-                  <NumberField.Input className="w-20" />
-                  <NumberField.IncrementButton />
-                </NumberField.Group>
-              </NumberField>
             </div>
-          </Card.Content>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+              <div>
+                <Label>Max session history</Label>
+                <Input
+                  type="number"
+                  value={local.memory.maxSessionHistory}
+                  onChange={(e) => update('memory', 'maxSessionHistory', Number(e.target.value) || 100)}
+                  min={10}
+                  max={10000}
+                  step={10}
+                  className="w-28"
+                />
+              </div>
+              <div>
+                <Label>Prune after (days)</Label>
+                <Input
+                  type="number"
+                  value={local.memory.pruneAfterDays}
+                  onChange={(e) => update('memory', 'pruneAfterDays', Number(e.target.value) || 90)}
+                  min={7}
+                  max={365}
+                  className="w-24"
+                />
+              </div>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Model Tracking */}
-        <Card className="border border-default-200 bg-default-50">
-          <Card.Header>
-            <Card.Title>Model Tracking</Card.Title>
-            <Card.Description>AI model performance tracking</Card.Description>
-          </Card.Header>
-          <Card.Content className="space-y-3">
-            <Switch
-              isSelected={local.modelTracking.enabled}
-              onChange={(val) => update('modelTracking', 'enabled', val)}
-            >
-              <Switch.Control><Switch.Thumb /></Switch.Control>
+        <Card className="border border-border bg-muted/50">
+          <CardHeader>
+            <CardTitle>Model Tracking</CardTitle>
+            <CardDescription>AI model performance tracking</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={local.modelTracking.enabled}
+                onChange={(e) => update('modelTracking', 'enabled', e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
               <Label className="text-sm">Enabled</Label>
-            </Switch>
-            <Switch
-              isSelected={local.modelTracking.crossProject}
-              onChange={(val) => update('modelTracking', 'crossProject', val)}
-            >
-              <Switch.Control><Switch.Thumb /></Switch.Control>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={local.modelTracking.crossProject}
+                onChange={(e) => update('modelTracking', 'crossProject', e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
               <Label className="text-sm">Cross-project tracking</Label>
-            </Switch>
-          </Card.Content>
+            </div>
+          </CardContent>
         </Card>
 
         {/* CI */}
-        <Card className="border border-default-200 bg-default-50">
-          <Card.Header>
-            <Card.Title>CI Rules</Card.Title>
-            <Card.Description>Rule categories for CI/CD enforcement</Card.Description>
-          </Card.Header>
-          <Card.Content className="space-y-4">
+        <Card className="border border-border bg-muted/50">
+          <CardHeader>
+            <CardTitle>CI Rules</CardTitle>
+            <CardDescription>Rule categories for CI/CD enforcement</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <TagField
               label="Block on"
               tags={local.ci.blockOn}
@@ -245,42 +253,41 @@ export function ConfigPage() {
               tags={local.ci.ignore}
               onChange={(tags) => update('ci', 'ignore', tags)}
             />
-          </Card.Content>
+          </CardContent>
         </Card>
 
         {/* Content */}
-        <Card className="border border-default-200 bg-default-50">
-          <Card.Header>
-            <Card.Title>Content</Card.Title>
-            <Card.Description>How bundled and project content are merged</Card.Description>
-          </Card.Header>
-          <Card.Content>
-            <Select
-              selectedKey={local.content.overrideMode}
-              onSelectionChange={(key) => {
-                if (key) update('content', 'overrideMode', String(key) as AiddConfig['content']['overrideMode']);
-              }}
-            >
+        <Card className="border border-border bg-muted/50">
+          <CardHeader>
+            <CardTitle>Content</CardTitle>
+            <CardDescription>How bundled and project content are merged</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div>
               <Label>Override mode</Label>
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox>
-                  <ListBox.Item key="merge" id="merge" textValue="Merge">
+              <Select
+                value={local.content.overrideMode}
+                onValueChange={(value) => {
+                  update('content', 'overrideMode', value as AiddConfig['content']['overrideMode']);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="merge">
                     Merge — combine bundled + project content
-                  </ListBox.Item>
-                  <ListBox.Item key="project_only" id="project_only" textValue="Project only">
+                  </SelectItem>
+                  <SelectItem value="project_only">
                     Project only — ignore bundled content
-                  </ListBox.Item>
-                  <ListBox.Item key="bundled_only" id="bundled_only" textValue="Bundled only">
+                  </SelectItem>
+                  <SelectItem value="bundled_only">
                     Bundled only — ignore project overrides
-                  </ListBox.Item>
-                </ListBox>
-              </Select.Popover>
-            </Select>
-          </Card.Content>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </div>
@@ -313,15 +320,15 @@ function TagField({
 
   return (
     <div>
-      <span className="mb-1 block text-xs font-medium text-default-500">{label}</span>
+      <span className="mb-1 block text-xs font-medium text-muted-foreground">{label}</span>
       <div className="flex flex-wrap items-center gap-1.5">
         {tags.map((tag) => (
-          <Chip key={tag} size="sm" variant="soft" color="accent">
+          <Chip key={tag} size="sm" color="accent">
             <span className="flex items-center gap-1">
               {tag}
               <button
                 type="button"
-                className="ml-0.5 rounded hover:bg-default-200"
+                className="ml-0.5 rounded hover:bg-accent"
                 onClick={() => removeTag(tag)}
                 aria-label={`Remove ${tag}`}
               >
@@ -330,23 +337,19 @@ function TagField({
             </span>
           </Chip>
         ))}
-        <TextField
+        <Input
           value={input}
-          onChange={setInput}
-          className="max-w-[160px]"
+          onChange={(e) => setInput(e.target.value)}
+          className="max-w-[160px] text-xs"
+          placeholder="Add tag..."
           aria-label={`Add ${label}`}
-        >
-          <Input
-            placeholder="Add tag..."
-            className="text-xs"
-            onKeyDown={(e: React.KeyboardEvent) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addTag();
-              }
-            }}
-          />
-        </TextField>
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addTag();
+            }
+          }}
+        />
       </div>
     </div>
   );

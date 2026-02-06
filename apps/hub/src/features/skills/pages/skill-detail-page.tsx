@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@heroui/react';
+import { Button } from '@/components/ui/button';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { BlockEditor } from '../../../components/editor';
@@ -35,14 +35,14 @@ export function SkillDetailPage() {
   }, [activeProject?.path, name]);
 
   if (loading) {
-    return <div className="p-4 text-default-400">Loading...</div>;
+    return <div className="p-4 text-muted-foreground">Loading...</div>;
   }
 
   if (!skill) {
     return (
       <div>
         <PageHeader title="Skill Not Found" />
-        <Button variant="ghost" size="sm" onPress={() => navigate('/skills')}>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/skills')}>
           <ArrowLeft size={16} /> Back to Skills
         </Button>
       </div>
@@ -56,10 +56,10 @@ export function SkillDetailPage() {
         description={skill.description}
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onPress={() => navigate('/skills')}>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/skills')}>
               <ArrowLeft size={16} /> Back
             </Button>
-            <Button variant="outline" size="sm" onPress={() => navigate(`/skills/${name}/edit`)}>
+            <Button variant="outline" size="sm" onClick={() => navigate(`/skills/${name}/edit`)}>
               <Pencil size={16} /> Edit
             </Button>
           </div>
@@ -70,7 +70,7 @@ export function SkillDetailPage() {
         <SkillMetadata skill={skill} />
       </div>
 
-      <div className="rounded-xl border border-default-200">
+      <div className="rounded-xl border border-border">
         <BlockEditor initialMarkdown={skill.content} editable={false} />
       </div>
     </div>

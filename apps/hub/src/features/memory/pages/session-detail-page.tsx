@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Chip } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { ArrowLeft } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
@@ -43,7 +44,7 @@ export function SessionDetailPage() {
   }, [activeProject?.path, id, stale, fetchAll, activeSessions, completedSessions, fetchObservations]);
 
   if (loading) {
-    return <div className="p-4 text-default-400">Loading session...</div>;
+    return <div className="p-4 text-muted-foreground">Loading session...</div>;
   }
 
   if (!session) {
@@ -52,7 +53,7 @@ export function SessionDetailPage() {
         <PageHeader
           title="Session Not Found"
           actions={
-            <Button variant="ghost" size="sm" onPress={() => navigate('/sessions')}>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/sessions')}>
               <ArrowLeft size={16} /> Back
             </Button>
           }
@@ -74,7 +75,7 @@ export function SessionDetailPage() {
         title={`Session: ${session.branch}`}
         description={`${modelLabel} · ${formatDate(session.startedAt)}`}
         actions={
-          <Button variant="ghost" size="sm" onPress={() => navigate('/sessions')}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/sessions')}>
             <ArrowLeft size={16} /> Back
           </Button>
         }
@@ -91,19 +92,19 @@ export function SessionDetailPage() {
       {/* Outcome */}
       {session.outcome && (
         <div className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold text-default-600">Outcome</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">Outcome</h3>
           <div className="flex flex-wrap gap-2">
-            <Chip size="sm" variant="soft" color={session.outcome.testsPassing ? 'success' : 'danger'}>
+            <Chip size="sm" color={session.outcome.testsPassing ? 'success' : 'danger'}>
               Tests: {session.outcome.testsPassing ? 'Passing' : 'Failing'}
             </Chip>
-            <Chip size="sm" variant="soft" color={scoreColor(session.outcome.complianceScore)}>
+            <Chip size="sm" color={scoreColor(session.outcome.complianceScore)}>
               Compliance: {session.outcome.complianceScore}%
             </Chip>
             {session.outcome.reverts > 0 && (
-              <Chip size="sm" variant="soft" color="warning">Reverts: {session.outcome.reverts}</Chip>
+              <Chip size="sm" color="warning">Reverts: {session.outcome.reverts}</Chip>
             )}
             {session.outcome.userFeedback && (
-              <Chip size="sm" variant="soft" color={session.outcome.userFeedback === 'positive' ? 'success' : session.outcome.userFeedback === 'negative' ? 'danger' : 'default'}>
+              <Chip size="sm" color={session.outcome.userFeedback === 'positive' ? 'success' : session.outcome.userFeedback === 'negative' ? 'danger' : 'default'}>
                 Feedback: {session.outcome.userFeedback}
               </Chip>
             )}
@@ -115,21 +116,21 @@ export function SessionDetailPage() {
       <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2">
         {session.tasksCompleted.length > 0 && (
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-default-600">Completed Tasks ({session.tasksCompleted.length})</h3>
-            <ul className="list-inside list-disc text-xs text-default-500">
+            <h3 className="mb-2 text-sm font-semibold text-foreground">Completed Tasks ({session.tasksCompleted.length})</h3>
+            <ul className="list-inside list-disc text-xs text-muted-foreground">
               {session.tasksCompleted.map((t, i) => <li key={i}>{t}</li>)}
             </ul>
           </div>
         )}
         {session.decisions.length > 0 && (
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-default-600">Decisions ({session.decisions.length})</h3>
+            <h3 className="mb-2 text-sm font-semibold text-foreground">Decisions ({session.decisions.length})</h3>
             <ul className="space-y-1">
               {session.decisions.map((d, i) => (
-                <li key={i} className="text-xs text-default-500">
+                <li key={i} className="text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">{d.decision}</span>
                   <br />
-                  <span className="text-default-400">{d.reasoning}</span>
+                  <span className="text-muted-foreground">{d.reasoning}</span>
                 </li>
               ))}
             </ul>
@@ -140,13 +141,13 @@ export function SessionDetailPage() {
       {/* Errors Resolved */}
       {session.errorsResolved.length > 0 && (
         <div className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold text-default-600">Errors Resolved ({session.errorsResolved.length})</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">Errors Resolved ({session.errorsResolved.length})</h3>
           <ul className="space-y-1">
             {session.errorsResolved.map((e, i) => (
-              <li key={i} className="text-xs text-default-500">
+              <li key={i} className="text-xs text-muted-foreground">
                 <span className="font-medium text-danger">{e.error}</span>
                 <br />
-                <span className="text-default-400">Fix: {e.fix}</span>
+                <span className="text-muted-foreground">Fix: {e.fix}</span>
               </li>
             ))}
           </ul>
@@ -155,9 +156,9 @@ export function SessionDetailPage() {
 
       {/* Observations Timeline */}
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-default-600">Observations ({observations.length})</h3>
+        <h3 className="mb-2 text-sm font-semibold text-foreground">Observations ({observations.length})</h3>
         {observations.length === 0 ? (
-          <p className="text-xs text-default-400">No observations recorded for this session.</p>
+          <p className="text-xs text-muted-foreground">No observations recorded for this session.</p>
         ) : (
           <div className="space-y-2">
             {observations.map((obs) => (
@@ -172,8 +173,8 @@ export function SessionDetailPage() {
 
 function MetaItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-default-200 bg-default-50 p-3">
-      <p className="text-[10px] font-medium uppercase text-default-400">{label}</p>
+    <div className="rounded-lg border border-border bg-muted/50 p-3">
+      <p className="text-[10px] font-medium uppercase text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold text-foreground">{value}</p>
     </div>
   );

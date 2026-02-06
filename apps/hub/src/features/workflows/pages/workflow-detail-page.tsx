@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@heroui/react';
+import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { BlockEditor } from '../../../components/editor';
@@ -47,7 +47,7 @@ export function WorkflowDetailPage() {
   }, [activeProject?.path, name]);
 
   if (loading) {
-    return <div className="p-4 text-default-400">Loading...</div>;
+    return <div className="p-4 text-muted-foreground">Loading...</div>;
   }
 
   return (
@@ -56,18 +56,18 @@ export function WorkflowDetailPage() {
         title={title || decodeURIComponent(name ?? '')}
         description={description}
         actions={
-          <Button variant="ghost" size="sm" onPress={() => navigate('/workflows')}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/workflows')}>
             <ArrowLeft size={16} /> Back
           </Button>
         }
       />
 
       {content ? (
-        <div className="rounded-xl border border-default-200">
+        <div className="rounded-xl border border-border">
           <BlockEditor initialMarkdown={content} editable={false} />
         </div>
       ) : (
-        <p className="py-8 text-center text-sm text-default-400">Workflow not found.</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">Workflow not found.</p>
       )}
     </div>
   );

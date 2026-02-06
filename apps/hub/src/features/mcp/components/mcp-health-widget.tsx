@@ -21,14 +21,14 @@ export function McpHealthWidget() {
     ? 'bg-danger'
     : running > 0
       ? 'bg-success'
-      : 'bg-default-300';
+      : 'bg-muted-foreground';
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <div className={`h-2.5 w-2.5 rounded-full ${statusColor}`} />
         <div className="flex items-center gap-1.5">
-          <Server size={14} className="text-default-400" />
+          <Server size={14} className="text-muted-foreground" />
           <span className="text-sm text-foreground">
             <span className="font-semibold">{total}</span> configured
           </span>

@@ -1,10 +1,10 @@
-import { Outlet } from 'react-router-dom';
-import { Spinner } from '@heroui/react';
-import { AppSidebar } from './app-sidebar';
-import { AppHeader } from './app-header';
-import { ErrorBoundary } from '../error-boundary';
-import { useEntityWatcher } from '../../lib/hooks/use-entity-watcher';
-import { useProjectStore } from '../../stores/project-store';
+import { Outlet } from "react-router-dom";
+import { Spinner } from "@/components/ui/spinner";
+import { AppSidebar } from "./app-sidebar";
+import { AppHeader } from "./app-header";
+import { ErrorBoundary } from "../error-boundary";
+import { useEntityWatcher } from "../../lib/hooks/use-entity-watcher";
+import { useProjectStore } from "../../stores/project-store";
 
 export function AppLayout() {
   const loading = useProjectStore((s) => s.loading);

@@ -14,7 +14,7 @@ export function ToolUsageChart({ stats, limit = 10 }: ToolUsageChartProps) {
   }));
 
   if (data.length === 0) {
-    return <p className="py-8 text-center text-xs text-default-400">No tool usage data available.</p>;
+    return <p className="py-8 text-center text-xs text-muted-foreground">No tool usage data available.</p>;
   }
 
   return (

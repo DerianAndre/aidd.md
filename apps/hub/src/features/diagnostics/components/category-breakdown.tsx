@@ -27,14 +27,14 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
       {entries.map(([key, value]) => (
         <div
           key={key}
-          className="rounded-xl border border-default-200 bg-default-50 p-3"
+          className="rounded-xl border border-border bg-muted/50 p-3"
         >
-          <span className="text-[10px] font-medium uppercase text-default-400">
+          <span className="text-[10px] font-medium uppercase text-muted-foreground">
             {CATEGORY_LABELS[key] ?? key}
           </span>
           <div className="mt-1 flex items-center gap-2">
             <span className="text-lg font-bold text-foreground">{value}</span>
-            <div className="h-1.5 flex-1 rounded-full bg-default-200">
+            <div className="h-1.5 flex-1 rounded-full bg-border">
               <div
                 className={`h-full rounded-full ${BAR_COLORS[scoreColor(value)]}`}
                 style={{ width: `${Math.min(value, 100)}%` }}

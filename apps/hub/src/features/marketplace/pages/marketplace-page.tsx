@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tabs, Chip, Spinner, Button, Skeleton } from '@heroui/react';
 import {
   RefreshCw,
   Server,
@@ -13,6 +12,11 @@ import {
   FileCode,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { MarketplaceCard } from '../components/marketplace-card';
@@ -65,8 +69,8 @@ export function MarketplacePage() {
     void fetchCatalog();
   }, [fetchCatalog]);
 
-  const handleTabChange = (key: string | number) => {
-    setTab(String(key) as MarketplaceTab);
+  const handleTabChange = (value: string) => {
+    setTab(value as MarketplaceTab);
   };
 
   const handleEntryClick = (entry: MarketplaceEntry) => {
@@ -82,13 +86,13 @@ export function MarketplacePage() {
         actions={
           <div className="flex items-center gap-2">
             {usingFallback && (
-              <Chip size="sm" variant="soft" color="warning">Offline</Chip>
+              <Chip size="sm" color="warning">Offline</Chip>
             )}
             <Button
               size="sm"
               variant="ghost"
-              isDisabled={loading}
-              onPress={() => void refresh()}
+              disabled={loading}
+              onClick={() => void refresh()}
             >
               {loading ? <Spinner size="sm" /> : <RefreshCw size={14} />}
             </Button>
@@ -101,37 +105,33 @@ export function MarketplacePage() {
 
       {/* Tabs */}
       <Tabs
-        selectedKey={filters.tab}
-        onSelectionChange={handleTabChange}
-        aria-label="Marketplace sections"
+        value={filters.tab}
+        onValueChange={handleTabChange}
       >
-        <Tabs.ListContainer>
-          <Tabs.List>
-            {(Object.keys(TAB_META) as MarketplaceTab[]).map((tab) => {
-              const meta = TAB_META[tab];
-              const Icon = meta.icon;
-              const contentType = TAB_CONTENT_TYPE_MAP[tab];
-              const count = tab === 'mcp-servers'
-                ? mcpServers.length
-                : (contentType ? (contentCounts[contentType] ?? 0) : 0);
-              return (
-                <Tabs.Tab key={tab} id={tab}>
-                  <span className="flex items-center gap-1.5">
-                    <Icon size={14} />
-                    {meta.label}
-                    {count > 0 && (
-                      <Chip size="sm" variant="soft">{count}</Chip>
-                    )}
-                  </span>
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-              );
-            })}
-          </Tabs.List>
-        </Tabs.ListContainer>
+        <TabsList>
+          {(Object.keys(TAB_META) as MarketplaceTab[]).map((tab) => {
+            const meta = TAB_META[tab];
+            const Icon = meta.icon;
+            const contentType = TAB_CONTENT_TYPE_MAP[tab];
+            const count = tab === 'mcp-servers'
+              ? mcpServers.length
+              : (contentType ? (contentCounts[contentType] ?? 0) : 0);
+            return (
+              <TabsTrigger key={tab} value={tab}>
+                <span className="flex items-center gap-1.5">
+                  <Icon size={14} />
+                  {meta.label}
+                  {count > 0 && (
+                    <Chip size="sm">{count}</Chip>
+                  )}
+                </span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
         {(Object.keys(TAB_META) as MarketplaceTab[]).map((tab) => (
-          <Tabs.Panel key={tab} id={tab}>
+          <TabsContent key={tab} value={tab}>
             <div className="pt-4 space-y-4">
               {/* Filter bar */}
               <FilterBar
@@ -184,7 +184,7 @@ export function MarketplacePage() {
                 />
               )}
             </div>
-          </Tabs.Panel>
+          </TabsContent>
         ))}
       </Tabs>
     </div>

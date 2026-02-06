@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Button } from '@heroui/react';
 import { Copy, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export interface InstallSnippetProps {
   /** Label above the snippet (e.g., "JSON Config" or "CLI Command") */
@@ -21,13 +21,13 @@ export function InstallSnippet({ label, code, language = 'json' }: InstallSnippe
   };
 
   return (
-    <div className="rounded-lg border border-default-200 bg-default-50">
-      <div className="flex items-center justify-between border-b border-default-200 px-3 py-2">
-        <span className="text-xs font-medium text-default-500">{label}</span>
+    <div className="rounded-lg border border-border bg-muted/50">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
         <Button
           size="sm"
           variant="ghost"
-          onPress={() => void handleCopy()}
+          onClick={() => void handleCopy()}
           aria-label="Copy to clipboard"
         >
           {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}

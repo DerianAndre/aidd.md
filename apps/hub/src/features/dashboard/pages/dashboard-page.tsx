@@ -25,8 +25,8 @@ export function DashboardPage() {
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <HealthDiagnosticsWidget />
         <IntelligenceWidget />
-        <div className="rounded-xl border border-default-200 bg-default-50 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-default-600">Permanent Memory</h3>
+        <div className="rounded-xl border border-border bg-muted/50 p-4">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">Permanent Memory</h3>
           <MemoryWidget />
         </div>
         <EvolutionDraftsWidget />

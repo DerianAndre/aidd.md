@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Skeleton } from '@heroui/react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Target, FlaskConical, Cpu } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
@@ -60,19 +60,19 @@ export function AnalyticsPage() {
       </div>
 
       {/* Session timeline */}
-      <div className="mb-6 rounded-xl border border-default-200 bg-default-50 p-4">
-        <h3 className="mb-3 text-sm font-semibold text-default-600">Sessions Over Time</h3>
+      <div className="mb-6 rounded-xl border border-border bg-muted/50 p-4">
+        <h3 className="mb-3 text-sm font-semibold text-foreground">Sessions Over Time</h3>
         <SessionTimelineChart data={timelineData} />
       </div>
 
       {/* Two-column charts */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <div className="rounded-xl border border-default-200 bg-default-50 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-default-600">Model Performance</h3>
+        <div className="rounded-xl border border-border bg-muted/50 p-4">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">Model Performance</h3>
           <ModelPerformanceChart metrics={modelMetrics} />
         </div>
-        <div className="rounded-xl border border-default-200 bg-default-50 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-default-600">Tool Usage</h3>
+        <div className="rounded-xl border border-border bg-muted/50 p-4">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">Tool Usage</h3>
           <ToolUsageChart stats={toolStats} />
         </div>
       </div>

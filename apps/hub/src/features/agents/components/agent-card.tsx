@@ -1,4 +1,5 @@
-import { Card, Chip } from '@heroui/react';
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
 import type { AgentEntry } from '../lib/parse-agents';
 import { truncate } from '../../../lib/utils';
 
@@ -16,37 +17,36 @@ export function AgentCard({ agent, onPress }: AgentCardProps) {
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPress(); }
       }}
-      className="cursor-pointer border border-default-200 bg-default-50 transition-colors hover:border-primary-300"
+      className="cursor-pointer border border-border bg-muted/50 transition-colors hover:border-primary"
     >
-      <Card.Header className="flex-col items-start gap-1">
+      <CardHeader className="flex-col items-start gap-1">
         <div className="flex w-full items-center justify-between gap-2">
-          <Card.Title className="text-sm font-semibold">
+          <CardTitle className="text-sm font-semibold">
             <span className="mr-1.5">{agent.emoji}</span>
             {agent.name}
-          </Card.Title>
+          </CardTitle>
           <Chip
             size="sm"
-            variant="soft"
             color={agent.type === 'orchestrator' ? 'accent' : 'default'}
           >
             {agent.type === 'orchestrator' ? 'Orchestrator' : 'Agent'}
           </Chip>
         </div>
         {agent.purpose && (
-          <Card.Description className="text-xs text-default-500">
+          <CardDescription className="text-xs text-muted-foreground">
             {truncate(agent.purpose, 120)}
-          </Card.Description>
+          </CardDescription>
         )}
-      </Card.Header>
+      </CardHeader>
       {(agent.skills ?? agent.activation ?? agent.complexity) && (
-        <Card.Footer className="flex gap-2 pt-0">
+        <CardFooter className="flex gap-2 pt-0">
           {agent.skills && (
-            <span className="text-[10px] text-default-400">{agent.skills}</span>
+            <span className="text-[10px] text-muted-foreground">{agent.skills}</span>
           )}
           {agent.complexity && (
-            <Chip size="sm" variant="soft" color="warning">{agent.complexity}</Chip>
+            <Chip size="sm" color="warning">{agent.complexity}</Chip>
           )}
-        </Card.Footer>
+        </CardFooter>
       )}
     </Card>
   );

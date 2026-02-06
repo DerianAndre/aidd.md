@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Tabs, Skeleton } from '@heroui/react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '../../../components/layout/page-header';
 import { BlockEditor } from '../../../components/editor';
 import { readFile, fileExists } from '../../../lib/tauri';
@@ -50,33 +51,30 @@ export function AdaptersPage() {
       )}
 
       {!loading && (
-        <Tabs>
-          <Tabs.ListContainer>
-            <Tabs.List aria-label="IDE Adapters">
-              {ADAPTERS.map((adapter) => (
-                <Tabs.Tab key={adapter.id} id={adapter.id}>
-                  {adapter.label}
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-              ))}
-            </Tabs.List>
-          </Tabs.ListContainer>
+        <Tabs defaultValue={ADAPTERS[0].id}>
+          <TabsList>
+            {ADAPTERS.map((adapter) => (
+              <TabsTrigger key={adapter.id} value={adapter.id}>
+                {adapter.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
           {ADAPTERS.map((adapter) => (
-            <Tabs.Panel key={adapter.id} id={adapter.id}>
+            <TabsContent key={adapter.id} value={adapter.id}>
               {contents[adapter.id] ? (
-                <div className="mt-2 rounded-xl border border-default-200">
+                <div className="mt-2 rounded-xl border">
                   <BlockEditor
                     initialMarkdown={contents[adapter.id]}
                     editable={false}
                   />
                 </div>
               ) : (
-                <p className="py-8 text-center text-sm text-default-400">
+                <p className="py-8 text-center text-sm text-muted-foreground">
                   No README.md found for {adapter.label} adapter.
                 </p>
               )}
-            </Tabs.Panel>
+            </TabsContent>
           ))}
         </Tabs>
       )}

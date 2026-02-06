@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Chip, Skeleton } from '@heroui/react';
+import { Chip } from '@/components/ui/chip';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
 import { ConfidenceMeter } from '../../evolution/components/confidence-meter';
 import { useEvolutionStore } from '../../evolution/stores/evolution-store';
@@ -34,15 +35,15 @@ export function EvolutionDraftsWidget() {
   const loading = evoLoading || draftsLoading;
 
   return (
-    <div className="rounded-xl border border-default-200 bg-default-50 p-4">
+    <div className="rounded-xl border border-border bg-muted/50 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-default-600">Evolution & Drafts</h3>
+        <h3 className="text-sm font-semibold text-foreground">Evolution & Drafts</h3>
       </div>
 
       {loading ? (
         <Skeleton className="h-24 rounded-lg" />
       ) : candidates.length === 0 && pendingDrafts.length === 0 ? (
-        <p className="py-6 text-center text-xs text-default-400">
+        <p className="py-6 text-center text-xs text-muted-foreground">
           No pending items. Patterns emerge as sessions complete.
         </p>
       ) : (
@@ -50,7 +51,7 @@ export function EvolutionDraftsWidget() {
           {/* Evolution section */}
           {candidates.length > 0 && (
             <div className="mb-2">
-              <p className="text-xs text-default-500">
+              <p className="text-xs text-muted-foreground">
                 <span className="font-semibold text-foreground">{candidates.length}</span> evolution candidate{candidates.length !== 1 ? 's' : ''}
               </p>
               {topCandidate && (
@@ -66,13 +67,13 @@ export function EvolutionDraftsWidget() {
 
           {/* Divider */}
           {candidates.length > 0 && pendingDrafts.length > 0 && (
-            <div className="my-2 border-t border-default-100" />
+            <div className="my-2 border-t border-border" />
           )}
 
           {/* Drafts section */}
           {pendingDrafts.length > 0 && (
             <div>
-              <p className="text-xs text-default-500">
+              <p className="text-xs text-muted-foreground">
                 <span className="font-semibold text-foreground">{pendingDrafts.length}</span> pending draft{pendingDrafts.length !== 1 ? 's' : ''}
               </p>
               {topDraft && (
@@ -80,14 +81,14 @@ export function EvolutionDraftsWidget() {
                   <span className="min-w-0 truncate text-xs text-foreground">
                     {truncate(topDraft.title, 40)}
                   </span>
-                  <Chip size="sm" variant="soft" color="default">{topDraft.category}</Chip>
+                  <Chip size="sm" color="default">{topDraft.category}</Chip>
                 </div>
               )}
             </div>
           )}
 
           {/* Footer links */}
-          <div className="mt-3 flex gap-4 border-t border-default-100 pt-2">
+          <div className="mt-3 flex gap-4 border-t border-border pt-2">
             <Link
               to={ROUTES.EVOLUTION}
               className="inline-flex items-center gap-1 text-xs text-primary hover:underline"

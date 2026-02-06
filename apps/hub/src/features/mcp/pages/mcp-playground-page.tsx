@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Tabs } from '@heroui/react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Wrench, BookOpen, MessageSquare } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { ToolExplorer } from '../components/tool-explorer';
@@ -15,56 +15,51 @@ export function McpPlaygroundPage() {
     <div>
       <PageHeader title="MCP Playground" description="Browse tools, resources, and prompts across all AIDD MCP packages" />
 
-      <Tabs>
-        <Tabs.ListContainer>
-          <Tabs.List aria-label="MCP catalog">
-            <Tabs.Tab id="tools">
-              <span className="flex items-center gap-1.5">
-                <Wrench size={14} /> Tools ({stats.totalTools})
-              </span>
-              <Tabs.Indicator />
-            </Tabs.Tab>
-            <Tabs.Tab id="resources">
-              <span className="flex items-center gap-1.5">
-                <BookOpen size={14} /> Resources ({stats.totalResources})
-              </span>
-              <Tabs.Indicator />
-            </Tabs.Tab>
-            <Tabs.Tab id="prompts">
-              <span className="flex items-center gap-1.5">
-                <MessageSquare size={14} /> Prompts ({stats.totalPrompts})
-              </span>
-              <Tabs.Indicator />
-            </Tabs.Tab>
-          </Tabs.List>
-        </Tabs.ListContainer>
+      <Tabs defaultValue="tools">
+        <TabsList aria-label="MCP catalog">
+          <TabsTrigger value="tools">
+            <span className="flex items-center gap-1.5">
+              <Wrench size={14} /> Tools ({stats.totalTools})
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="resources">
+            <span className="flex items-center gap-1.5">
+              <BookOpen size={14} /> Resources ({stats.totalResources})
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="prompts">
+            <span className="flex items-center gap-1.5">
+              <MessageSquare size={14} /> Prompts ({stats.totalPrompts})
+            </span>
+          </TabsTrigger>
+        </TabsList>
 
         {/* Tools */}
-        <Tabs.Panel id="tools" className="pt-4">
+        <TabsContent value="tools" className="pt-4">
           <ToolExplorer />
-        </Tabs.Panel>
+        </TabsContent>
 
         {/* Resources */}
-        <Tabs.Panel id="resources" className="pt-4">
+        <TabsContent value="resources" className="pt-4">
           <div className="space-y-3">
             {resources.length === 0 ? (
-              <p className="py-8 text-center text-sm text-default-400">No resources registered.</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">No resources registered.</p>
             ) : (
               resources.map((r) => <ResourceDetail key={r.uri} resource={r} />)
             )}
           </div>
-        </Tabs.Panel>
+        </TabsContent>
 
         {/* Prompts */}
-        <Tabs.Panel id="prompts" className="pt-4">
+        <TabsContent value="prompts" className="pt-4">
           <div className="space-y-3">
             {prompts.length === 0 ? (
-              <p className="py-8 text-center text-sm text-default-400">No prompts registered.</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">No prompts registered.</p>
             ) : (
               prompts.map((p) => <PromptDetail key={p.name} prompt={p} />)
             )}
           </div>
-        </Tabs.Panel>
+        </TabsContent>
       </Tabs>
     </div>
   );

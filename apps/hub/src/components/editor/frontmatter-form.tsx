@@ -1,4 +1,12 @@
-import { TextField, Input, Select, Label, ListBox } from '@heroui/react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import type { ReactNode } from 'react';
 
 // ---------------------------------------------------------------------------
@@ -43,49 +51,44 @@ export function FrontmatterForm({
   children,
 }: FrontmatterFormProps) {
   return (
-    <div className="rounded-xl border border-default-200 bg-default-50 p-4">
+    <div className="rounded-xl border bg-muted/50 p-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {fields.map((field) => {
           if (field.type === 'select') {
             return (
-              <div key={field.key}>
+              <div key={field.key} className="space-y-1.5">
+                <Label>{field.label}</Label>
                 <Select
-                  isDisabled={disabled}
-                  selectedKey={values[field.key] ?? null}
-                  onSelectionChange={(key) => {
-                    if (key) onChange(field.key, String(key));
-                  }}
+                  disabled={disabled}
+                  value={values[field.key] ?? ''}
+                  onValueChange={(value) => onChange(field.key, value)}
                 >
-                  <Label>{field.label}</Label>
-                  <Select.Trigger>
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {field.options.map((opt) => (
-                        <ListBox.Item key={opt.value} id={opt.value} textValue={opt.label}>
-                          {opt.label}
-                        </ListBox.Item>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {field.options.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
             );
           }
 
           return (
-            <TextField
-              key={field.key}
-              value={values[field.key] ?? ''}
-              isDisabled={disabled}
-              isRequired={field.required}
-              onChange={(v: string) => onChange(field.key, v)}
-            >
+            <div key={field.key} className="space-y-1.5">
               <Label>{field.label}</Label>
-              <Input placeholder={field.placeholder} />
-            </TextField>
+              <Input
+                value={values[field.key] ?? ''}
+                disabled={disabled}
+                required={field.required}
+                placeholder={field.placeholder}
+                onChange={(e) => onChange(field.key, e.target.value)}
+              />
+            </div>
           );
         })}
       </div>

@@ -1,4 +1,5 @@
-import { Card, Chip } from '@heroui/react';
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
 import { formatRelativeTime, formatDuration, truncate } from '../../../lib/utils';
 import type { SessionState } from '../../../lib/types';
 
@@ -9,15 +10,15 @@ interface SessionCardProps {
 
 function outcomeChip(session: SessionState) {
   if (!session.endedAt) {
-    return <Chip size="sm" variant="soft" color="accent">Active</Chip>;
+    return <Chip size="sm" color="accent">Active</Chip>;
   }
   if (session.outcome?.testsPassing) {
-    return <Chip size="sm" variant="soft" color="success">Passed</Chip>;
+    return <Chip size="sm" color="success">Passed</Chip>;
   }
   if (session.outcome && !session.outcome.testsPassing) {
-    return <Chip size="sm" variant="soft" color="danger">Failed</Chip>;
+    return <Chip size="sm" color="danger">Failed</Chip>;
   }
-  return <Chip size="sm" variant="soft" color="default">Completed</Chip>;
+  return <Chip size="sm" color="default">Completed</Chip>;
 }
 
 export function SessionCard({ session, onPress }: SessionCardProps) {
@@ -33,23 +34,23 @@ export function SessionCard({ session, onPress }: SessionCardProps) {
       role={onPress ? 'button' : undefined}
       tabIndex={onPress ? 0 : undefined}
       onKeyDown={onPress ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPress(); } } : undefined}
-      className={`border border-default-200 bg-default-50 transition-colors hover:border-primary-300 ${onPress ? 'cursor-pointer' : ''}`}
+      className={`border border-border bg-muted/50 transition-colors hover:border-primary ${onPress ? 'cursor-pointer' : ''}`}
     >
-      <Card.Header className="flex-col items-start gap-1">
+      <CardHeader className="flex-col items-start gap-1">
         <div className="flex w-full items-center justify-between gap-2">
-          <Card.Title className="text-sm font-semibold">
+          <CardTitle className="text-sm font-semibold">
             {truncate(session.branch, 30)}
-          </Card.Title>
+          </CardTitle>
           {outcomeChip(session)}
         </div>
-        <Card.Description className="text-xs text-default-500">
+        <CardDescription className="text-xs text-muted-foreground">
           {modelLabel} · {duration} · {session.tasksCompleted.length} tasks
-        </Card.Description>
-      </Card.Header>
-      <Card.Footer className="flex items-center justify-between pt-0">
-        <Chip size="sm" variant="soft" color="default">{session.taskClassification?.domain ?? 'unknown'}</Chip>
-        <span className="text-[10px] text-default-400">{formatRelativeTime(session.startedAt)}</span>
-      </Card.Footer>
+        </CardDescription>
+      </CardHeader>
+      <CardFooter className="flex items-center justify-between pt-0">
+        <Chip size="sm" color="default">{session.taskClassification?.domain ?? 'unknown'}</Chip>
+        <span className="text-[10px] text-muted-foreground">{formatRelativeTime(session.startedAt)}</span>
+      </CardFooter>
     </Card>
   );
 }

@@ -1,4 +1,5 @@
-import { SearchField, Skeleton } from '@heroui/react';
+import { SearchInput } from '@/components/ui/search-input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMemo, useState } from 'react';
 import { EmptyState } from '../empty-state';
 
@@ -52,19 +53,13 @@ export function EntityList<T>({
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex items-center gap-3">
-        <SearchField
-          aria-label="Search"
+        <SearchInput
           value={search}
           onChange={setSearch}
+          placeholder={searchPlaceholder}
           className="max-w-xs"
-        >
-          <SearchField.Group>
-            <SearchField.SearchIcon />
-            <SearchField.Input placeholder={searchPlaceholder} />
-            {search && <SearchField.ClearButton />}
-          </SearchField.Group>
-        </SearchField>
-        <span className="text-xs text-default-400">
+        />
+        <span className="text-xs text-muted-foreground">
           {filtered.length} item{filtered.length !== 1 ? 's' : ''}
         </span>
         {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}

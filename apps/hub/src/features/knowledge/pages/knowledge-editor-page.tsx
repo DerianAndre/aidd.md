@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@heroui/react';
+import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { BlockEditor, FrontmatterForm, type FieldDefinition } from '../../../components/editor';
@@ -83,7 +83,7 @@ export function KnowledgeEditorPage() {
   const hasChanges = buildContent() !== originalContent;
 
   if (loading) {
-    return <div className="p-4 text-default-400">Loading...</div>;
+    return <div className="p-4 text-muted-foreground">Loading...</div>;
   }
 
   return (
@@ -93,14 +93,14 @@ export function KnowledgeEditorPage() {
         description="Edit knowledge entry"
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onPress={() => navigate('/knowledge')}>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/knowledge')}>
               <ArrowLeft size={16} /> Back
             </Button>
             <Button
-              variant="primary"
+              variant="default"
               size="sm"
-              isDisabled={!hasChanges || saving}
-              onPress={() => void handleSave()}
+              disabled={!hasChanges || saving}
+              onClick={() => void handleSave()}
             >
               <Save size={16} /> {saving ? 'Saving...' : 'Save'}
             </Button>
@@ -116,7 +116,7 @@ export function KnowledgeEditorPage() {
         />
       </div>
 
-      <div className="rounded-xl border border-default-200">
+      <div className="rounded-xl border border-border">
         <BlockEditor
           initialMarkdown={body}
           editable={true}

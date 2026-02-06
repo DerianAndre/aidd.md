@@ -1,4 +1,5 @@
-import { Card, Chip } from '@heroui/react';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
 import { ConfidenceMeter } from './confidence-meter';
 import { formatDate } from '../../../lib/utils';
 import type { EvolutionCandidate, EvolutionType } from '../../../lib/types';
@@ -19,34 +20,34 @@ interface CandidateCardProps {
 
 export function CandidateCard({ candidate }: CandidateCardProps) {
   return (
-    <Card className="border border-default-200 bg-default-50">
-      <Card.Header>
+    <Card className="border border-border bg-muted/50">
+      <CardHeader>
         <div className="flex w-full items-start justify-between gap-2">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <Chip size="sm" variant="soft" color={TYPE_COLORS[candidate.type]}>
+              <Chip size="sm" color={TYPE_COLORS[candidate.type]}>
                 {candidate.type.replace(/_/g, ' ')}
               </Chip>
               <span className="text-sm font-medium text-foreground">{candidate.title}</span>
             </div>
-            <p className="text-xs text-default-500">{candidate.description}</p>
+            <p className="text-xs text-muted-foreground">{candidate.description}</p>
           </div>
           <ConfidenceMeter value={candidate.confidence} />
         </div>
-      </Card.Header>
-      <Card.Content className="pt-0">
-        <div className="flex flex-wrap items-center gap-3 text-[10px] text-default-400">
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
           <span>{candidate.sessionCount} session{candidate.sessionCount !== 1 ? 's' : ''}</span>
           <span>{candidate.evidence.length} evidence</span>
           <span>{candidate.discoveryTokensTotal.toLocaleString()} tokens</span>
           <span>Created {formatDate(candidate.createdAt)}</span>
         </div>
         {candidate.suggestedAction && (
-          <p className="mt-2 text-xs text-default-500">
+          <p className="mt-2 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">Suggested:</span> {candidate.suggestedAction}
           </p>
         )}
-      </Card.Content>
+      </CardContent>
     </Card>
   );
 }

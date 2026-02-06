@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Chip, Button, Spinner } from '@heroui/react';
 import {
   ArrowLeft,
   ChevronRight,
@@ -10,6 +9,9 @@ import {
   BadgeCheck,
   TrendingUp,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
+import { Spinner } from '@/components/ui/spinner';
 import { PageHeader } from '../../../components/layout/page-header';
 import { InstallSnippet } from '../components/install-snippet';
 import { InstallDialog } from '../components/install-dialog';
@@ -50,7 +52,7 @@ export function MarketplaceDetailPage() {
     return (
       <div>
         <PageHeader title="Not Found" description="This entry could not be found" />
-        <Button variant="ghost" onPress={() => navigate('/marketplace')}>
+        <Button variant="ghost" onClick={() => navigate('/marketplace')}>
           <ArrowLeft size={14} /> Back to Marketplace
         </Button>
       </div>
@@ -98,27 +100,26 @@ export function MarketplaceDetailPage() {
       {/* Back + Breadcrumbs */}
       <nav className="mb-4 flex items-center gap-2" aria-label="Breadcrumb">
         <Button
-          size="sm"
+          size="icon"
           variant="ghost"
-          isIconOnly
-          onPress={() => navigate('/marketplace')}
+          onClick={() => navigate('/marketplace')}
           aria-label="Back to Marketplace"
         >
           <ArrowLeft size={16} />
         </Button>
         <ol className="flex items-center gap-1 text-sm">
           <li>
-            <Link to="/marketplace" className="text-default-500 hover:text-foreground transition-colors">
+            <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors">
               Marketplace
             </Link>
           </li>
-          <li><ChevronRight size={14} className="text-default-300" /></li>
+          <li><ChevronRight size={14} className="text-muted-foreground" /></li>
           <li>
-            <Link to="/marketplace" className="text-default-500 hover:text-foreground transition-colors">
+            <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors">
               {tabLabel}
             </Link>
           </li>
-          <li><ChevronRight size={14} className="text-default-300" /></li>
+          <li><ChevronRight size={14} className="text-muted-foreground" /></li>
           <li className="text-foreground font-medium">{entry.name}</li>
         </ol>
       </nav>
@@ -130,21 +131,21 @@ export function MarketplaceDetailPage() {
 
       {/* Two-column layout */}
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        {/* Left — Main content */}
+        {/* Left -- Main content */}
         <div className="space-y-6">
           {/* Metadata chips */}
           <div className="flex flex-wrap items-center gap-2">
-            <Chip size="sm" variant="soft" color="default">{categoryLabel}</Chip>
+            <Chip size="sm" color="default">{categoryLabel}</Chip>
             {isMcp && (entry as McpServerEntry).transport.map((t) => (
-              <Chip key={t} size="sm" variant="soft" color="default">{t.toUpperCase()}</Chip>
+              <Chip key={t} size="sm" color="default">{t.toUpperCase()}</Chip>
             ))}
             {entry.official && (
-              <Chip size="sm" variant="soft" color="success">
+              <Chip size="sm" color="success">
                 <BadgeCheck size={12} className="mr-1" /> Official
               </Chip>
             )}
             {entry.trending && (
-              <Chip size="sm" variant="soft" color="accent">
+              <Chip size="sm" color="accent">
                 <TrendingUp size={12} className="mr-1" /> Trending
               </Chip>
             )}
@@ -152,14 +153,14 @@ export function MarketplaceDetailPage() {
 
           {/* Long description / markdown */}
           {(entry.longDescription || (!isMcp && (entry as ContentEntry).markdownContent)) && (
-            <div className="rounded-lg border border-default-200 bg-default-50 p-4">
+            <div className="rounded-lg border border-border bg-muted/50 p-4">
               {entry.longDescription && (
-                <div className="prose prose-sm max-w-none text-default-700">
+                <div className="prose prose-sm max-w-none text-foreground">
                   {entry.longDescription}
                 </div>
               )}
               {!isMcp && (entry as ContentEntry).markdownContent && (
-                <div className="whitespace-pre-wrap text-sm text-default-600">
+                <div className="whitespace-pre-wrap text-sm text-foreground">
                   {(entry as ContentEntry).markdownContent}
                 </div>
               )}
@@ -172,7 +173,7 @@ export function MarketplaceDetailPage() {
               <h3 className="mb-3 text-sm font-semibold text-foreground">Features</h3>
               <ul className="space-y-1.5">
                 {(entry as McpServerEntry).features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-sm text-default-600">
+                  <li key={feature} className="flex items-center gap-2 text-sm text-foreground">
                     <Check size={14} className="shrink-0 text-success" />
                     {feature}
                   </li>
@@ -190,7 +191,7 @@ export function MarketplaceDetailPage() {
           )}
         </div>
 
-        {/* Right — Sidebar */}
+        {/* Right -- Sidebar */}
         <div className="space-y-4">
           {/* Install snippet */}
           {isMcp && (
@@ -212,9 +213,8 @@ export function MarketplaceDetailPage() {
           {isMcp && (
             <>
               <Button
-                variant="primary"
                 className="w-full"
-                onPress={() => setInstallOpen(true)}
+                onClick={() => setInstallOpen(true)}
               >
                 <Download size={14} /> Install Directly
               </Button>
@@ -229,13 +229,13 @@ export function MarketplaceDetailPage() {
 
           {/* Compatibility */}
           {entry.compatibility.length > 0 && (
-            <div className="rounded-lg border border-default-200 bg-default-50 p-3">
-              <h4 className="mb-2 text-xs font-medium text-default-500">Compatible with</h4>
+            <div className="rounded-lg border border-border bg-muted/50 p-3">
+              <h4 className="mb-2 text-xs font-medium text-muted-foreground">Compatible with</h4>
               <div className="flex flex-wrap gap-1.5">
                 {entry.compatibility.map((c) => {
                   const target = COMPATIBILITY_TARGETS.find((t) => t.value === c);
                   return (
-                    <Chip key={c} size="sm" variant="soft" color="default">
+                    <Chip key={c} size="sm" color="default">
                       {target?.label ?? c}
                     </Chip>
                   );
@@ -245,20 +245,20 @@ export function MarketplaceDetailPage() {
           )}
 
           {/* Author + GitHub */}
-          <div className="rounded-lg border border-default-200 bg-default-50 p-3 space-y-2">
+          <div className="rounded-lg border border-border bg-muted/50 p-3 space-y-2">
             <div>
-              <span className="text-xs text-default-400">Author</span>
+              <span className="text-xs text-muted-foreground">Author</span>
               <p className="text-sm font-medium text-foreground">{entry.author}</p>
             </div>
             {!usingFallback && entry.installCount > 0 && (
               <div>
-                <span className="text-xs text-default-400">Installs</span>
+                <span className="text-xs text-muted-foreground">Installs</span>
                 <p className="text-sm font-medium text-foreground">{formatInstallCount(entry.installCount)}</p>
               </div>
             )}
             <div>
-              <span className="text-xs text-default-400">Updated</span>
-              <p className="text-sm text-default-600">{entry.updatedAt}</p>
+              <span className="text-xs text-muted-foreground">Updated</span>
+              <p className="text-sm text-foreground">{entry.updatedAt}</p>
             </div>
             {entry.githubUrl && (
               <a

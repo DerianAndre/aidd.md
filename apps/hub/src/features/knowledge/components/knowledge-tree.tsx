@@ -41,8 +41,8 @@ function TreeItem({ node, selectedPath, onSelect, depth }: TreeItemProps) {
     <div>
       <button
         onClick={handleClick}
-        className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs transition-colors hover:bg-default-100 ${
-          isSelected ? 'bg-primary-100 text-primary-700' : 'text-default-600'
+        className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs transition-colors hover:bg-accent ${
+          isSelected ? 'bg-primary/10 text-primary' : 'text-foreground'
         }`}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
       >
@@ -52,9 +52,9 @@ function TreeItem({ node, selectedPath, onSelect, depth }: TreeItemProps) {
           <span className="w-3.5" />
         )}
         {node.isDir ? (
-          <Folder size={14} className="shrink-0 text-default-400" />
+          <Folder size={14} className="shrink-0 text-muted-foreground" />
         ) : (
-          <FileText size={14} className="shrink-0 text-default-400" />
+          <FileText size={14} className="shrink-0 text-muted-foreground" />
         )}
         <span className="truncate">{node.name}</span>
       </button>

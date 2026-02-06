@@ -1,15 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
-import {
-  Tabs,
-  Chip,
-  Spinner,
-  Switch,
-  Label,
-  Button,
-  Card,
-  TextField,
-  Input,
-} from '@heroui/react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Chip } from '@/components/ui/chip';
+import { Spinner } from '@/components/ui/spinner';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Layers, ShieldCheck, Eye, Plus, Trash2 } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
@@ -102,8 +98,8 @@ export function OverridesPage() {
   }, [newRuleName, addRule]);
 
   const handleTabChange = useCallback(
-    (key: string | number) => {
-      if (key === 'effective') {
+    (value: string) => {
+      if (value === 'effective') {
         void fetchEffective('rules');
       }
     },
@@ -132,47 +128,42 @@ export function OverridesPage() {
         </div>
       ) : (
         <Tabs
-          aria-label="Override sections"
-          onSelectionChange={handleTabChange}
+          defaultValue="agents"
+          onValueChange={handleTabChange}
         >
-          <Tabs.ListContainer>
-            <Tabs.List>
-              <Tabs.Tab key="agents" id="agents">
-                <span className="flex items-center gap-1.5">
-                  <Layers size={14} />
-                  Agents
-                  {overrides && overrides.agents.disabled.length > 0 && (
-                    <Chip size="sm" variant="soft" color="warning">
-                      {overrides.agents.disabled.length} disabled
-                    </Chip>
-                  )}
-                </span>
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab key="rules" id="rules">
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck size={14} />
-                  Project Rules
-                  {overrides && overrides.rule_count > 0 && (
-                    <Chip size="sm" variant="soft">{overrides.rule_count}</Chip>
-                  )}
-                </span>
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab key="effective" id="effective">
-                <span className="flex items-center gap-1.5">
-                  <Eye size={14} />
-                  Effective Preview
-                </span>
-                <Tabs.Indicator />
-              </Tabs.Tab>
-            </Tabs.List>
-          </Tabs.ListContainer>
+          <TabsList>
+            <TabsTrigger value="agents">
+              <span className="flex items-center gap-1.5">
+                <Layers size={14} />
+                Agents
+                {overrides && overrides.agents.disabled.length > 0 && (
+                  <Chip size="sm" color="warning">
+                    {overrides.agents.disabled.length} disabled
+                  </Chip>
+                )}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="rules">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck size={14} />
+                Project Rules
+                {overrides && overrides.rule_count > 0 && (
+                  <Chip size="sm">{overrides.rule_count}</Chip>
+                )}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="effective">
+              <span className="flex items-center gap-1.5">
+                <Eye size={14} />
+                Effective Preview
+              </span>
+            </TabsTrigger>
+          </TabsList>
 
-          {/* ── Agents tab ──────────────────────────────────────────── */}
-          <Tabs.Panel key="agents" id="agents">
+          {/* -- Agents tab -- */}
+          <TabsContent value="agents">
             <div className="pt-4">
-              <p className="mb-4 text-sm text-default-500">
+              <p className="mb-4 text-sm text-muted-foreground">
                 Toggle agents on/off for this project. Disabled agents are excluded
                 from integration-generated files.
               </p>
@@ -188,7 +179,7 @@ export function OverridesPage() {
                   {agents.filter((a) => a.type === 'agent').map((agent, i) => (
                     <div
                       key={`${agent.name}-${i}`}
-                      className="flex items-center justify-between rounded-lg border border-default-200 bg-default-50 px-4 py-3"
+                      className="flex items-center justify-between rounded-lg border border-border bg-muted/50 px-4 py-3"
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-lg">{agent.emoji}</span>
@@ -197,40 +188,37 @@ export function OverridesPage() {
                             {agent.name}
                           </p>
                           {agent.purpose && (
-                            <p className="line-clamp-1 text-xs text-default-400">
+                            <p className="line-clamp-1 text-xs text-muted-foreground">
                               {agent.purpose}
                             </p>
                           )}
                         </div>
                       </div>
-                      <Switch
-                        size="sm"
-                        isSelected={!isDisabled(agent.name)}
-                        onChange={(val) => void handleToggleAgent(agent.name, val)}
-                      >
-                        <Switch.Control>
-                          <Switch.Thumb />
-                        </Switch.Control>
-                      </Switch>
+                      <input
+                        type="checkbox"
+                        checked={!isDisabled(agent.name)}
+                        onChange={(e) => void handleToggleAgent(agent.name, e.target.checked)}
+                        className="h-4 w-4 rounded border-border"
+                      />
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          </Tabs.Panel>
+          </TabsContent>
 
-          {/* ── Project Rules tab ──────────────────────────────────── */}
-          <Tabs.Panel key="rules" id="rules">
+          {/* -- Project Rules tab -- */}
+          <TabsContent value="rules">
             <div className="pt-4">
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm text-default-500">
+                <p className="text-sm text-muted-foreground">
                   Project-specific rules stored in .aidd/overrides/rules/.
                   These are merged with global rules.
                 </p>
                 <Button
                   size="sm"
                   variant="ghost"
-                  onPress={() => setShowAddRule(!showAddRule)}
+                  onClick={() => setShowAddRule(!showAddRule)}
                 >
                   <Plus size={14} />
                   Add Rule
@@ -239,24 +227,24 @@ export function OverridesPage() {
 
               {showAddRule && (
                 <Card className="mb-4">
-                  <Card.Content className="flex items-end gap-3 p-4">
-                    <TextField
-                      className="flex-1"
-                      value={newRuleName}
-                      onChange={setNewRuleName}
-                    >
+                  <CardContent className="flex items-end gap-3 p-4">
+                    <div className="flex-1">
                       <Label>Rule name</Label>
-                      <Input placeholder="e.g. project-conventions" />
-                    </TextField>
+                      <Input
+                        value={newRuleName}
+                        onChange={(e) => setNewRuleName(e.target.value)}
+                        placeholder="e.g. project-conventions"
+                      />
+                    </div>
                     <Button
                       size="sm"
-                      variant="primary"
-                      isDisabled={!newRuleName.trim()}
-                      onPress={() => void handleAddRule()}
+                      variant="default"
+                      disabled={!newRuleName.trim()}
+                      onClick={() => void handleAddRule()}
                     >
                       Create
                     </Button>
-                  </Card.Content>
+                  </CardContent>
                 </Card>
               )}
 
@@ -267,24 +255,24 @@ export function OverridesPage() {
                   {projectRules.map((rule) => (
                     <div
                       key={rule.name}
-                      className="flex items-center justify-between rounded-lg border border-default-200 bg-default-50 px-4 py-3"
+                      className="flex items-center justify-between rounded-lg border border-border bg-muted/50 px-4 py-3"
                     >
                       <div>
                         <p className="text-sm font-medium text-foreground">
                           {rule.name}
                         </p>
                         {rule.content && (
-                          <p className="mt-0.5 line-clamp-1 text-xs text-default-400">
+                          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                             {rule.content.slice(0, 120)}
                           </p>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Chip size="sm" variant="soft" color="accent">override</Chip>
+                        <Chip size="sm" color="accent">override</Chip>
                         <Button
                           size="sm"
-                          variant="danger"
-                          onPress={() => void removeRule(rule.name)}
+                          variant="destructive"
+                          onClick={() => void removeRule(rule.name)}
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -294,13 +282,13 @@ export function OverridesPage() {
                 </div>
               )}
             </div>
-          </Tabs.Panel>
+          </TabsContent>
 
-          {/* ── Effective Preview tab ──────────────────────────────── */}
-          <Tabs.Panel key="effective" id="effective">
+          {/* -- Effective Preview tab -- */}
+          <TabsContent value="effective">
             <div className="pt-4">
               <div className="mb-4 flex items-center gap-3">
-                <p className="text-sm text-default-500">
+                <p className="text-sm text-muted-foreground">
                   Preview the merged result of global framework + project overrides.
                 </p>
                 <div className="flex gap-1">
@@ -308,8 +296,8 @@ export function OverridesPage() {
                     <Button
                       key={cat}
                       size="sm"
-                      variant={effectiveCategory === cat ? 'primary' : 'ghost'}
-                      onPress={() => void fetchEffective(cat)}
+                      variant={effectiveCategory === cat ? 'default' : 'ghost'}
+                      onClick={() => void fetchEffective(cat)}
                     >
                       {cat}
                     </Button>
@@ -324,14 +312,14 @@ export function OverridesPage() {
                   {effectiveEntities.map((entity) => (
                     <div
                       key={entity.name}
-                      className="flex items-center justify-between rounded-lg border border-default-200 bg-default-50 px-4 py-3"
+                      className="flex items-center justify-between rounded-lg border border-border bg-muted/50 px-4 py-3"
                     >
                       <div>
                         <p className="text-sm font-medium text-foreground">
                           {entity.name}
                         </p>
                         {entity.content && (
-                          <p className="mt-0.5 line-clamp-1 text-xs text-default-400">
+                          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                             {entity.content.slice(0, 120)}
                           </p>
                         )}
@@ -339,13 +327,12 @@ export function OverridesPage() {
                       <div className="flex items-center gap-2">
                         <Chip
                           size="sm"
-                          variant="soft"
                           color={entity.source === 'override' ? 'accent' : 'default'}
                         >
                           {entity.source}
                         </Chip>
                         {!entity.enabled && (
-                          <Chip size="sm" variant="soft" color="danger">
+                          <Chip size="sm" color="danger">
                             disabled
                           </Chip>
                         )}
@@ -355,7 +342,7 @@ export function OverridesPage() {
                 </div>
               )}
             </div>
-          </Tabs.Panel>
+          </TabsContent>
         </Tabs>
       )}
     </div>

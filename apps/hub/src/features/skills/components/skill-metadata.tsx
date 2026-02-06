@@ -1,4 +1,4 @@
-import { Chip } from '@heroui/react';
+import { Chip } from '@/components/ui/chip';
 import type { SkillEntity } from '../lib/types';
 
 const TIER_COLORS: Record<number, 'accent' | 'success' | 'warning' | 'default'> = {
@@ -24,17 +24,17 @@ export function SkillMetadata({ skill }: SkillMetadataProps) {
   return (
     <div className="flex flex-wrap gap-2">
       {skill.tier > 0 && (
-        <Chip size="sm" variant="soft" color={tierColor}>
+        <Chip size="sm" color={tierColor}>
           {tierLabel}
         </Chip>
       )}
       {skill.version && (
-        <Chip size="sm" variant="soft" color="default">
+        <Chip size="sm" color="default">
           v{skill.version}
         </Chip>
       )}
       {skill.license && (
-        <Chip size="sm" variant="soft" color="default">
+        <Chip size="sm" color="default">
           {skill.license}
         </Chip>
       )}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Skeleton, Chip } from '@heroui/react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Chip } from '@/components/ui/chip';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { DraftCard } from '../components/draft-card';
@@ -67,7 +68,6 @@ export function DraftsPage() {
       <div className="mb-4 flex items-center gap-2">
         <Chip
           size="sm"
-          variant="soft"
           color={!showAll ? 'accent' : 'default'}
           className="cursor-pointer"
           onClick={() => setShowAll(false)}
@@ -76,7 +76,6 @@ export function DraftsPage() {
         </Chip>
         <Chip
           size="sm"
-          variant="soft"
           color={showAll ? 'accent' : 'default'}
           className="cursor-pointer"
           onClick={() => setShowAll(true)}
@@ -104,12 +103,12 @@ export function DraftsPage() {
 
         {/* Preview panel */}
         {selectedDraftId && (
-          <div className="rounded-xl border border-default-200 bg-default-50 p-4">
-            <h3 className="mb-3 text-sm font-semibold text-default-600">Draft Preview</h3>
+          <div className="rounded-xl border border-border bg-muted/50 p-4">
+            <h3 className="mb-3 text-sm font-semibold text-foreground">Draft Preview</h3>
             {draftContent === null ? (
               <Skeleton className="h-40 rounded-lg" />
             ) : (
-              <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-default-100 p-3 text-xs text-default-600">
+              <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-muted p-3 text-xs text-foreground">
                 {draftContent}
               </pre>
             )}

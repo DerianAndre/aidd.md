@@ -12,13 +12,13 @@ export function ConfidenceMeter({ value }: ConfidenceMeterProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <div className="h-1.5 w-20 rounded-full bg-default-200">
+      <div className="h-1.5 w-20 rounded-full bg-border">
         <div
           className={`h-full rounded-full ${color}`}
           style={{ width: `${Math.min(value, 100)}%` }}
         />
       </div>
-      <span className="text-[10px] font-medium text-default-500">{value}%</span>
+      <span className="text-[10px] font-medium text-muted-foreground">{value}%</span>
     </div>
   );
 }

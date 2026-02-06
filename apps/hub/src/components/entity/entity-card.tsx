@@ -1,4 +1,5 @@
-import { Card, Chip } from '@heroui/react';
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
 import { truncate } from '../../lib/utils';
 
 export interface EntityCardProps {
@@ -22,18 +23,17 @@ export function EntityCard({
       role={onPress ? 'button' : undefined}
       tabIndex={onPress ? 0 : undefined}
       onKeyDown={onPress ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPress(); } } : undefined}
-      className={`border border-default-200 bg-default-50 transition-colors hover:border-primary-300 ${onPress ? 'cursor-pointer' : ''}`}
+      className={`border bg-muted/50 transition-colors hover:border-primary ${onPress ? 'cursor-pointer' : ''}`}
     >
-      <Card.Header className="flex-col items-start gap-1">
+      <CardHeader className="flex-col items-start gap-1">
         <div className="flex w-full items-center justify-between gap-2">
-          <Card.Title className="text-sm font-semibold">{title}</Card.Title>
+          <CardTitle className="text-sm font-semibold">{title}</CardTitle>
           {chips && chips.length > 0 && (
             <div className="flex gap-1">
               {chips.map((chip) => (
                 <Chip
                   key={chip.label}
                   size="sm"
-                  variant="soft"
                   color={chip.color ?? 'default'}
                 >
                   {chip.label}
@@ -43,15 +43,15 @@ export function EntityCard({
           )}
         </div>
         {description && (
-          <Card.Description className="text-xs text-default-500">
+          <CardDescription className="text-xs">
             {truncate(description, 120)}
-          </Card.Description>
+          </CardDescription>
         )}
-      </Card.Header>
+      </CardHeader>
       {meta && (
-        <Card.Footer className="pt-0">
-          <span className="text-[10px] text-default-400">{meta}</span>
-        </Card.Footer>
+        <CardFooter className="pt-0">
+          <span className="text-[10px] text-muted-foreground">{meta}</span>
+        </CardFooter>
       )}
     </Card>
   );

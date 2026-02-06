@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Skeleton, Chip } from '@heroui/react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Chip } from '@/components/ui/chip';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { CandidateCard } from '../components/candidate-card';
@@ -58,7 +59,7 @@ export function EvolutionPage() {
       {/* Pending candidates */}
       {hasCandidates && (
         <section className="mb-6">
-          <h3 className="mb-3 text-sm font-semibold text-default-600">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">
             Pending Candidates ({candidates.length})
           </h3>
           <div className="space-y-2">
@@ -72,13 +73,13 @@ export function EvolutionPage() {
       {/* Evolution log */}
       {hasLog && (
         <section>
-          <h3 className="mb-3 text-sm font-semibold text-default-600">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">
             Evolution Log ({logEntries.length})
           </h3>
-          <div className="overflow-x-auto rounded-xl border border-default-200">
+          <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-default-200 bg-default-100 text-left text-default-500">
+                <tr className="border-b border-border bg-muted text-left text-muted-foreground">
                   <th className="px-3 py-2 font-medium">Action</th>
                   <th className="px-3 py-2 font-medium">Title</th>
                   <th className="px-3 py-2 font-medium">Confidence</th>
@@ -87,15 +88,15 @@ export function EvolutionPage() {
               </thead>
               <tbody>
                 {logEntries.map((entry) => (
-                  <tr key={entry.id} className="border-b border-default-100 last:border-0">
+                  <tr key={entry.id} className="border-b border-muted last:border-0">
                     <td className="px-3 py-2">
-                      <Chip size="sm" variant="soft" color={ACTION_COLORS[entry.action]}>
+                      <Chip size="sm" color={ACTION_COLORS[entry.action]}>
                         {entry.action.replace(/_/g, ' ')}
                       </Chip>
                     </td>
                     <td className="px-3 py-2 text-foreground">{entry.title}</td>
-                    <td className="px-3 py-2 text-default-500">{entry.confidence}%</td>
-                    <td className="px-3 py-2 text-default-400">{formatDate(entry.timestamp)}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{entry.confidence}%</td>
+                    <td className="px-3 py-2 text-muted-foreground">{formatDate(entry.timestamp)}</td>
                   </tr>
                 ))}
               </tbody>

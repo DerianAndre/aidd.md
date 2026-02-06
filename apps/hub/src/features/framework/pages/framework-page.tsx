@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Tabs, Chip, Spinner, Button } from '@heroui/react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Chip } from '@/components/ui/chip';
+import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/components/ui/button';
 import {
   ShieldCheck,
   Zap,
@@ -73,8 +76,8 @@ export function FrameworkPage() {
     }
   }, [tab, stale, fetchCategory, activeProject?.path]);
 
-  const handleTabChange = (key: string | number) => {
-    navigate(`/framework/${String(key)}`);
+  const handleTabChange = (value: string) => {
+    navigate(`/framework/${value}`);
   };
 
   const handleEntityClick = (cat: FrameworkCategory, name: string) => {
@@ -117,15 +120,15 @@ export function FrameworkPage() {
         actions={
           <div className="flex items-center gap-2">
             {/* Compact version badge */}
-            <Chip size="sm" variant="soft" color={syncInfo?.update_available ? 'warning' : 'success'}>
+            <Chip size="sm" color={syncInfo?.update_available ? 'warning' : 'success'}>
               {syncInfo?.current_version ? `v${syncInfo.current_version}` : 'No version'}
             </Chip>
             {syncInfo?.update_available && (
               <Button
                 size="sm"
-                variant="primary"
-                isDisabled={syncing}
-                onPress={() => void doSync()}
+                variant="default"
+                disabled={syncing}
+                onClick={() => void doSync()}
               >
                 {syncing ? <Spinner size="sm" /> : <Download size={14} />}
                 {syncing ? 'Syncing...' : 'Update'}
@@ -134,14 +137,14 @@ export function FrameworkPage() {
             <Button
               size="sm"
               variant="ghost"
-              isDisabled={checking || syncing}
-              onPress={() => void checkUpdates()}
+              disabled={checking || syncing}
+              onClick={() => void checkUpdates()}
             >
               {checking ? <Spinner size="sm" /> : <RefreshCw size={14} />}
             </Button>
             <button
               type="button"
-              className="text-default-400 hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setSyncExpanded((v) => !v)}
               title="Sync details"
             >
@@ -153,7 +156,7 @@ export function FrameworkPage() {
 
       {/* Expandable sync details */}
       {syncExpanded && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-default-200 bg-default-50 px-4 py-3 text-xs text-default-500">
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/50 px-4 py-3 text-xs text-muted-foreground">
           {syncInfo?.update_available && syncInfo.latest_version && (
             <span className="text-warning">v{syncInfo.latest_version} available</span>
           )}
@@ -171,76 +174,72 @@ export function FrameworkPage() {
 
       {/* Stat cards */}
       <div className="mb-6 grid gap-3 grid-cols-2 sm:grid-cols-4">
-        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
-          <div className="rounded-lg bg-default-100 p-2 text-default-500">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
+          <div className="rounded-lg bg-muted p-2 text-muted-foreground">
             <Package size={18} strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{totalEntities}</p>
-            <p className="text-[10px] text-default-400">Total Entities</p>
+            <p className="text-[10px] text-muted-foreground">Total Entities</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
-          <div className="rounded-lg bg-default-100 p-2 text-default-500">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
+          <div className="rounded-lg bg-muted p-2 text-muted-foreground">
             <ShieldCheck size={18} strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{globalCount}</p>
-            <p className="text-[10px] text-default-400">Global</p>
+            <p className="text-[10px] text-muted-foreground">Global</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
-          <div className="rounded-lg bg-default-100 p-2 text-success">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
+          <div className="rounded-lg bg-muted p-2 text-success">
             <FileCode size={18} strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{projectCount}</p>
-            <p className="text-[10px] text-default-400">Project</p>
+            <p className="text-[10px] text-muted-foreground">Project</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
-          <div className="rounded-lg bg-default-100 p-2 text-default-500">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
+          <div className="rounded-lg bg-muted p-2 text-muted-foreground">
             <BookOpen size={18} strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{CATEGORIES.filter((c) => entities[c].length > 0).length}</p>
-            <p className="text-[10px] text-default-400">Categories</p>
+            <p className="text-[10px] text-muted-foreground">Categories</p>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
       <Tabs
-        selectedKey={tab}
-        onSelectionChange={handleTabChange}
-        aria-label="Framework categories"
+        value={tab}
+        onValueChange={handleTabChange}
       >
-        <Tabs.ListContainer>
-          <Tabs.List>
-            {CATEGORIES.map((cat) => {
-              const meta = TAB_META[cat];
-              const Icon = meta.icon;
-              const count = entities[cat].length;
-              return (
-                <Tabs.Tab key={cat} id={cat}>
-                  <span className="flex items-center gap-1.5">
-                    <Icon size={14} />
-                    {meta.label}
-                    {count > 0 && (
-                      <Chip size="sm" variant="soft">{count}</Chip>
-                    )}
-                  </span>
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-              );
-            })}
-          </Tabs.List>
-        </Tabs.ListContainer>
+        <TabsList>
+          {CATEGORIES.map((cat) => {
+            const meta = TAB_META[cat];
+            const Icon = meta.icon;
+            const count = entities[cat].length;
+            return (
+              <TabsTrigger key={cat} value={cat}>
+                <span className="flex items-center gap-1.5">
+                  <Icon size={14} />
+                  {meta.label}
+                  {count > 0 && (
+                    <Chip size="sm">{count}</Chip>
+                  )}
+                </span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
         {CATEGORIES.map((cat) => {
           const meta = TAB_META[cat];
           return (
-            <Tabs.Panel key={cat} id={cat}>
+            <TabsContent key={cat} value={cat}>
               <div className="pt-4">
                 {cat === 'knowledge' ? (
                   loading[cat] ? (
@@ -248,7 +247,7 @@ export function FrameworkPage() {
                       <Spinner />
                     </div>
                   ) : entities[cat].length === 0 ? (
-                    <div className="flex flex-col items-center py-12 text-default-400">
+                    <div className="flex flex-col items-center py-12 text-muted-foreground">
                       <BookOpen size={40} className="mb-3" />
                       <p className="text-sm">No knowledge entries found</p>
                       <p className="mt-1 text-xs">
@@ -286,7 +285,7 @@ export function FrameworkPage() {
                   />
                 )}
               </div>
-            </Tabs.Panel>
+            </TabsContent>
           );
         })}
       </Tabs>

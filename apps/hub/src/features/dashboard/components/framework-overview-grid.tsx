@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Chip } from '@heroui/react';
+import { Chip } from '@/components/ui/chip';
 import {
   ShieldCheck,
   Zap,
@@ -22,7 +22,7 @@ const CATEGORY_META: Record<FrameworkCategory, { label: string; icon: LucideIcon
   knowledge: { label: 'Knowledge', icon: BookOpen, color: 'text-accent' },
   workflows: { label: 'Workflows', icon: GitBranch, color: 'text-success' },
   templates: { label: 'Templates', icon: FileText, color: 'text-primary' },
-  spec: { label: 'Spec', icon: FileCode, color: 'text-default-500' },
+  spec: { label: 'Spec', icon: FileCode, color: 'text-muted-foreground' },
 };
 
 export function FrameworkOverviewGrid() {
@@ -54,7 +54,7 @@ export function FrameworkOverviewGrid() {
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-foreground">Framework</span>
           {syncInfo?.current_version && (
-            <Chip size="sm" variant="soft" color="default">
+            <Chip size="sm" color="default">
               v{syncInfo.current_version}
             </Chip>
           )}
@@ -82,13 +82,13 @@ export function FrameworkOverviewGrid() {
               key={cat}
               type="button"
               onClick={() => navigate(`/framework/${cat}`)}
-              className="flex flex-col items-center gap-1.5 rounded-xl border border-default-200 bg-default-50 p-3 transition-colors hover:border-primary-300 hover:bg-default-100/50"
+              className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-muted/50 p-3 transition-colors hover:border-primary hover:bg-accent/50"
             >
               <Icon size={20} className={meta.color} />
               <span className="text-xs font-medium text-foreground">{meta.label}</span>
               <span className="text-xl font-bold text-foreground">{count}</span>
               {count > 0 && (
-                <span className="text-[10px] text-default-400">
+                <span className="text-[10px] text-muted-foreground">
                   {globalCount}g + {projectCount}p
                 </span>
               )}

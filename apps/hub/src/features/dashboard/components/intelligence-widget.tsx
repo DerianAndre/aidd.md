@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Chip, Skeleton } from '@heroui/react';
+import { Chip } from '@/components/ui/chip';
+import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Target, CheckCircle, Cpu, ArrowRight } from 'lucide-react';
 import { useAnalyticsStore } from '../../analytics/stores/analytics-store';
 import { useSessionsStore } from '../../memory/stores/sessions-store';
@@ -50,9 +51,9 @@ export function IntelligenceWidget() {
   ];
 
   return (
-    <div className="rounded-xl border border-default-200 bg-default-50 p-4">
+    <div className="rounded-xl border border-border bg-muted/50 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-default-600">Intelligence</h3>
+        <h3 className="text-sm font-semibold text-foreground">Intelligence</h3>
         <Link
           to={ROUTES.ANALYTICS}
           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
@@ -65,21 +66,21 @@ export function IntelligenceWidget() {
       <div className="flex flex-wrap gap-4">
         {stats.map(({ icon: Icon, value, label }) => (
           <div key={label} className="flex items-center gap-1.5">
-            <Icon size={14} className="text-default-400" />
+            <Icon size={14} className="text-muted-foreground" />
             <span className="text-sm font-bold text-foreground">{value}</span>
-            <span className="text-[10px] text-default-400">{label}</span>
+            <span className="text-[10px] text-muted-foreground">{label}</span>
           </div>
         ))}
       </div>
 
       {/* Divider */}
-      <div className="my-3 border-t border-default-100" />
+      <div className="my-3 border-t border-border" />
 
       {/* Recent sessions */}
       {sessionsLoading ? (
         <Skeleton className="h-16 rounded-lg" />
       ) : recentSessions.length === 0 ? (
-        <p className="py-2 text-center text-xs text-default-400">No sessions yet</p>
+        <p className="py-2 text-center text-xs text-muted-foreground">No sessions yet</p>
       ) : (
         <div className="space-y-1.5">
           {recentSessions.map((session) => {
@@ -90,11 +91,10 @@ export function IntelligenceWidget() {
                 key={session.memorySessionId ?? session.id}
                 type="button"
                 onClick={() => navigate(`/sessions/${session.memorySessionId ?? session.id}`)}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors hover:bg-default-100"
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors hover:bg-accent"
               >
                 <Chip
                   size="sm"
-                  variant="soft"
                   color={isActive ? 'accent' : FEEDBACK_COLORS[feedback ?? ''] ?? 'default'}
                 >
                   {isActive ? 'active' : feedback ?? 'done'}
@@ -102,7 +102,7 @@ export function IntelligenceWidget() {
                 <span className="min-w-0 flex-1 truncate text-xs text-foreground">
                   {session.aiProvider?.model ?? 'unknown'}
                 </span>
-                <span className="shrink-0 text-[10px] text-default-400">
+                <span className="shrink-0 text-[10px] text-muted-foreground">
                   {formatRelativeTime(session.startedAt)}
                 </span>
               </button>

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { SearchField, Skeleton, Chip } from '@heroui/react';
+import { SearchInput } from '@/components/ui/search-input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Chip } from '@/components/ui/chip';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { ObservationCard } from '../components/observation-card';
@@ -80,14 +82,13 @@ export function ObservationsPage() {
       <PageHeader title="Observations" description="Typed observations from sessions" />
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <SearchField aria-label="Search observations" value={search} onChange={setSearch} className="max-w-xs">
-          <SearchField.Group>
-            <SearchField.SearchIcon />
-            <SearchField.Input placeholder="Search observations..." />
-            {search && <SearchField.ClearButton />}
-          </SearchField.Group>
-        </SearchField>
-        <span className="text-xs text-default-400">{filtered.length} observations</span>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search observations..."
+          className="max-w-xs"
+        />
+        <span className="text-xs text-muted-foreground">{filtered.length} observations</span>
       </div>
 
       {/* Type filter chips */}
@@ -96,7 +97,6 @@ export function ObservationsPage() {
           <Chip
             key={type}
             size="sm"
-            variant="soft"
             color={activeTypes.has(type) ? 'accent' : 'default'}
             className="cursor-pointer"
             onClick={() => toggleType(type)}

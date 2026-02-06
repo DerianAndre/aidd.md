@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Skeleton } from '@heroui/react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb, AlertTriangle, BookMarked, ArrowRight } from 'lucide-react';
 import { usePermanentMemoryStore } from '../../memory/stores/permanent-memory-store';
 import { useProjectStore } from '../../../stores/project-store';
@@ -32,10 +32,10 @@ export function MemoryWidget() {
         {items.map((item) => {
           const Icon = item.icon;
           return (
-            <div key={item.label} className="flex items-center gap-2 rounded-lg bg-default-100 px-3 py-2">
+            <div key={item.label} className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
               <Icon size={14} className={item.color} />
               <span className="text-lg font-bold text-foreground">{item.count}</span>
-              <span className="text-[10px] text-default-400">{item.label}</span>
+              <span className="text-[10px] text-muted-foreground">{item.label}</span>
             </div>
           );
         })}

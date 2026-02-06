@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Chip, Skeleton } from '@heroui/react';
+import { Chip } from '@/components/ui/chip';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import { useSessionsStore } from '../../memory/stores/sessions-store';
 import { useProjectStore } from '../../../stores/project-store';
@@ -32,7 +33,7 @@ export function RecentSessionsWidget() {
   }
 
   if (recent.length === 0) {
-    return <p className="text-xs text-default-400">No sessions recorded yet.</p>;
+    return <p className="text-xs text-muted-foreground">No sessions recorded yet.</p>;
   }
 
   return (
@@ -43,7 +44,7 @@ export function RecentSessionsWidget() {
         return (
           <div
             key={s.id}
-            className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 transition-colors hover:bg-default-100"
+            className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 transition-colors hover:bg-accent"
             role="button"
             tabIndex={0}
             onClick={() => navigate(ROUTES.SESSION_DETAIL.replace(':id', s.id))}
@@ -54,14 +55,13 @@ export function RecentSessionsWidget() {
             <div className="flex items-center gap-2">
               <Chip
                 size="sm"
-                variant="soft"
                 color={isActive ? 'accent' : passed ? 'success' : 'danger'}
               >
                 {isActive ? 'active' : passed ? 'passed' : 'failed'}
               </Chip>
               <span className="text-xs text-foreground">{s.aiProvider.model}</span>
             </div>
-            <span className="text-[10px] text-default-400">{formatRelativeTime(s.startedAt)}</span>
+            <span className="text-[10px] text-muted-foreground">{formatRelativeTime(s.startedAt)}</span>
           </div>
         );
       })}

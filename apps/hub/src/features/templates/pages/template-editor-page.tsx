@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@heroui/react';
+import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { BlockEditor } from '../../../components/editor';
@@ -54,7 +54,7 @@ export function TemplateEditorPage() {
   const hasChanges = content !== editedContent;
 
   if (loading) {
-    return <div className="p-4 text-default-400">Loading...</div>;
+    return <div className="p-4 text-muted-foreground">Loading...</div>;
   }
 
   return (
@@ -64,14 +64,14 @@ export function TemplateEditorPage() {
         description="Edit template"
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onPress={() => navigate('/templates')}>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/templates')}>
               <ArrowLeft size={16} /> Back
             </Button>
             <Button
-              variant="primary"
+              variant="default"
               size="sm"
-              isDisabled={!hasChanges || saving}
-              onPress={() => void handleSave()}
+              disabled={!hasChanges || saving}
+              onClick={() => void handleSave()}
             >
               <Save size={16} /> {saving ? 'Saving...' : 'Save'}
             </Button>
@@ -79,7 +79,7 @@ export function TemplateEditorPage() {
         }
       />
 
-      <div className="rounded-xl border border-default-200">
+      <div className="rounded-xl border border-border">
         <BlockEditor
           initialMarkdown={content}
           editable={true}

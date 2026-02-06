@@ -1,6 +1,8 @@
-import { Card, Button, Chip } from "@heroui/react";
-import { Check, X, Trash2, FolderOpen } from "lucide-react";
-import type { ProjectInfo } from "../../../lib/tauri";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
+import { Check, X, Trash2, FolderOpen } from 'lucide-react';
+import type { ProjectInfo } from '../../../lib/tauri';
 
 interface ProjectCardProps {
   project: ProjectInfo;
@@ -9,16 +11,16 @@ interface ProjectCardProps {
   onRemove: () => void;
 }
 
-const MARKER_LABELS: { key: keyof ProjectInfo["markers"]; label: string }[] = [
-  { key: "agents_md", label: "AGENTS.md" },
-  { key: "rules", label: "Rules" },
-  { key: "skills", label: "Skills" },
-  { key: "workflows", label: "Workflows" },
-  { key: "templates", label: "Templates" },
-  { key: "knowledge", label: "Knowledge" },
-  { key: "specs", label: "Specs" },
-  { key: "aidd_dir", label: ".aidd/" },
-  { key: "memory", label: "Memory" },
+const MARKER_LABELS: { key: keyof ProjectInfo['markers']; label: string }[] = [
+  { key: 'agents_md', label: 'AGENTS.md' },
+  { key: 'rules', label: 'Rules' },
+  { key: 'skills', label: 'Skills' },
+  { key: 'workflows', label: 'Workflows' },
+  { key: 'templates', label: 'Templates' },
+  { key: 'knowledge', label: 'Knowledge' },
+  { key: 'specs', label: 'Specs' },
+  { key: 'aidd_dir', label: '.aidd/' },
+  { key: 'memory', label: 'Memory' },
 ];
 
 export function ProjectCard({
@@ -28,33 +30,32 @@ export function ProjectCard({
   onRemove,
 }: ProjectCardProps) {
   return (
-    <Card className={isActive ? "border-2 border-primary" : ""}>
-      <Card.Header>
+    <Card className={isActive ? 'border-2 border-primary' : ''}>
+      <CardHeader>
         <div className="flex w-full items-start justify-between">
           <div className="flex items-center gap-2">
-            <FolderOpen size={18} className="shrink-0 text-default-500" />
+            <FolderOpen size={18} className="shrink-0 text-muted-foreground" />
             <div>
-              <Card.Title>{project.name}</Card.Title>
-              <Card.Description className="break-all text-xs">
+              <CardTitle>{project.name}</CardTitle>
+              <CardDescription className="break-all text-xs">
                 {project.path}
-              </Card.Description>
+              </CardDescription>
             </div>
           </div>
           {isActive && (
-            <Chip size="sm" variant="soft" color="success">
+            <Chip size="sm" color="success">
               Active
             </Chip>
           )}
         </div>
-      </Card.Header>
-      <Card.Content>
+      </CardHeader>
+      <CardContent>
         <div className="flex flex-wrap gap-1">
           {MARKER_LABELS.map(({ key, label }) => (
             <Chip
               key={key}
               size="sm"
-              variant="soft"
-              color={project.markers[key] ? "success" : "default"}
+              color={project.markers[key] ? 'success' : 'default'}
             >
               <span className="flex items-center gap-0.5">
                 {project.markers[key] ? <Check size={12} /> : <X size={12} />}
@@ -63,10 +64,10 @@ export function ProjectCard({
             </Chip>
           ))}
         </div>
-      </Card.Content>
-      <Card.Footer className="flex justify-between">
+      </CardContent>
+      <CardFooter className="flex justify-between">
         {!isActive ? (
-          <Button size="sm" variant="primary" onPress={onSetActive}>
+          <Button size="sm" variant="default" onClick={onSetActive}>
             Set Active
           </Button>
         ) : (
@@ -75,13 +76,13 @@ export function ProjectCard({
         <Button
           size="sm"
           variant="ghost"
-          onPress={onRemove}
+          onClick={onRemove}
           className="text-danger"
         >
           <Trash2 size={14} />
           Remove
         </Button>
-      </Card.Footer>
+      </CardFooter>
     </Card>
   );
 }

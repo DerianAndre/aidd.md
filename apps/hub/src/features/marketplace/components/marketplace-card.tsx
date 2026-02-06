@@ -1,4 +1,5 @@
-import { Card, Chip } from '@heroui/react';
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
 import { truncate } from '../../../lib/utils';
 import { formatInstallCount } from '../lib/catalog-helpers';
 import type { MarketplaceEntry } from '../lib/types';
@@ -25,39 +26,39 @@ export function MarketplaceCard({ entry, onPress, usingFallback }: MarketplaceCa
           onPress();
         }
       }}
-      className="border border-default-200 bg-default-50 transition-colors hover:border-primary-300 cursor-pointer"
+      className="border border-border bg-muted/50 transition-colors hover:border-primary cursor-pointer"
     >
-      <Card.Header className="flex-col items-start gap-1">
+      <CardHeader className="flex-col items-start gap-1">
         <div className="flex w-full items-center justify-between gap-2">
-          <Card.Title className="text-sm font-semibold">{entry.name}</Card.Title>
+          <CardTitle className="text-sm font-semibold">{entry.name}</CardTitle>
           <div className="flex gap-1">
-            <Chip size="sm" variant="soft" color="default">
+            <Chip size="sm" color="default">
               {categoryLabel}
             </Chip>
             {entry.official && (
-              <Chip size="sm" variant="soft" color="success">
+              <Chip size="sm" color="success">
                 Official
               </Chip>
             )}
             {entry.trending && (
-              <Chip size="sm" variant="soft" color="accent">
+              <Chip size="sm" color="accent">
                 Trending
               </Chip>
             )}
           </div>
         </div>
-        <Card.Description className="text-xs text-default-500">
+        <CardDescription className="text-xs text-muted-foreground">
           {truncate(entry.description, 100)}
-        </Card.Description>
-      </Card.Header>
-      <Card.Footer className="pt-0 flex items-center justify-between">
-        <span className="text-[10px] text-default-400">{entry.author}</span>
+        </CardDescription>
+      </CardHeader>
+      <CardFooter className="pt-0 flex items-center justify-between">
+        <span className="text-[10px] text-muted-foreground">{entry.author}</span>
         {!usingFallback && entry.installCount > 0 && (
-          <span className="text-[10px] font-medium text-default-500">
+          <span className="text-[10px] font-medium text-muted-foreground">
             {formatInstallCount(entry.installCount)} installs
           </span>
         )}
-      </Card.Footer>
+      </CardFooter>
     </Card>
   );
 }

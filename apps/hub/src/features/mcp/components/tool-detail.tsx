@@ -1,4 +1,6 @@
-import { Card, Chip, Button } from '@heroui/react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { Button } from '@/components/ui/button';
 import { Copy, Check } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import type { McpToolInfo, McpResourceInfo, McpPromptInfo } from '../lib/mcp-catalog';
@@ -19,28 +21,28 @@ export function ToolDetail({ tool }: ToolDetailProps) {
   );
 
   return (
-    <Card className="border border-default-200 bg-default-50">
-      <Card.Header>
+    <Card className="border border-border bg-muted/50">
+      <CardHeader>
         <div className="flex items-center gap-2">
-          <Card.Title className="text-sm">{tool.name}</Card.Title>
+          <CardTitle className="text-sm">{tool.name}</CardTitle>
           {tool.multiAction && (
-            <Chip size="sm" variant="soft" color="warning">multi-action</Chip>
+            <Chip size="sm" color="warning">multi-action</Chip>
           )}
         </div>
-        <Card.Description>{tool.description}</Card.Description>
-      </Card.Header>
-      <Card.Content className="space-y-3">
-        <div className="flex items-center gap-1.5 text-xs text-default-500">
+        <CardDescription>{tool.description}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span>Package:</span>
-          <Chip size="sm" variant="soft" color="accent">{tool.packageName}</Chip>
+          <Chip size="sm" color="accent">{tool.packageName}</Chip>
         </div>
 
         {tool.multiAction && tool.actions && (
           <div>
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-default-400">Actions</p>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Actions</p>
             <div className="flex flex-wrap gap-1">
               {tool.actions.map((a) => (
-                <Chip key={a} size="sm" variant="soft" color="default">{a}</Chip>
+                <Chip key={a} size="sm" color="default">{a}</Chip>
               ))}
             </div>
           </div>
@@ -48,14 +50,14 @@ export function ToolDetail({ tool }: ToolDetailProps) {
 
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-default-400">Invocation snippet</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Invocation snippet</p>
             <CopyButton text={snippet} />
           </div>
-          <pre className="overflow-x-auto rounded-lg bg-default-100 p-3 text-xs text-default-700">
+          <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs text-foreground">
             {snippet}
           </pre>
         </div>
-      </Card.Content>
+      </CardContent>
     </Card>
   );
 }
@@ -76,26 +78,26 @@ export function ResourceDetail({ resource }: ResourceDetailProps) {
   );
 
   return (
-    <Card className="border border-default-200 bg-default-50">
-      <Card.Header>
-        <Card.Title className="text-sm">{resource.uri}</Card.Title>
-        <Card.Description>{resource.description}</Card.Description>
-      </Card.Header>
-      <Card.Content className="space-y-3">
-        <div className="flex items-center gap-1.5 text-xs text-default-500">
+    <Card className="border border-border bg-muted/50">
+      <CardHeader>
+        <CardTitle className="text-sm">{resource.uri}</CardTitle>
+        <CardDescription>{resource.description}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span>Package:</span>
-          <Chip size="sm" variant="soft" color="accent">{resource.packageName}</Chip>
+          <Chip size="sm" color="accent">{resource.packageName}</Chip>
         </div>
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-default-400">Read snippet</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Read snippet</p>
             <CopyButton text={snippet} />
           </div>
-          <pre className="overflow-x-auto rounded-lg bg-default-100 p-3 text-xs text-default-700">
+          <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs text-foreground">
             {snippet}
           </pre>
         </div>
-      </Card.Content>
+      </CardContent>
     </Card>
   );
 }
@@ -116,26 +118,26 @@ export function PromptDetail({ prompt }: PromptDetailProps) {
   );
 
   return (
-    <Card className="border border-default-200 bg-default-50">
-      <Card.Header>
-        <Card.Title className="text-sm">{prompt.name}</Card.Title>
-        <Card.Description>{prompt.description}</Card.Description>
-      </Card.Header>
-      <Card.Content className="space-y-3">
-        <div className="flex items-center gap-1.5 text-xs text-default-500">
+    <Card className="border border-border bg-muted/50">
+      <CardHeader>
+        <CardTitle className="text-sm">{prompt.name}</CardTitle>
+        <CardDescription>{prompt.description}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span>Package:</span>
-          <Chip size="sm" variant="soft" color="accent">{prompt.packageName}</Chip>
+          <Chip size="sm" color="accent">{prompt.packageName}</Chip>
         </div>
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-default-400">Get snippet</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Get snippet</p>
             <CopyButton text={snippet} />
           </div>
-          <pre className="overflow-x-auto rounded-lg bg-default-100 p-3 text-xs text-default-700">
+          <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs text-foreground">
             {snippet}
           </pre>
         </div>
-      </Card.Content>
+      </CardContent>
     </Card>
   );
 }
@@ -155,7 +157,7 @@ function CopyButton({ text }: { text: string }) {
   }, [text]);
 
   return (
-    <Button variant="ghost" size="sm" onPress={handleCopy} className="h-auto px-1 py-0.5">
+    <Button variant="ghost" size="sm" onClick={handleCopy} className="h-auto px-1 py-0.5">
       {copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
       <span className="text-[10px]">{copied ? 'Copied' : 'Copy'}</span>
     </Button>

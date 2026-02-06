@@ -13,7 +13,7 @@ export function ModelPerformanceChart({ metrics }: ModelPerformanceChartProps) {
   }));
 
   if (data.length === 0) {
-    return <p className="py-8 text-center text-xs text-default-400">No model data available.</p>;
+    return <p className="py-8 text-center text-xs text-muted-foreground">No model data available.</p>;
   }
 
   return (

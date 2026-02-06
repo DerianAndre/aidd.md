@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { Button } from '@heroui/react';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   children: ReactNode;
@@ -32,15 +32,15 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div className="flex flex-col items-center justify-center gap-4 py-20 text-default-500">
-          <AlertTriangle size={40} strokeWidth={1.5} className="text-danger" />
+        <div className="flex flex-col items-center justify-center gap-4 py-20 text-muted-foreground">
+          <AlertTriangle size={40} strokeWidth={1.5} className="text-destructive" />
           <div className="text-center">
             <p className="text-sm font-medium text-foreground">Something went wrong</p>
-            <p className="mt-1 max-w-md text-xs text-default-400">
+            <p className="mt-1 max-w-md text-xs text-muted-foreground">
               {this.state.error?.message ?? 'An unexpected error occurred.'}
             </p>
           </div>
-          <Button size="sm" variant="outline" onPress={this.handleReset}>
+          <Button size="sm" variant="outline" onClick={this.handleReset}>
             Try again
           </Button>
         </div>

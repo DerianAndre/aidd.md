@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SearchField, Skeleton } from '@heroui/react';
+import { SearchInput } from '@/components/ui/search-input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { SessionCard } from '../components/session-card';
@@ -42,14 +43,13 @@ export function SessionsPage() {
       <PageHeader title="Sessions" description="Active and completed AI sessions" />
 
       <div className="mb-4 flex items-center gap-3">
-        <SearchField aria-label="Search sessions" value={search} onChange={setSearch} className="max-w-xs">
-          <SearchField.Group>
-            <SearchField.SearchIcon />
-            <SearchField.Input placeholder="Search by branch or model..." />
-            {search && <SearchField.ClearButton />}
-          </SearchField.Group>
-        </SearchField>
-        <span className="text-xs text-default-400">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by branch or model..."
+          className="max-w-xs"
+        />
+        <span className="text-xs text-muted-foreground">
           {total} session{total !== 1 ? 's' : ''}
         </span>
       </div>
@@ -68,7 +68,7 @@ export function SessionsPage() {
 
       {!loading && filteredActive.length > 0 && (
         <div className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold text-default-600">Active ({filteredActive.length})</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">Active ({filteredActive.length})</h3>
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filteredActive.map((session) => (
               <SessionCard
@@ -83,7 +83,7 @@ export function SessionsPage() {
 
       {!loading && filteredCompleted.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-default-600">Completed ({filteredCompleted.length})</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">Completed ({filteredCompleted.length})</h3>
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCompleted.map((session) => (
               <SessionCard

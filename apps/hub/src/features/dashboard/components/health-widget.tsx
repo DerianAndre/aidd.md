@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Skeleton } from '@heroui/react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useDiagnosticsStore } from '../../diagnostics/stores/diagnostics-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { scoreColor } from '../../../lib/utils';
@@ -25,7 +25,7 @@ export function HealthWidget() {
   }
 
   if (!healthScore || healthScore.sessionsAnalyzed === 0) {
-    return <p className="text-xs text-default-400">No health data yet.</p>;
+    return <p className="text-xs text-muted-foreground">No health data yet.</p>;
   }
 
   const color = COLOR_MAP[scoreColor(healthScore.overall)];
@@ -34,10 +34,10 @@ export function HealthWidget() {
     <div>
       <div className="flex items-baseline gap-2">
         <span className={`text-3xl font-bold ${color}`}>{healthScore.overall}</span>
-        <span className="text-xs text-default-400">/ 100</span>
+        <span className="text-xs text-muted-foreground">/ 100</span>
       </div>
       {healthScore.recommendations.slice(0, 2).map((rec, i) => (
-        <p key={i} className="mt-1 text-[10px] text-default-500">&bull; {rec}</p>
+        <p key={i} className="mt-1 text-[10px] text-muted-foreground">&bull; {rec}</p>
       ))}
     </div>
   );

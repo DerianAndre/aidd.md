@@ -10,7 +10,7 @@ export function EmptyState({
   icon,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-16 text-default-400">
+    <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
       {icon ?? <FileX size={40} strokeWidth={1.5} />}
       <p className="text-sm">{message}</p>
     </div>

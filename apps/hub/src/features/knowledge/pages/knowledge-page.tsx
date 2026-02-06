@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Skeleton } from '@heroui/react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { KnowledgeTree } from '../components/knowledge-tree';
@@ -54,7 +54,7 @@ export function KnowledgePage() {
       {!loading && items.length > 0 && (
         <div className="flex gap-4">
           {/* Tree panel */}
-          <div className="w-64 shrink-0 overflow-y-auto rounded-xl border border-default-200 bg-default-50 p-2" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+          <div className="w-64 shrink-0 overflow-y-auto rounded-xl border border-border bg-muted/50 p-2" style={{ maxHeight: 'calc(100vh - 200px)' }}>
             <KnowledgeTree
               nodes={tree}
               selectedPath={selectedPath}
@@ -67,7 +67,7 @@ export function KnowledgePage() {
             {selectedEntity ? (
               <KnowledgeContent entity={selectedEntity} />
             ) : (
-              <div className="flex h-64 items-center justify-center text-sm text-default-400">
+              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
                 Select an entry from the tree to view its content.
               </div>
             )}

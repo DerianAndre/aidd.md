@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tabs, Chip } from '@heroui/react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Chip } from '@/components/ui/chip';
 import { Users, Crown } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EntityList } from '../../../components/entity';
@@ -42,63 +43,59 @@ export function AgentsListPage() {
 
       {/* Stat cards */}
       <div className="mb-6 grid gap-3 grid-cols-3">
-        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
-          <div className="rounded-lg bg-default-100 p-2 text-default-500">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
+          <div className="rounded-lg bg-muted p-2 text-muted-foreground">
             <Users size={18} strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{agents.length}</p>
-            <p className="text-[10px] text-default-400">Total</p>
+            <p className="text-[10px] text-muted-foreground">Total</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
-          <div className="rounded-lg bg-default-100 p-2 text-default-500">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
+          <div className="rounded-lg bg-muted p-2 text-muted-foreground">
             <Users size={18} strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{individualAgents.length}</p>
-            <p className="text-[10px] text-default-400">Agents</p>
+            <p className="text-[10px] text-muted-foreground">Agents</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border border-default-200 bg-default-50 p-3">
-          <div className="rounded-lg bg-default-100 p-2 text-accent">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
+          <div className="rounded-lg bg-muted p-2 text-accent">
             <Crown size={18} strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{orchestrators.length}</p>
-            <p className="text-[10px] text-default-400">Orchestrators</p>
+            <p className="text-[10px] text-muted-foreground">Orchestrators</p>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <Tabs aria-label="Agent types" defaultSelectedKey="agents">
-        <Tabs.ListContainer>
-          <Tabs.List>
-            <Tabs.Tab key="agents" id="agents">
-              <span className="flex items-center gap-1.5">
-                <Users size={14} />
-                Agents
-                {individualAgents.length > 0 && (
-                  <Chip size="sm" variant="soft">{individualAgents.length}</Chip>
-                )}
-              </span>
-              <Tabs.Indicator />
-            </Tabs.Tab>
-            <Tabs.Tab key="orchestrators" id="orchestrators">
-              <span className="flex items-center gap-1.5">
-                <Crown size={14} />
-                Orchestrators
-                {orchestrators.length > 0 && (
-                  <Chip size="sm" variant="soft">{orchestrators.length}</Chip>
-                )}
-              </span>
-              <Tabs.Indicator />
-            </Tabs.Tab>
-          </Tabs.List>
-        </Tabs.ListContainer>
+      <Tabs defaultValue="agents">
+        <TabsList>
+          <TabsTrigger value="agents">
+            <span className="flex items-center gap-1.5">
+              <Users size={14} />
+              Agents
+              {individualAgents.length > 0 && (
+                <Chip size="sm">{individualAgents.length}</Chip>
+              )}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="orchestrators">
+            <span className="flex items-center gap-1.5">
+              <Crown size={14} />
+              Orchestrators
+              {orchestrators.length > 0 && (
+                <Chip size="sm">{orchestrators.length}</Chip>
+              )}
+            </span>
+          </TabsTrigger>
+        </TabsList>
 
-        <Tabs.Panel id="agents">
+        <TabsContent value="agents">
           <div className="pt-4">
             <EntityList
               items={individualAgents}
@@ -116,9 +113,9 @@ export function AgentsListPage() {
               )}
             />
           </div>
-        </Tabs.Panel>
+        </TabsContent>
 
-        <Tabs.Panel id="orchestrators">
+        <TabsContent value="orchestrators">
           <div className="pt-4">
             <EntityList
               items={orchestrators}
@@ -136,7 +133,7 @@ export function AgentsListPage() {
               )}
             />
           </div>
-        </Tabs.Panel>
+        </TabsContent>
       </Tabs>
     </div>
   );

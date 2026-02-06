@@ -90,7 +90,7 @@ export const MCP_PACKAGES: McpPackageInfo[] = [
     prompts: [
       { name: 'aidd_plan_task', description: 'Plan using BLUF-6 format' },
       { name: 'aidd_review_code', description: 'Review code against active AIDD rules' },
-      { name: 'aidd_start_feature', description: 'Guide ASDD lifecycle for a new feature' },
+      { name: 'aidd_start_feature', description: 'Guide AIDD lifecycle for a new feature' },
     ],
   },
 
@@ -118,11 +118,11 @@ export const MCP_PACKAGES: McpPackageInfo[] = [
       // observation
       { name: 'aidd_observation', description: 'Record typed observation during session' },
       // lifecycle
-      { name: 'aidd_lifecycle_get', description: '8-phase ASDD lifecycle definition' },
-      { name: 'aidd_lifecycle_init', description: 'Start new ASDD lifecycle session' },
+      { name: 'aidd_lifecycle_get', description: '8-phase AIDD lifecycle definition' },
+      { name: 'aidd_lifecycle_init', description: 'Start new AIDD lifecycle session' },
       { name: 'aidd_lifecycle_advance', description: 'Advance lifecycle to next phase' },
       { name: 'aidd_lifecycle_status', description: 'Current lifecycle session status' },
-      { name: 'aidd_lifecycle_list', description: 'List ASDD lifecycle sessions' },
+      { name: 'aidd_lifecycle_list', description: 'List AIDD lifecycle sessions' },
       // analytics
       { name: 'aidd_model_performance', description: 'AI model performance metrics from sessions' },
       { name: 'aidd_model_compare', description: 'Side-by-side model comparison' },

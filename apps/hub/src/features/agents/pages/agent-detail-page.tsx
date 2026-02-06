@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Chip } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { ArrowLeft } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { BlockEditor } from '../../../components/editor';
@@ -35,14 +36,14 @@ export function AgentDetailPage() {
   }, [activeProject?.path, name]);
 
   if (loading) {
-    return <div className="p-4 text-default-400">Loading...</div>;
+    return <div className="p-4 text-muted-foreground">Loading...</div>;
   }
 
   if (!agent) {
     return (
       <div>
         <PageHeader title="Agent Not Found" />
-        <Button variant="ghost" size="sm" onPress={() => navigate('/agents')}>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/agents')}>
           <ArrowLeft size={16} /> Back to Agents
         </Button>
       </div>
@@ -58,7 +59,7 @@ export function AgentDetailPage() {
         title={`${agent.emoji} ${agent.name}`}
         description={agent.purpose}
         actions={
-          <Button variant="ghost" size="sm" onPress={() => navigate('/agents')}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/agents')}>
             <ArrowLeft size={16} /> Back
           </Button>
         }
@@ -66,31 +67,31 @@ export function AgentDetailPage() {
 
       {/* Metadata chips */}
       <div className="mb-4 flex flex-wrap gap-2">
-        <Chip size="sm" variant="soft" color={agent.type === 'orchestrator' ? 'accent' : 'default'}>
+        <Chip size="sm" color={agent.type === 'orchestrator' ? 'accent' : 'default'}>
           {agent.type === 'orchestrator' ? 'Orchestrator' : 'Agent'}
         </Chip>
         {agent.skills && (
-          <Chip size="sm" variant="soft" color="default">{agent.skills}</Chip>
+          <Chip size="sm" color="default">{agent.skills}</Chip>
         )}
         {agent.activation && (
-          <Chip size="sm" variant="soft" color="default">{agent.activation}</Chip>
+          <Chip size="sm" color="default">{agent.activation}</Chip>
         )}
         {agent.complexity && (
-          <Chip size="sm" variant="soft" color="warning">{agent.complexity}</Chip>
+          <Chip size="sm" color="warning">{agent.complexity}</Chip>
         )}
         {agent.duration && (
-          <Chip size="sm" variant="soft" color="default">{agent.duration}</Chip>
+          <Chip size="sm" color="default">{agent.duration}</Chip>
         )}
         {agent.cost && (
-          <Chip size="sm" variant="soft" color="success">{agent.cost}</Chip>
+          <Chip size="sm" color="success">{agent.cost}</Chip>
         )}
       </div>
 
       {/* Workflow steps for orchestrators */}
       {agent.workflow && agent.workflow.length > 0 && (
-        <div className="mb-4 rounded-xl border border-default-200 bg-default-50 p-4">
+        <div className="mb-4 rounded-xl border border-border bg-muted/50 p-4">
           <h3 className="mb-2 text-sm font-semibold text-foreground">Workflow Steps</h3>
-          <ol className="list-inside list-decimal space-y-1 text-xs text-default-500">
+          <ol className="list-inside list-decimal space-y-1 text-xs text-muted-foreground">
             {agent.workflow.map((step, i) => (
               <li key={i}>{step}</li>
             ))}
@@ -100,7 +101,7 @@ export function AgentDetailPage() {
 
       {/* Raw section rendered in BlockNote read-only */}
       {agentSection && (
-        <div className="rounded-xl border border-default-200">
+        <div className="rounded-xl border border-border">
           <BlockEditor initialMarkdown={agentSection} editable={false} />
         </div>
       )}

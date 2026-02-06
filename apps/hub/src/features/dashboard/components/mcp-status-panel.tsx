@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Chip } from '@heroui/react';
+import { Chip } from '@/components/ui/chip';
 import { Cpu, ArrowRight } from 'lucide-react';
 import { McpPackageMiniCard } from './mcp-package-mini-card';
 import { useMcpServersStore } from '../../mcp/stores/mcp-servers-store';
@@ -43,19 +43,19 @@ export function McpStatusPanel() {
   const toolsWithConfig = report?.summary.tools_with_config ?? [];
 
   return (
-    <div className="mb-4 rounded-xl border-2 border-primary-200 bg-default-50 p-4">
+    <div className="mb-4 rounded-xl border-2 border-primary/20 bg-muted/50 p-4">
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="rounded-lg bg-primary-100 p-1.5 text-primary">
+          <div className="rounded-lg bg-primary/10 p-1.5 text-primary">
             <Cpu size={18} />
           </div>
           <span className="text-sm font-semibold text-foreground">MCP Engine</span>
-          <Chip size="sm" variant="soft" color={builtCount === MCP_SERVERS.length ? 'success' : 'warning'}>
+          <Chip size="sm" color={builtCount === MCP_SERVERS.length ? 'success' : 'warning'}>
             {builtCount} built
           </Chip>
           {runningCount > 0 && (
-            <Chip size="sm" variant="soft" color="success">
+            <Chip size="sm" color="success">
               {runningCount} running
             </Chip>
           )}
@@ -87,8 +87,8 @@ export function McpStatusPanel() {
 
       {/* Discovery row */}
       {totalDiscovered > 0 && (
-        <p className="mt-3 text-xs text-default-400">
-          Discovered: <span className="font-medium text-default-500">{totalDiscovered}</span> MCPs
+        <p className="mt-3 text-xs text-muted-foreground">
+          Discovered: <span className="font-medium text-muted-foreground">{totalDiscovered}</span> MCPs
           {toolsWithConfig.length > 0 && (
             <> across {toolsWithConfig.join(', ')}</>
           )}
