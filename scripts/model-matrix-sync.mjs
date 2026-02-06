@@ -148,12 +148,18 @@ function warn(msg) { console.log(`  ${YELLOW}!${RESET} ${msg}`); warnings++; }
 
 console.log(`\n${BOLD}${PREFIX} Model Matrix Sync Check${RESET}\n`);
 
+// Show file paths relative to root
+const mdRelPath = 'templates/model-matrix.md';
+const tsRelPath = 'mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts';
+console.log(`  ${DIM}SSOT:    ${mdRelPath}${RESET}`);
+console.log(`  ${DIM}Runtime: ${tsRelPath}${RESET}\n`);
+
 if (!existsSync(mdPath)) {
-  fail('templates/model-matrix.md not found');
+  fail(`${mdRelPath} not found`);
   process.exit(1);
 }
 if (!existsSync(tsPath)) {
-  fail('mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts not found');
+  fail(`${tsRelPath} not found`);
   process.exit(1);
 }
 

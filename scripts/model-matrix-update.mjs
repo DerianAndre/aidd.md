@@ -48,6 +48,14 @@ const CONTEXT_TOLERANCE = 0.15;
 /** Pricing values within 25% of each other are considered "agreeing" */
 const PRICE_TOLERANCE = 0.25;
 
+/**
+ * Magnitude sanity checks — even if both sources agree, flag as SUSPICIOUS
+ * if the change from our current value is too large. This catches cases where
+ * both sources match to the wrong model variant.
+ */
+const MAX_CONTEXT_CHANGE_RATIO = 2.0;   // Flag if context changes by more than 2x
+const MAX_PRICING_CHANGE_RATIO = 3.0;   // Flag if pricing changes by more than 3x
+
 // ---------------------------------------------------------------------------
 // Provider mappings
 // ---------------------------------------------------------------------------
@@ -309,6 +317,16 @@ function valuesAgree(a, b, tolerance) {
   return ratio <= tolerance;
 }
 
+/**
+ * Check if the magnitude of change from current to new is suspicious.
+ * Returns true if the ratio exceeds the threshold in either direction.
+ */
+function isSuspiciousMagnitude(currentValue, newValue, maxRatio) {
+  if (currentValue <= 0 || newValue <= 0) return false;
+  const ratio = Math.max(currentValue / newValue, newValue / currentValue);
+  return ratio > maxRatio;
+}
+
 function resolveConsensus(orValue, llValue, tolerance) {
   const orValid = orValue != null && orValue > 0;
   const llValid = llValue != null && llValue > 0;
@@ -393,6 +411,12 @@ function compareModels(localModels, orIndex, llIndex, mdContent) {
       PRICE_TOLERANCE,
     );
 
+    // Parse current context window from markdown (e.g., "200K" → 200000, "1M" → 1000000)
+    const curCtxRaw = curCtx.match(/(\d+)(K|M)/i);
+    const curCtxNum = curCtxRaw
+      ? parseInt(curCtxRaw[1]) * (curCtxRaw[2].toUpperCase() === 'M' ? 1_000_000 : 1_000)
+      : local.contextWindow;
+
     // Determine if changes exist
     const changes = [];
 
@@ -400,12 +424,13 @@ function compareModels(localModels, orIndex, llIndex, mdContent) {
     if (ctxConsensus.confidence === 'HIGH' && ctxConsensus.value > 0) {
       const newCtxStr = formatContextMd(ctxConsensus.value);
       if (curCtx && curCtx !== newCtxStr) {
+        const suspicious = isSuspiciousMagnitude(curCtxNum, ctxConsensus.value, MAX_CONTEXT_CHANGE_RATIO);
         changes.push({
           field: 'context',
           oldValue: curCtx,
           newValue: newCtxStr,
           newRaw: ctxConsensus.value,
-          confidence: 'HIGH',
+          confidence: suspicious ? 'SUSPICIOUS' : 'HIGH',
         });
       }
     } else if (ctxConsensus.confidence === 'CONFLICT') {
@@ -432,17 +457,24 @@ function compareModels(localModels, orIndex, llIndex, mdContent) {
       }
     }
 
+    // Parse current pricing from markdown (e.g., "$15 / $75" → [15, 75])
+    const curCostParts = [...(curCost.matchAll(/\$?([\d.]+)/g))].map((m) => parseFloat(m[1]));
+    const curInputCost = curCostParts[0] || 0;
+    const curOutputCost = curCostParts[1] || 0;
+
     // Pricing change detection
     if (inputConsensus.confidence === 'HIGH' && outputConsensus.confidence === 'HIGH') {
       const newCostStr = formatPricingMd(inputConsensus.value, outputConsensus.value);
       if (curCost && curCost !== newCostStr) {
+        const suspiciousIn = curInputCost > 0 && isSuspiciousMagnitude(curInputCost, inputConsensus.value, MAX_PRICING_CHANGE_RATIO);
+        const suspiciousOut = curOutputCost > 0 && isSuspiciousMagnitude(curOutputCost, outputConsensus.value, MAX_PRICING_CHANGE_RATIO);
         changes.push({
           field: 'pricing',
           oldValue: curCost,
           newValue: newCostStr,
           newInputRaw: inputConsensus.value,
           newOutputRaw: outputConsensus.value,
-          confidence: 'HIGH',
+          confidence: (suspiciousIn || suspiciousOut) ? 'SUSPICIOUS' : 'HIGH',
         });
       }
     } else if (inputConsensus.confidence === 'CONFLICT' || outputConsensus.confidence === 'CONFLICT') {
@@ -535,17 +567,17 @@ function applyMarkdownUpdates(results) {
   let applied = 0;
 
   for (const r of results) {
-    const highChanges = r.changes.filter(
-      (c) => c.confidence === 'HIGH' || (force && c.confidence === 'UNVERIFIED'),
+    const applyable = r.changes.filter(
+      (c) => c.confidence === 'HIGH' || (force && (c.confidence === 'UNVERIFIED' || c.confidence === 'SUSPICIOUS')),
     );
-    if (highChanges.length === 0) continue;
+    if (applyable.length === 0) continue;
 
     for (let i = 0; i < lines.length; i++) {
       if (!lines[i].includes(`\`${r.local.id}\``)) continue;
       const cols = lines[i].split('|');
       if (cols.length < 7) break;
 
-      for (const c of highChanges) {
+      for (const c of applyable) {
         if (c.field === 'context' && c.newValue) {
           cols[4] = ` ${c.newValue} `;
           applied++;
@@ -586,7 +618,7 @@ function applyTypeScriptUpdates(results) {
     const ctxChange = r.changes.find(
       (c) =>
         c.field === 'context' &&
-        (c.confidence === 'HIGH' || (force && c.confidence === 'UNVERIFIED')),
+        (c.confidence === 'HIGH' || (force && (c.confidence === 'UNVERIFIED' || c.confidence === 'SUSPICIOUS'))),
     );
     if (!ctxChange || !ctxChange.newRaw) continue;
 
@@ -637,6 +669,22 @@ function displayReport(results, newModels) {
     if (dryRun) {
       console.log(`\n  ${DIM}Run without --dry-run to apply consensus updates.${RESET}`);
     }
+  }
+
+  // Suspicious consensus (both agree but magnitude is too large)
+  const suspicious = results.filter((r) =>
+    r.changes.some((c) => c.confidence === 'SUSPICIOUS'),
+  );
+
+  if (suspicious.length > 0) {
+    console.log(`\n${BOLD}${YELLOW}Suspicious Consensus${RESET} ${DIM}(both agree, but change is >2x context or >3x pricing \u2014 NOT auto-updated)${RESET}\n`);
+    for (const r of suspicious) {
+      for (const c of r.changes.filter((c) => c.confidence === 'SUSPICIOUS')) {
+        console.log(`  ${YELLOW}!${RESET} ${r.local.name}: ${c.field} ${c.oldValue} \u2192 ${c.newValue} ${DIM}(verify model identity)${RESET}`);
+      }
+    }
+    console.log(`\n  ${DIM}Both sources agree, but the change is large. Verify model IDs match correctly.${RESET}`);
+    console.log(`  ${DIM}Use --force to apply if you've confirmed these are correct.${RESET}`);
   }
 
   // Conflicts (sources disagree)
@@ -773,7 +821,7 @@ try {
 
   // Apply consensus updates (unless --dry-run)
   const hasHighChanges = results.some((r) => r.changes.some((c) => c.confidence === 'HIGH'));
-  const hasForceChanges = force && results.some((r) => r.changes.some((c) => c.confidence === 'UNVERIFIED'));
+  const hasForceChanges = force && results.some((r) => r.changes.some((c) => c.confidence === 'UNVERIFIED' || c.confidence === 'SUSPICIOUS'));
 
   if ((hasHighChanges || hasForceChanges) && !dryRun) {
     const mdApplied = applyMarkdownUpdates(results);
@@ -797,6 +845,10 @@ try {
     (acc, r) => acc + r.changes.filter((c) => c.confidence === 'CONFLICT').length,
     0,
   );
+  const totalSuspicious = results.reduce(
+    (acc, r) => acc + r.changes.filter((c) => c.confidence === 'SUSPICIOUS').length,
+    0,
+  );
   const totalUnverified = results.reduce(
     (acc, r) => acc + r.changes.filter((c) => c.confidence === 'UNVERIFIED').length,
     0,
@@ -808,8 +860,12 @@ try {
     console.log(`${DIM}Run: pnpm mcp:models:sync && pnpm mcp:typecheck && pnpm mcp:build${RESET}`);
   } else if (totalChanges > 0 && dryRun) {
     console.log(`${PREFIX} ${YELLOW}${totalChanges} consensus update(s) available \u2014 run without --dry-run${RESET}`);
-  } else if (totalConflicts > 0 || totalUnverified > 0) {
-    console.log(`${PREFIX} ${YELLOW}${totalConflicts} conflict(s), ${totalUnverified} unverified \u2014 review above${RESET}`);
+  } else if (totalConflicts > 0 || totalSuspicious > 0 || totalUnverified > 0) {
+    const parts = [];
+    if (totalConflicts) parts.push(`${totalConflicts} conflict(s)`);
+    if (totalSuspicious) parts.push(`${totalSuspicious} suspicious`);
+    if (totalUnverified) parts.push(`${totalUnverified} unverified`);
+    console.log(`${PREFIX} ${YELLOW}${parts.join(', ')} \u2014 review above${RESET}`);
   } else if (newModels.length > 0) {
     console.log(`${PREFIX} ${YELLOW}New models available \u2014 review above and add to matrix if needed${RESET}`);
     console.log(`${DIM}Edit templates/model-matrix.md (SSOT), then update model-matrix.ts to match.${RESET}`);

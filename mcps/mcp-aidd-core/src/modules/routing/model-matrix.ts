@@ -134,7 +134,7 @@ export const MODEL_MATRIX: ModelEntry[] = [
     name: 'Claude Haiku 4.5',
     tier: 3,
     cognitiveProfile: ['boilerplate', 'formatting', 'mechanical', 'extraction'],
-    contextWindow: 100_000,
+    contextWindow: 200_000,
     costTier: '$',
     status: 'active',
   },
