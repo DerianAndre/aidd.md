@@ -3,6 +3,15 @@ export const ROUTES = {
   PROJECTS: '/projects',
   AGENTS: '/agents',
   AGENT_DETAIL: '/agents/:name',
+  // Framework — unified view at /framework/:category
+  FRAMEWORK: '/framework',
+  FRAMEWORK_RULES: '/framework/rules',
+  FRAMEWORK_SKILLS: '/framework/skills',
+  FRAMEWORK_KNOWLEDGE: '/framework/knowledge',
+  FRAMEWORK_WORKFLOWS: '/framework/workflows',
+  FRAMEWORK_TEMPLATES: '/framework/templates',
+  FRAMEWORK_SPEC: '/framework/spec',
+  // Legacy detail routes (kept for deep linking)
   RULES: '/rules',
   RULE_EDITOR: '/rules/:name',
   SKILLS: '/skills',

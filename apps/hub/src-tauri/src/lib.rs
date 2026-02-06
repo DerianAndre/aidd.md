@@ -5,13 +5,14 @@ mod presentation;
 
 use std::sync::Arc;
 
-use application::ProjectService;
+use application::{FrameworkService, ProjectService};
 use infrastructure::filesystem::FileAdapter;
 use infrastructure::persistence::JsonStore;
 
 /// Shared application context — injected as Tauri managed state.
 pub struct AppContext {
     pub project_service: Arc<ProjectService>,
+    pub framework_service: Arc<FrameworkService>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -23,9 +24,19 @@ pub fn run() {
     let file_adapter = Arc::new(FileAdapter);
 
     // Application services
-    let project_service = Arc::new(ProjectService::new(json_store, file_adapter));
+    let project_service = Arc::new(ProjectService::new(
+        json_store.clone(),
+        file_adapter.clone(),
+    ));
+    let framework_service = Arc::new(
+        FrameworkService::new(json_store.aidd_dir(), json_store.clone(), file_adapter.clone())
+            .expect("Failed to initialize framework service"),
+    );
 
-    let ctx = AppContext { project_service };
+    let ctx = AppContext {
+        project_service,
+        framework_service,
+    };
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -40,6 +51,13 @@ pub fn run() {
             presentation::commands::project_commands::list_projects,
             presentation::commands::project_commands::get_active_project,
             presentation::commands::project_commands::set_active_project,
+            // Framework management (DDD)
+            presentation::commands::framework_commands::get_framework_path,
+            presentation::commands::framework_commands::get_framework_version,
+            presentation::commands::framework_commands::list_framework_entities,
+            presentation::commands::framework_commands::read_framework_entity,
+            presentation::commands::framework_commands::write_framework_entity,
+            presentation::commands::framework_commands::delete_framework_entity,
             // Filesystem
             presentation::commands::filesystem_commands::read_file,
             presentation::commands::filesystem_commands::write_file,

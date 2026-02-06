@@ -41,11 +41,11 @@ const NAV_GROUPS = [
     label: 'Framework',
     items: [
       { label: 'Agents', path: ROUTES.AGENTS, icon: Users },
-      { label: 'Rules', path: ROUTES.RULES, icon: ShieldCheck },
-      { label: 'Skills', path: ROUTES.SKILLS, icon: Zap },
-      { label: 'Workflows', path: ROUTES.WORKFLOWS, icon: GitBranch },
-      { label: 'Templates', path: ROUTES.TEMPLATES, icon: FileText },
-      { label: 'Knowledge', path: ROUTES.KNOWLEDGE, icon: BookOpen },
+      { label: 'Rules', path: ROUTES.FRAMEWORK_RULES, icon: ShieldCheck },
+      { label: 'Skills', path: ROUTES.FRAMEWORK_SKILLS, icon: Zap },
+      { label: 'Knowledge', path: ROUTES.FRAMEWORK_KNOWLEDGE, icon: BookOpen },
+      { label: 'Workflows', path: ROUTES.FRAMEWORK_WORKFLOWS, icon: GitBranch },
+      { label: 'Templates', path: ROUTES.FRAMEWORK_TEMPLATES, icon: FileText },
     ],
   },
   {

@@ -94,6 +94,36 @@ export const getActiveProject = () =>
 export const setActiveProject = (path: string) =>
   invoke<void>('set_active_project', { path });
 
+// Framework management
+export type FrameworkCategory = 'rules' | 'skills' | 'knowledge' | 'workflows' | 'templates' | 'spec';
+
+export interface FrameworkEntity {
+  name: string;
+  category: string;
+  path: string;
+  frontmatter: Record<string, string>;
+  content: string;
+  last_modified: string;
+}
+
+export const getFrameworkPath = () =>
+  invoke<string>('get_framework_path');
+
+export const getFrameworkVersion = () =>
+  invoke<string | null>('get_framework_version');
+
+export const listFrameworkEntities = (category: FrameworkCategory) =>
+  invoke<FrameworkEntity[]>('list_framework_entities', { category });
+
+export const readFrameworkEntity = (category: FrameworkCategory, name: string) =>
+  invoke<FrameworkEntity>('read_framework_entity', { category, name });
+
+export const writeFrameworkEntity = (category: FrameworkCategory, name: string, content: string) =>
+  invoke<void>('write_framework_entity', { category, name, content });
+
+export const deleteFrameworkEntity = (category: FrameworkCategory, name: string) =>
+  invoke<void>('delete_framework_entity', { category, name });
+
 // File watcher
 export interface FileChangeEvent {
   event_type: 'created' | 'modified' | 'deleted';
