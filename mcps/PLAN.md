@@ -99,7 +99,7 @@ get(ids[]) → full details ONLY for filtered IDs (~500-1000 tokens/result)
 ## 3. Repository Structure
 
 ```
-mcps/
+packages/
 ├── shared/                       # @aidd.md/mcp-shared
 │   ├── package.json
 │   ├── tsconfig.json
@@ -116,7 +116,8 @@ mcps/
 │       ├── logger.ts             # Structured logger
 │       ├── utils.ts              # Markdown parsing, frontmatter extraction
 │       └── schemas.ts            # Shared Zod schemas
-│
+
+mcps/
 ├── mcp-aidd/                     # @aidd.md/mcp (monolithic)
 │   ├── package.json
 │   ├── tsconfig.json
@@ -801,12 +802,12 @@ Proven patterns to port from the EnXingaPay MCP implementation:
 
 | File | Pattern |
 |------|---------|
-| `packages/mcp/mcp-shared/src/server.ts` | Server factory |
-| `packages/mcp/mcp-shared/src/fs.ts` | FS utilities |
-| `packages/mcp/mcp-shared/src/paths.ts` | Path resolution |
-| `packages/mcp/mcp-memory/src/tools/memory-session.ts` | Session multi-action |
-| `packages/mcp/mcp-memory/src/tools/memory-branch.ts` | Branch multi-action |
-| `packages/mcp/mcp-memory/src/tools/memory-mistakes.ts` | Mistake tracking |
+| `packages/shared/src/server.ts` | Server factory |
+| `packages/shared/src/fs.ts` | FS utilities |
+| `packages/shared/src/paths.ts` | Path resolution |
+| `mcps/mcp-aidd-memory/src/modules/session/index.ts` | Session multi-action |
+| `mcps/mcp-aidd-memory/src/modules/branch/index.ts` | Branch multi-action |
+| `mcps/mcp-aidd-memory/src/modules/memory/index.ts` | Mistake tracking |
 
 ---
 

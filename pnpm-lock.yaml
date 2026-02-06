@@ -32,7 +32,7 @@ importers:
     dependencies:
       '@aidd.md/mcp-shared':
         specifier: workspace:*
-        version: link:../../mcps/shared
+        version: link:../../packages/shared
       '@blocknote/core':
         specifier: ^0.46
         version: 0.46.2(@types/hast@3.0.4)
@@ -110,25 +110,6 @@ importers:
         specifier: ^6
         version: 6.4.1(@types/node@25.2.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
-  mcps/cli:
-    dependencies:
-      '@aidd.md/mcp-shared':
-        specifier: workspace:*
-        version: link:../shared
-      commander:
-        specifier: ^13.1.0
-        version: 13.1.0
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.8
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   mcps/mcp-aidd:
     dependencies:
       '@aidd.md/mcp-core':
@@ -139,7 +120,7 @@ importers:
         version: link:../mcp-aidd-memory
       '@aidd.md/mcp-shared':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../../packages/shared
       '@aidd.md/mcp-tools':
         specifier: workspace:*
         version: link:../mcp-aidd-tools
@@ -164,7 +145,7 @@ importers:
     dependencies:
       '@aidd.md/mcp-shared':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../../packages/shared
       '@modelcontextprotocol/sdk':
         specifier: ^1.26.0
         version: 1.26.0(zod@4.3.6)
@@ -189,7 +170,7 @@ importers:
     dependencies:
       '@aidd.md/mcp-shared':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../../packages/shared
       '@modelcontextprotocol/sdk':
         specifier: ^1.26.0
         version: 1.26.0(zod@4.3.6)
@@ -221,7 +202,7 @@ importers:
     dependencies:
       '@aidd.md/mcp-shared':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../../packages/shared
       '@modelcontextprotocol/sdk':
         specifier: ^1.26.0
         version: 1.26.0(zod@4.3.6)
@@ -242,7 +223,26 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@22.19.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
-  mcps/shared:
+  packages/cli:
+    dependencies:
+      '@aidd.md/mcp-shared':
+        specifier: workspace:*
+        version: link:../shared
+      commander:
+        specifier: ^13.1.0
+        version: 13.1.0
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.8
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/shared:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.26.0

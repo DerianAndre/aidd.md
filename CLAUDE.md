@@ -33,6 +33,7 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 - **spec/** — AIDD standard specifications (ASDD lifecycle, memory layer, heuristics, etc.)
 - **knowledge/** — Technology Knowledge Base (TKB) entries
 - **templates/** — Task routing and decision templates
+- **packages/** — Shared libraries and CLI
 - **mcps/** — MCP server packages (Core, Memory, Tools + Monolithic)
 
 ---
@@ -83,11 +84,14 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 
 ---
 
-## MCP Package Structure
+## Package Structure
 
 ```
-mcps/
+packages/
   shared/           @aidd.md/mcp-shared    (types, utils, server factory)
+  cli/              @aidd.md/cli           (CLI — framework management)
+
+mcps/
   mcp-aidd/         @aidd.md/mcp           (monolithic — all modules)
   mcp-aidd-core/    @aidd.md/mcp-core      (brain — guidance, routing, knowledge)
   mcp-aidd-memory/  @aidd.md/mcp-memory    (memory — sessions, evolution, analytics)
