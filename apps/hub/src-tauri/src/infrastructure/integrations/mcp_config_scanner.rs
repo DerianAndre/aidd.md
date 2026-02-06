@@ -267,6 +267,21 @@ fn push_discovered(
         .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect());
     let url = entry.get("url").and_then(|v| v.as_str()).map(String::from);
 
+    // Read explicit type from config, or derive from command/url presence
+    let transport_type = entry
+        .get("type")
+        .and_then(|v| v.as_str())
+        .map(String::from)
+        .or_else(|| {
+            if command.is_some() {
+                Some("stdio".to_string())
+            } else if url.is_some() {
+                Some("http".to_string())
+            } else {
+                None
+            }
+        });
+
     let is_aidd = detect_aidd(&command, &args);
 
     out.push(DiscoveredMcp {
@@ -277,6 +292,7 @@ fn push_discovered(
         command,
         args,
         url,
+        transport_type,
         is_aidd,
     });
 }

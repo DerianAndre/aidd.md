@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.svg" alt="aidd.md logo" width="240" height="78">
+</p>
+
 # aidd.md — AI-Driven Development
 
 > The open standard for AI-Driven Development. Multi-IDE, AI-agnostic agent coordination.
@@ -69,50 +73,50 @@ npm run scan:secrets src/config.ts
 
 11 specialized roles coordinated by the Master Orchestrator:
 
-| Agent | Purpose | Activation |
-|-------|---------|-----------|
-| Master Orchestrator | Logic orchestration, context validation | Entry-point for any task |
-| System Architect | C4 diagrams, ADRs, system design | "architecture", "system design" |
-| Contract Architect | OpenAPI 3.1, API governance | "API design", "OpenAPI" |
-| Data Architect | SQL schemas, data strategy | "database", "schema" |
-| Interface Artisan | React components, WCAG, Tailwind | "component", "UI" |
-| Experience Engineer | Frontend architecture, performance | "state management", "optimize" |
-| Design Architect | Design systems, tokens | "design system", "tokens" |
-| Security Architect | OWASP audits, defense-in-depth | "security", "vulnerabilities" |
-| Quality Engineer | Test generation, quality strategy | "write tests", "coverage" |
-| Platform Engineer | CI/CD, Docker, monitoring | "deploy", "infrastructure" |
-| Knowledge Architect | Documentation sync | "update docs", "document" |
-| i18n Specialist | Internationalization | "i18n", "translate" |
+| Agent               | Purpose                                 | Activation                      |
+| ------------------- | --------------------------------------- | ------------------------------- |
+| Master Orchestrator | Logic orchestration, context validation | Entry-point for any task        |
+| System Architect    | C4 diagrams, ADRs, system design        | "architecture", "system design" |
+| Contract Architect  | OpenAPI 3.1, API governance             | "API design", "OpenAPI"         |
+| Data Architect      | SQL schemas, data strategy              | "database", "schema"            |
+| Interface Artisan   | React components, WCAG, Tailwind        | "component", "UI"               |
+| Experience Engineer | Frontend architecture, performance      | "state management", "optimize"  |
+| Design Architect    | Design systems, tokens                  | "design system", "tokens"       |
+| Security Architect  | OWASP audits, defense-in-depth          | "security", "vulnerabilities"   |
+| Quality Engineer    | Test generation, quality strategy       | "write tests", "coverage"       |
+| Platform Engineer   | CI/CD, Docker, monitoring               | "deploy", "infrastructure"      |
+| Knowledge Architect | Documentation sync                      | "update docs", "document"       |
+| i18n Specialist     | Internationalization                    | "i18n", "translate"             |
 
 ### Rules (11 files)
 
 Immutable constraints — prescriptive, MUST follow:
 
-| Rule | Scope |
-|------|-------|
-| `global.md` | Evidence-First, BLUF-6, heuristics, immutability constraints |
-| `orchestrator.md` | Task decomposition, strategic mapping, TKB integration |
-| `backend.md` | Hexagonal architecture, API design, security patterns |
-| `frontend.md` | WCAG 2.1 AA, React patterns, Tailwind best practices |
-| `testing.md` | Test pyramid (70/20/10), AAA pattern, coverage targets |
-| `security.md` | OWASP Top 10 (2025), secret management, CI/CD security |
-| `interfaces.md` | Zero-fidelity contracts between agents |
-| `decision-tree.md` | Automated role selection logic |
-| `code-style.md` | Naming conventions, TypeScript strict, import patterns |
-| `git-workflow.md` | Commit format, branch strategy, spec-first flow |
-| `documentation.md` | Normalized patterns, folder structure, ADR format |
+| Rule               | Scope                                                        |
+| ------------------ | ------------------------------------------------------------ |
+| `global.md`        | Evidence-First, BLUF-6, heuristics, immutability constraints |
+| `orchestrator.md`  | Task decomposition, strategic mapping, TKB integration       |
+| `backend.md`       | Hexagonal architecture, API design, security patterns        |
+| `frontend.md`      | WCAG 2.1 AA, React patterns, Tailwind best practices         |
+| `testing.md`       | Test pyramid (70/20/10), AAA pattern, coverage targets       |
+| `security.md`      | OWASP Top 10 (2025), secret management, CI/CD security       |
+| `interfaces.md`    | Zero-fidelity contracts between agents                       |
+| `decision-tree.md` | Automated role selection logic                               |
+| `code-style.md`    | Naming conventions, TypeScript strict, import patterns       |
+| `git-workflow.md`  | Commit format, branch strategy, spec-first flow              |
+| `documentation.md` | Normalized patterns, folder structure, ADR format            |
 
 ### Specifications (5 files)
 
 Formal reference documents — descriptive, detailed rationale:
 
-| Spec | Content |
-|------|---------|
-| `asdd-lifecycle.md` | 8-phase AI-Spec-Driven Development lifecycle |
-| `bluf-6.md` | 6-part communication protocol |
-| `heuristics.md` | 10 decision heuristics with examples |
-| `version-protocol.md` | 4-step version verification |
-| `memory-layer.md` | Project memory integration (decisions/mistakes/conventions) |
+| Spec                  | Content                                                     |
+| --------------------- | ----------------------------------------------------------- |
+| `asdd-lifecycle.md`   | 8-phase AI-Spec-Driven Development lifecycle                |
+| `bluf-6.md`           | 6-part communication protocol                               |
+| `heuristics.md`       | 10 decision heuristics with examples                        |
+| `version-protocol.md` | 4-step version verification                                 |
+| `memory-layer.md`     | Project memory integration (decisions/mistakes/conventions) |
 
 ### Skills (11 directories)
 
@@ -126,12 +130,12 @@ Multi-step procedures: analyze, audit, design, docs, feature-branch, product, re
 
 Task-specific development guides with routing system. See `templates/routing.md` for keyword-to-template mapping.
 
-| Category | Templates |
-|----------|-----------|
-| Core Development | brainstorming, analysis, refactoring, frontend, backend, database, testing |
-| Design & Content | ux-ui, copywriting, documentation |
-| Infrastructure & Security | cicd, security-audit, penetration-testing, devops |
-| Specialized | api-design, system-architecture, performance, migration, code-review, research |
+| Category                  | Templates                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| Core Development          | brainstorming, analysis, refactoring, frontend, backend, database, testing     |
+| Design & Content          | ux-ui, copywriting, documentation                                              |
+| Infrastructure & Security | cicd, security-audit, penetration-testing, devops                              |
+| Specialized               | api-design, system-architecture, performance, migration, code-review, research |
 
 ### Knowledge Base (106 entries)
 
@@ -210,12 +214,12 @@ aidd.md/
 
 ## IDE Integration
 
-| IDE | Setup | Details |
-|-----|-------|---------|
-| Antigravity | Auto-loads AGENTS.md natively | See `adapters/gemini/` |
-| Cursor | Symlink `.cursor/rules` → `rules/` | See `adapters/cursor/` |
+| IDE         | Setup                                | Details                |
+| ----------- | ------------------------------------ | ---------------------- |
+| Antigravity | Auto-loads AGENTS.md natively        | See `adapters/gemini/` |
+| Cursor      | Symlink `.cursor/rules` → `rules/`   | See `adapters/cursor/` |
 | Claude Code | Auto-discovers skills from `skills/` | See `adapters/claude/` |
-| Warp | WARP.md guidance file | See `adapters/warp/` |
+| Warp        | WARP.md guidance file                | See `adapters/warp/`   |
 
 ---
 

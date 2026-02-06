@@ -9,6 +9,7 @@ import {
   GitBranch,
   FileText,
   BookOpen,
+  ScrollText,
   History,
   Eye,
   Brain,
@@ -16,7 +17,6 @@ import {
   Dna,
   FileStack,
   Activity,
-  HeartPulse,
   Server,
   Terminal,
   Settings,
@@ -40,6 +40,13 @@ const NAV_GROUPS = [
     ],
   },
   {
+    label: 'MCP',
+    items: [
+      { label: 'MCP Overview', path: ROUTES.MCP, icon: Server },
+      { label: 'MCP Playground', path: ROUTES.MCP_PLAYGROUND, icon: Terminal },
+    ],
+  },
+  {
     label: 'Framework',
     items: [
       { label: 'Agents', path: ROUTES.AGENTS, icon: Users },
@@ -48,6 +55,7 @@ const NAV_GROUPS = [
       { label: 'Knowledge', path: ROUTES.FRAMEWORK_KNOWLEDGE, icon: BookOpen },
       { label: 'Workflows', path: ROUTES.FRAMEWORK_WORKFLOWS, icon: GitBranch },
       { label: 'Templates', path: ROUTES.FRAMEWORK_TEMPLATES, icon: FileText },
+      { label: 'Spec', path: ROUTES.FRAMEWORK_SPEC, icon: ScrollText },
     ],
   },
   {
@@ -71,9 +79,6 @@ const NAV_GROUPS = [
   {
     label: 'System',
     items: [
-      { label: 'MCP Health', path: ROUTES.MCP_HEALTH, icon: HeartPulse },
-      { label: 'MCP Servers', path: ROUTES.MCP_SERVERS, icon: Server },
-      { label: 'MCP Playground', path: ROUTES.MCP_PLAYGROUND, icon: Terminal },
       { label: 'Config', path: ROUTES.CONFIG, icon: Settings },
       { label: 'Integrations', path: ROUTES.INTEGRATIONS, icon: Plug },
     ],

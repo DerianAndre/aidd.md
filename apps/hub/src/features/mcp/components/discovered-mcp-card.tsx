@@ -16,6 +16,12 @@ const STATUS_COLOR = {
   error: 'danger',
 } as const;
 
+const TRANSPORT_COLOR: Record<string, 'default' | 'accent' | 'warning'> = {
+  stdio: 'default',
+  http: 'accent',
+  sse: 'warning',
+};
+
 interface DiscoveredMcpCardProps {
   entry: DiscoveredMcp;
   hubServer?: McpServer;
@@ -30,8 +36,8 @@ export function DiscoveredMcpCard({ entry, hubServer }: DiscoveredMcpCardProps) 
     : entry.url ?? null;
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-default-200 bg-content1 px-3 py-2">
-      {/* Left: icon + name + badges */}
+    <div className="rounded-lg border border-default-200 bg-content1 px-3 py-2">
+      {/* Line 1: icon + name + badges */}
       <div className="flex items-center gap-2 overflow-hidden">
         <ToolIcon size={16} className="shrink-0 text-default-400" />
         <span className="font-medium text-sm text-foreground truncate">{entry.name}</span>
@@ -50,15 +56,22 @@ export function DiscoveredMcpCard({ entry, hubServer }: DiscoveredMcpCardProps) 
         )}
       </div>
 
-      {/* Right: command preview */}
-      {commandPreview && (
+      {/* Line 2: transport type + config path / command preview */}
+      <div className="mt-1 flex items-center gap-2 pl-6">
+        {entry.transport_type && (
+          <Chip size="sm" variant="soft" color={TRANSPORT_COLOR[entry.transport_type] ?? 'default'}>
+            {entry.transport_type}
+          </Chip>
+        )}
         <span
-          className="shrink-0 text-[11px] font-mono text-default-400 max-w-[280px] truncate"
-          title={commandPreview}
+          className="text-[11px] font-mono text-default-400 truncate"
+          title={entry.config_path}
         >
-          {truncate(commandPreview, 50)}
+          {commandPreview
+            ? truncate(commandPreview, 60)
+            : truncate(entry.config_path, 60)}
         </span>
-      )}
+      </div>
     </div>
   );
 }

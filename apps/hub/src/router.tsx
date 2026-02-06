@@ -126,16 +126,21 @@ export const router = createBrowserRouter([
         element: lazyPage(() => import('./features/diagnostics/pages/diagnostics-page'), 'DiagnosticsPage'),
       },
       {
-        path: 'mcp-health',
-        element: lazyPage(() => import('./features/mcp-health/pages/mcp-health-page'), 'McpHealthPage'),
-      },
-      {
-        path: 'mcp-servers',
-        element: lazyPage(() => import('./features/mcp-servers/pages/mcp-servers-page'), 'McpServersPage'),
+        path: 'mcp',
+        element: lazyPage(() => import('./features/mcp/pages/mcp-overview-page'), 'McpOverviewPage'),
       },
       {
         path: 'mcp-playground',
-        element: lazyPage(() => import('./features/mcp-servers/pages/mcp-playground-page'), 'McpPlaygroundPage'),
+        element: lazyPage(() => import('./features/mcp/pages/mcp-playground-page'), 'McpPlaygroundPage'),
+      },
+      // Legacy MCP routes → redirect to unified /mcp
+      {
+        path: 'mcp-health',
+        element: <Navigate to="/mcp" replace />,
+      },
+      {
+        path: 'mcp-servers',
+        element: <Navigate to="/mcp" replace />,
       },
       {
         path: 'config',

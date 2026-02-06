@@ -252,6 +252,7 @@ export interface DiscoveredMcp {
   command: string | null;
   args: string[] | null;
   url: string | null;
+  transport_type: string | null;
   is_aidd: boolean;
 }
 

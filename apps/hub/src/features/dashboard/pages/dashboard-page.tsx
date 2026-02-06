@@ -5,7 +5,7 @@ import { StatCard } from '../components/stat-card';
 import { RecentSessionsWidget } from '../components/recent-sessions-widget';
 import { HealthWidget } from '../components/health-widget';
 import { MemoryWidget } from '../components/memory-widget';
-import { McpHealthWidget } from '../../mcp-health/components/mcp-health-widget';
+import { McpHealthWidget } from '../../mcp/components/mcp-health-widget';
 import { useAnalyticsStore } from '../../analytics/stores/analytics-store';
 import { useDiagnosticsStore } from '../../diagnostics/stores/diagnostics-store';
 import { useDraftsStore } from '../../drafts/stores/drafts-store';

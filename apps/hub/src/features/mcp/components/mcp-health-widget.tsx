@@ -46,10 +46,10 @@ export function McpHealthWidget() {
       </div>
 
       <Link
-        to={ROUTES.MCP_HEALTH}
+        to={ROUTES.MCP}
         className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
       >
-        View MCP Health <ArrowRight size={12} />
+        View MCP Overview <ArrowRight size={12} />
       </Link>
     </div>
   );
