@@ -4,6 +4,7 @@
 
 **Effort Tier**: 1 (HIGH_EFFORT)
 **AIDD Skill**: `skills/knowledge-architect/SKILL.md` (Technical Research)
+**Model Guidance**: Sonnet subagents for parallel research tasks (web searches, doc lookups, synthesis). Opus orchestrator for cross-referencing, decision-making, and final synthesis.
 
 ---
 
@@ -77,7 +78,26 @@ For each significant claim:
 - Is the information current (not outdated by newer releases or findings)?
 - What is the confidence level? (High: 3+ sources agree; Medium: 2 sources or 1 authoritative; Low: single non-authoritative source)
 
-### Step 5: Analyze and Synthesize
+### Step 5: Trend Validation
+
+- Is the chosen approach aligned with where the ecosystem is heading?
+- Check for upcoming deprecations, breaking changes, or migration paths
+- Verify the approach works with detected project versions (see `spec/version-protocol.md`)
+
+### Step 6: Risk Identification
+
+- Known pitfalls, breaking changes, deprecation timelines
+- Common failure modes reported in community resources
+- Security implications of each approach
+- Vendor lock-in or portability concerns
+
+### Step 7: Benchmark (if performance-sensitive)
+
+- Find benchmarks or case studies for candidate approaches
+- Compare quantitative metrics (throughput, latency, bundle size, memory)
+- Note benchmark conditions and whether they match project constraints
+
+### Step 8: Analyze and Synthesize
 
 - Identify the consensus view across sources
 - Document areas of disagreement and why they exist
@@ -85,7 +105,7 @@ For each significant claim:
 - Identify gaps in available information
 - Form conclusions with stated confidence levels
 
-### Step 6: Report in BLUF-6 Format
+### Step 9: Report in BLUF-6 Format
 
 #### 1. BLUF (Bottom Line Up Front)
 2-3 sentences: the direct answer to the research question with confidence level.
@@ -108,6 +128,37 @@ Actionable next steps based on findings. Each recommendation includes: what, why
 
 #### 6. Unknown Factors
 What remains uncertain. What additional research would be needed. What assumptions were made and their risk if wrong.
+
+---
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `WebSearch` | Trends, comparisons, ecosystem state, current year verification |
+| Context7 MCP | Framework-specific docs (when available) |
+| `aidd_query_tkb` | Project's Technology Knowledge Base entries |
+| `aidd_tech_compatibility` | Verify stack compatibility with TKB data |
+| Project `package.json` | Version-locked constraints (ground truth) |
+
+---
+
+## Output Artifact
+
+When research is complete, produce a structured summary:
+
+```markdown
+## Research Summary — [Feature Name]
+- **Approaches Evaluated**: [list with pros/cons]
+- **Selected Approach**: [choice + rationale]
+- **Key References**: [links/sources with dates]
+- **Risks & Mitigations**: [table]
+- **Open Questions**: [what remains uncertain]
+```
+
+This artifact feeds directly into the Plan phase (`spec/asdd-lifecycle.md` Phase 3).
+
+**Gate**: Present findings as a trade-off matrix. User chooses approach → proceed to Plan.
 
 ---
 
@@ -141,7 +192,11 @@ What remains uncertain. What additional research would be needed. What assumptio
 
 ## Cross-References
 
+- **Previous phase (Brainstorming)**: `templates/brainstorming.md`
+- **Next phase (Plan)**: `spec/asdd-lifecycle.md`
+- **Orchestration pipeline**: `workflows/orchestrators/architect-mode.md`
 - **BLUF-6 format**: `spec/bluf-6.md`
 - **Knowledge Architect skill**: `skills/knowledge-architect/SKILL.md`
 - **Technology selection workflow**: `workflows/technology-selection.md`
+- **Version verification**: `spec/version-protocol.md`
 - **Global rules**: `rules/global.md`

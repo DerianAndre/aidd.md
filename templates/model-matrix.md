@@ -212,6 +212,25 @@ Tier 1 unavailable → FAIL (no silent degradation)
 | Create PR | 2 | Needs to write coherent summary and test plan |
 | Final architecture review | 1 | Verify implementation matches architectural intent |
 
+### Parallel Dispatch Pattern
+
+When multiple independent tasks exist in a phase, dispatch them simultaneously at appropriate tiers. The orchestrator manages dependency ordering: independent tasks run in parallel, dependent tasks wait for prerequisites.
+
+```
+Example — Phase 5 with 4 implementation steps:
+
+  Step 1: Define domain entities (High)       → Opus subagent   ─┐
+  Step 2: Create DB migration (Standard)      → Sonnet subagent   ├─ parallel
+  Step 3: Add barrel exports (Low)            → Haiku subagent  ─┘
+  Step 4: Implement use case (High)           → Opus subagent (after Step 1 completes)
+```
+
+**Rules**:
+- Independent tasks (no shared state or sequential dependencies) run in parallel.
+- Dependent tasks wait for their prerequisites to complete.
+- Each subagent runs at its assigned tier — the orchestrator coordinates.
+- On failure, escalate the failing task one tier higher and retry before blocking the pipeline.
+
 ---
 
 ## 7. Maintenance
@@ -244,7 +263,7 @@ Tier 1 unavailable → FAIL (no silent degradation)
 
 ## Cross-References
 
-- **Architect Mode**: `~/.claude/templates/architect-mode.md` — phases, escalation rules, parallel dispatch
+- **Architect Mode**: `workflows/orchestrators/architect-mode.md` — phases, escalation rules, parallel dispatch
 - **Routing Table**: `templates/routing.md` — task-to-agent/workflow/template mapping
 - **CLAUDE.md**: `~/.claude/CLAUDE.md` — model intelligence tiers (Section 2)
 - **MCP Tool**: `aidd_model_route` — programmatic routing via the model matrix

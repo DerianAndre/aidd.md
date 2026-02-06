@@ -2,7 +2,7 @@
 
 > Dual-mode routing: AIDD skills (when AGENTS.md detected) or fallback templates (when not).
 
-**Last Updated**: 2026-02-04
+**Last Updated**: 2026-02-06
 **Status**: Living Document
 
 ---
@@ -49,6 +49,7 @@ When the project has AIDD installed (detected by presence of `AGENTS.md` + `rule
 | Technology selection, evaluation | Orchestrator | technology-selection.md |
 | Code review, pre-merge | Quality Engineer | review.md |
 | Brainstorming, ideation | Orchestrator | product.md |
+| Architect mode (brainstorm→plan→execute) | Orchestrator | orchestrators/architect-mode.md |
 
 **AIDD takes priority**. When detected, AIDD agents and workflows are the SSOT. Templates serve as supplementary reference only.
 
@@ -97,6 +98,7 @@ When no AIDD is detected, match task keywords to local templates:
 | Migration | upgrade, migrate, breaking changes, version, deprecation | migration.md | 1→2 |
 | Code Review | review, pre-merge, PR review, quality gate, standards | code-review.md | 1 |
 | Research | research, deep dive, investigate, landscape, comparison | research.md | 1 |
+| Architect Mode | architect, architect-mode, brainstorm+plan, ideation-to-execution, full pipeline | orchestrators/architect-mode.md | 1→2→3 |
 | Full Lifecycle | new feature, ASDD, from scratch, full implementation | ASDD inline (spec/asdd-lifecycle.md) | 1→2→3 |
 
 ---
@@ -157,6 +159,7 @@ aidd_model_recommend → historical performance override
 
 ## Cross-References
 
+- **Architect Mode orchestrator**: `workflows/orchestrators/architect-mode.md`
 - **Model matrix**: `templates/model-matrix.md`
 - **Orchestrator logic**: `rules/orchestrator.md`
 - **Decision tree**: `rules/decision-tree.md`

@@ -4,6 +4,7 @@
 
 **Effort Tier**: 1 (HIGH_EFFORT)
 **AIDD Skill**: `skills/system-architect/SKILL.md` (Strategic Planning)
+**Model Guidance**: Orchestrator (Opus) inline. Do NOT delegate brainstorming to subagents — it requires conversational continuity with the user.
 
 ---
 
@@ -33,6 +34,25 @@ Apply a Diverge-Analyze-Converge-Document pattern to generate, evaluate, and sel
 ---
 
 ## Process Steps
+
+### Step 0: Elicit Requirements (if problem is vague)
+
+If the user enters with a vague idea, extract what they actually need before generating options. The user may not know what they want, may think they know but lack the optimal approach, or may have the right instinct but wrong framing. Questions are the primary tool.
+
+**Protocol: Listen → Probe → Mirror → Challenge → Converge**
+
+1. **Listen** — Parse the initial request. Identify stated goals, implicit assumptions, and gaps.
+2. **Probe** — Ask 3-5 targeted questions per round:
+   - "What problem does this solve for the end user?"
+   - "What exists today? What's broken or missing?"
+   - "What's the simplest version that delivers value?"
+   - "What are you explicitly NOT trying to build?"
+   - "What constraints exist?" (time, tech, team, infra)
+3. **Mirror** — Summarize understanding back in structured form (BLUF). Let the user correct.
+4. **Challenge** — If the approach has flaws, present the trade-off matrix before proceeding.
+5. **Converge** — When clarity reaches ~80%, present a structured summary and proceed to Step 1.
+
+**Skip this step** if the user arrives with a clear problem statement and defined scope.
 
 ### Step 1: Define Problem Space
 
@@ -74,6 +94,8 @@ Score each cell: Strong (++), Adequate (+), Neutral (0), Weak (-), Disqualifying
 - Identify risks in the selected approach and mitigation strategies
 - Define the implementation boundary (what is included in this iteration)
 
+**Gate**: User chooses → `[Keep Brainstorming]` | `[Move to Research]` | `[Move to Plan]` | `[Accept & Execute]`
+
 ### Step 5: Document — Decision Record
 
 Produce a decision record containing:
@@ -84,6 +106,25 @@ Produce a decision record containing:
 - **Trade-offs Accepted**: What we are giving up
 - **Rejected Alternatives**: Why each was not selected
 - **Risks and Mitigations**: Known risks with the chosen path
+
+---
+
+## Output Artifact
+
+When brainstorming is complete, produce a structured summary:
+
+```markdown
+## Brainstorm Summary — [Feature Name]
+- **Problem Statement**: [1-2 sentences]
+- **Target User**: [who benefits]
+- **Core Requirements**: [bulleted, prioritized]
+- **Excluded Scope**: [what we're NOT building]
+- **Constraints**: [tech, time, infra]
+- **Open Questions**: [unresolved items]
+- **Recommended Approach**: [1 paragraph]
+```
+
+This artifact feeds directly into the Research phase (`templates/research.md`) or the Plan phase (`spec/asdd-lifecycle.md` Phase 3).
 
 ---
 
@@ -113,8 +154,11 @@ Produce a decision record containing:
 
 ## Cross-References
 
+- **Next phase (Research)**: `templates/research.md`
+- **Orchestration pipeline**: `workflows/orchestrators/architect-mode.md`
 - **Workflow**: `workflows/product.md`
 - **Decision tree**: `rules/decision-tree.md`
 - **System Architect skill**: `skills/system-architect/SKILL.md`
 - **BLUF-6 output format**: `spec/bluf-6.md`
 - **Technology selection workflow**: `workflows/technology-selection.md`
+- **ASDD lifecycle**: `spec/asdd-lifecycle.md`

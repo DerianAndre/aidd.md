@@ -2,7 +2,7 @@
 
 > Structured development lifecycle where every feature flows through specification before implementation.
 
-**Last Updated**: 2026-02-04
+**Last Updated**: 2026-02-06
 **Status**: Reference
 
 ---
@@ -12,8 +12,9 @@
 1. [Overview](#1-overview)
 2. [Phase Definitions](#2-phase-definitions)
 3. [Tier Transitions](#3-tier-transitions)
-4. [Quality Gates](#4-quality-gates)
-5. [Workflow Diagram](#5-workflow-diagram)
+4. [Dispatch Strategy](#4-dispatch-strategy)
+5. [Quality Gates](#5-quality-gates)
+6. [Workflow Diagram](#6-workflow-diagram)
 
 ---
 
@@ -56,20 +57,56 @@ Core principle: **specification and implementation are separate commits**. The s
 
 - List every file to create or modify.
 - Assign complexity per task: Low (< 15 min), Medium (15-60 min), High (> 60 min).
+- Assign a model tier per task (see `templates/model-matrix.md` for tier definitions).
 - Order tasks by dependency (what must exist before what).
 - Use task tracking tools for all non-trivial plans.
 - Check codebase for similar features that can be referenced or reused.
 
-**Exit criteria**: Complete task list with file paths, complexity ratings, and dependency order.
+#### Plan Document Structure
+
+Each implementation step MUST include a model assignment column:
+
+| # | Task | Files | Complexity | Model | Status |
+|---|---|---|---|---|---|
+| 1 | [Atomic task] | `src/...` | High | Opus | pending |
+| 2 | [Atomic task] | `src/...` | Standard | Sonnet | pending |
+| 3 | [Atomic task] | `src/...` | Low | Haiku | pending |
+
+#### File Convention
+
+| Scope | Path |
+|---|---|
+| Single feature | `docs/plans/active/<YYYY-MM-DD>-<feature>.md` |
+| Multi-part feature | `docs/plans/active/<YYYY-MM-DD>-01-<feature-part-a>.md`, `...-02-...` |
+| Related issue | `docs/issues/<YYYY-MM-DD>-<feature>.md` |
+
+**Gate**: User reviews plan → `[Approve]` | `[Revise]` | `[Reject & Re-brainstorm]`
+
+**Exit criteria**: Complete task list with file paths, complexity ratings, model assignments, and dependency order.
+
+### PHASE 3B — ISSUE (when applicable)
+
+**Objective**: Create a structured issue document for bug reports or tracked problems.
+
+- Create `docs/issues/<YYYY-MM-DD>-<feature>.md` with:
+  - Problem description and reproduction steps (if bug)
+  - Linked plan document (if one exists)
+  - GitHub issue body (ready to push via `gh`)
+- Link the issue to the relevant plan document if both exist.
+
+**Exit criteria**: Issue documented with reproduction steps and linked to plan (if applicable).
 
 ### PHASE 4 — COMMIT_SPEC
 
 **Objective**: Persist the specification as a versioned artifact.
 
+- Check current branch — suggest `feature/<name>` or `fix/<name>` if on `main`.
 - Write spec document in `docs/plans/active/` or `docs/specs/`.
-- Include: user story, acceptance criteria, task breakdown, architecture notes.
+- Include: user story, acceptance criteria, task breakdown with model assignments, architecture notes.
 - Commit separately from implementation: `docs(scope): add spec for [feature]`.
 - The spec is now the contract. Implementation must satisfy it.
+
+**Model guidance**: This is a mechanical task (Tier 3). Can be delegated to a Haiku subagent.
 
 **Exit criteria**: Spec committed to version control. No implementation code in this commit.
 
@@ -78,10 +115,36 @@ Core principle: **specification and implementation are separate commits**. The s
 **Objective**: Implement the feature by following the plan strictly.
 
 - Mark each task as `in_progress` before starting, `completed` when done.
-- Only one task should be `in_progress` at any time.
+- Only one task should be `in_progress` at any time (for the orchestrator's tracking).
 - Think from relevant sub-agent perspectives (e.g., Frontend: Engineer + UX Lead; Backend: Architect + Engineer).
 - If implementation diverges from spec, update the spec first, then continue.
+- If blocked, stop, document the blocker, and ask the user.
 - Run targeted tests after each meaningful change.
+
+#### Dispatch Strategy
+
+Assign model tier per-task using the plan's Model column (see `templates/model-matrix.md` for adaptive assignments):
+
+- Group independent tasks by model tier.
+- Launch parallel subagents where no dependencies exist.
+- Sequential execution for dependent tasks.
+- If subagent output fails verification: escalate to next model tier and retry.
+
+```
+Example — Plan has 6 steps:
+
+  Step 1: Define entities        (High, Opus)     ─┐
+  Step 2: Create migration       (Std, Sonnet)     ├─ parallel (no deps)
+  Step 3: Barrel exports         (Low, Haiku)     ─┘
+  Step 4: Implement use case     (High, Opus)     ← depends on Step 1
+  Step 5: Add API endpoint       (Std, Sonnet)    ← depends on Step 4
+  Step 6: Write unit tests       (Low, Haiku)     ← depends on Step 4
+
+Execution:
+  Round 1: [Opus:Step1] + [Sonnet:Step2] + [Haiku:Step3]  (parallel)
+  Round 2: [Opus:Step4]                                     (sequential)
+  Round 3: [Sonnet:Step5] + [Haiku:Step6]                   (parallel)
+```
 
 **Exit criteria**: All planned tasks completed. No untracked changes.
 
@@ -105,6 +168,21 @@ Core principle: **specification and implementation are separate commits**. The s
 - Run targeted tests to confirm all pass.
 - Confirm spec matches final implementation (update spec if diverged).
 - Review for dead code, magic strings, and missing error handling.
+
+#### Completion Task-to-Model Assignment
+
+| Task | Model Tier | Rationale |
+|---|---|---|
+| Run typecheck/lint | 3 (Haiku) | Mechanical — run command, report result |
+| Run test suite | 3 (Haiku) | Mechanical — run command, report result |
+| Analyze test failures | 2 → 1 | Depends on failure complexity; escalate if needed |
+| Write missing tests (simple) | 3 (Haiku) | Pure functions, no mocks, obvious assertions |
+| Write missing tests (complex) | 2 → 1 | Integration tests, mocked boundaries, edge cases |
+| Update plan status | 3 (Haiku) | File edit — mechanical |
+| Move plan to `done/` | 3 (Haiku) | File operation — mechanical |
+| Draft commit message | 2 (Sonnet) | Needs to summarize changes accurately |
+| Create PR | 2 (Sonnet) | Needs coherent summary and test plan |
+| Final architecture review | 1 (Opus) | Verify implementation matches architectural intent |
 
 **Exit criteria**: Clean typecheck, clean lint, all targeted tests pass, spec is current.
 
@@ -135,7 +213,26 @@ Tier transitions are not rigid. If execution reveals architectural issues, escal
 
 ---
 
-## 4. Quality Gates
+## 4. Dispatch Strategy
+
+Model selection during execution is **per-task**, not per-phase. The orchestrator evaluates each implementation step and assigns the optimal model tier. See `templates/model-matrix.md` for the full adaptive task assignment rules.
+
+### Principles
+
+1. **Use the minimum tier that produces correct output** — never overspend on boilerplate.
+2. **Escalate on failure** — if a subagent fails or produces incorrect output, retry one tier higher.
+3. **Escalate on ambiguity** — unclear requirements or multiple valid approaches → Tier 1.
+4. **Escalate on security** — auth, crypto, user input, external APIs → minimum Tier 2, prefer Tier 1.
+5. **Escalate on dependency** — if a task blocks multiple downstream tasks → one tier higher.
+6. **User override** — user can always request a specific model tier for any task.
+
+### Parallel Execution
+
+Independent tasks dispatch simultaneously at their assigned tiers. The orchestrator manages dependency ordering: independent tasks run in parallel, dependent tasks wait for their prerequisites.
+
+---
+
+## 5. Quality Gates
 
 Before marking a feature as complete, verify every item:
 
@@ -149,10 +246,11 @@ Before marking a feature as complete, verify every item:
 - [ ] Conventional commit format used
 - [ ] Spec commit is separate from implementation commit
 - [ ] Memory files updated if significant decisions were made
+- [ ] Model usage is cost-efficient (minimum tier that produces correct output)
 
 ---
 
-## 5. Workflow Diagram
+## 6. Workflow Diagram
 
 ```
 SYNC --> STORY --> PLAN --> COMMIT_SPEC --> EXECUTE --> TEST --> VERIFY --> COMMIT_IMPL
@@ -162,3 +260,16 @@ SYNC --> STORY --> PLAN --> COMMIT_SPEC --> EXECUTE --> TEST --> VERIFY --> COMM
 ```
 
 If at any point the implementation diverges from the spec, the workflow loops back: update the spec first, then resume execution. The spec is always the source of truth.
+
+---
+
+## Cross-References
+
+- **Orchestration pipeline**: `workflows/orchestrators/architect-mode.md`
+- **Brainstorming (pre-ASDD)**: `templates/brainstorming.md`
+- **Research (pre-ASDD)**: `templates/research.md`
+- **Model tier assignments**: `templates/model-matrix.md`
+- **Task routing**: `templates/routing.md`
+- **Orchestrator rules**: `rules/orchestrator.md`
+- **BLUF-6 output format**: `spec/bluf-6.md`
+- **Memory layer**: `spec/memory-layer.md`

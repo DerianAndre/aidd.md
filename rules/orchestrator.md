@@ -27,7 +27,23 @@ Break down every task into the AIDD triad:
 - **Workflows:** Sequential or parallel logic flows (`workflows/*.md`).
 - **Skills:** Specific atomic capabilities required (` skills/*/`).
 
-### 4. Technology Knowledge Base (TKB) Integration
+### 4. Intake Classification
+
+Before entering any execution phase, classify the user's request to determine the optimal entry point:
+
+| Signal | Entry Point | Reference |
+|---|---|---|
+| Vague idea, "I want to build..." | Brainstorming | `templates/brainstorming.md` |
+| Clear feature, needs research | Research | `templates/research.md` |
+| Defined requirements, ready to plan | ASDD Phase 3 — PLAN | `spec/asdd-lifecycle.md` |
+| Existing plan, ready to build | ASDD Phase 5 — EXECUTE | `spec/asdd-lifecycle.md` |
+| Bug report or issue | Issue Tracking | `spec/asdd-lifecycle.md` Phase 3B |
+
+**Default assumption**: Enter at Brainstorming unless the user demonstrates sufficient clarity to skip ahead.
+
+**See:** [`workflows/orchestrators/architect-mode.md`](../workflows/orchestrators/architect-mode.md) for the full intake-to-completion pipeline.
+
+### 5. Technology Knowledge Base (TKB) Integration
 
 Before recommending technologies, the Orchestrator must:
 
@@ -73,6 +89,19 @@ Output a **Master Execution Plan** using the following format:
 2. **Component Selection:** Explicit list of `[Rules]`, `[Workflows]`, `[Skills]`, and `[Templates]` to be activated.
 3. **Roadmap:** Step-by-step technical path with milestones.
 4. **Risk Assessment:** Identification of potential "Black Swans" or technical debt.
+
+### Phase Gates
+
+Each major phase ends with a user decision gate before proceeding:
+
+| Phase | Gate Options |
+|---|---|
+| Brainstorming | `[Keep Brainstorming]` · `[Move to Research]` · `[Move to Plan]` · `[Accept & Execute]` |
+| Research | `[Findings Accepted]` · `[More Research Needed]` · `[Re-brainstorm]` |
+| Plan | `[Approve]` · `[Revise]` · `[Reject & Re-brainstorm]` |
+| Execute | `[Continue]` · `[Pause & Reassess]` (on divergence or blocker) |
+
+**Rule**: Never proceed past a gate without explicit or implied user consent. If the user's intent is clear, the gate can be passed implicitly.
 
 ---
 
