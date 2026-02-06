@@ -756,6 +756,48 @@ if (discoveredServers.size === 0) {
   }
 }
 
+// --- Detect installed AI agents/editors ---
+console.log(`\n${DIM}Installed Agents${RESET}`);
+
+/** Agent registry: name → { displayName, detectPaths, category } */
+const agentRegistry = [
+  { name: 'claude-code', displayName: 'Claude Code', category: 'CLI', paths: [resolve(home, '.claude')] },
+  { name: 'cursor', displayName: 'Cursor', category: 'IDE', paths: [resolve(home, '.cursor')] },
+  { name: 'windsurf', displayName: 'Windsurf', category: 'IDE', paths: [resolve(home, '.codeium', 'windsurf')] },
+  { name: 'codex', displayName: 'Codex', category: 'CLI', paths: [resolve(home, '.codex')] },
+  { name: 'gemini-cli', displayName: 'Gemini CLI', category: 'CLI', paths: [resolve(home, '.gemini')] },
+  { name: 'github-copilot', displayName: 'GitHub Copilot', category: 'Extension', paths: [resolve(home, '.copilot'), resolve(root, '.github')] },
+  { name: 'amp', displayName: 'Amp', category: 'CLI', paths: [resolve(home, '.config', 'amp')] },
+  { name: 'cline', displayName: 'Cline', category: 'Extension', paths: [resolve(home, '.cline')] },
+  { name: 'roo', displayName: 'Roo Code', category: 'Extension', paths: [resolve(home, '.roo')] },
+  { name: 'kilo', displayName: 'Kilo Code', category: 'Extension', paths: [resolve(home, '.kilocode')] },
+  { name: 'goose', displayName: 'Goose', category: 'CLI', paths: [resolve(home, '.config', 'goose')] },
+  { name: 'opencode', displayName: 'OpenCode', category: 'CLI', paths: [resolve(home, '.config', 'opencode')] },
+  { name: 'trae', displayName: 'Trae', category: 'IDE', paths: [resolve(home, '.trae')] },
+  { name: 'continue', displayName: 'Continue', category: 'Extension', paths: [resolve(home, '.continue'), resolve(root, '.continue')] },
+  { name: 'kiro-cli', displayName: 'Kiro CLI', category: 'CLI', paths: [resolve(home, '.kiro')] },
+  { name: 'droid', displayName: 'Droid', category: 'CLI', paths: [resolve(home, '.factory')] },
+  { name: 'augment', displayName: 'Augment', category: 'Extension', paths: [resolve(home, '.augment')] },
+  { name: 'junie', displayName: 'Junie', category: 'IDE', paths: [resolve(home, '.junie')] },
+  { name: 'antigravity', displayName: 'Antigravity', category: 'Extension', paths: [resolve(home, '.gemini', 'antigravity'), resolve(root, '.agent')] },
+  { name: 'openclaw', displayName: 'OpenClaw', category: 'CLI', paths: [resolve(home, '.openclaw'), resolve(home, '.clawdbot'), resolve(home, '.moltbot')] },
+  { name: 'zencoder', displayName: 'Zencoder', category: 'Extension', paths: [resolve(home, '.zencoder')] },
+  { name: 'neovate', displayName: 'Neovate', category: 'Extension', paths: [resolve(home, '.neovate')] },
+  { name: 'openhands', displayName: 'OpenHands', category: 'CLI', paths: [resolve(home, '.openhands')] },
+  { name: 'qwen-code', displayName: 'Qwen Code', category: 'CLI', paths: [resolve(home, '.qwen')] },
+  { name: 'mistral-vibe', displayName: 'Mistral Vibe', category: 'CLI', paths: [resolve(home, '.vibe')] },
+];
+
+const installedAgents = agentRegistry.filter((a) => a.paths.some((p) => existsSync(p)));
+
+if (installedAgents.length === 0) {
+  info('No AI agents detected');
+} else {
+  for (const agent of installedAgents) {
+    pass(`${agent.displayName} ${DIM}(${agent.category})${RESET}`);
+  }
+}
+
 // =========================================================================
 // Summary
 // =========================================================================
