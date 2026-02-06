@@ -1,4 +1,5 @@
 // Re-export shared types from @aidd.md/mcp-shared
+import type { AiddConfig as _AiddConfig } from '@aidd.md/mcp-shared';
 export type {
   AiddConfig,
   AiProvider,
@@ -20,7 +21,34 @@ export type {
   ToolUsageEntry,
 } from '@aidd.md/mcp-shared';
 
-export { DEFAULT_CONFIG } from '@aidd.md/mcp-shared';
+// Inlined to avoid pulling Node.js `fs` from @aidd.md/mcp-shared into Vite browser bundle.
+// Must stay in sync with mcps/shared/src/types.ts → DEFAULT_CONFIG.
+export const DEFAULT_CONFIG: _AiddConfig = {
+  evolution: {
+    enabled: true,
+    autoApplyThreshold: 90,
+    draftThreshold: 70,
+    learningPeriodSessions: 5,
+    killSwitch: false,
+  },
+  memory: {
+    maxSessionHistory: 100,
+    autoPromoteBranchDecisions: true,
+    pruneAfterDays: 90,
+  },
+  modelTracking: {
+    enabled: true,
+    crossProject: false,
+  },
+  ci: {
+    blockOn: ['security_critical', 'type_safety'],
+    warnOn: ['code_style', 'documentation'],
+    ignore: ['commit_format'],
+  },
+  content: {
+    overrideMode: 'merge',
+  },
+};
 
 // Hub-specific types
 export type { ProjectInfo, ProjectEntry, MarkdownEntity, FileEntry, FileChangeEvent } from './tauri';

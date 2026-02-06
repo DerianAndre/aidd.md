@@ -12,6 +12,7 @@ import { useAnalyticsStore } from '../../features/analytics/stores/analytics-sto
 import { useEvolutionStore } from '../../features/evolution/stores/evolution-store';
 import { useDraftsStore } from '../../features/drafts/stores/drafts-store';
 import { useDiagnosticsStore } from '../../features/diagnostics/stores/diagnostics-store';
+import { useConfigStore } from '../../features/config/stores/config-store';
 
 const DEBOUNCE_MS = 100;
 
@@ -39,6 +40,9 @@ export function useEntityWatcher() {
   const evolutionInvalidate = useEvolutionStore((s) => s.invalidate);
   const draftsInvalidate = useDraftsStore((s) => s.invalidate);
   const diagnosticsInvalidate = useDiagnosticsStore((s) => s.invalidate);
+
+  // Config store
+  const configInvalidate = useConfigStore((s) => s.invalidate);
 
   const flush = useCallback(() => {
     const prefixes = pendingRef.current;
@@ -69,11 +73,15 @@ export function useEntityWatcher() {
       diagnosticsInvalidate(); // mistakes feed into health score
     }
 
+    // Config file
+    if (prefixes.has('/.aidd/config.json')) configInvalidate();
+
     prefixes.clear();
   }, [
     rulesInvalidate, templatesInvalidate, skillsInvalidate, workflowsInvalidate, knowledgeInvalidate,
     sessionsInvalidate, permanentMemoryInvalidate, analyticsInvalidate,
     evolutionInvalidate, draftsInvalidate, diagnosticsInvalidate,
+    configInvalidate,
   ]);
 
   useEffect(() => {
@@ -92,7 +100,7 @@ export function useEntityWatcher() {
         const prefixes = [
           '/rules/', '/templates/', '/skills/', '/workflows/', '/knowledge/',
           '/.aidd/sessions/', '/.aidd/evolution/', '/.aidd/drafts/',
-          '/ai/memory/',
+          '/ai/memory/', '/.aidd/config.json',
         ] as const;
         for (const prefix of prefixes) {
           if (normalized.includes(prefix)) {
