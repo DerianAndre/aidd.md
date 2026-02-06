@@ -12,6 +12,7 @@ import { homedir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
+const home = homedir();
 
 const GREEN = '\x1b[32m';
 const RED = '\x1b[31m';
@@ -224,7 +225,7 @@ console.log(`\n${BOLD}${PREFIX} Doctor${RESET}\n`);
 // =========================================================================
 // 1. Environment
 // =========================================================================
-console.log(`${DIM}Environment${RESET}`);
+console.log(`${DIM}Environment${RESET} ${DIM}— Node.js, pnpm${RESET}`);
 
 const nodeVersion = getVersion('node', ['--version']);
 if (nodeVersion && parseInt(nodeVersion) >= 22) {
@@ -241,9 +242,9 @@ if (pnpmVersion && parseInt(pnpmVersion) >= 10) {
 }
 
 // =========================================================================
-// 2. MCP Packages
+// 2. aidd.md MCPs
 // =========================================================================
-console.log(`\n${DIM}MCP Packages${RESET}`);
+console.log(`\n${DIM}aidd.md MCPs${RESET} ${DIM}— Package build status${RESET}`);
 
 const mcpsDir = resolve(root, 'mcps');
 const pkgsDir = resolve(root, 'packages');
@@ -300,322 +301,7 @@ if (sdkPath) {
   fail('@modelcontextprotocol/sdk not installed', 'Run: pnpm install');
 }
 
-// =========================================================================
-// 3. AIDD Framework Content
-// =========================================================================
-console.log(`\n${DIM}AIDD Framework${RESET}`);
-
-const agentsPath = resolve(root, 'AGENTS.md');
-if (existsSync(agentsPath)) {
-  pass('AGENTS.md found');
-} else {
-  fail('AGENTS.md missing');
-}
-
-const rulesDir = resolve(root, 'rules');
-if (existsSync(rulesDir)) {
-  const count = countFiles(rulesDir, '.md');
-  pass(`rules/ (${count} files)`);
-} else {
-  fail('rules/ missing');
-}
-
-const skillsDir = resolve(root, 'skills');
-let skillDirs = [];
-if (existsSync(skillsDir)) {
-  try {
-    skillDirs = readdirSync(skillsDir).filter((f) =>
-      existsSync(resolve(skillsDir, f, 'SKILL.md'))
-    );
-    pass(`skills/ (${skillDirs.length} agents)`);
-  } catch {
-    warn('skills/ exists but could not read');
-  }
-} else {
-  fail('skills/ missing');
-}
-
-const knowledgeDir = resolve(root, 'knowledge');
-if (existsSync(knowledgeDir)) {
-  try {
-    const domains = readdirSync(knowledgeDir).filter((f) =>
-      statSync(resolve(knowledgeDir, f)).isDirectory()
-    );
-    const totalEntries = countFilesRecursive(knowledgeDir, '.md');
-    pass(`knowledge/ (${domains.length} domains, ${totalEntries} entries)`);
-  } catch {
-    warn('knowledge/ exists but could not count entries');
-  }
-} else {
-  warn('knowledge/ missing');
-}
-
-const workflowsDir = resolve(root, 'workflows');
-if (existsSync(workflowsDir)) {
-  const mdCount = countFiles(workflowsDir, '.md');
-  const orchDir = resolve(workflowsDir, 'orchestrators');
-  const orchCount = existsSync(orchDir) ? countFiles(orchDir, '.md') : 0;
-  pass(`workflows/ (${mdCount} files + ${orchCount} orchestrators)`);
-} else {
-  warn('workflows/ missing');
-}
-
-const specDir = resolve(root, 'spec');
-if (existsSync(specDir)) {
-  const count = countFiles(specDir, '.md');
-  pass(`spec/ (${count} files)`);
-} else {
-  warn('spec/ missing');
-}
-
-const templatesDir = resolve(root, 'templates');
-if (existsSync(templatesDir)) {
-  const count = countFilesRecursive(templatesDir, '.md');
-  pass(`templates/ (${count} files)`);
-} else {
-  warn('templates/ missing');
-}
-
-const claudeMdPath = resolve(root, 'CLAUDE.md');
-if (existsSync(claudeMdPath)) {
-  pass('CLAUDE.md found');
-} else {
-  warn('CLAUDE.md missing (project instructions for Claude Code)');
-}
-
-// =========================================================================
-// 4. Skills Validation
-// =========================================================================
-console.log(`\n${DIM}Skills Validation${RESET}`);
-
-if (skillDirs.length > 0) {
-  let validSkills = 0;
-  const skillIssues = [];
-
-  for (const dir of skillDirs) {
-    const skillPath = resolve(skillsDir, dir, 'SKILL.md');
-    try {
-      const content = readFileSync(skillPath, 'utf-8');
-      const fm = parseFrontmatter(content);
-      const errs = [];
-
-      if (!fm) {
-        errs.push('no frontmatter');
-      } else {
-        if (!fm.name) errs.push('missing name');
-        if (!fm.description) errs.push('missing description');
-        const tier = parseInt(fm.tier, 10);
-        if (!fm.tier || isNaN(tier) || tier < 1 || tier > 3) {
-          errs.push(`invalid tier: ${fm.tier ?? 'missing'}`);
-        }
-      }
-
-      if (errs.length === 0) {
-        validSkills++;
-      } else {
-        skillIssues.push({ dir, errs });
-      }
-    } catch {
-      skillIssues.push({ dir, errs: ['could not read'] });
-    }
-  }
-
-  if (skillIssues.length === 0) {
-    pass(`${validSkills}/${skillDirs.length} skills have valid frontmatter`);
-  } else {
-    warn(`${skillIssues.length} skill(s) with issues:`);
-    for (const { dir, errs } of skillIssues) {
-      console.log(`      ${DIM}→ ${dir}: ${errs.join(', ')}${RESET}`);
-    }
-  }
-} else {
-  info('No skills to validate');
-}
-
-// =========================================================================
-// 5. Cross-Reference Integrity
-// =========================================================================
-console.log(`\n${DIM}Cross-References${RESET}`);
-
-if (existsSync(agentsPath) && skillDirs.length > 0) {
-  try {
-    const agentsContent = readFileSync(agentsPath, 'utf-8');
-    // Extract skill dir refs like `skills/system-architect/` or `skills/system-architect/SKILL.md`
-    const refs = [...agentsContent.matchAll(/skills\/([a-z0-9-]+)\/?/g)].map((m) => m[1]);
-    const uniqueRefs = [...new Set(refs)];
-    const missing = uniqueRefs.filter((ref) => !skillDirs.includes(ref));
-
-    if (missing.length === 0) {
-      pass(`AGENTS.md → skills/ (${uniqueRefs.length} refs, all valid)`);
-    } else {
-      warn(`AGENTS.md references ${missing.length} missing skill(s):`);
-      for (const m of missing) {
-        console.log(`      ${DIM}→ skills/${m}/ not found${RESET}`);
-      }
-    }
-  } catch {
-    warn('Could not check cross-references');
-  }
-} else {
-  info('Skipping cross-reference check (missing AGENTS.md or skills/)');
-}
-
-// =========================================================================
-// 6. Model Matrix
-// =========================================================================
-console.log(`\n${DIM}Model Matrix${RESET}`);
-
-const modelMatrixMd = resolve(root, 'templates/model-matrix.md');
-const modelMatrixTs = resolve(root, 'mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts');
-
-if (existsSync(modelMatrixMd) && existsSync(modelMatrixTs)) {
-  const mdContent = readFileSync(modelMatrixMd, 'utf-8');
-  const tsContent = readFileSync(modelMatrixTs, 'utf-8');
-
-  // Quick sync check: extract model IDs from Provider Registry section only
-  const registryStart = mdContent.indexOf('## 2. Provider Registry');
-  const registryEnd = mdContent.indexOf('## 3.', registryStart > -1 ? registryStart : 0);
-  const registrySection = registryStart > -1
-    ? mdContent.slice(registryStart, registryEnd > -1 ? registryEnd : undefined)
-    : '';
-  const mdIds = [...registrySection.matchAll(/\|\s*`([^`]+)`\s*\|/g)].map((m) => m[1]);
-  const tsIds = [...tsContent.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]);
-
-  const mdSet = new Set(mdIds);
-  const tsSet = new Set(tsIds);
-  const missingInTs = [...mdSet].filter((id) => !tsSet.has(id));
-  const missingInMd = [...tsSet].filter((id) => !mdSet.has(id));
-
-  if (missingInTs.length === 0 && missingInMd.length === 0) {
-    pass(`model-matrix.md ↔ model-matrix.ts in sync (${tsIds.length} models)`);
-  } else {
-    warn(
-      `Model matrix drift: ${missingInTs.length} in md only, ${missingInMd.length} in ts only`,
-      'Run: pnpm mcp:models:sync for details'
-    );
-  }
-
-  const lastUpdatedMatch = mdContent.match(/\*\*Last Updated\*\*:\s*(\d{4}-\d{2}-\d{2})/);
-  if (lastUpdatedMatch) {
-    const daysSince = Math.floor((Date.now() - new Date(lastUpdatedMatch[1]).getTime()) / (24 * 60 * 60 * 1000));
-    if (daysSince > 30) {
-      warn(`Model matrix last updated ${daysSince} days ago`, 'Run: pnpm mcp:models:update');
-    } else {
-      pass(`Model matrix updated ${daysSince} day(s) ago`);
-    }
-  }
-} else {
-  if (!existsSync(modelMatrixMd)) warn('templates/model-matrix.md not found');
-  if (!existsSync(modelMatrixTs)) warn('model-matrix.ts not found (core package)');
-}
-
-// =========================================================================
-// 7. Project State (.aidd/)
-// =========================================================================
-console.log(`\n${DIM}Project State (.aidd/)${RESET}`);
-
-let needsAiddSetup = false;
-const aiddDir = resolve(root, '.aidd');
-if (existsSync(aiddDir)) {
-  pass('.aidd/ directory found');
-
-  // --- Config schema validation ---
-  const configPath = resolve(aiddDir, 'config.json');
-  if (existsSync(configPath)) {
-    try {
-      const config = JSON.parse(readFileSync(configPath, 'utf-8'));
-      const expectedKeys = ['evolution', 'memory', 'modelTracking', 'ci', 'content'];
-      const configKeys = Object.keys(config);
-      const missing = expectedKeys.filter((k) => !configKeys.includes(k));
-      const unknown = configKeys.filter((k) => !expectedKeys.includes(k));
-
-      if (missing.length === 0 && unknown.length === 0) {
-        pass('config.json valid (all sections present)');
-      } else {
-        if (missing.length > 0) warn(`config.json missing sections: ${missing.join(', ')}`);
-        if (unknown.length > 0) info(`config.json has extra sections: ${unknown.join(', ')}`);
-      }
-
-      // Validate evolution sub-keys
-      if (config.evolution) {
-        const evo = config.evolution;
-        if (typeof evo.autoApplyThreshold === 'number' && (evo.autoApplyThreshold < 0 || evo.autoApplyThreshold > 100)) {
-          warn('config.json: evolution.autoApplyThreshold should be 0-100');
-        }
-        if (typeof evo.draftThreshold === 'number' && (evo.draftThreshold < 0 || evo.draftThreshold > 100)) {
-          warn('config.json: evolution.draftThreshold should be 0-100');
-        }
-      }
-
-      // Validate content.overrideMode
-      if (config.content?.overrideMode && !['merge', 'project_only', 'bundled_only'].includes(config.content.overrideMode)) {
-        warn(`config.json: content.overrideMode "${config.content.overrideMode}" invalid (merge|project_only|bundled_only)`);
-      }
-    } catch {
-      fail('config.json invalid JSON');
-    }
-  } else {
-    warn('config.json not found (using defaults)', 'Run: pnpm mcp:doctor to create');
-  }
-
-  // --- Subdirectory checks ---
-  const requiredDirs = ['sessions', 'evolution', 'branches', 'drafts'];
-  for (const sub of requiredDirs) {
-    const subDir = resolve(aiddDir, sub);
-    if (existsSync(subDir)) {
-      pass(`${sub}/ exists`);
-    } else {
-      warn(`${sub}/ missing`, 'Run: pnpm mcp:setup');
-    }
-  }
-
-  // --- Stale sessions ---
-  const sessionsDir = resolve(aiddDir, 'sessions');
-  if (existsSync(sessionsDir)) {
-    try {
-      const sessionFiles = readdirSync(sessionsDir).filter((f) => f.endsWith('.json'));
-      if (sessionFiles.length > 0) {
-        let pruneAfterDays = 90;
-        try {
-          const config = JSON.parse(readFileSync(resolve(aiddDir, 'config.json'), 'utf-8'));
-          pruneAfterDays = config.memory?.pruneAfterDays ?? 90;
-        } catch { /* use default */ }
-
-        const cutoff = Date.now() - (pruneAfterDays * 24 * 60 * 60 * 1000);
-        const stale = sessionFiles.filter((f) => {
-          try { return statSync(resolve(sessionsDir, f)).mtimeMs < cutoff; }
-          catch { return false; }
-        });
-
-        if (stale.length > 0) {
-          warn(`${stale.length} session(s) older than ${pruneAfterDays} days`, 'Use aidd_memory_prune tool to clean up');
-        } else {
-          pass(`${sessionFiles.length} session(s), none stale`);
-        }
-      } else {
-        info('No sessions recorded yet');
-      }
-    } catch { /* skip */ }
-  }
-
-  // --- Disk usage ---
-  const totalBytes = dirSizeBytes(aiddDir);
-  if (totalBytes > 50 * 1024 * 1024) {
-    warn(`.aidd/ using ${formatBytes(totalBytes)}`, 'Consider pruning old sessions');
-  } else {
-    info(`.aidd/ disk usage: ${formatBytes(totalBytes)}`);
-  }
-} else {
-  warn('.aidd/ directory not found');
-  needsAiddSetup = true;
-}
-
-// =========================================================================
-// 8. MCPs Installed
-// =========================================================================
-console.log(`\n${DIM}MCPs Installed${RESET}`);
-
-const home = homedir();
+console.log(`\n${DIM}MCPs installed${RESET} ${DIM}— External MCP servers${RESET}`);
 
 // --- Discover MCP servers from all config sources ---
 /** @type {Map<string, { config: any, label: string }>} */
@@ -757,8 +443,320 @@ if (discoveredServers.size === 0) {
   }
 }
 
-// --- Detect installed AI agents/editors ---
-console.log(`\n${DIM}Installed Agents${RESET}`);
+// =========================================================================
+// 3. aidd.md Framework
+// =========================================================================
+console.log(`\n${DIM}aidd.md Framework${RESET} ${DIM}— Content and structure${RESET}`);
+
+const agentsPath = resolve(root, 'AGENTS.md');
+if (existsSync(agentsPath)) {
+  pass('AGENTS.md found');
+} else {
+  fail('AGENTS.md missing');
+}
+
+const rulesDir = resolve(root, 'rules');
+if (existsSync(rulesDir)) {
+  const count = countFiles(rulesDir, '.md');
+  pass(`rules/ (${count} files)`);
+} else {
+  fail('rules/ missing');
+}
+
+const skillsDir = resolve(root, 'skills');
+let skillDirs = [];
+if (existsSync(skillsDir)) {
+  try {
+    skillDirs = readdirSync(skillsDir).filter((f) =>
+      existsSync(resolve(skillsDir, f, 'SKILL.md'))
+    );
+    pass(`skills/ (${skillDirs.length} agents)`);
+  } catch {
+    warn('skills/ exists but could not read');
+  }
+} else {
+  fail('skills/ missing');
+}
+
+const knowledgeDir = resolve(root, 'knowledge');
+if (existsSync(knowledgeDir)) {
+  try {
+    const domains = readdirSync(knowledgeDir).filter((f) =>
+      statSync(resolve(knowledgeDir, f)).isDirectory()
+    );
+    const totalEntries = countFilesRecursive(knowledgeDir, '.md');
+    pass(`knowledge/ (${domains.length} domains, ${totalEntries} entries)`);
+  } catch {
+    warn('knowledge/ exists but could not count entries');
+  }
+} else {
+  warn('knowledge/ missing');
+}
+
+const workflowsDir = resolve(root, 'workflows');
+if (existsSync(workflowsDir)) {
+  const mdCount = countFiles(workflowsDir, '.md');
+  const orchDir = resolve(workflowsDir, 'orchestrators');
+  const orchCount = existsSync(orchDir) ? countFiles(orchDir, '.md') : 0;
+  pass(`workflows/ (${mdCount} files + ${orchCount} orchestrators)`);
+} else {
+  warn('workflows/ missing');
+}
+
+const specDir = resolve(root, 'spec');
+if (existsSync(specDir)) {
+  const count = countFiles(specDir, '.md');
+  pass(`spec/ (${count} files)`);
+} else {
+  warn('spec/ missing');
+}
+
+const templatesDir = resolve(root, 'templates');
+if (existsSync(templatesDir)) {
+  const count = countFilesRecursive(templatesDir, '.md');
+  pass(`templates/ (${count} files)`);
+} else {
+  warn('templates/ missing');
+}
+
+const claudeMdPath = resolve(root, 'CLAUDE.md');
+if (existsSync(claudeMdPath)) {
+  pass('CLAUDE.md found');
+} else {
+  warn('CLAUDE.md missing (project instructions for Claude Code)');
+}
+
+// =========================================================================
+// 4. Skills Validation
+// =========================================================================
+console.log(`\n${DIM}Skills Validation${RESET} ${DIM}— Frontmatter integrity${RESET}`);
+
+if (skillDirs.length > 0) {
+  let validSkills = 0;
+  const skillIssues = [];
+
+  for (const dir of skillDirs) {
+    const skillPath = resolve(skillsDir, dir, 'SKILL.md');
+    try {
+      const content = readFileSync(skillPath, 'utf-8');
+      const fm = parseFrontmatter(content);
+      const errs = [];
+
+      if (!fm) {
+        errs.push('no frontmatter');
+      } else {
+        if (!fm.name) errs.push('missing name');
+        if (!fm.description) errs.push('missing description');
+        const tier = parseInt(fm.tier, 10);
+        if (!fm.tier || isNaN(tier) || tier < 1 || tier > 3) {
+          errs.push(`invalid tier: ${fm.tier ?? 'missing'}`);
+        }
+      }
+
+      if (errs.length === 0) {
+        validSkills++;
+      } else {
+        skillIssues.push({ dir, errs });
+      }
+    } catch {
+      skillIssues.push({ dir, errs: ['could not read'] });
+    }
+  }
+
+  if (skillIssues.length === 0) {
+    pass(`${validSkills}/${skillDirs.length} skills have valid frontmatter`);
+  } else {
+    warn(`${skillIssues.length} skill(s) with issues:`);
+    for (const { dir, errs } of skillIssues) {
+      console.log(`      ${DIM}→ ${dir}: ${errs.join(', ')}${RESET}`);
+    }
+  }
+} else {
+  info('No skills to validate');
+}
+
+// =========================================================================
+// 5. Cross-Reference Integrity
+// =========================================================================
+console.log(`\n${DIM}Cross-References${RESET} ${DIM}— AGENTS.md ↔ skills/${RESET}`);
+
+if (existsSync(agentsPath) && skillDirs.length > 0) {
+  try {
+    const agentsContent = readFileSync(agentsPath, 'utf-8');
+    // Extract skill dir refs like `skills/system-architect/` or `skills/system-architect/SKILL.md`
+    const refs = [...agentsContent.matchAll(/skills\/([a-z0-9-]+)\/?/g)].map((m) => m[1]);
+    const uniqueRefs = [...new Set(refs)];
+    const missing = uniqueRefs.filter((ref) => !skillDirs.includes(ref));
+
+    if (missing.length === 0) {
+      pass(`AGENTS.md → skills/ (${uniqueRefs.length} refs, all valid)`);
+    } else {
+      warn(`AGENTS.md references ${missing.length} missing skill(s):`);
+      for (const m of missing) {
+        console.log(`      ${DIM}→ skills/${m}/ not found${RESET}`);
+      }
+    }
+  } catch {
+    warn('Could not check cross-references');
+  }
+} else {
+  info('Skipping cross-reference check (missing AGENTS.md or skills/)');
+}
+
+// =========================================================================
+// 6. Model Matrix
+// =========================================================================
+console.log(`\n${DIM}Model Matrix${RESET} ${DIM}— SSOT sync and freshness${RESET}`);
+
+const modelMatrixMd = resolve(root, 'templates/model-matrix.md');
+const modelMatrixTs = resolve(root, 'mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts');
+
+if (existsSync(modelMatrixMd) && existsSync(modelMatrixTs)) {
+  const mdContent = readFileSync(modelMatrixMd, 'utf-8');
+  const tsContent = readFileSync(modelMatrixTs, 'utf-8');
+
+  // Quick sync check: extract model IDs from Provider Registry section only
+  const registryStart = mdContent.indexOf('## 2. Provider Registry');
+  const registryEnd = mdContent.indexOf('## 3.', registryStart > -1 ? registryStart : 0);
+  const registrySection = registryStart > -1
+    ? mdContent.slice(registryStart, registryEnd > -1 ? registryEnd : undefined)
+    : '';
+  const mdIds = [...registrySection.matchAll(/\|\s*`([^`]+)`\s*\|/g)].map((m) => m[1]);
+  const tsIds = [...tsContent.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]);
+
+  const mdSet = new Set(mdIds);
+  const tsSet = new Set(tsIds);
+  const missingInTs = [...mdSet].filter((id) => !tsSet.has(id));
+  const missingInMd = [...tsSet].filter((id) => !mdSet.has(id));
+
+  if (missingInTs.length === 0 && missingInMd.length === 0) {
+    pass(`model-matrix.md ↔ model-matrix.ts in sync (${tsIds.length} models)`);
+  } else {
+    warn(
+      `Model matrix drift: ${missingInTs.length} in md only, ${missingInMd.length} in ts only`,
+      'Run: pnpm mcp:models:sync for details'
+    );
+  }
+
+  const lastUpdatedMatch = mdContent.match(/\*\*Last Updated\*\*:\s*(\d{4}-\d{2}-\d{2})/);
+  if (lastUpdatedMatch) {
+    const daysSince = Math.floor((Date.now() - new Date(lastUpdatedMatch[1]).getTime()) / (24 * 60 * 60 * 1000));
+    if (daysSince > 30) {
+      warn(`Model matrix last updated ${daysSince} days ago`, 'Run: pnpm mcp:models:update');
+    } else {
+      pass(`Model matrix updated ${daysSince} day(s) ago`);
+    }
+  }
+} else {
+  if (!existsSync(modelMatrixMd)) warn('templates/model-matrix.md not found');
+  if (!existsSync(modelMatrixTs)) warn('model-matrix.ts not found (core package)');
+}
+
+// =========================================================================
+// 7. Project State (.aidd/)
+// =========================================================================
+console.log(`\n${DIM}Project State (.aidd/)${RESET} ${DIM}— Config, sessions, storage${RESET}`);
+
+let needsAiddSetup = false;
+const aiddDir = resolve(root, '.aidd');
+if (existsSync(aiddDir)) {
+  pass('.aidd/ directory found');
+
+  // --- Config schema validation ---
+  const configPath = resolve(aiddDir, 'config.json');
+  if (existsSync(configPath)) {
+    try {
+      const config = JSON.parse(readFileSync(configPath, 'utf-8'));
+      const expectedKeys = ['evolution', 'memory', 'modelTracking', 'ci', 'content'];
+      const configKeys = Object.keys(config);
+      const missing = expectedKeys.filter((k) => !configKeys.includes(k));
+      const unknown = configKeys.filter((k) => !expectedKeys.includes(k));
+
+      if (missing.length === 0 && unknown.length === 0) {
+        pass('config.json valid (all sections present)');
+      } else {
+        if (missing.length > 0) warn(`config.json missing sections: ${missing.join(', ')}`);
+        if (unknown.length > 0) info(`config.json has extra sections: ${unknown.join(', ')}`);
+      }
+
+      // Validate evolution sub-keys
+      if (config.evolution) {
+        const evo = config.evolution;
+        if (typeof evo.autoApplyThreshold === 'number' && (evo.autoApplyThreshold < 0 || evo.autoApplyThreshold > 100)) {
+          warn('config.json: evolution.autoApplyThreshold should be 0-100');
+        }
+        if (typeof evo.draftThreshold === 'number' && (evo.draftThreshold < 0 || evo.draftThreshold > 100)) {
+          warn('config.json: evolution.draftThreshold should be 0-100');
+        }
+      }
+
+      // Validate content.overrideMode
+      if (config.content?.overrideMode && !['merge', 'project_only', 'bundled_only'].includes(config.content.overrideMode)) {
+        warn(`config.json: content.overrideMode "${config.content.overrideMode}" invalid (merge|project_only|bundled_only)`);
+      }
+    } catch {
+      fail('config.json invalid JSON');
+    }
+  } else {
+    warn('config.json not found (using defaults)', 'Run: pnpm mcp:doctor to create');
+  }
+
+  // --- Subdirectory checks ---
+  const requiredDirs = ['sessions', 'evolution', 'branches', 'drafts'];
+  for (const sub of requiredDirs) {
+    const subDir = resolve(aiddDir, sub);
+    if (existsSync(subDir)) {
+      pass(`${sub}/ exists`);
+    } else {
+      warn(`${sub}/ missing`, 'Run: pnpm mcp:setup');
+    }
+  }
+
+  // --- Stale sessions ---
+  const sessionsDir = resolve(aiddDir, 'sessions');
+  if (existsSync(sessionsDir)) {
+    try {
+      const sessionFiles = readdirSync(sessionsDir).filter((f) => f.endsWith('.json'));
+      if (sessionFiles.length > 0) {
+        let pruneAfterDays = 90;
+        try {
+          const config = JSON.parse(readFileSync(resolve(aiddDir, 'config.json'), 'utf-8'));
+          pruneAfterDays = config.memory?.pruneAfterDays ?? 90;
+        } catch { /* use default */ }
+
+        const cutoff = Date.now() - (pruneAfterDays * 24 * 60 * 60 * 1000);
+        const stale = sessionFiles.filter((f) => {
+          try { return statSync(resolve(sessionsDir, f)).mtimeMs < cutoff; }
+          catch { return false; }
+        });
+
+        if (stale.length > 0) {
+          warn(`${stale.length} session(s) older than ${pruneAfterDays} days`, 'Use aidd_memory_prune tool to clean up');
+        } else {
+          pass(`${sessionFiles.length} session(s), none stale`);
+        }
+      } else {
+        info('No sessions recorded yet');
+      }
+    } catch { /* skip */ }
+  }
+
+  // --- Disk usage ---
+  const totalBytes = dirSizeBytes(aiddDir);
+  if (totalBytes > 50 * 1024 * 1024) {
+    warn(`.aidd/ using ${formatBytes(totalBytes)}`, 'Consider pruning old sessions');
+  } else {
+    info(`.aidd/ disk usage: ${formatBytes(totalBytes)}`);
+  }
+} else {
+  warn('.aidd/ directory not found');
+  needsAiddSetup = true;
+}
+
+// =========================================================================
+// 8. Installed Agents
+// =========================================================================
+console.log(`\n${DIM}Installed Agents${RESET} ${DIM}— Detected AI editors/CLIs${RESET}`);
 
 /**
  * Check if a directory is a real agent install (not just a skills/ dir
