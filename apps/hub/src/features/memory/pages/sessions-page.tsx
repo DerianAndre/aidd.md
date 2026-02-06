@@ -42,7 +42,7 @@ export function SessionsPage() {
       <PageHeader title="Sessions" description="Active and completed AI sessions" />
 
       <div className="mb-4 flex items-center gap-3">
-        <SearchField value={search} onChange={setSearch} className="max-w-xs">
+        <SearchField aria-label="Search sessions" value={search} onChange={setSearch} className="max-w-xs">
           <SearchField.Group>
             <SearchField.SearchIcon />
             <SearchField.Input placeholder="Search by branch or model..." />

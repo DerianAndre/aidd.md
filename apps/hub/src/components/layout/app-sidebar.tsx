@@ -1,4 +1,5 @@
-import { ListBox, Select, Label } from '@heroui/react';
+import type { Key } from '@heroui/react';
+import { ListBox, Select, Label, Header } from '@heroui/react';
 import {
   LayoutDashboard,
   Users,
@@ -109,10 +110,10 @@ export function AppSidebar() {
       {!collapsed && projects.length > 0 && (
         <div className="border-b border-divider p-3">
           <Select
-            selectedKey={activeProject ? activeProject.path : null}
-            onSelectionChange={(key) => {
-              if (key) {
-                switchProject(String(key));
+            value={activeProject ? activeProject.path : null}
+            onChange={(value: Key | null) => {
+              if (value) {
+                switchProject(String(value));
               }
             }}
           >
@@ -144,9 +145,9 @@ export function AppSidebar() {
           {NAV_GROUPS.map((group) => (
             <ListBox.Section key={group.label}>
               {!collapsed && (
-                <span className="px-3 text-xs font-medium uppercase tracking-wider text-default-400">
+                <Header className="px-3 text-xs font-medium uppercase tracking-wider text-default-400">
                   {group.label}
-                </span>
+                </Header>
               )}
               {group.items.map((item) => (
                 <ListBox.Item
@@ -154,10 +155,8 @@ export function AppSidebar() {
                   id={item.path}
                   textValue={item.label}
                 >
-                  <div className="flex items-center gap-3">
-                    <item.icon size={18} />
-                    {collapsed ? null : item.label}
-                  </div>
+                  <item.icon size={18} className="shrink-0" />
+                  {!collapsed && <Label>{item.label}</Label>}
                 </ListBox.Item>
               ))}
             </ListBox.Section>

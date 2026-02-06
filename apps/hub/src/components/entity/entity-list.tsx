@@ -53,6 +53,7 @@ export function EntityList<T>({
       {/* Toolbar */}
       <div className="flex items-center gap-3">
         <SearchField
+          aria-label="Search"
           value={search}
           onChange={setSearch}
           className="max-w-xs"

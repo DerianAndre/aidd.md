@@ -1,12 +1,31 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
+import { Spinner } from '@heroui/react';
 import { AppSidebar } from './app-sidebar';
 import { AppHeader } from './app-header';
 import { ErrorBoundary } from '../error-boundary';
 import { useEntityWatcher } from '../../lib/hooks/use-entity-watcher';
+import { useProjectStore } from '../../stores/project-store';
 
 export function AppLayout() {
+  const loading = useProjectStore((s) => s.loading);
+  const projects = useProjectStore((s) => s.projects);
+
   // Start file watcher — routes change events to feature stores
   useEntityWatcher();
+
+  // Wait for project store to initialize
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  // No projects registered → send to onboarding
+  if (projects.length === 0) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

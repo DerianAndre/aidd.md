@@ -80,7 +80,7 @@ export function ObservationsPage() {
       <PageHeader title="Observations" description="Typed observations from sessions" />
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <SearchField value={search} onChange={setSearch} className="max-w-xs">
+        <SearchField aria-label="Search observations" value={search} onChange={setSearch} className="max-w-xs">
           <SearchField.Group>
             <SearchField.SearchIcon />
             <SearchField.Input placeholder="Search observations..." />
