@@ -26,6 +26,10 @@ export const router = createBrowserRouter([
         element: lazyPage(() => import('./features/dashboard/pages/dashboard-page'), 'DashboardPage'),
       },
       {
+        path: 'projects',
+        element: lazyPage(() => import('./features/projects/pages/projects-page'), 'ProjectsPage'),
+      },
+      {
         path: 'agents',
         element: lazyPage(() => import('./features/agents/pages/agents-list-page'), 'AgentsListPage'),
       },
@@ -126,10 +130,6 @@ export const router = createBrowserRouter([
         element: lazyPage(() => import('./features/adapters/pages/adapters-page'), 'AdaptersPage'),
       },
     ],
-  },
-  {
-    path: '/onboarding',
-    element: lazyPage(() => import('./features/onboarding/pages/onboarding-page'), 'OnboardingPage'),
   },
   {
     path: '*',

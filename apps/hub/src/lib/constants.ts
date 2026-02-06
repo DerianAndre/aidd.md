@@ -1,5 +1,6 @@
 export const ROUTES = {
   DASHBOARD: '/',
+  PROJECTS: '/projects',
   AGENTS: '/agents',
   AGENT_DETAIL: '/agents/:name',
   RULES: '/rules',
@@ -26,7 +27,6 @@ export const ROUTES = {
   MCP_PLAYGROUND: '/mcp-playground',
   CONFIG: '/config',
   ADAPTERS: '/adapters',
-  ONBOARDING: '/onboarding',
 } as const;
 
 export const POLLING_INTERVALS = {

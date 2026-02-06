@@ -2,6 +2,7 @@ import type { Key } from '@heroui/react';
 import { ListBox, Select, Label, Header } from '@heroui/react';
 import {
   LayoutDashboard,
+  FolderKanban,
   Users,
   ShieldCheck,
   Zap,
@@ -33,6 +34,7 @@ const NAV_GROUPS = [
     label: 'Overview',
     items: [
       { label: 'Dashboard', path: ROUTES.DASHBOARD, icon: LayoutDashboard },
+      { label: 'Projects', path: ROUTES.PROJECTS, icon: FolderKanban },
     ],
   },
   {
@@ -47,7 +49,7 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: 'Memory',
+    label: 'Project Data',
     items: [
       { label: 'Sessions', path: ROUTES.SESSIONS, icon: History },
       { label: 'Observations', path: ROUTES.OBSERVATIONS, icon: Eye },
