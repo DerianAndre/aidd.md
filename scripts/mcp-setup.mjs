@@ -41,7 +41,7 @@ async function main() {
   // Step 2: Install dependencies
   console.log(`${DIM}[2/4]${RESET} Installing dependencies...\n`);
   try {
-    execFileSync('pnpm', ['install', '--filter', './mcps/**'], {
+    execFileSync('pnpm', ['install', '--filter', './mcps/**', '--filter', './packages/**'], {
       cwd: root,
       stdio: 'inherit',
       shell: true,

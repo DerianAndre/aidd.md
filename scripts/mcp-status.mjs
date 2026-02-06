@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
 const mcpsDir = resolve(root, 'mcps');
+const pkgsDir = resolve(root, 'packages');
 
 const GREEN = '\x1b[32m';
 const RED = '\x1b[31m';
@@ -20,20 +21,20 @@ const RESET = '\x1b[0m';
 const PREFIX = '[aidd.md]';
 
 const packages = [
-  { name: '@aidd.md/mcp-shared', dir: 'shared', dist: 'dist/index.js' },
-  { name: '@aidd.md/mcp', dir: 'mcp-aidd', dist: 'dist/index.js' },
-  { name: '@aidd.md/mcp-core', dir: 'mcp-aidd-core', dist: 'dist/index.js' },
-  { name: '@aidd.md/mcp-memory', dir: 'mcp-aidd-memory', dist: 'dist/index.js' },
-  { name: '@aidd.md/mcp-tools', dir: 'mcp-aidd-tools', dist: 'dist/index.js' },
+  { name: '@aidd.md/mcp-shared', baseDir: pkgsDir, dir: 'shared', dist: 'dist/index.js' },
+  { name: '@aidd.md/mcp', baseDir: mcpsDir, dir: 'mcp-aidd', dist: 'dist/index.js' },
+  { name: '@aidd.md/mcp-core', baseDir: mcpsDir, dir: 'mcp-aidd-core', dist: 'dist/index.js' },
+  { name: '@aidd.md/mcp-memory', baseDir: mcpsDir, dir: 'mcp-aidd-memory', dist: 'dist/index.js' },
+  { name: '@aidd.md/mcp-tools', baseDir: mcpsDir, dir: 'mcp-aidd-tools', dist: 'dist/index.js' },
 ];
 
 // Filter to only packages that exist in the workspace
 const existing = packages.filter((pkg) =>
-  existsSync(resolve(mcpsDir, pkg.dir, 'package.json'))
+  existsSync(resolve(pkg.baseDir, pkg.dir, 'package.json'))
 );
 
 if (existing.length === 0) {
-  console.log(`\n${PREFIX} ${RED}No MCP packages found in mcps/${RESET}`);
+  console.log(`\n${PREFIX} ${RED}No packages found${RESET}`);
   console.log(`${DIM}→ Run: pnpm mcp:doctor${RESET}\n`);
   process.exit(1);
 }
@@ -42,7 +43,7 @@ console.log(`\n${BOLD}${PREFIX} Status${RESET}\n`);
 
 let ready = 0;
 for (const pkg of existing) {
-  const distPath = resolve(mcpsDir, pkg.dir, pkg.dist);
+  const distPath = resolve(pkg.baseDir, pkg.dir, pkg.dist);
   const isBuilt = existsSync(distPath);
 
   if (isBuilt) {

@@ -246,19 +246,20 @@ if (pnpmVersion && parseInt(pnpmVersion) >= 10) {
 console.log(`\n${DIM}MCP Packages${RESET}`);
 
 const mcpsDir = resolve(root, 'mcps');
+const pkgsDir = resolve(root, 'packages');
 const packages = [
-  { name: '@aidd.md/mcp-shared', dir: 'shared', dist: 'dist/index.js' },
-  { name: '@aidd.md/mcp', dir: 'mcp-aidd', dist: 'dist/index.js' },
-  { name: '@aidd.md/mcp-core', dir: 'mcp-aidd-core', dist: 'dist/index.js' },
-  { name: '@aidd.md/mcp-memory', dir: 'mcp-aidd-memory', dist: 'dist/index.js' },
-  { name: '@aidd.md/mcp-tools', dir: 'mcp-aidd-tools', dist: 'dist/index.js' },
+  { name: '@aidd.md/mcp-shared', baseDir: pkgsDir, dir: 'shared', dist: 'dist/index.js' },
+  { name: '@aidd.md/mcp', baseDir: mcpsDir, dir: 'mcp-aidd', dist: 'dist/index.js' },
+  { name: '@aidd.md/mcp-core', baseDir: mcpsDir, dir: 'mcp-aidd-core', dist: 'dist/index.js' },
+  { name: '@aidd.md/mcp-memory', baseDir: mcpsDir, dir: 'mcp-aidd-memory', dist: 'dist/index.js' },
+  { name: '@aidd.md/mcp-tools', baseDir: mcpsDir, dir: 'mcp-aidd-tools', dist: 'dist/index.js' },
 ];
 
 let built = 0;
 let pkgExists = 0;
 
 for (const pkg of packages) {
-  const pkgDir = resolve(mcpsDir, pkg.dir);
+  const pkgDir = resolve(pkg.baseDir, pkg.dir);
   const distPath = resolve(pkgDir, pkg.dist);
 
   if (!existsSync(resolve(pkgDir, 'package.json'))) {
@@ -284,7 +285,7 @@ if (pkgExists === 0) {
 // Check key dependency (pnpm may hoist to workspace package node_modules)
 const sdkLocations = [
   resolve(root, 'node_modules/@modelcontextprotocol/sdk/package.json'),
-  resolve(mcpsDir, 'shared/node_modules/@modelcontextprotocol/sdk/package.json'),
+  resolve(pkgsDir, 'shared/node_modules/@modelcontextprotocol/sdk/package.json'),
   resolve(mcpsDir, 'mcp-aidd/node_modules/@modelcontextprotocol/sdk/package.json'),
 ];
 const sdkPath = sdkLocations.find((p) => existsSync(p));

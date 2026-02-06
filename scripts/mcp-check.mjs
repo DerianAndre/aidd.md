@@ -12,18 +12,19 @@ try {
   const __dirname = dirname(fileURLToPath(import.meta.url));
   const root = resolve(__dirname, '..');
   const mcpsDir = resolve(root, 'mcps');
+  const pkgsDir = resolve(root, 'packages');
 
   const packages = [
-    { dir: 'shared', dist: 'dist/index.js' },
-    { dir: 'mcp-aidd', dist: 'dist/index.js' },
-    { dir: 'mcp-aidd-core', dist: 'dist/index.js' },
-    { dir: 'mcp-aidd-memory', dist: 'dist/index.js' },
-    { dir: 'mcp-aidd-tools', dist: 'dist/index.js' },
+    { baseDir: pkgsDir, dir: 'shared', dist: 'dist/index.js' },
+    { baseDir: mcpsDir, dir: 'mcp-aidd', dist: 'dist/index.js' },
+    { baseDir: mcpsDir, dir: 'mcp-aidd-core', dist: 'dist/index.js' },
+    { baseDir: mcpsDir, dir: 'mcp-aidd-memory', dist: 'dist/index.js' },
+    { baseDir: mcpsDir, dir: 'mcp-aidd-tools', dist: 'dist/index.js' },
   ];
 
   // Count only packages that exist in the workspace
   const existing = packages.filter((pkg) =>
-    existsSync(resolve(mcpsDir, pkg.dir, 'package.json'))
+    existsSync(resolve(pkg.baseDir, pkg.dir, 'package.json'))
   );
 
   if (existing.length === 0) {
@@ -33,7 +34,7 @@ try {
 
   let ready = 0;
   for (const pkg of existing) {
-    if (existsSync(resolve(mcpsDir, pkg.dir, pkg.dist))) {
+    if (existsSync(resolve(pkg.baseDir, pkg.dir, pkg.dist))) {
       ready++;
     }
   }
