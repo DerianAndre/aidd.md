@@ -128,8 +128,36 @@ Format `X→Y` means: starts at tier X for planning, transitions to tier Y for e
 
 ---
 
+## 5. Model Resolution
+
+When a task is classified with a tier (1, 2, or 3), resolve the tier to a specific model using the **Model Routing Matrix**:
+
+> **SSOT**: [templates/model-matrix.md](model-matrix.md)
+> **MCP Tool**: `aidd_model_route` — accepts `{ tier, provider?, task? }`, returns optimal model with alternatives and fallback chain.
+
+### Resolution Flow
+
+```
+aidd_classify_task → tier (1/2/3)
+  ↓
+aidd_model_route → { recommended, alternatives, fallbackChain }
+  ↓ (optionally)
+aidd_model_recommend → historical performance override
+```
+
+### Quick Reference
+
+| Tier | Default Provider Priority |
+|------|--------------------------|
+| 1 (HIGH) | anthropic → openai → google → xai → deepseek |
+| 2 (STANDARD) | anthropic → openai → google → mistral → meta |
+| 3 (LOW) | anthropic → google → mistral → meta |
+
+---
+
 ## Cross-References
 
+- **Model matrix**: `templates/model-matrix.md`
 - **Orchestrator logic**: `rules/orchestrator.md`
 - **Decision tree**: `rules/decision-tree.md`
 - **ASDD lifecycle**: `spec/asdd-lifecycle.md`

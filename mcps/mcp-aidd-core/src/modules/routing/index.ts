@@ -6,8 +6,9 @@ import {
   parseAllMarkdownTables,
   extractSection,
 } from '@aidd.md/mcp-shared';
-import type { AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
+import type { AiddModule, ModelTier, ModuleContext } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { routeToModel, MODEL_MATRIX, TIER_DEFAULTS, COGNITIVE_TIER_MAP } from './model-matrix.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -401,6 +402,90 @@ export const routingModule: AiddModule = {
         }
 
         return createTextResult(lines.join('\n'));
+      },
+    });
+
+    // -----------------------------------------------------------------------
+    // Model routing tool
+    // -----------------------------------------------------------------------
+
+    registerTool(server, {
+      name: 'aidd_model_route',
+      description:
+        'Route to the optimal model for a given tier and optional constraints. Uses the multi-provider model matrix (SSOT: templates/model-matrix.md). Compose with aidd_classify_task to get the tier first.',
+      schema: {
+        tier: z
+          .number()
+          .int()
+          .min(1)
+          .max(3)
+          .describe('Model tier: 1 (HIGH), 2 (STANDARD), 3 (LOW)'),
+        provider: z
+          .string()
+          .optional()
+          .describe('Preferred provider (anthropic, openai, google, xai, meta, mistral, deepseek)'),
+        task: z
+          .string()
+          .optional()
+          .describe('Task description — if cognitive keywords imply a higher tier, the tier escalates automatically'),
+        excludeDeprecated: z
+          .boolean()
+          .optional()
+          .default(true)
+          .describe('Exclude deprecated models from results'),
+      },
+      annotations: { readOnlyHint: true },
+      handler: async (args) => {
+        const { tier, provider, task, excludeDeprecated } = args as {
+          tier: number;
+          provider?: string;
+          task?: string;
+          excludeDeprecated?: boolean;
+        };
+        const result = routeToModel({
+          tier: tier as ModelTier,
+          provider,
+          task,
+          excludeDeprecated,
+        });
+        return createJsonResult(result);
+      },
+    });
+
+    registerTool(server, {
+      name: 'aidd_get_model_matrix',
+      description:
+        'Get the full multi-provider model matrix showing all registered models with their tiers, cognitive profiles, and status.',
+      schema: {
+        tier: z
+          .number()
+          .int()
+          .min(1)
+          .max(3)
+          .optional()
+          .describe('Filter by tier (1, 2, or 3). Omit for all tiers.'),
+        provider: z
+          .string()
+          .optional()
+          .describe('Filter by provider name'),
+      },
+      annotations: { readOnlyHint: true },
+      handler: async (args) => {
+        const { tier, provider } = args as { tier?: number; provider?: string };
+        let models = MODEL_MATRIX;
+
+        if (tier !== undefined) {
+          models = models.filter((m) => m.tier === tier);
+        }
+        if (provider) {
+          models = models.filter((m) => m.provider === provider.toLowerCase());
+        }
+
+        return createJsonResult({
+          models,
+          tierDefaults: TIER_DEFAULTS,
+          cognitiveTierMap: COGNITIVE_TIER_MAP,
+        });
       },
     });
   },

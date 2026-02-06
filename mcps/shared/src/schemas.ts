@@ -1,6 +1,34 @@
 import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
+// Model Routing Matrix
+// ---------------------------------------------------------------------------
+
+export const modelTierSchema = z.union([z.literal(1), z.literal(2), z.literal(3)]);
+
+export const modelStatusSchema = z.enum(['active', 'deprecated', 'preview']);
+
+export const modelEntrySchema = z.object({
+  id: z.string(),
+  provider: z.string(),
+  name: z.string(),
+  tier: modelTierSchema,
+  cognitiveProfile: z.array(z.string()),
+  contextWindow: z.number().int().min(0),
+  costTier: z.enum(['$', '$$', '$$$']),
+  status: modelStatusSchema,
+  deprecationDate: z.string().optional(),
+  selfHosted: z.boolean().optional(),
+});
+
+export const modelRoutingResultSchema = z.object({
+  tier: modelTierSchema,
+  recommended: modelEntrySchema,
+  alternatives: z.array(modelEntrySchema),
+  fallbackChain: z.array(z.string()),
+});
+
+// ---------------------------------------------------------------------------
 // AI Provider
 // ---------------------------------------------------------------------------
 

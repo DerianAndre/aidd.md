@@ -148,6 +148,34 @@ export const DEFAULT_CONFIG: AiddConfig = {
 };
 
 // ---------------------------------------------------------------------------
+// Model Routing Matrix
+// ---------------------------------------------------------------------------
+
+export type ModelTier = 1 | 2 | 3;
+
+export type ModelStatus = 'active' | 'deprecated' | 'preview';
+
+export interface ModelEntry {
+  id: string;
+  provider: string;
+  name: string;
+  tier: ModelTier;
+  cognitiveProfile: string[];
+  contextWindow: number;
+  costTier: '$' | '$$' | '$$$';
+  status: ModelStatus;
+  deprecationDate?: string;
+  selfHosted?: boolean;
+}
+
+export interface ModelRoutingResult {
+  tier: ModelTier;
+  recommended: ModelEntry;
+  alternatives: ModelEntry[];
+  fallbackChain: string[];
+}
+
+// ---------------------------------------------------------------------------
 // Session State (Memory Layer 1)
 // ---------------------------------------------------------------------------
 
