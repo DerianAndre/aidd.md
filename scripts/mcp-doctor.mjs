@@ -172,6 +172,55 @@ if (existsSync(specDir)) {
   warn('spec/ missing');
 }
 
+// --- Model Matrix ---
+console.log(`\n${DIM}Model Matrix${RESET}`);
+
+const modelMatrixMd = resolve(root, 'templates/model-matrix.md');
+const modelMatrixTs = resolve(root, 'mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts');
+
+if (existsSync(modelMatrixMd) && existsSync(modelMatrixTs)) {
+  const mdContent = readFileSync(modelMatrixMd, 'utf-8');
+  const tsContent = readFileSync(modelMatrixTs, 'utf-8');
+
+  // Quick sync check: extract model IDs from Provider Registry section only
+  const registryStart = mdContent.indexOf('## 2. Provider Registry');
+  const registryEnd = mdContent.indexOf('## 3.', registryStart > -1 ? registryStart : 0);
+  const registrySection = registryStart > -1
+    ? mdContent.slice(registryStart, registryEnd > -1 ? registryEnd : undefined)
+    : '';
+  // Match backticked IDs in table rows (column 3 of Provider Registry tables)
+  const mdIds = [...registrySection.matchAll(/\|\s*`([^`]+)`\s*\|/g)].map((m) => m[1]);
+  const tsIds = [...tsContent.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]);
+
+  const mdSet = new Set(mdIds);
+  const tsSet = new Set(tsIds);
+  const missingInTs = [...mdSet].filter((id) => !tsSet.has(id));
+  const missingInMd = [...tsSet].filter((id) => !mdSet.has(id));
+
+  if (missingInTs.length === 0 && missingInMd.length === 0) {
+    pass(`model-matrix.md ↔ model-matrix.ts in sync (${tsIds.length} models)`);
+  } else {
+    warn(
+      `Model matrix drift: ${missingInTs.length} in md only, ${missingInMd.length} in ts only`,
+      'Run: pnpm mcp:models:sync for details'
+    );
+  }
+
+  // Check last updated date
+  const lastUpdatedMatch = mdContent.match(/\*\*Last Updated\*\*:\s*(\d{4}-\d{2}-\d{2})/);
+  if (lastUpdatedMatch) {
+    const daysSince = Math.floor((Date.now() - new Date(lastUpdatedMatch[1]).getTime()) / (24 * 60 * 60 * 1000));
+    if (daysSince > 30) {
+      warn(`Model matrix last updated ${daysSince} days ago`, 'Run: pnpm mcp:models:update');
+    } else {
+      pass(`Model matrix updated ${daysSince} day(s) ago`);
+    }
+  }
+} else {
+  if (!existsSync(modelMatrixMd)) warn('templates/model-matrix.md not found');
+  if (!existsSync(modelMatrixTs)) warn('model-matrix.ts not found (core package)');
+}
+
 // --- Project State ---
 console.log(`\n${DIM}Project State (.aidd/)${RESET}`);
 

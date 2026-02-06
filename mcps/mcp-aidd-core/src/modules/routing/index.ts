@@ -8,7 +8,7 @@ import {
 } from '@aidd.md/mcp-shared';
 import type { AiddModule, ModelTier, ModuleContext } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { routeToModel, MODEL_MATRIX, TIER_DEFAULTS, COGNITIVE_TIER_MAP } from './model-matrix.js';
+import { routeToModel, getMatrixStatus, MODEL_MATRIX, TIER_DEFAULTS, COGNITIVE_TIER_MAP } from './model-matrix.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -486,6 +486,18 @@ export const routingModule: AiddModule = {
           tierDefaults: TIER_DEFAULTS,
           cognitiveTierMap: COGNITIVE_TIER_MAP,
         });
+      },
+    });
+
+    registerTool(server, {
+      name: 'aidd_model_matrix_status',
+      description:
+        'Get the health status of the model routing matrix: total models, distribution by tier/provider/status, deprecated models, and upcoming deprecation alerts.',
+      schema: {},
+      annotations: { readOnlyHint: true },
+      handler: async () => {
+        const status = getMatrixStatus();
+        return createJsonResult(status);
       },
     });
   },

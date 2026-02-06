@@ -214,11 +214,41 @@ Tier 1 unavailable → FAIL (no silent degradation)
 
 ---
 
+## 7. Maintenance
+
+### Commands
+
+| Command | Purpose | Network |
+|---------|---------|---------|
+| `pnpm mcp:models:sync` | Validate markdown ↔ TypeScript sync, check deprecations | Offline |
+| `pnpm mcp:models:update` | Fetch latest models from OpenRouter API, report changes | Online |
+| `pnpm mcp:doctor` | Includes model matrix sync check (quick) | Offline |
+
+### Update Workflow
+
+1. Run `pnpm mcp:models:update` to see what changed in the ecosystem
+2. Edit this file (`templates/model-matrix.md`) — add/remove/update models
+3. Mirror changes to `mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts`
+4. Run `pnpm mcp:models:sync` to verify sync
+5. Run `pnpm mcp:typecheck && pnpm mcp:build` to rebuild
+6. Update the **Last Updated** date at the top of this file
+
+### When to Update
+
+- A tracked provider announces a new model or deprecation
+- `pnpm mcp:models:update` reports new models from tracked providers
+- `pnpm mcp:models:sync` reports upcoming deprecations (< 30 days)
+- Quarterly review as a minimum cadence
+
+---
+
 ## Cross-References
 
 - **Architect Mode**: `~/.claude/templates/architect-mode.md` — phases, escalation rules, parallel dispatch
 - **Routing Table**: `templates/routing.md` — task-to-agent/workflow/template mapping
 - **CLAUDE.md**: `~/.claude/CLAUDE.md` — model intelligence tiers (Section 2)
 - **MCP Tool**: `aidd_model_route` — programmatic routing via the model matrix
+- **MCP Tool**: `aidd_get_model_matrix` — retrieve full matrix with optional filters
+- **MCP Tool**: `aidd_model_matrix_status` — matrix health, deprecation alerts
 - **MCP Analytics**: `aidd_model_recommend` — historical performance-based recommendations
 - **MCP Classification**: `aidd_classify_task` — task description → tier assignment

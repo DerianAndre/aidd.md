@@ -31,6 +31,8 @@
     "mcp:status": "node scripts/mcp-status.mjs",
     "mcp:doctor": "node scripts/mcp-doctor.mjs",
     "mcp:check": "node scripts/mcp-check.mjs",
+    "mcp:models:sync": "node scripts/model-matrix-sync.mjs",
+    "mcp:models:update": "node scripts/model-matrix-update.mjs",
     "validate:mermaid": "tsx skills/system-architect/scripts/validate-mermaid.ts",
     "validate:openapi": "tsx skills/contract-architect/scripts/validate-openapi.ts",
     "validate:sql": "tsx skills/data-architect/scripts/validate-sql.ts",

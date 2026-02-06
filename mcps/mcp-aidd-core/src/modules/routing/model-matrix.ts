@@ -311,3 +311,67 @@ export function routeToModel(options: {
     fallbackChain: providerOrder,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Matrix status (for aidd_model_matrix_status tool)
+// ---------------------------------------------------------------------------
+
+export interface MatrixStatusResult {
+  totalModels: number;
+  byTier: Record<number, number>;
+  byProvider: Record<string, number>;
+  byStatus: Record<string, number>;
+  deprecatedModels: Array<{ id: string; provider: string; deprecationDate?: string }>;
+  upcomingDeprecations: Array<{ id: string; provider: string; deprecationDate: string; daysLeft: number }>;
+  providers: string[];
+}
+
+export function getMatrixStatus(): MatrixStatusResult {
+  const byTier: Record<number, number> = { 1: 0, 2: 0, 3: 0 };
+  const byProvider: Record<string, number> = {};
+  const byStatus: Record<string, number> = {};
+  const deprecatedModels: MatrixStatusResult['deprecatedModels'] = [];
+  const upcomingDeprecations: MatrixStatusResult['upcomingDeprecations'] = [];
+  const providers = new Set<string>();
+
+  const now = Date.now();
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
+  for (const model of MODEL_MATRIX) {
+    byTier[model.tier] = (byTier[model.tier] || 0) + 1;
+    byProvider[model.provider] = (byProvider[model.provider] || 0) + 1;
+    byStatus[model.status] = (byStatus[model.status] || 0) + 1;
+    providers.add(model.provider);
+
+    if (model.status === 'deprecated') {
+      deprecatedModels.push({
+        id: model.id,
+        provider: model.provider,
+        deprecationDate: model.deprecationDate,
+      });
+    }
+
+    if (model.deprecationDate) {
+      const depDate = new Date(model.deprecationDate).getTime();
+      const diffMs = depDate - now;
+      if (diffMs > 0 && diffMs < thirtyDaysMs) {
+        upcomingDeprecations.push({
+          id: model.id,
+          provider: model.provider,
+          deprecationDate: model.deprecationDate,
+          daysLeft: Math.ceil(diffMs / (24 * 60 * 60 * 1000)),
+        });
+      }
+    }
+  }
+
+  return {
+    totalModels: MODEL_MATRIX.length,
+    byTier,
+    byProvider,
+    byStatus,
+    deprecatedModels,
+    upcomingDeprecations,
+    providers: [...providers],
+  };
+}
