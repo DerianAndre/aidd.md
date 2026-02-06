@@ -8,3 +8,5 @@ dist/
 Thumbs.db
 nul
 target/
+# AIDD runtime state
+.aidd/

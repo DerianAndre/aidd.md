@@ -42,8 +42,8 @@
 
 ### 💻 Fullstack Agent
 
-**Purpose:** End-to-end implementation, complete features, integrations  
-**Skills:** `skills/fullstack/`  
+**Purpose:** End-to-end implementation, complete features, integrations
+**Skills:** Composite — coordinates all specialized skills via `workflows/orchestrators/full-stack-feature.md`
 **Activation:** Development tasks, feature implementation
 
 ### 🎨 Interface Artisan

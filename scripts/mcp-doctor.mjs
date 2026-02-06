@@ -3,10 +3,11 @@
  * MCP Doctor — Full diagnostic of the AIDD MCP environment.
  * Usage: node scripts/mcp-doctor.mjs
  */
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, appendFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { createInterface } from 'node:readline';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
@@ -30,6 +31,7 @@ function warn(msg, hint) {
   console.log(`  ${YELLOW}⚠️  ${msg}${RESET}`);
   if (hint) console.log(`      ${DIM}→ ${hint}${RESET}`);
 }
+function info(msg) { console.log(`  ${DIM}ℹ  ${msg}${RESET}`); }
 
 function getVersion(cmd, args) {
   try {
@@ -47,9 +49,69 @@ function countFiles(dir, ext) {
   }
 }
 
+function countFilesRecursive(dir, ext) {
+  let count = 0;
+  try {
+    for (const entry of readdirSync(dir)) {
+      const full = resolve(dir, entry);
+      if (statSync(full).isDirectory()) {
+        count += countFilesRecursive(full, ext);
+      } else if (entry.endsWith(ext)) {
+        count++;
+      }
+    }
+  } catch { /* skip unreadable dirs */ }
+  return count;
+}
+
+function dirSizeBytes(dir) {
+  let total = 0;
+  try {
+    for (const entry of readdirSync(dir)) {
+      const full = resolve(dir, entry);
+      const st = statSync(full);
+      if (st.isDirectory()) {
+        total += dirSizeBytes(full);
+      } else {
+        total += st.size;
+      }
+    }
+  } catch { /* skip unreadable */ }
+  return total;
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/**
+ * Parse YAML frontmatter from a markdown string.
+ * Returns key-value object or null if no frontmatter found.
+ */
+function parseFrontmatter(content) {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!match) return null;
+  const fm = {};
+  for (const line of match[1].split('\n')) {
+    const idx = line.indexOf(':');
+    if (idx > 0) {
+      const key = line.slice(0, idx).trim();
+      const val = line.slice(idx + 1).trim();
+      if (key && !key.startsWith('#') && !key.startsWith('-')) {
+        fm[key] = val;
+      }
+    }
+  }
+  return fm;
+}
+
 console.log(`\n${BOLD}${PREFIX} Doctor${RESET}\n`);
 
-// --- Environment ---
+// =========================================================================
+// 1. Environment
+// =========================================================================
 console.log(`${DIM}Environment${RESET}`);
 
 const nodeVersion = getVersion('node', ['--version']);
@@ -66,7 +128,9 @@ if (pnpmVersion && parseInt(pnpmVersion) >= 10) {
   fail(`pnpm ${pnpmVersion ?? 'not found'} (requires v10+)`);
 }
 
-// --- MCP Packages ---
+// =========================================================================
+// 2. MCP Packages
+// =========================================================================
 console.log(`\n${DIM}MCP Packages${RESET}`);
 
 const mcpsDir = resolve(root, 'mcps');
@@ -79,7 +143,7 @@ const packages = [
 ];
 
 let built = 0;
-let exists = 0;
+let pkgExists = 0;
 
 for (const pkg of packages) {
   const pkgDir = resolve(mcpsDir, pkg.dir);
@@ -89,7 +153,7 @@ for (const pkg of packages) {
     continue; // Package not created yet — skip silently
   }
 
-  exists++;
+  pkgExists++;
 
   if (existsSync(distPath)) {
     built++;
@@ -99,13 +163,33 @@ for (const pkg of packages) {
   }
 }
 
-if (exists === 0) {
+if (pkgExists === 0) {
   warn('No MCP packages found yet', 'Run: pnpm mcp:setup');
-} else if (built === exists) {
-  pass(`${built}/${exists} packages built`);
+} else if (built === pkgExists) {
+  pass(`${built}/${pkgExists} packages built`);
 }
 
-// --- AIDD Framework Content ---
+// Check key dependency (pnpm may hoist to workspace package node_modules)
+const sdkLocations = [
+  resolve(root, 'node_modules/@modelcontextprotocol/sdk/package.json'),
+  resolve(mcpsDir, 'shared/node_modules/@modelcontextprotocol/sdk/package.json'),
+  resolve(mcpsDir, 'mcp-aidd/node_modules/@modelcontextprotocol/sdk/package.json'),
+];
+const sdkPath = sdkLocations.find((p) => existsSync(p));
+if (sdkPath) {
+  try {
+    const sdkPkg = JSON.parse(readFileSync(sdkPath, 'utf-8'));
+    pass(`@modelcontextprotocol/sdk ${sdkPkg.version}`);
+  } catch {
+    pass('@modelcontextprotocol/sdk installed');
+  }
+} else {
+  fail('@modelcontextprotocol/sdk not installed', 'Run: pnpm install');
+}
+
+// =========================================================================
+// 3. AIDD Framework Content
+// =========================================================================
 console.log(`\n${DIM}AIDD Framework${RESET}`);
 
 const agentsPath = resolve(root, 'AGENTS.md');
@@ -124,12 +208,13 @@ if (existsSync(rulesDir)) {
 }
 
 const skillsDir = resolve(root, 'skills');
+let skillDirs = [];
 if (existsSync(skillsDir)) {
   try {
-    const agents = readdirSync(skillsDir).filter((f) => {
-      return existsSync(resolve(skillsDir, f, 'SKILL.md'));
-    });
-    pass(`skills/ (${agents.length} agents)`);
+    skillDirs = readdirSync(skillsDir).filter((f) =>
+      existsSync(resolve(skillsDir, f, 'SKILL.md'))
+    );
+    pass(`skills/ (${skillDirs.length} agents)`);
   } catch {
     warn('skills/ exists but could not read');
   }
@@ -139,16 +224,12 @@ if (existsSync(skillsDir)) {
 
 const knowledgeDir = resolve(root, 'knowledge');
 if (existsSync(knowledgeDir)) {
-  let entryCount = 0;
   try {
-    const categories = readdirSync(knowledgeDir).filter((f) =>
-      existsSync(resolve(knowledgeDir, f)) &&
-      readdirSync(resolve(knowledgeDir, f)).some((e) => e.endsWith('.md'))
+    const domains = readdirSync(knowledgeDir).filter((f) =>
+      statSync(resolve(knowledgeDir, f)).isDirectory()
     );
-    for (const cat of categories) {
-      entryCount += countFiles(resolve(knowledgeDir, cat), '.md');
-    }
-    pass(`knowledge/ (${entryCount} entries)`);
+    const totalEntries = countFilesRecursive(knowledgeDir, '.md');
+    pass(`knowledge/ (${domains.length} domains, ${totalEntries} entries)`);
   } catch {
     warn('knowledge/ exists but could not count entries');
   }
@@ -158,8 +239,10 @@ if (existsSync(knowledgeDir)) {
 
 const workflowsDir = resolve(root, 'workflows');
 if (existsSync(workflowsDir)) {
-  const count = countFiles(workflowsDir, '.md');
-  pass(`workflows/ (${count} files)`);
+  const mdCount = countFiles(workflowsDir, '.md');
+  const orchDir = resolve(workflowsDir, 'orchestrators');
+  const orchCount = existsSync(orchDir) ? countFiles(orchDir, '.md') : 0;
+  pass(`workflows/ (${mdCount} files + ${orchCount} orchestrators)`);
 } else {
   warn('workflows/ missing');
 }
@@ -172,7 +255,94 @@ if (existsSync(specDir)) {
   warn('spec/ missing');
 }
 
-// --- Model Matrix ---
+const templatesDir = resolve(root, 'templates');
+if (existsSync(templatesDir)) {
+  const count = countFilesRecursive(templatesDir, '.md');
+  pass(`templates/ (${count} files)`);
+} else {
+  warn('templates/ missing');
+}
+
+// =========================================================================
+// 4. Skills Validation
+// =========================================================================
+console.log(`\n${DIM}Skills Validation${RESET}`);
+
+if (skillDirs.length > 0) {
+  let validSkills = 0;
+  const skillIssues = [];
+
+  for (const dir of skillDirs) {
+    const skillPath = resolve(skillsDir, dir, 'SKILL.md');
+    try {
+      const content = readFileSync(skillPath, 'utf-8');
+      const fm = parseFrontmatter(content);
+      const errs = [];
+
+      if (!fm) {
+        errs.push('no frontmatter');
+      } else {
+        if (!fm.name) errs.push('missing name');
+        if (!fm.description) errs.push('missing description');
+        const tier = parseInt(fm.tier, 10);
+        if (!fm.tier || isNaN(tier) || tier < 1 || tier > 3) {
+          errs.push(`invalid tier: ${fm.tier ?? 'missing'}`);
+        }
+      }
+
+      if (errs.length === 0) {
+        validSkills++;
+      } else {
+        skillIssues.push({ dir, errs });
+      }
+    } catch {
+      skillIssues.push({ dir, errs: ['could not read'] });
+    }
+  }
+
+  if (skillIssues.length === 0) {
+    pass(`${validSkills}/${skillDirs.length} skills have valid frontmatter`);
+  } else {
+    warn(`${skillIssues.length} skill(s) with issues:`);
+    for (const { dir, errs } of skillIssues) {
+      console.log(`      ${DIM}→ ${dir}: ${errs.join(', ')}${RESET}`);
+    }
+  }
+} else {
+  info('No skills to validate');
+}
+
+// =========================================================================
+// 5. Cross-Reference Integrity
+// =========================================================================
+console.log(`\n${DIM}Cross-References${RESET}`);
+
+if (existsSync(agentsPath) && skillDirs.length > 0) {
+  try {
+    const agentsContent = readFileSync(agentsPath, 'utf-8');
+    // Extract skill dir refs like `skills/system-architect/` or `skills/system-architect/SKILL.md`
+    const refs = [...agentsContent.matchAll(/skills\/([a-z0-9-]+)\/?/g)].map((m) => m[1]);
+    const uniqueRefs = [...new Set(refs)];
+    const missing = uniqueRefs.filter((ref) => !skillDirs.includes(ref));
+
+    if (missing.length === 0) {
+      pass(`AGENTS.md → skills/ (${uniqueRefs.length} refs, all valid)`);
+    } else {
+      warn(`AGENTS.md references ${missing.length} missing skill(s):`);
+      for (const m of missing) {
+        console.log(`      ${DIM}→ skills/${m}/ not found${RESET}`);
+      }
+    }
+  } catch {
+    warn('Could not check cross-references');
+  }
+} else {
+  info('Skipping cross-reference check (missing AGENTS.md or skills/)');
+}
+
+// =========================================================================
+// 6. Model Matrix
+// =========================================================================
 console.log(`\n${DIM}Model Matrix${RESET}`);
 
 const modelMatrixMd = resolve(root, 'templates/model-matrix.md');
@@ -188,7 +358,6 @@ if (existsSync(modelMatrixMd) && existsSync(modelMatrixTs)) {
   const registrySection = registryStart > -1
     ? mdContent.slice(registryStart, registryEnd > -1 ? registryEnd : undefined)
     : '';
-  // Match backticked IDs in table rows (column 3 of Provider Registry tables)
   const mdIds = [...registrySection.matchAll(/\|\s*`([^`]+)`\s*\|/g)].map((m) => m[1]);
   const tsIds = [...tsContent.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]);
 
@@ -206,7 +375,6 @@ if (existsSync(modelMatrixMd) && existsSync(modelMatrixTs)) {
     );
   }
 
-  // Check last updated date
   const lastUpdatedMatch = mdContent.match(/\*\*Last Updated\*\*:\s*(\d{4}-\d{2}-\d{2})/);
   if (lastUpdatedMatch) {
     const daysSince = Math.floor((Date.now() - new Date(lastUpdatedMatch[1]).getTime()) / (24 * 60 * 60 * 1000));
@@ -221,52 +389,216 @@ if (existsSync(modelMatrixMd) && existsSync(modelMatrixTs)) {
   if (!existsSync(modelMatrixTs)) warn('model-matrix.ts not found (core package)');
 }
 
-// --- Project State ---
+// =========================================================================
+// 7. Claude Code Integration
+// =========================================================================
+console.log(`\n${DIM}Claude Code Integration${RESET}`);
+
+const claudeSettingsPath = resolve(root, '.claude', 'settings.json');
+if (existsSync(claudeSettingsPath)) {
+  try {
+    const settings = JSON.parse(readFileSync(claudeSettingsPath, 'utf-8'));
+    const mcpServers = settings.mcpServers ?? settings['mcp-servers'] ?? {};
+    const hasAidd = Object.keys(mcpServers).some((k) =>
+      k.includes('aidd') || (mcpServers[k]?.command && JSON.stringify(mcpServers[k]).includes('mcp-aidd'))
+    );
+    if (hasAidd) {
+      pass('MCP server configured in .claude/settings.json');
+    } else {
+      warn('No AIDD MCP server found in .claude/settings.json', 'Add mcp-aidd to mcpServers');
+    }
+  } catch {
+    warn('.claude/settings.json exists but could not parse');
+  }
+} else {
+  info('.claude/settings.json not found (Claude Code project config)');
+}
+
+const claudeMdPath = resolve(root, 'CLAUDE.md');
+if (existsSync(claudeMdPath)) {
+  pass('CLAUDE.md found');
+} else {
+  warn('CLAUDE.md missing (project instructions for Claude Code)');
+}
+
+// =========================================================================
+// 8. Project State (.aidd/)
+// =========================================================================
 console.log(`\n${DIM}Project State (.aidd/)${RESET}`);
 
+let needsAiddSetup = false;
 const aiddDir = resolve(root, '.aidd');
 if (existsSync(aiddDir)) {
   pass('.aidd/ directory found');
 
+  // --- Config schema validation ---
   const configPath = resolve(aiddDir, 'config.json');
   if (existsSync(configPath)) {
     try {
-      JSON.parse(readFileSync(configPath, 'utf-8'));
-      pass('config.json valid');
+      const config = JSON.parse(readFileSync(configPath, 'utf-8'));
+      const expectedKeys = ['evolution', 'memory', 'modelTracking', 'ci', 'content'];
+      const configKeys = Object.keys(config);
+      const missing = expectedKeys.filter((k) => !configKeys.includes(k));
+      const unknown = configKeys.filter((k) => !expectedKeys.includes(k));
+
+      if (missing.length === 0 && unknown.length === 0) {
+        pass('config.json valid (all sections present)');
+      } else {
+        if (missing.length > 0) warn(`config.json missing sections: ${missing.join(', ')}`);
+        if (unknown.length > 0) info(`config.json has extra sections: ${unknown.join(', ')}`);
+      }
+
+      // Validate evolution sub-keys
+      if (config.evolution) {
+        const evo = config.evolution;
+        if (typeof evo.autoApplyThreshold === 'number' && (evo.autoApplyThreshold < 0 || evo.autoApplyThreshold > 100)) {
+          warn('config.json: evolution.autoApplyThreshold should be 0-100');
+        }
+        if (typeof evo.draftThreshold === 'number' && (evo.draftThreshold < 0 || evo.draftThreshold > 100)) {
+          warn('config.json: evolution.draftThreshold should be 0-100');
+        }
+      }
+
+      // Validate content.overrideMode
+      if (config.content?.overrideMode && !['merge', 'project_only', 'bundled_only'].includes(config.content.overrideMode)) {
+        warn(`config.json: content.overrideMode "${config.content.overrideMode}" invalid (merge|project_only|bundled_only)`);
+      }
     } catch {
       fail('config.json invalid JSON');
     }
   } else {
-    warn('config.json not found (using defaults)', 'Create .aidd/config.json for customization');
+    warn('config.json not found (using defaults)', 'Run: pnpm mcp:doctor to create');
   }
 
+  // --- Subdirectory checks ---
+  const requiredDirs = ['sessions', 'evolution', 'branches', 'drafts'];
+  for (const sub of requiredDirs) {
+    const subDir = resolve(aiddDir, sub);
+    if (existsSync(subDir)) {
+      pass(`${sub}/ exists`);
+    } else {
+      warn(`${sub}/ missing`, 'Run: pnpm mcp:setup');
+    }
+  }
+
+  // --- Stale sessions ---
   const sessionsDir = resolve(aiddDir, 'sessions');
   if (existsSync(sessionsDir)) {
-    pass('sessions/ directory exists');
-  } else {
-    warn('sessions/ missing', 'Run: pnpm mcp:setup');
+    try {
+      const sessionFiles = readdirSync(sessionsDir).filter((f) => f.endsWith('.json'));
+      if (sessionFiles.length > 0) {
+        let pruneAfterDays = 90;
+        try {
+          const config = JSON.parse(readFileSync(resolve(aiddDir, 'config.json'), 'utf-8'));
+          pruneAfterDays = config.memory?.pruneAfterDays ?? 90;
+        } catch { /* use default */ }
+
+        const cutoff = Date.now() - (pruneAfterDays * 24 * 60 * 60 * 1000);
+        const stale = sessionFiles.filter((f) => {
+          try { return statSync(resolve(sessionsDir, f)).mtimeMs < cutoff; }
+          catch { return false; }
+        });
+
+        if (stale.length > 0) {
+          warn(`${stale.length} session(s) older than ${pruneAfterDays} days`, 'Use aidd_memory_prune tool to clean up');
+        } else {
+          pass(`${sessionFiles.length} session(s), none stale`);
+        }
+      } else {
+        info('No sessions recorded yet');
+      }
+    } catch { /* skip */ }
   }
 
-  const evolutionDir = resolve(aiddDir, 'evolution');
-  if (existsSync(evolutionDir)) {
-    pass('evolution/ directory exists');
+  // --- Disk usage ---
+  const totalBytes = dirSizeBytes(aiddDir);
+  if (totalBytes > 50 * 1024 * 1024) {
+    warn(`.aidd/ using ${formatBytes(totalBytes)}`, 'Consider pruning old sessions');
   } else {
-    warn('evolution/ missing', 'Run: pnpm mcp:setup');
+    info(`.aidd/ disk usage: ${formatBytes(totalBytes)}`);
   }
 } else {
-  warn('.aidd/ directory not found', 'Run: pnpm mcp:setup');
+  warn('.aidd/ directory not found');
+  needsAiddSetup = true;
 }
 
-// --- Summary ---
+// =========================================================================
+// Summary
+// =========================================================================
 console.log();
 
 if (issues === 0 && warnings === 0) {
   console.log(`${PREFIX} ${GREEN}All checks passed!${RESET}\n`);
-  process.exit(0);
 } else if (issues === 0) {
   console.log(`${PREFIX} ${YELLOW}${warnings} warning(s) — everything works, some optional setup pending${RESET}\n`);
-  process.exit(0);
 } else {
   console.log(`${PREFIX} ${RED}${issues} issue(s), ${warnings} warning(s)${RESET}\n`);
-  process.exit(1);
 }
+
+// =========================================================================
+// Interactive: offer to create .aidd/
+// =========================================================================
+if (needsAiddSetup) {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  const answer = await new Promise((resolve) => {
+    rl.question(`  ${YELLOW}→ Create .aidd/ directory structure now? (y/N) ${RESET}`, resolve);
+  });
+  rl.close();
+
+  if (answer.trim().toLowerCase() === 'y') {
+    const dirs = ['', 'sessions', 'evolution', 'branches', 'drafts'];
+    for (const sub of dirs) {
+      const dir = resolve(aiddDir, sub);
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    }
+
+    // Write default config.json
+    const configPath = resolve(aiddDir, 'config.json');
+    if (!existsSync(configPath)) {
+      const defaultConfig = {
+        evolution: {
+          enabled: true,
+          autoApplyThreshold: 90,
+          draftThreshold: 70,
+          learningPeriodSessions: 5,
+          killSwitch: false,
+        },
+        memory: {
+          maxSessionHistory: 100,
+          autoPromoteBranchDecisions: true,
+          pruneAfterDays: 90,
+        },
+        modelTracking: {
+          enabled: true,
+          crossProject: false,
+        },
+        ci: {
+          blockOn: ['security_critical', 'type_safety'],
+          warnOn: ['code_style', 'documentation'],
+          ignore: ['commit_format'],
+        },
+        content: {
+          overrideMode: 'merge',
+        },
+      };
+      writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2) + '\n');
+      console.log(`  ${GREEN}✅ config.json created with defaults${RESET}`);
+    }
+
+    // Auto-add .aidd/ to .gitignore if not already present
+    const gitignorePath = resolve(root, '.gitignore');
+    if (existsSync(gitignorePath)) {
+      const gitignore = readFileSync(gitignorePath, 'utf-8');
+      if (!gitignore.includes('.aidd/') && !gitignore.includes('.aidd\n')) {
+        appendFileSync(gitignorePath, '\n# AIDD runtime state\n.aidd/\n');
+        console.log(`  ${GREEN}✅ .aidd/ added to .gitignore${RESET}`);
+      }
+    }
+
+    console.log(`  ${GREEN}✅ .aidd/ created with sessions/, evolution/, branches/, drafts/${RESET}\n`);
+  } else {
+    console.log(`  ${DIM}→ Skipped. Run pnpm mcp:setup later to initialize.${RESET}\n`);
+  }
+}
+
+process.exit(issues > 0 ? 1 : 0);
