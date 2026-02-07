@@ -10,7 +10,7 @@ import type {
 } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { StorageProvider } from '../../storage/index.js';
-import { findMemoryDir, readMistakes } from '../memory/permanent-memory.js';
+import { entryToMistake } from '../memory/permanent-memory.js';
 import { findSimilarErrors } from './similarity.js';
 import type { HealthScore } from './types.js';
 
@@ -29,14 +29,12 @@ export function createDiagnosticsModule(storage: StorageProvider): AiddModule {
     name: 'diagnostics',
     description: 'Error diagnosis and project health scoring',
 
-    register(server: McpServer, context: ModuleContext) {
-      const memoryDir = findMemoryDir(context.projectRoot);
-
+    register(server: McpServer, _context: ModuleContext) {
       // ---- Diagnose error ----
       registerTool(server, {
         name: 'aidd_diagnose_error',
         description:
-          'Search memory for similar past mistakes and their fixes. Combines permanent memory (mistakes.json) with observation search.',
+          'Search memory for similar past mistakes and their fixes. Combines permanent memory with observation search.',
         schema: {
           error: z.string().describe('Error message or description to diagnose'),
           limit: z.number().optional().default(5).describe('Max matches to return'),
@@ -50,12 +48,13 @@ export function createDiagnosticsModule(storage: StorageProvider): AiddModule {
             threshold: number;
           };
 
-          // Search permanent memory mistakes
-          const mistakes = readMistakes(memoryDir);
+          // Search permanent memory mistakes via backend
+          const backend = await storage.getBackend();
+          const mistakeEntries = await backend.listPermanentMemory({ type: 'mistake' });
+          const mistakes = mistakeEntries.map(entryToMistake);
           const similar = findSimilarErrors(error, mistakes, threshold);
 
           // Also search observations for mistake-type entries
-          const backend = await storage.getBackend();
           const obsResults = await backend.search(error, { type: 'mistake', limit: limit * 2 });
 
           // Merge: mistakes first (richer data), then observations for additional context
@@ -154,7 +153,8 @@ export function createDiagnosticsModule(storage: StorageProvider): AiddModule {
             : 50;
 
           // 3. Error recurrence (inverse — fewer recurring errors = better)
-          const mistakes = readMistakes(memoryDir);
+          const mistakeEntries = await backend.listPermanentMemory({ type: 'mistake' });
+          const mistakes = mistakeEntries.map(entryToMistake);
           const recurringMistakes = mistakes.filter((m) => m.occurrences > 1);
           const errorRecurrence = mistakes.length > 0
             ? Math.round((1 - recurringMistakes.length / Math.max(mistakes.length, 1)) * 100)

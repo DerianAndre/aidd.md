@@ -11,6 +11,7 @@ import type {
   ModuleContext,
   SessionState,
   AiProvider,
+  TokenUsage,
 } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { StorageProvider } from '../../storage/index.js';
@@ -71,6 +72,16 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
             .array(z.object({ name: z.string(), resultQuality: z.enum(['good', 'neutral', 'bad']) }))
             .optional()
             .describe('Tools called to append'),
+          tokenUsage: z
+            .object({
+              inputTokens: z.number(),
+              outputTokens: z.number(),
+              cacheReadTokens: z.number().optional(),
+              cacheWriteTokens: z.number().optional(),
+              totalCost: z.number().optional(),
+            })
+            .optional()
+            .describe('Token usage to merge (additive) — opt-in, system works without it'),
           // end params
           outcome: z
             .object({
@@ -147,6 +158,23 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
               if (a['toolsCalled'])
                 session.toolsCalled.push(...(a['toolsCalled'] as SessionState['toolsCalled']));
 
+              // Additive merge of token usage
+              if (a['tokenUsage']) {
+                const incoming = a['tokenUsage'] as TokenUsage;
+                if (!session.tokenUsage) {
+                  session.tokenUsage = { ...incoming };
+                } else {
+                  session.tokenUsage.inputTokens += incoming.inputTokens;
+                  session.tokenUsage.outputTokens += incoming.outputTokens;
+                  if (incoming.cacheReadTokens != null)
+                    session.tokenUsage.cacheReadTokens = (session.tokenUsage.cacheReadTokens ?? 0) + incoming.cacheReadTokens;
+                  if (incoming.cacheWriteTokens != null)
+                    session.tokenUsage.cacheWriteTokens = (session.tokenUsage.cacheWriteTokens ?? 0) + incoming.cacheWriteTokens;
+                  if (incoming.totalCost != null)
+                    session.tokenUsage.totalCost = (session.tokenUsage.totalCost ?? 0) + incoming.totalCost;
+                }
+              }
+
               await backend.saveSession(session);
               return createJsonResult({
                 id: session.id,
@@ -163,6 +191,32 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
 
               session.endedAt = now();
               if (a['outcome']) session.outcome = a['outcome'] as SessionState['outcome'];
+
+              // Merge final token usage if provided
+              if (a['tokenUsage']) {
+                const incoming = a['tokenUsage'] as TokenUsage;
+                if (!session.tokenUsage) {
+                  session.tokenUsage = { ...incoming };
+                } else {
+                  session.tokenUsage.inputTokens += incoming.inputTokens;
+                  session.tokenUsage.outputTokens += incoming.outputTokens;
+                  if (incoming.cacheReadTokens != null)
+                    session.tokenUsage.cacheReadTokens = (session.tokenUsage.cacheReadTokens ?? 0) + incoming.cacheReadTokens;
+                  if (incoming.cacheWriteTokens != null)
+                    session.tokenUsage.cacheWriteTokens = (session.tokenUsage.cacheWriteTokens ?? 0) + incoming.cacheWriteTokens;
+                  if (incoming.totalCost != null)
+                    session.tokenUsage.totalCost = (session.tokenUsage.totalCost ?? 0) + incoming.totalCost;
+                }
+              }
+
+              // Compute context efficiency: tasks completed per 1K output tokens
+              if (session.tokenUsage && session.outcome) {
+                const outputK = session.tokenUsage.outputTokens / 1000;
+                const tasks = session.tasksCompleted.length;
+                if (outputK > 0 && tasks > 0) {
+                  session.outcome.contextEfficiency = Math.round((tasks / outputK) * 100) / 100;
+                }
+              }
 
               await backend.saveSession(session);
               return createJsonResult({

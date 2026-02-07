@@ -12,12 +12,11 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { StorageProvider } from '../../storage/index.js';
 import {
   findMemoryDir,
-  readDecisions,
-  writeDecisions,
-  readMistakes,
-  writeMistakes,
-  readConventions,
-  writeConventions,
+  decisionToEntry,
+  mistakeToEntry,
+  entryToMistake,
+  conventionToEntry,
+  exportPermanentMemoryToJson,
 } from './permanent-memory.js';
 import type { DecisionEntry, MistakeEntry, ConventionEntry } from './permanent-memory.js';
 
@@ -114,7 +113,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
       registerTool(server, {
         name: 'aidd_memory_add_decision',
         description:
-          'Record a permanent decision. Stored in ai/memory/decisions.json (Git-visible, team-shared).',
+          'Record a permanent decision. Stored in SQLite; export to ai/memory/decisions.json via aidd_memory_export.',
         schema: {
           decision: z.string().describe('The decision made'),
           reasoning: z.string().describe('Why this decision was made'),
@@ -142,9 +141,8 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
             sessionId: a.sessionId,
           };
 
-          const existing = readDecisions(memoryDir);
-          existing.push(entry);
-          writeDecisions(memoryDir, existing);
+          const backend = await storage.getBackend();
+          await backend.savePermanentMemory(decisionToEntry(entry));
 
           return createJsonResult({ id: entry.id, type: 'decision', saved: true });
         },
@@ -153,7 +151,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
       registerTool(server, {
         name: 'aidd_memory_add_mistake',
         description:
-          'Record a mistake/error and its fix. Checks for duplicates by error text. Stored in ai/memory/mistakes.json.',
+          'Record a mistake/error and its fix. Checks for duplicates by error text. Stored in SQLite; export via aidd_memory_export.',
         schema: {
           error: z.string().describe('The error encountered'),
           rootCause: z.string().describe('Root cause analysis'),
@@ -171,27 +169,28 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
             sessionId?: string;
           };
 
-          const existing = readMistakes(memoryDir);
+          const backend = await storage.getBackend();
+          const existing = await backend.listPermanentMemory({ type: 'mistake' });
 
           // Check for duplicates by error text similarity
           const errorLower = a.error.toLowerCase();
-          const duplicate = existing.find(
-            (m) => m.error.toLowerCase() === errorLower,
-          );
-
-          if (duplicate) {
-            duplicate.occurrences += 1;
-            duplicate.lastSeenAt = now();
-            duplicate.fix = stripPrivateTags(a.fix);
-            duplicate.prevention = stripPrivateTags(a.prevention);
-            writeMistakes(memoryDir, existing);
-            return createJsonResult({
-              id: duplicate.id,
-              type: 'mistake',
-              saved: true,
-              duplicate: true,
-              occurrences: duplicate.occurrences,
-            });
+          for (const e of existing) {
+            if (e.title.toLowerCase() === errorLower) {
+              // Update existing mistake: increment occurrences, update fix/prevention
+              const mistake = entryToMistake(e);
+              mistake.occurrences += 1;
+              mistake.lastSeenAt = now();
+              mistake.fix = stripPrivateTags(a.fix);
+              mistake.prevention = stripPrivateTags(a.prevention);
+              await backend.savePermanentMemory(mistakeToEntry(mistake));
+              return createJsonResult({
+                id: mistake.id,
+                type: 'mistake',
+                saved: true,
+                duplicate: true,
+                occurrences: mistake.occurrences,
+              });
+            }
           }
 
           const entry: MistakeEntry = {
@@ -206,8 +205,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
             sessionId: a.sessionId,
           };
 
-          existing.push(entry);
-          writeMistakes(memoryDir, existing);
+          await backend.savePermanentMemory(mistakeToEntry(entry));
 
           return createJsonResult({ id: entry.id, type: 'mistake', saved: true, duplicate: false });
         },
@@ -216,7 +214,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
       registerTool(server, {
         name: 'aidd_memory_add_convention',
         description:
-          'Record a project convention. Stored in ai/memory/conventions.json (Git-visible, team-shared).',
+          'Record a project convention. Stored in SQLite; export to ai/memory/conventions.json via aidd_memory_export.',
         schema: {
           convention: z.string().describe('The convention to follow'),
           example: z.string().describe('Example of the convention in practice'),
@@ -241,9 +239,8 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
             sessionId: a.sessionId,
           };
 
-          const existing = readConventions(memoryDir);
-          existing.push(entry);
-          writeConventions(memoryDir, existing);
+          const backend = await storage.getBackend();
+          await backend.savePermanentMemory(conventionToEntry(entry));
 
           return createJsonResult({ id: entry.id, type: 'convention', saved: true });
         },
@@ -252,7 +249,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
       registerTool(server, {
         name: 'aidd_memory_prune',
         description:
-          'Remove a permanent memory entry by ID and type. Removes from both JSON file and search index.',
+          'Remove a permanent memory entry by ID and type. Removes from SQLite and search index.',
         schema: {
           type: z.enum(['decision', 'mistake', 'convention']).describe('Type of entry to remove'),
           id: z.string().describe('Entry ID to remove'),
@@ -260,41 +257,33 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
         annotations: { destructiveHint: true, idempotentHint: true },
         handler: async (args) => {
           const { type, id } = args as { type: string; id: string };
+          const backend = await storage.getBackend();
 
-          let removed = false;
-
-          switch (type) {
-            case 'decision': {
-              const entries = readDecisions(memoryDir);
-              const filtered = entries.filter((e) => e.id !== id);
-              if (filtered.length < entries.length) {
-                writeDecisions(memoryDir, filtered);
-                removed = true;
-              }
-              break;
-            }
-            case 'mistake': {
-              const entries = readMistakes(memoryDir);
-              const filtered = entries.filter((e) => e.id !== id);
-              if (filtered.length < entries.length) {
-                writeMistakes(memoryDir, filtered);
-                removed = true;
-              }
-              break;
-            }
-            case 'convention': {
-              const entries = readConventions(memoryDir);
-              const filtered = entries.filter((e) => e.id !== id);
-              if (filtered.length < entries.length) {
-                writeConventions(memoryDir, filtered);
-                removed = true;
-              }
-              break;
-            }
+          const entry = await backend.getPermanentMemory(id);
+          if (!entry || entry.type !== type) {
+            return createErrorResult(`Entry ${id} of type ${type} not found`);
           }
 
-          if (!removed) return createErrorResult(`Entry ${id} of type ${type} not found`);
+          await backend.deletePermanentMemory(id);
           return createJsonResult({ id, type, removed: true });
+        },
+      });
+
+      // ---- Export: SQLite → JSON files ----
+      registerTool(server, {
+        name: 'aidd_memory_export',
+        description:
+          'Export permanent memory from SQLite to JSON files in ai/memory/ (decisions.json, mistakes.json, conventions.json). For Git visibility and team sharing.',
+        schema: {},
+        annotations: { idempotentHint: true },
+        handler: async () => {
+          const backend = await storage.getBackend();
+          const result = await exportPermanentMemoryToJson(backend, memoryDir);
+          return createJsonResult({
+            exported: true,
+            directory: memoryDir,
+            ...result,
+          });
         },
       });
     },
