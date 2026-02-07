@@ -75,7 +75,7 @@ export interface EntityStoreState<T extends BaseEntity> {
  * Usage:
  * ```ts
  * export const useRulesStore = createEntityStore<RuleEntity>({
- *   basePath: 'rules',
+ *   basePath: 'content/rules',
  *   recursive: false,
  *   transform: (raw) => ({ ...mapFields(raw) }),
  * });

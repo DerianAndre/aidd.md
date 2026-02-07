@@ -19,7 +19,7 @@ export const ROUTES = {
   SKILL_EDITOR: '/skills/:name/edit',
   WORKFLOWS: '/workflows',
   WORKFLOW_DETAIL: '/workflows/:name',
-  ORCHESTRATOR_DETAIL: '/workflows/orchestrators/:name',
+  ORCHESTRATOR_DETAIL: '/workflows/:name',
   TEMPLATES: '/templates',
   TEMPLATE_EDITOR: '/templates/:name',
   KNOWLEDGE: '/knowledge',

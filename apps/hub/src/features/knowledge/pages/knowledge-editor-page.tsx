@@ -43,7 +43,7 @@ export function KnowledgeEditorPage() {
     if (!activeProject?.path || !pathParam) return;
     void (async () => {
       setLoading(true);
-      const path = `${activeProject.path}/knowledge/${pathParam}.md`;
+      const path = `${activeProject.path}/content/knowledge/${pathParam}.md`;
       setFilePath(path);
       try {
         const raw = await readFile(path);

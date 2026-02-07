@@ -24,7 +24,7 @@ export function RuleEditorPage() {
     if (!activeProject?.path || !name) return;
     void (async () => {
       setLoading(true);
-      const path = `${activeProject.path}/rules/${decodeURIComponent(name)}.md`;
+      const path = `${activeProject.path}/content/rules/${decodeURIComponent(name)}.md`;
       setFilePath(path);
       try {
         const raw = await readFile(path);

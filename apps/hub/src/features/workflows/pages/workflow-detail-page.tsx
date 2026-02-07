@@ -22,10 +22,9 @@ export function WorkflowDetailPage() {
     void (async () => {
       setLoading(true);
       const decodedName = decodeURIComponent(name);
-      // Try top-level first, then orchestrators
+      // All workflows are now at top-level
       const paths = [
-        `${activeProject.path}/workflows/${decodedName}.md`,
-        `${activeProject.path}/workflows/orchestrators/${decodedName}.md`,
+        `${activeProject.path}/content/workflows/${decodedName}.md`,
       ];
 
       for (const path of paths) {

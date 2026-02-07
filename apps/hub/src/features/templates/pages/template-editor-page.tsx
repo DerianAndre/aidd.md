@@ -24,7 +24,7 @@ export function TemplateEditorPage() {
     if (!activeProject?.path || !name) return;
     void (async () => {
       setLoading(true);
-      const path = `${activeProject.path}/templates/${decodeURIComponent(name)}.md`;
+      const path = `${activeProject.path}/content/templates/${decodeURIComponent(name)}.md`;
       setFilePath(path);
       try {
         const raw = await readFile(path);

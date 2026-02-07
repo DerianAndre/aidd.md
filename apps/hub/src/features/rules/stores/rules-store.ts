@@ -2,7 +2,7 @@ import { createEntityStore, defaultTransform } from '../../../stores/create-enti
 import type { RuleEntity } from '../lib/types';
 
 export const useRulesStore = createEntityStore<RuleEntity>({
-  basePath: 'rules',
+  basePath: 'content/rules',
   recursive: false,
   transform: (raw) => defaultTransform(raw) as RuleEntity,
 });

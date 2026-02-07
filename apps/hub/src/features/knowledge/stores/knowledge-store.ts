@@ -5,11 +5,11 @@ import { readFile, listMarkdownEntities } from '../../../lib/tauri';
 import type { KnowledgeEntity } from '../lib/types';
 
 export const useKnowledgeStore = createEntityStore<KnowledgeEntity>({
-  basePath: 'knowledge',
+  basePath: 'content/knowledge',
   recursive: true,
   transform: () => null, // Not used — customFetch overrides
   customFetch: async (projectRoot: string) => {
-    const basePath = `${normalizePath(projectRoot)}/knowledge`;
+    const basePath = `${normalizePath(projectRoot)}/content/knowledge`;
     const raws = await listMarkdownEntities(basePath, true);
     const entities: KnowledgeEntity[] = [];
 

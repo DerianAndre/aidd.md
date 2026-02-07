@@ -3,33 +3,24 @@ import { listMarkdownEntities } from '../../../lib/tauri';
 import { normalizePath } from '../../../lib/utils';
 import type { WorkflowEntity } from '../lib/types';
 
+/** Workflows that coordinate multiple skills (formerly in orchestrators/) */
+const ORCHESTRATOR_NAMES = new Set(['orchestrator', 'full-stack-feature']);
+
 export const useWorkflowsStore = createEntityStore<WorkflowEntity>({
-  basePath: 'workflows',
+  basePath: 'content/workflows',
   recursive: true,
   transform: () => null, // Not used — customFetch overrides
   customFetch: async (projectRoot: string) => {
-    const basePath = `${normalizePath(projectRoot)}/workflows`;
+    const basePath = `${normalizePath(projectRoot)}/content/workflows`;
 
-    // Get top-level workflows
-    const topLevel = await listMarkdownEntities(basePath, false);
-    const workflows: WorkflowEntity[] = topLevel.map((raw) => ({
-      ...defaultTransform(raw),
-      isOrchestrator: false,
-    }));
-
-    // Get orchestrators from subdirectory
-    try {
-      const orchestrators = await listMarkdownEntities(`${basePath}/orchestrators`, false);
-      for (const raw of orchestrators) {
-        workflows.push({
-          ...defaultTransform(raw),
-          isOrchestrator: true,
-        });
-      }
-    } catch {
-      // orchestrators/ may not exist
-    }
-
-    return workflows;
+    // All workflows are now at top-level (orchestrators flattened)
+    const entries = await listMarkdownEntities(basePath, false);
+    return entries.map((raw) => {
+      const entity = defaultTransform(raw);
+      return {
+        ...entity,
+        isOrchestrator: ORCHESTRATOR_NAMES.has(entity.name),
+      };
+    });
   },
 });

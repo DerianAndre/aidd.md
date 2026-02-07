@@ -43,7 +43,7 @@ export function SkillEditorPage() {
     if (!activeProject?.path || !name) return;
     void (async () => {
       setLoading(true);
-      const path = `${activeProject.path}/skills/${decodeURIComponent(name)}/SKILL.md`;
+      const path = `${activeProject.path}/content/skills/${decodeURIComponent(name)}/SKILL.md`;
       setFilePath(path);
       try {
         const raw = await readFile(path);

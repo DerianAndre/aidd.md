@@ -21,7 +21,7 @@ export function SkillDetailPage() {
     if (!activeProject?.path || !name) return;
     void (async () => {
       setLoading(true);
-      const dirPath = `${activeProject.path}/skills/${decodeURIComponent(name)}`;
+      const dirPath = `${activeProject.path}/content/skills/${decodeURIComponent(name)}`;
       const filePath = `${dirPath}/SKILL.md`;
       try {
         const content = await readFile(filePath);

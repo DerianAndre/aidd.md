@@ -5,11 +5,11 @@ import { parseSkillContent } from '../lib/parse-skill';
 import type { SkillEntity } from '../lib/types';
 
 export const useSkillsStore = createEntityStore<SkillEntity>({
-  basePath: 'skills',
+  basePath: 'content/skills',
   recursive: false,
   transform: () => null, // Not used — customFetch overrides
   customFetch: async (projectRoot: string) => {
-    const basePath = `${normalizePath(projectRoot)}/skills`;
+    const basePath = `${normalizePath(projectRoot)}/content/skills`;
     const entries = await listDirectory(basePath);
     const skills: SkillEntity[] = [];
 

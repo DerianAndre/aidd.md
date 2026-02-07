@@ -48,11 +48,11 @@ export function useEntityWatcher() {
     const prefixes = pendingRef.current;
 
     // Framework entities
-    if (prefixes.has('/rules/')) rulesInvalidate();
-    if (prefixes.has('/templates/')) templatesInvalidate();
-    if (prefixes.has('/skills/')) skillsInvalidate();
-    if (prefixes.has('/workflows/')) workflowsInvalidate();
-    if (prefixes.has('/knowledge/')) knowledgeInvalidate();
+    if (prefixes.has('/content/rules/')) rulesInvalidate();
+    if (prefixes.has('/content/templates/')) templatesInvalidate();
+    if (prefixes.has('/content/skills/')) skillsInvalidate();
+    if (prefixes.has('/content/workflows/')) workflowsInvalidate();
+    if (prefixes.has('/content/knowledge/')) knowledgeInvalidate();
 
     // Memory layer — sessions + analytics + diagnostics
     if (prefixes.has('/.aidd/sessions/')) {
@@ -98,7 +98,7 @@ export function useEntityWatcher() {
         const normalized = filePath.replace(/\\/g, '/');
 
         const prefixes = [
-          '/rules/', '/templates/', '/skills/', '/workflows/', '/knowledge/',
+          '/content/rules/', '/content/templates/', '/content/skills/', '/content/workflows/', '/content/knowledge/',
           '/.aidd/sessions/', '/.aidd/evolution/', '/.aidd/drafts/',
           '/ai/memory/', '/.aidd/config.json',
         ] as const;
