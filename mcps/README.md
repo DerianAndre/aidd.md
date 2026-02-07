@@ -1,8 +1,8 @@
 # AIDD MCP Ecosystem
 
-> AI-Driven Development made autonomous: 63 tools, 5-layer memory, self-evolving framework.
-> **Last Updated**: 2026-02-05
-> **Status**: Implementation In Progress
+> AI-Driven Development made autonomous: 69 tools, 5-layer memory, self-evolving framework.
+> **Last Updated**: 2026-02-07
+> **Status**: Implementation Complete
 
 ---
 
@@ -161,7 +161,7 @@ This diagnoses the problem and suggests the solution.
   3 separate processes — AI orchestrates
 ```
 
-**Engine** (recommended) — One process, all 63 tools, direct inter-module communication. Simpler setup, lower resource usage.
+**Engine** (recommended) — One process, all 69 tools, direct inter-module communication. Simpler setup, lower resource usage.
 
 **Split** — Three processes, granular control. Use when you need resource isolation or only need specific capabilities.
 
@@ -170,12 +170,12 @@ This diagnoses the problem and suggests the solution.
 ```
 AI Tool (Claude Code, Cursor, Windsurf, etc.)
     │
-    ├── stdio ──► @aidd.md/mcp-engine (all 63 tools)
+    ├── stdio ──► @aidd.md/mcp-engine (all 69 tools)
     │
     OR
     │
     ├── stdio ──► @aidd.md/mcp-core     (17 tools: guidance, routing, knowledge)
-    ├── stdio ──► @aidd.md/mcp-memory   (27 tools: sessions, search, evolution, analytics)
+    ├── stdio ──► @aidd.md/mcp-memory   (33 tools: sessions, search, evolution, analytics, pattern-killer)
     └── stdio ──► @aidd.md/mcp-tools    (19 tools: validation, enforcement, CI)
 ```
 
@@ -204,7 +204,7 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 | `aidd_optimize_context`      | Token-budget-aware context filtering                                         |
 | `aidd_scaffold`              | Initialize AIDD in a project (minimal/standard/full)                         |
 
-### Memory: The Memory (27 tools)
+### Memory: The Memory (33 tools)
 
 | Tool                         | Purpose                                                                    |
 | ---------------------------- | -------------------------------------------------------------------------- |
@@ -235,6 +235,13 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 | `aidd_model_recommend`       | Task-type-aware model recommendation                                       |
 | `aidd_diagnose_error`        | Search memory for similar past mistakes + fixes                            |
 | `aidd_project_health`        | Data-driven health score from analytics                                    |
+| `aidd_memory_export`         | Export permanent memory from SQLite to JSON files                          |
+| `aidd_pattern_audit`         | Full pattern audit: detect banned patterns, fingerprint, 5D score          |
+| `aidd_pattern_list`          | List active banned patterns by category or model scope                     |
+| `aidd_pattern_add`           | Add new banned pattern for AI output detection                             |
+| `aidd_pattern_stats`         | Pattern detection statistics per model with frequency breakdown            |
+| `aidd_pattern_score`         | Quick 5-dimension text quality evaluation with verdict                     |
+| `aidd_pattern_false_positive`| Report pattern as false positive, reduce confidence                        |
 
 ### Tools: The Hands (19 tools)
 
@@ -268,23 +275,23 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 ┌─────────────────────────────────────────────────────┐
 │  Layer 5: EVOLUTION                                 │
 │  Cross-session patterns → auto-framework mutations   │
-│  Storage: .aidd/evolution/                           │
+│  Storage: .aidd/data.db (evolution_candidates, evolution_log tables) │
 ├─────────────────────────────────────────────────────┤
 │  Layer 4: PERMANENT                                  │
 │  Project-lifetime decisions, mistakes, conventions   │
-│  Storage: ai/memory/ (or project memory files)       │
+│  Storage: .aidd/data.db (permanent_memory table) + ai/memory/*.json exports │
 ├─────────────────────────────────────────────────────┤
 │  Layer 3: LIFECYCLE                                  │
 │  AIDD 6-phase tracking + quality gates               │
-│  Storage: .aidd/sessions/active/<id>.json            │
+│  Storage: .aidd/data.db (lifecycle_sessions table)   │
 ├─────────────────────────────────────────────────────┤
 │  Layer 2: BRANCH                                     │
 │  Git branch context (survives session restarts)      │
-│  Storage: .aidd/branches/<branch>.json               │
+│  Storage: .aidd/data.db (branches table)             │
 ├─────────────────────────────────────────────────────┤
 │  Layer 1: SESSION                                    │
 │  Single conversation state + AI provider tracking    │
-│  Storage: .aidd/sessions/active/<id>.json            │
+│  Storage: .aidd/data.db (sessions table)             │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -294,25 +301,26 @@ Each session records: agents used, skills used, tools called (with quality), AI 
 
 ---
 
-## Storage Architecture (Hybrid)
+## Storage Architecture (SQLite-First)
 
-Dual-backend approach for optimal balance of performance and Git visibility:
+Single SQLite database for all persistent state:
 
 ```
 ┌─────────────────────────────────────────────────┐
 │  SQLite (.aidd/data.db) — gitignored            │
-│  Sessions, observations, analytics, search index │
+│  16 tables: sessions, observations, branches,   │
+│  evolution, patterns, memory, lifecycle, etc.    │
 │  FTS5 full-text search + WAL concurrent access   │
+│  Schema checksum in meta table                   │
 ├─────────────────────────────────────────────────┤
-│  JSON files — Git-visible                        │
-│  Decisions, conventions (ai/memory/)             │
-│  Branch contexts (.aidd/branches/)               │
-│  Evolution log (.aidd/evolution/)                │
-│  Drafts (.aidd/drafts/)                          │
+│  Auto-generated files — Git-visible              │
+│  ai/memory/insights.md (auto-learning dashboard) │
+│  ai/memory/state-dump.sql (diffable state)       │
+│  ai/memory/*.json (on-demand export)             │
 └─────────────────────────────────────────────────┘
 ```
 
-**StorageBackend interface** abstracts both backends. SQLite is optional (`better-sqlite3`) — JSON backend provides zero-dependency fallback.
+**StorageBackend interface** provides ~30 methods covering all data types. `better-sqlite3` is a required dependency.
 
 ### 3-Layer Search Pattern
 
@@ -384,7 +392,7 @@ The autonomous evolution engine learns from every completed session and improves
 3. **Confidence-based auto-apply**:
    - **>90% confidence, 10+ sessions**: Auto-apply, notify user
    - **70-90% confidence, 5-10 sessions**: Create draft in `.aidd/drafts/`
-   - **<70% confidence, <5 sessions**: Log to `.aidd/evolution/pending.json`
+   - **<70% confidence, <5 sessions**: Store as pending candidate in SQLite
 
 ### What It Evolves
 
@@ -399,8 +407,8 @@ The autonomous evolution engine learns from every completed session and improves
 
 ### Safeguards
 
-- All changes logged in `.aidd/evolution/log.json` (audit trail)
-- Framework snapshots in `.aidd/evolution/snapshots/` (rollback)
+- All changes logged in evolution_log table (audit trail)
+- Framework snapshots in evolution_snapshots table (rollback)
 - Configurable thresholds in `.aidd/config.json`
 - Kill switch: `"evolution": { "kill_switch": true }`
 - Learning period: first N sessions = data collection only

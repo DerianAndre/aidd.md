@@ -29,6 +29,103 @@ const ANALYSIS_INTERVAL = 5;
 const PRUNE_INTERVAL = 10;
 
 // ---------------------------------------------------------------------------
+// SQL helpers — escape for INSERT statements
+// ---------------------------------------------------------------------------
+
+function esc(value: unknown): string {
+  if (value === null || value === undefined) return 'NULL';
+  if (typeof value === 'number') return String(value);
+  if (typeof value === 'boolean') return value ? '1' : '0';
+  if (typeof value === 'object') return `'${JSON.stringify(value).replace(/'/g, "''")}'`;
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+// ---------------------------------------------------------------------------
+// state-dump.sql writer — atomic write, zero AI tokens
+// ---------------------------------------------------------------------------
+
+async function writeStateDumpFile(storage: StorageProvider, projectRoot: string): Promise<void> {
+  const backend = await storage.getBackend();
+  const memoryDir = findMemoryDir(projectRoot);
+
+  const candidates = await backend.listEvolutionCandidates({});
+  const permanentMemory = await backend.listPermanentMemory({});
+  const bannedPatterns = await backend.listBannedPatterns({ active: true });
+  const logEntries = await backend.getEvolutionLog({ limit: 20 });
+  const patternStats = await backend.getPatternStats({});
+
+  const lines: string[] = [
+    `-- AIDD State Dump — Auto-generated, do not edit`,
+    `-- Updated: ${now()}`,
+    '',
+  ];
+
+  // Evolution candidates
+  if (candidates.length > 0) {
+    lines.push('-- Evolution Candidates (active)');
+    for (const c of candidates) {
+      lines.push(
+        `INSERT OR REPLACE INTO evolution_candidates (id, type, title, confidence, model_scope, session_count, data, created_at, updated_at) VALUES (${esc(c.id)}, ${esc(c.type)}, ${esc(c.title)}, ${c.confidence}, ${esc(c.modelScope)}, ${c.sessionCount}, ${esc({ evidence: c.evidence, suggestedAction: c.suggestedAction, modelEvidence: c.modelEvidence })}, ${esc(c.createdAt)}, ${esc(c.updatedAt)});`,
+      );
+    }
+    lines.push('');
+  }
+
+  // Permanent memory
+  if (permanentMemory.length > 0) {
+    lines.push('-- Permanent Memory (decisions, mistakes, conventions)');
+    for (const m of permanentMemory) {
+      lines.push(
+        `INSERT OR REPLACE INTO permanent_memory (id, type, title, content, session_id, created_at) VALUES (${esc(m.id)}, ${esc(m.type)}, ${esc(m.title)}, ${esc(m.content)}, ${esc(m.sessionId)}, ${esc(m.createdAt)});`,
+      );
+    }
+    lines.push('');
+  }
+
+  // Banned patterns
+  if (bannedPatterns.length > 0) {
+    lines.push('-- Banned Patterns (active)');
+    for (const p of bannedPatterns) {
+      lines.push(
+        `INSERT OR REPLACE INTO banned_patterns (id, category, pattern, type, severity, model_scope, origin, active, use_count, hint, created_at) VALUES (${esc(p.id)}, ${esc(p.category)}, ${esc(p.pattern)}, ${esc(p.type)}, ${esc(p.severity)}, ${esc(p.modelScope)}, ${esc(p.origin)}, ${esc(p.active)}, ${p.useCount}, ${esc(p.hint)}, ${esc(p.createdAt)});`,
+      );
+    }
+    lines.push('');
+  }
+
+  // Recent evolution log
+  if (logEntries.length > 0) {
+    lines.push('-- Recent Evolution Log (last 20)');
+    for (const e of logEntries) {
+      lines.push(
+        `INSERT OR REPLACE INTO evolution_log (id, candidate_id, action, title, confidence, timestamp) VALUES (${esc(e.id)}, ${esc(e.candidateId)}, ${esc(e.action)}, ${esc(e.title)}, ${e.confidence}, ${esc(e.timestamp)});`,
+      );
+    }
+    lines.push('');
+  }
+
+  // Pattern stats summary (as SQL comments for visibility)
+  if (patternStats.totalDetections > 0) {
+    lines.push('-- Pattern Detection Summary');
+    lines.push(`-- Total detections: ${patternStats.totalDetections}`);
+    for (const m of patternStats.models.slice(0, 5)) {
+      lines.push(`-- ${m.modelId}: ${m.detections} detections — ${m.summary}`);
+    }
+    for (const p of patternStats.topPatterns.slice(0, 10)) {
+      lines.push(`-- Top pattern: "${p.pattern}" (${p.category}) — ${p.count} hits, ${p.uniqueSessions} sessions`);
+    }
+    lines.push('');
+  }
+
+  // Atomic write: .tmp → renameSync
+  ensureDir(memoryDir);
+  const target = resolve(memoryDir, 'state-dump.sql');
+  const tmp = target + '.tmp';
+  writeFileSync(tmp, lines.join('\n'), 'utf-8');
+  renameSync(tmp, target);
+}
+
+// ---------------------------------------------------------------------------
 // Insights.md writer — atomic write, zero AI tokens
 // ---------------------------------------------------------------------------
 
@@ -406,8 +503,9 @@ export function createEvolutionModule(storage: StorageProvider): AiddModule {
           }
         }
 
-        // Write insights.md after analysis
+        // Write insights.md + state-dump.sql after analysis
         await writeInsightsFile(storage, context.projectRoot);
+        await writeStateDumpFile(storage, context.projectRoot);
       });
 
       // 6.3: Feedback loop — adjust candidate confidence on session end
