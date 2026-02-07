@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::domain::ports::inbound::{
-    MemoryPort, SessionSummary, SessionInfo, ObservationEntry, EvolutionStatus, PatternStats, ProjectPort,
+    MemoryPort, ProjectPort, SessionSummary, SessionInfo, ObservationEntry, EvolutionStatus, PatternStats,
 };
 use crate::application::ProjectService;
 
@@ -16,6 +16,7 @@ const REQUIRED_TABLES: &[&str] = &[
     "evolution_log",
     "banned_patterns",
     "pattern_detections",
+    "permanent_memory",
 ];
 
 /// SQLite Adapter for Memory Port.
@@ -235,7 +236,7 @@ impl MemoryPort for SqliteMemoryAdapter {
             ).unwrap_or(0);
 
             let false_positives: usize = conn.query_row(
-                "SELECT COALESCE(SUM(false_positive_count), 0) FROM pattern_detections",
+                "SELECT COUNT(*) FROM pattern_detections WHERE source = 'false_positive'",
                 [],
                 |row| row.get(0),
             ).unwrap_or(0);
@@ -255,6 +256,137 @@ impl MemoryPort for SqliteMemoryAdapter {
             })
         })
     }
+
+    fn list_all_sessions(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String> {
+        let limit = limit.unwrap_or(100);
+        self.safe_query(move |conn| {
+            let mut stmt = conn.prepare(
+                "SELECT data FROM sessions ORDER BY started_at DESC LIMIT ?1"
+            )?;
+
+            let sessions = stmt.query_map([limit], |row| {
+                let data: String = row.get(0)?;
+                Ok(serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::Value::Null))
+            })?
+                .filter_map(|r| r.ok())
+                .filter(|v| !v.is_null())
+                .collect();
+
+            Ok(sessions)
+        }).or_else(|_| Ok(vec![]))
+    }
+
+    fn list_evolution_candidates(&self) -> Result<Vec<serde_json::Value>, String> {
+        self.safe_query(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT data FROM evolution_candidates ORDER BY confidence DESC"
+            )?;
+
+            let candidates = stmt.query_map([], |row| {
+                let data: String = row.get(0)?;
+                Ok(serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::Value::Null))
+            })?
+                .filter_map(|r| r.ok())
+                .filter(|v| !v.is_null())
+                .collect();
+
+            Ok(candidates)
+        }).or_else(|_| Ok(vec![]))
+    }
+
+    fn list_evolution_log(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String> {
+        let limit = limit.unwrap_or(50);
+        self.safe_query(move |conn| {
+            let mut stmt = conn.prepare(
+                "SELECT id, candidate_id, action, title, confidence, timestamp \
+                 FROM evolution_log ORDER BY timestamp DESC LIMIT ?1"
+            )?;
+
+            let entries = stmt.query_map([limit], |row| {
+                Ok(serde_json::json!({
+                    "id": row.get::<_, String>(0)?,
+                    "candidateId": row.get::<_, String>(1)?,
+                    "action": row.get::<_, String>(2)?,
+                    "title": row.get::<_, String>(3)?,
+                    "confidence": row.get::<_, f64>(4)?,
+                    "timestamp": row.get::<_, String>(5)?
+                }))
+            })?
+                .filter_map(|r| r.ok())
+                .collect();
+
+            Ok(entries)
+        }).or_else(|_| Ok(vec![]))
+    }
+
+    fn list_permanent_memory(&self, memory_type: &str) -> Result<Vec<serde_json::Value>, String> {
+        let memory_type = memory_type.to_string();
+        self.safe_query(move |conn| {
+            let mut stmt = conn.prepare(
+                "SELECT id, type, title, content, created_at, session_id \
+                 FROM permanent_memory WHERE type = ?1 ORDER BY created_at DESC"
+            )?;
+
+            let entries = stmt.query_map([&memory_type], |row| {
+                let id: String = row.get(0)?;
+                let entry_type: String = row.get(1)?;
+                let title: String = row.get(2)?;
+                let content: String = row.get(3)?;
+                let created_at: String = row.get(4)?;
+                let session_id: Option<String> = row.get(5)?;
+
+                // Parse content JSON and merge with metadata
+                let content_value = serde_json::from_str::<serde_json::Value>(&content)
+                    .unwrap_or(serde_json::json!({}));
+
+                let mut entry = serde_json::Map::new();
+                entry.insert("id".into(), serde_json::json!(id));
+                entry.insert("type".into(), serde_json::json!(entry_type));
+                entry.insert("createdAt".into(), serde_json::json!(created_at));
+                if let Some(sid) = session_id {
+                    entry.insert("sessionId".into(), serde_json::json!(sid));
+                }
+
+                // Type-specific field mapping
+                match memory_type.as_str() {
+                    "mistake" => {
+                        entry.insert("error".into(), serde_json::json!(title));
+                        if let serde_json::Value::Object(map) = content_value {
+                            for (k, v) in map {
+                                entry.insert(k, v);
+                            }
+                        }
+                    }
+                    "decision" => {
+                        entry.insert("decision".into(), serde_json::json!(title));
+                        if let serde_json::Value::Object(map) = content_value {
+                            for (k, v) in map {
+                                entry.insert(k, v);
+                            }
+                        }
+                    }
+                    "convention" => {
+                        entry.insert("convention".into(), serde_json::json!(title));
+                        if let serde_json::Value::Object(map) = content_value {
+                            for (k, v) in map {
+                                entry.insert(k, v);
+                            }
+                        }
+                    }
+                    _ => {
+                        entry.insert("title".into(), serde_json::json!(title));
+                        entry.insert("content".into(), content_value);
+                    }
+                }
+
+                Ok(serde_json::Value::Object(entry))
+            })?
+                .filter_map(|r| r.ok())
+                .collect();
+
+            Ok(entries)
+        }).or_else(|_| Ok(vec![]))
+    }
 }
 
 #[cfg(test)]
@@ -262,38 +394,31 @@ mod tests {
     use super::*;
     use rusqlite::Connection;
 
-    /// Create an in-memory database with the full AIDD schema
+    /// Create an in-memory database matching the real AIDD schema from migrations.ts
     fn create_test_db() -> Connection {
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch(
             "CREATE TABLE sessions (
                 id TEXT PRIMARY KEY,
+                memory_session_id TEXT,
+                parent_session_id TEXT,
                 branch TEXT NOT NULL DEFAULT '',
                 started_at TEXT NOT NULL DEFAULT '',
                 ended_at TEXT,
-                ai_provider TEXT NOT NULL DEFAULT '{}',
-                decisions TEXT NOT NULL DEFAULT '[]',
-                errors_resolved TEXT NOT NULL DEFAULT '[]',
-                files_modified TEXT NOT NULL DEFAULT '[]',
-                tasks_completed TEXT NOT NULL DEFAULT '[]',
-                tasks_pending TEXT NOT NULL DEFAULT '[]',
-                tools_called TEXT NOT NULL DEFAULT '[]',
-                outcome TEXT,
-                memory_session_id TEXT,
-                parent_session_id TEXT,
-                task_classification TEXT,
-                token_usage TEXT
+                status TEXT NOT NULL DEFAULT 'active',
+                model_id TEXT,
+                data TEXT NOT NULL DEFAULT '{}'
             );
             CREATE TABLE observations (
                 id TEXT PRIMARY KEY,
                 session_id TEXT NOT NULL,
                 type TEXT NOT NULL DEFAULT '',
                 title TEXT NOT NULL DEFAULT '',
-                narrative TEXT,
-                facts TEXT NOT NULL DEFAULT '[]',
-                concepts TEXT NOT NULL DEFAULT '[]',
-                files_read TEXT NOT NULL DEFAULT '[]',
-                files_modified TEXT NOT NULL DEFAULT '[]',
+                content TEXT,
+                facts TEXT,
+                concepts TEXT,
+                files_read TEXT,
+                files_modified TEXT,
                 discovery_tokens INTEGER,
                 created_at TEXT NOT NULL DEFAULT ''
             );
@@ -301,44 +426,51 @@ mod tests {
                 id TEXT PRIMARY KEY,
                 type TEXT NOT NULL DEFAULT '',
                 title TEXT NOT NULL DEFAULT '',
-                description TEXT NOT NULL DEFAULT '',
-                evidence TEXT NOT NULL DEFAULT '[]',
                 confidence REAL NOT NULL DEFAULT 0,
+                model_scope TEXT,
                 status TEXT NOT NULL DEFAULT 'pending',
-                source TEXT NOT NULL DEFAULT '',
+                data TEXT NOT NULL DEFAULT '{}',
                 created_at TEXT NOT NULL DEFAULT '',
-                content TEXT,
-                target_path TEXT,
-                model_scope TEXT
+                updated_at TEXT NOT NULL DEFAULT ''
             );
             CREATE TABLE evolution_log (
                 id TEXT PRIMARY KEY,
                 candidate_id TEXT NOT NULL,
                 action TEXT NOT NULL DEFAULT '',
-                timestamp TEXT NOT NULL DEFAULT '',
-                details TEXT
+                title TEXT NOT NULL DEFAULT '',
+                confidence REAL NOT NULL DEFAULT 0,
+                timestamp TEXT NOT NULL DEFAULT ''
             );
             CREATE TABLE banned_patterns (
                 id TEXT PRIMARY KEY,
-                pattern TEXT NOT NULL DEFAULT '',
-                type TEXT NOT NULL DEFAULT 'exact',
                 category TEXT NOT NULL DEFAULT '',
+                pattern TEXT NOT NULL DEFAULT '',
+                type TEXT NOT NULL DEFAULT 'regex',
                 severity TEXT NOT NULL DEFAULT 'medium',
-                hint TEXT,
                 model_scope TEXT,
-                source TEXT NOT NULL DEFAULT 'manual',
+                origin TEXT NOT NULL DEFAULT 'system',
                 active INTEGER NOT NULL DEFAULT 1,
                 use_count INTEGER NOT NULL DEFAULT 0,
+                hint TEXT,
                 created_at TEXT NOT NULL DEFAULT ''
             );
             CREATE TABLE pattern_detections (
-                id TEXT PRIMARY KEY,
-                pattern_id TEXT NOT NULL,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 session_id TEXT,
-                model_id TEXT,
-                matched_text TEXT,
-                detected_at TEXT NOT NULL DEFAULT '',
-                false_positive_count INTEGER NOT NULL DEFAULT 0
+                model_id TEXT NOT NULL DEFAULT '',
+                pattern_id TEXT,
+                matched_text TEXT NOT NULL DEFAULT '',
+                context TEXT,
+                source TEXT NOT NULL DEFAULT 'auto',
+                created_at TEXT NOT NULL DEFAULT ''
+            );
+            CREATE TABLE permanent_memory (
+                id TEXT PRIMARY KEY,
+                type TEXT NOT NULL DEFAULT '',
+                title TEXT NOT NULL DEFAULT '',
+                content TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL DEFAULT '',
+                session_id TEXT
             );"
         ).unwrap();
         conn
@@ -377,14 +509,14 @@ mod tests {
     fn session_query_returns_correct_counts() {
         let conn = create_test_db();
 
-        // Insert test sessions
+        // Insert test sessions (using real schema with data column)
         conn.execute(
-            "INSERT INTO sessions (id, branch, started_at, ended_at) VALUES (?1, ?2, ?3, ?4)",
-            ["s1", "main", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z"],
+            "INSERT INTO sessions (id, branch, started_at, ended_at, status, data) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            ["s1", "main", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", "completed", r#"{"id":"s1","branch":"main","startedAt":"2026-01-01T00:00:00Z"}"#],
         ).unwrap();
         conn.execute(
-            "INSERT INTO sessions (id, branch, started_at) VALUES (?1, ?2, ?3)",
-            ["s2", "feat/test", "2026-01-02T00:00:00Z"],
+            "INSERT INTO sessions (id, branch, started_at, status, data) VALUES (?1, ?2, ?3, ?4, ?5)",
+            ["s2", "feat/test", "2026-01-02T00:00:00Z", "active", r#"{"id":"s2","branch":"feat/test","startedAt":"2026-01-02T00:00:00Z"}"#],
         ).unwrap();
 
         let total: usize = conn.query_row(
@@ -403,16 +535,16 @@ mod tests {
         let conn = create_test_db();
 
         conn.execute(
-            "INSERT INTO evolution_candidates (id, status) VALUES (?1, ?2)",
-            ["e1", "pending"],
+            "INSERT INTO evolution_candidates (id, type, title, status, data, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            ["e1", "rule_elevation", "Test 1", "pending", "{}", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"],
         ).unwrap();
         conn.execute(
-            "INSERT INTO evolution_candidates (id, status) VALUES (?1, ?2)",
-            ["e2", "pending"],
+            "INSERT INTO evolution_candidates (id, type, title, status, data, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            ["e2", "skill_combo", "Test 2", "pending", "{}", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"],
         ).unwrap();
         conn.execute(
-            "INSERT INTO evolution_candidates (id, status) VALUES (?1, ?2)",
-            ["e3", "approved"],
+            "INSERT INTO evolution_candidates (id, type, title, status, data, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            ["e3", "new_convention", "Test 3", "approved", "{}", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"],
         ).unwrap();
 
         let pending: usize = conn.query_row(

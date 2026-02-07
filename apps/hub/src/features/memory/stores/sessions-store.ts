@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { listDirectory, readJsonFile } from '../../../lib/tauri';
-import { statePath, STATE_PATHS } from '../../../lib/constants';
+import { invoke } from '@tauri-apps/api/core';
+import { listAllSessions } from '../../../lib/tauri';
 import type { SessionState, SessionObservation } from '../../../lib/types';
 
 interface SessionsStoreState {
@@ -9,24 +9,9 @@ interface SessionsStoreState {
   loading: boolean;
   stale: boolean;
 
-  fetchAll: (projectRoot: string) => Promise<void>;
+  fetchAll: (projectRoot?: string) => Promise<void>;
   fetchObservations: (projectRoot: string, sessionId: string, status: 'active' | 'completed') => Promise<SessionObservation[]>;
   invalidate: () => void;
-}
-
-async function loadSessions(dirPath: string): Promise<SessionState[]> {
-  try {
-    const files = await listDirectory(dirPath, ['json']);
-    const sessionFiles = files.filter((f) => !f.name.includes('-observations'));
-    const sessions = await Promise.all(
-      sessionFiles.map((f) => readJsonFile(f.path) as Promise<SessionState>),
-    );
-    return sessions.sort(
-      (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
-    );
-  } catch {
-    return [];
-  }
 }
 
 export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
@@ -35,25 +20,38 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
   loading: false,
   stale: true,
 
-  fetchAll: async (projectRoot) => {
+  fetchAll: async (_projectRoot?: string) => {
     if (!get().stale && (get().activeSessions.length + get().completedSessions.length > 0)) return;
     set({ loading: true });
     try {
-      const [active, completed] = await Promise.all([
-        loadSessions(statePath(projectRoot, STATE_PATHS.SESSIONS_ACTIVE)),
-        loadSessions(statePath(projectRoot, STATE_PATHS.SESSIONS_COMPLETED)),
-      ]);
+      const raw = await listAllSessions(200);
+      const sessions = (raw ?? []) as SessionState[];
+
+      const active = sessions
+        .filter((s) => !s.endedAt)
+        .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+      const completed = sessions
+        .filter((s) => !!s.endedAt)
+        .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+
       set({ activeSessions: active, completedSessions: completed, loading: false, stale: false });
     } catch {
       set({ loading: false, stale: false });
     }
   },
 
-  fetchObservations: async (projectRoot, sessionId, status) => {
+  fetchObservations: async (_projectRoot, sessionId, _status) => {
     try {
-      const dir = statePath(projectRoot, `${STATE_PATHS.SESSIONS}/${status}`);
-      const data = await readJsonFile(`${dir}/${sessionId}-observations.json`);
-      return (data as SessionObservation[]) ?? [];
+      const results = await invoke<Array<{ id: string; session_id: string; title: string; type: string; created_at: string }>>('search_observations', { query: sessionId, limit: 100 });
+      return (results ?? [])
+        .filter((o) => o.session_id === sessionId)
+        .map((o) => ({
+          id: o.id,
+          sessionId: o.session_id,
+          type: o.type as SessionObservation['type'],
+          title: o.title,
+          createdAt: o.created_at,
+        })) as SessionObservation[];
     } catch {
       return [];
     }

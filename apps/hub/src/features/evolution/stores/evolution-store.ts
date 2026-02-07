@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { readJsonFile } from '../../../lib/tauri';
-import { statePath, STATE_PATHS } from '../../../lib/constants';
+import { listEvolutionCandidates, listEvolutionLog } from '../../../lib/tauri';
 import type { EvolutionCandidate, EvolutionLogEntry } from '../../../lib/types';
 
 interface EvolutionStoreState {
@@ -9,7 +8,7 @@ interface EvolutionStoreState {
   loading: boolean;
   stale: boolean;
 
-  fetch: (projectRoot: string) => Promise<void>;
+  fetch: (projectRoot?: string) => Promise<void>;
   invalidate: () => void;
 }
 
@@ -19,31 +18,25 @@ export const useEvolutionStore = create<EvolutionStoreState>((set, get) => ({
   loading: false,
   stale: true,
 
-  fetch: async (projectRoot) => {
+  fetch: async (_projectRoot?: string) => {
     if (!get().stale) return;
     set({ loading: true });
     try {
-      const base = statePath(projectRoot, STATE_PATHS.EVOLUTION);
-
       let candidates: EvolutionCandidate[] = [];
       let logEntries: EvolutionLogEntry[] = [];
 
       try {
-        const pending = (await readJsonFile(`${base}/pending.json`)) as {
-          candidates?: EvolutionCandidate[];
-        };
-        candidates = pending.candidates ?? [];
+        const raw = await listEvolutionCandidates();
+        candidates = (raw ?? []) as EvolutionCandidate[];
       } catch {
-        // pending.json may not exist
+        // No candidates
       }
 
       try {
-        const log = (await readJsonFile(`${base}/log.json`)) as {
-          entries?: EvolutionLogEntry[];
-        };
-        logEntries = log.entries ?? [];
+        const raw = await listEvolutionLog(100);
+        logEntries = (raw ?? []) as EvolutionLogEntry[];
       } catch {
-        // log.json may not exist
+        // No log entries
       }
 
       // Sort candidates by confidence desc, log by timestamp desc

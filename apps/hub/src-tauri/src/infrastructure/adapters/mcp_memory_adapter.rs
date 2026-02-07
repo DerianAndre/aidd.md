@@ -181,6 +181,23 @@ impl MemoryPort for McpMemoryAdapter {
         })
     }
 
+    fn list_all_sessions(&self, _limit: Option<usize>) -> Result<Vec<serde_json::Value>, String> {
+        // MCP adapter: not yet implemented for detailed session listing
+        Ok(vec![])
+    }
+
+    fn list_evolution_candidates(&self) -> Result<Vec<serde_json::Value>, String> {
+        Ok(vec![])
+    }
+
+    fn list_evolution_log(&self, _limit: Option<usize>) -> Result<Vec<serde_json::Value>, String> {
+        Ok(vec![])
+    }
+
+    fn list_permanent_memory(&self, _memory_type: &str) -> Result<Vec<serde_json::Value>, String> {
+        Ok(vec![])
+    }
+
     fn get_pattern_stats(&self) -> Result<PatternStats, String> {
         let result = self
             .client

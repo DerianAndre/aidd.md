@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { listDirectory, readJsonFile } from '../../../lib/tauri';
-import { statePath, STATE_PATHS, MEMORY_FILES } from '../../../lib/constants';
+import { listAllSessions, listPermanentMemory } from '../../../lib/tauri';
 import type { SessionState, MistakeEntry, HealthScore } from '../../../lib/types';
 import { computeHealthScore } from '../lib/compute-health';
 
@@ -10,7 +9,7 @@ interface DiagnosticsStoreState {
   loading: boolean;
   stale: boolean;
 
-  fetch: (projectRoot: string) => Promise<void>;
+  fetch: (projectRoot?: string) => Promise<void>;
   invalidate: () => void;
 }
 
@@ -20,36 +19,31 @@ export const useDiagnosticsStore = create<DiagnosticsStoreState>((set, get) => (
   loading: false,
   stale: true,
 
-  fetch: async (projectRoot) => {
+  fetch: async (_projectRoot?: string) => {
     if (!get().stale) return;
     set({ loading: true });
     try {
-      // Load completed sessions
+      // Load completed sessions from SQLite
       let sessions: SessionState[] = [];
       try {
-        const dir = statePath(projectRoot, STATE_PATHS.SESSIONS_COMPLETED);
-        const files = await listDirectory(dir, ['json']);
-        const sessionFiles = files.filter((f) => !f.name.includes('-observations'));
-        sessions = await Promise.all(
-          sessionFiles.map((f) => readJsonFile(f.path) as Promise<SessionState>),
-        );
+        const raw = await listAllSessions(200);
+        sessions = ((raw ?? []) as SessionState[]).filter((s) => !!s.endedAt);
       } catch {
-        // No completed sessions
+        // No sessions available
       }
 
-      // Load mistakes
+      // Load mistakes from permanent memory
       let mistakes: MistakeEntry[] = [];
       try {
-        const mistakesPath = `${statePath(projectRoot, STATE_PATHS.MEMORY)}/${MEMORY_FILES.MISTAKES}`;
-        const raw = await readJsonFile(mistakesPath);
-        if (Array.isArray(raw)) mistakes = raw as MistakeEntry[];
+        const raw = await listPermanentMemory('mistake');
+        mistakes = (raw ?? []) as MistakeEntry[];
       } catch {
-        // No mistakes file
+        // No mistakes available
       }
 
       const healthScore = computeHealthScore(sessions, mistakes);
       const topMistakes = [...mistakes]
-        .sort((a, b) => b.occurrences - a.occurrences)
+        .sort((a, b) => (b.occurrences ?? 1) - (a.occurrences ?? 1))
         .slice(0, 5);
 
       set({ healthScore, topMistakes, loading: false, stale: false });

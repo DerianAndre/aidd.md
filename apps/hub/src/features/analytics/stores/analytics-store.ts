@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { listDirectory, readJsonFile } from '../../../lib/tauri';
-import { statePath, STATE_PATHS } from '../../../lib/constants';
+import { listAllSessions } from '../../../lib/tauri';
 import type { SessionState, ModelMetrics } from '../../../lib/types';
 import {
   computeModelMetrics,
@@ -21,7 +20,7 @@ interface AnalyticsStoreState {
   loading: boolean;
   stale: boolean;
 
-  fetch: (projectRoot: string) => Promise<void>;
+  fetch: (projectRoot?: string) => Promise<void>;
   invalidate: () => void;
 }
 
@@ -36,16 +35,12 @@ export const useAnalyticsStore = create<AnalyticsStoreState>((set, get) => ({
   loading: false,
   stale: true,
 
-  fetch: async (projectRoot) => {
+  fetch: async (_projectRoot?: string) => {
     if (!get().stale) return;
     set({ loading: true });
     try {
-      const dir = statePath(projectRoot, STATE_PATHS.SESSIONS_COMPLETED);
-      const files = await listDirectory(dir, ['json']);
-      const sessionFiles = files.filter((f) => !f.name.includes('-observations'));
-      const sessions = await Promise.all(
-        sessionFiles.map((f) => readJsonFile(f.path) as Promise<SessionState>),
-      );
+      const raw = await listAllSessions(200);
+      const sessions = ((raw ?? []) as SessionState[]).filter((s) => !!s.endedAt);
 
       const modelMetrics = computeModelMetrics(sessions);
       const toolStats = computeToolUsageStats(sessions);

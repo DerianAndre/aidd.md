@@ -127,6 +127,10 @@ pub fn run() {
             presentation::commands::memory_commands::get_evolution_status,
             presentation::commands::memory_commands::get_pattern_stats,
             presentation::commands::memory_commands::search_observations,
+            presentation::commands::memory_commands::list_all_sessions,
+            presentation::commands::memory_commands::list_evolution_candidates,
+            presentation::commands::memory_commands::list_evolution_log,
+            presentation::commands::memory_commands::list_permanent_memory,
         ])
         .run(tauri::generate_context!())
         .expect("error while running aidd.md Hub");

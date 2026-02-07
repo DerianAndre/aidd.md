@@ -1,5 +1,5 @@
 use crate::domain::ports::inbound::{
-    MemoryPort, SessionSummary, SessionInfo, ObservationEntry, EvolutionStatus, PatternStats,
+    MemoryPort, SessionSummary, ObservationEntry, EvolutionStatus, PatternStats,
 };
 
 /// Application Service for Memory queries.
@@ -38,11 +38,31 @@ impl MemoryService {
         self.memory_port.get_pattern_stats()
     }
 
+    /// Use case: List all sessions with full data
+    pub fn list_all_sessions(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String> {
+        self.memory_port.list_all_sessions(limit)
+    }
+
+    /// Use case: List evolution candidates with full data
+    pub fn list_evolution_candidates(&self) -> Result<Vec<serde_json::Value>, String> {
+        self.memory_port.list_evolution_candidates()
+    }
+
+    /// Use case: List evolution log entries
+    pub fn list_evolution_log(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String> {
+        self.memory_port.list_evolution_log(limit)
+    }
+
+    /// Use case: List permanent memory by type
+    pub fn list_permanent_memory(&self, memory_type: &str) -> Result<Vec<serde_json::Value>, String> {
+        self.memory_port.list_permanent_memory(memory_type)
+    }
+
     /// Use case: Get complete memory snapshot (all data)
     pub fn get_memory_snapshot(&self) -> Result<MemorySnapshot, String> {
         Ok(MemorySnapshot {
             sessions: self.get_session_summary()?,
-            observations: vec![], // TODO: implement when MCP client available
+            observations: vec![],
             evolution: self.get_evolution_status()?,
             patterns: self.get_pattern_stats()?,
         })

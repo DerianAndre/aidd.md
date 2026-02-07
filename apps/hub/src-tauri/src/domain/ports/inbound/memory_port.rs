@@ -3,6 +3,9 @@ pub trait MemoryPort: Send + Sync {
     /// Get summary of all sessions
     fn get_session_summary(&self) -> Result<SessionSummary, String>;
 
+    /// List all sessions with full detail (data JSON blob from SQLite)
+    fn list_all_sessions(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String>;
+
     /// Search observations by query
     fn search_observations(
         &self,
@@ -13,8 +16,17 @@ pub trait MemoryPort: Send + Sync {
     /// Get evolution status
     fn get_evolution_status(&self) -> Result<EvolutionStatus, String>;
 
+    /// List evolution candidates with full detail
+    fn list_evolution_candidates(&self) -> Result<Vec<serde_json::Value>, String>;
+
+    /// List evolution log entries
+    fn list_evolution_log(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String>;
+
     /// Get pattern statistics
     fn get_pattern_stats(&self) -> Result<PatternStats, String>;
+
+    /// List permanent memory entries by type (decision, mistake, convention)
+    fn list_permanent_memory(&self, memory_type: &str) -> Result<Vec<serde_json::Value>, String>;
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

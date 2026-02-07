@@ -277,6 +277,19 @@ export interface McpHealthReport {
 export const scanMcpHealth = (projectPath?: string) =>
   invoke<McpHealthReport>('scan_mcp_health', { projectPath: projectPath ?? null });
 
+// Memory data (detailed queries from SQLite)
+export const listAllSessions = (limit?: number) =>
+  invoke<unknown[]>('list_all_sessions', { limit: limit ?? null });
+
+export const listEvolutionCandidates = () =>
+  invoke<unknown[]>('list_evolution_candidates');
+
+export const listEvolutionLog = (limit?: number) =>
+  invoke<unknown[]>('list_evolution_log', { limit: limit ?? null });
+
+export const listPermanentMemory = (memoryType: string) =>
+  invoke<unknown[]>('list_permanent_memory', { memoryType });
+
 // File watcher
 export interface FileChangeEvent {
   event_type: 'created' | 'modified' | 'deleted';
