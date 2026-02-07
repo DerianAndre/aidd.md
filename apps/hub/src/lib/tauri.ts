@@ -58,7 +58,7 @@ export interface ProjectInfo {
   path: string;
   detected: boolean;
   markers: {
-    agents_md: boolean;
+    agents: boolean;
     rules: boolean;
     skills: boolean;
     workflows: boolean;
@@ -186,7 +186,7 @@ export const getEffectiveEntities = (projectPath: string, category: FrameworkCat
   invoke<EffectiveEntity[]>('get_effective_entities', { projectPath, category });
 
 // Integration management
-export type IntegrationTool = 'claude_code' | 'cursor' | 'vscode' | 'gemini';
+export type IntegrationTool = 'claude_code' | 'cursor' | 'vscode' | 'gemini' | 'windsurf';
 
 export type IntegrationStatusValue = 'not_configured' | 'configured' | 'needs_update';
 
@@ -194,6 +194,7 @@ export interface IntegrationConfig {
   integration_type: IntegrationTool;
   status: IntegrationStatusValue;
   config_files: string[];
+  dev_mode: boolean;
 }
 
 export interface IntegrationResult {
@@ -203,8 +204,8 @@ export interface IntegrationResult {
   messages: string[];
 }
 
-export const integrateTool = (projectPath: string, tool: IntegrationTool) =>
-  invoke<IntegrationResult>('integrate_tool', { projectPath, tool });
+export const integrateTool = (projectPath: string, tool: IntegrationTool, devMode = false) =>
+  invoke<IntegrationResult>('integrate_tool', { projectPath, tool, devMode });
 
 export const removeIntegration = (projectPath: string, tool: IntegrationTool) =>
   invoke<IntegrationResult>('remove_integration', { projectPath, tool });
@@ -242,7 +243,7 @@ export const getMcpServers = () =>
   invoke<McpServer[]>('get_mcp_servers');
 
 // MCP health scanning
-export type McpToolSource = 'claude_code' | 'cursor' | 'vscode' | 'gemini';
+export type McpToolSource = 'claude_code' | 'cursor' | 'vscode' | 'gemini' | 'windsurf';
 export type McpConfigScope = 'global' | 'project';
 
 export interface DiscoveredMcp {

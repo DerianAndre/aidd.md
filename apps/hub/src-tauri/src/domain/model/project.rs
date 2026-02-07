@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 /// AIDD markers detected in a project directory.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiddMarkers {
-    pub agents_md: bool,
+    pub agents: bool,
     pub rules: bool,
     pub skills: bool,
     pub workflows: bool,

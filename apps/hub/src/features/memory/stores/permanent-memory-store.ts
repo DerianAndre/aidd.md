@@ -23,7 +23,7 @@ interface PermanentMemoryStoreState {
 }
 
 function memoryDir(root: string) {
-  return `${normalizePath(root)}/ai/memory`;
+  return `${normalizePath(root)}/.aidd/memory`;
 }
 
 function generateId() {

@@ -28,11 +28,11 @@ export function IntegrationsPage() {
     }
   }, [activeProject?.path, fetchStatus]);
 
-  const handleIntegrate = useCallback(async (tool: IntegrationTool) => {
+  const handleIntegrate = useCallback(async (tool: IntegrationTool, devMode?: boolean) => {
     if (!activeProject?.path) return;
     setBusyTool(tool);
     try {
-      await integrate(activeProject.path, tool);
+      await integrate(activeProject.path, tool, devMode);
     } finally {
       setBusyTool(null);
     }
@@ -77,7 +77,7 @@ export function IntegrationsPage() {
             <IntegrationCard
               key={config.integration_type}
               config={config}
-              onIntegrate={() => void handleIntegrate(config.integration_type)}
+              onIntegrate={(devMode) => void handleIntegrate(config.integration_type, devMode)}
               onRemove={() => void handleRemove(config.integration_type)}
               busy={busyTool === config.integration_type}
             />

@@ -9,6 +9,7 @@ pub enum McpToolSource {
     Cursor,
     Vscode,
     Gemini,
+    Windsurf,
 }
 
 /// Whether the config was found at global or project scope.

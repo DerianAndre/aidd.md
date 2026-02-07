@@ -15,7 +15,7 @@ interface IntegrationsStoreState {
 
   // Actions
   fetchStatus: (projectPath: string) => Promise<void>;
-  integrate: (projectPath: string, tool: IntegrationTool) => Promise<IntegrationResult>;
+  integrate: (projectPath: string, tool: IntegrationTool, devMode?: boolean) => Promise<IntegrationResult>;
   remove: (projectPath: string, tool: IntegrationTool) => Promise<IntegrationResult>;
   clearResult: () => void;
 }
@@ -35,8 +35,8 @@ export const useIntegrationsStore = create<IntegrationsStoreState>((set) => ({
     }
   },
 
-  integrate: async (projectPath, tool) => {
-    const result = await integrateTool(projectPath, tool);
+  integrate: async (projectPath, tool, devMode) => {
+    const result = await integrateTool(projectPath, tool, devMode);
     set({ lastResult: result });
     // Refresh status after integration
     const integrations = await checkIntegrations(projectPath);

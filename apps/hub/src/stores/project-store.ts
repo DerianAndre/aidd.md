@@ -21,6 +21,7 @@ interface ProjectStoreState {
   addAndDetect: (path: string) => Promise<ProjectInfo>;
   remove: (path: string) => Promise<void>;
   switchProject: (path: string) => Promise<void>;
+  refreshProject: (path: string) => Promise<ProjectInfo>;
 }
 
 export const useProjectStore = create<ProjectStoreState>((set) => ({
@@ -70,5 +71,14 @@ export const useProjectStore = create<ProjectStoreState>((set) => ({
     await setActiveProject(path);
     const info = await detectProject(path);
     set({ activeProject: info });
+  },
+
+  refreshProject: async (path: string) => {
+    const info = await detectProject(path);
+    const state = useProjectStore.getState();
+    if (state.activeProject?.path === path) {
+      set({ activeProject: info });
+    }
+    return info;
   },
 }));

@@ -42,7 +42,7 @@ export const useDiagnosticsStore = create<DiagnosticsStoreState>((set, get) => (
       // Load mistakes
       let mistakes: MistakeEntry[] = [];
       try {
-        const raw = await readJsonFile(`${root}/ai/memory/mistakes.json`);
+        const raw = await readJsonFile(`${root}/.aidd/memory/mistakes.json`);
         if (Array.isArray(raw)) mistakes = raw as MistakeEntry[];
       } catch {
         // No mistakes file

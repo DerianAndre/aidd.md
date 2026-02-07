@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
-import { Check, X, Trash2, FolderOpen } from 'lucide-react';
+import { Check, X, Trash2, FolderOpen, RefreshCw } from 'lucide-react';
 import type { ProjectInfo } from '../../../lib/tauri';
 
 interface ProjectCardProps {
@@ -10,10 +10,12 @@ interface ProjectCardProps {
   isActive: boolean;
   onSetActive: () => void;
   onRemove: () => void;
+  onRefresh: () => void;
+  refreshing?: boolean;
 }
 
 const MARKER_LABELS: { key: keyof ProjectInfo['markers']; label: string }[] = [
-  { key: 'agents_md', label: 'AGENTS.md' },
+  { key: 'agents', label: 'Agents' },
   { key: 'rules', label: 'Rules' },
   { key: 'skills', label: 'Skills' },
   { key: 'workflows', label: 'Workflows' },
@@ -29,6 +31,8 @@ export function ProjectCard({
   isActive,
   onSetActive,
   onRemove,
+  onRefresh,
+  refreshing,
 }: ProjectCardProps) {
   const { t } = useTranslation();
   return (
@@ -75,15 +79,26 @@ export function ProjectCard({
         ) : (
           <span className="text-xs text-success">{t('page.projects.currentlyActive')}</span>
         )}
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={onRemove}
-          className="text-danger"
-        >
-          <Trash2 size={14} />
-          {t('common.remove')}
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onRefresh}
+            disabled={refreshing}
+            aria-label={t('common.refresh')}
+          >
+            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onRemove}
+            className="text-danger"
+          >
+            <Trash2 size={14} />
+            {t('common.remove')}
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );

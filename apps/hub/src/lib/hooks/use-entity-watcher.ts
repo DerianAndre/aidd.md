@@ -48,11 +48,11 @@ export function useEntityWatcher() {
     const prefixes = pendingRef.current;
 
     // Framework entities
-    if (prefixes.has('/content/rules/')) rulesInvalidate();
-    if (prefixes.has('/content/templates/')) templatesInvalidate();
-    if (prefixes.has('/content/skills/')) skillsInvalidate();
-    if (prefixes.has('/content/workflows/')) workflowsInvalidate();
-    if (prefixes.has('/content/knowledge/')) knowledgeInvalidate();
+    if (prefixes.has('/.aidd/content/rules/')) rulesInvalidate();
+    if (prefixes.has('/.aidd/content/templates/')) templatesInvalidate();
+    if (prefixes.has('/.aidd/content/skills/')) skillsInvalidate();
+    if (prefixes.has('/.aidd/content/workflows/')) workflowsInvalidate();
+    if (prefixes.has('/.aidd/content/knowledge/')) knowledgeInvalidate();
 
     // Memory layer — sessions + analytics + diagnostics
     if (prefixes.has('/.aidd/sessions/')) {
@@ -68,7 +68,7 @@ export function useEntityWatcher() {
     if (prefixes.has('/.aidd/drafts/')) draftsInvalidate();
 
     // Permanent memory — decisions, mistakes, conventions
-    if (prefixes.has('/ai/memory/')) {
+    if (prefixes.has('/.aidd/memory/')) {
       permanentMemoryInvalidate();
       diagnosticsInvalidate(); // mistakes feed into health score
     }
@@ -98,9 +98,9 @@ export function useEntityWatcher() {
         const normalized = filePath.replace(/\\/g, '/');
 
         const prefixes = [
-          '/content/rules/', '/content/templates/', '/content/skills/', '/content/workflows/', '/content/knowledge/',
+          '/.aidd/content/rules/', '/.aidd/content/templates/', '/.aidd/content/skills/', '/.aidd/content/workflows/', '/.aidd/content/knowledge/',
           '/.aidd/sessions/', '/.aidd/evolution/', '/.aidd/drafts/',
-          '/ai/memory/', '/.aidd/config.json',
+          '/.aidd/memory/', '/.aidd/config.json',
         ] as const;
         for (const prefix of prefixes) {
           if (normalized.includes(prefix)) {

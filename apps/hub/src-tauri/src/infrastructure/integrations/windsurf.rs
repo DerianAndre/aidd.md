@@ -9,42 +9,52 @@ use super::adapter_trait::{
     rules_pointer,
 };
 
-/// Cursor integration adapter.
+/// Windsurf / Antigravity integration adapter.
 ///
 /// Files managed:
-/// - Project: `.cursor/mcp.json` — MCP server config (project-scoped)
-/// - Project: `.cursor/rules/aidd.mdc` — AIDD rules pointer (MDC format)
+/// - Global: `~/.codeium/windsurf/mcp_config.json` — MCP server config
+/// - Project: `.windsurfrules` — rules pointer to AIDD content
 /// - Project: agents routing.md (config-resolved path)
 /// - Project: `AGENTS.md` — thin redirect (cross-tool compat)
-pub struct CursorAdapter;
+pub struct WindsurfAdapter {
+    home_dir: std::path::PathBuf,
+}
 
-impl ToolAdapter for CursorAdapter {
+impl WindsurfAdapter {
+    pub fn new() -> Self {
+        Self {
+            home_dir: dirs::home_dir().expect("Cannot resolve home directory"),
+        }
+    }
+
+    fn mcp_config_path(&self) -> std::path::PathBuf {
+        self.home_dir.join(".codeium").join("windsurf").join("mcp_config.json")
+    }
+}
+
+impl ToolAdapter for WindsurfAdapter {
     fn tool_type(&self) -> IntegrationType {
-        IntegrationType::Cursor
+        IntegrationType::Windsurf
     }
 
     fn integrate(&self, project_path: &Path, framework_path: &Path, dev_mode: bool) -> Result<IntegrationResult, String> {
         let mut result = IntegrationResult {
-            tool: IntegrationType::Cursor,
+            tool: IntegrationType::Windsurf,
             files_created: Vec::new(),
             files_modified: Vec::new(),
             messages: Vec::new(),
         };
 
-        // 1. Project MCP config
-        let mcp_path = project_path.join(".cursor").join("mcp.json");
-        upsert_mcp_entry(&mcp_path, project_path, dev_mode, &mut result)?;
+        // 1. Global MCP config
+        upsert_mcp_entry(&self.mcp_config_path(), project_path, dev_mode, &mut result)?;
 
-        // 2. Cursor rules (.mdc format with YAML frontmatter)
-        let rules_path = project_path.join(".cursor").join("rules").join("aidd.mdc");
-        let mdc_content = format!(
-            "---\ndescription: \"AIDD framework rules \u{2014} AI-Driven Development\"\nalwaysApply: true\nglobs: []\n---\n\n# AIDD Framework\n\n{}",
-            rules_pointer()
-        );
-        if let Some(path) = ensure_file(&rules_path, &mdc_content)? {
+        // 2. Project .windsurfrules (thin pointer to AIDD content)
+        let windsurfrules = project_path.join(".windsurfrules");
+        let content = rules_pointer();
+        if let Some(path) = ensure_file(&windsurfrules, &content)? {
             result.files_created.push(path);
         } else {
-            result.messages.push(".cursor/rules/aidd.mdc already exists — not overwritten".to_string());
+            result.messages.push(".windsurfrules already exists — not overwritten".to_string());
         }
 
         // 3. Agents files (config-aware)
@@ -55,18 +65,17 @@ impl ToolAdapter for CursorAdapter {
 
     fn remove(&self, project_path: &Path) -> Result<IntegrationResult, String> {
         let mut result = IntegrationResult {
-            tool: IntegrationType::Cursor,
+            tool: IntegrationType::Windsurf,
             files_created: Vec::new(),
             files_modified: Vec::new(),
             messages: Vec::new(),
         };
 
-        let mcp_path = project_path.join(".cursor").join("mcp.json");
-        remove_mcp_entry(&mcp_path, &mut result)?;
+        remove_mcp_entry(&self.mcp_config_path(), &mut result)?;
 
-        let rules_path = project_path.join(".cursor").join("rules").join("aidd.mdc");
-        if remove_file_if_exists(&rules_path)? {
-            result.messages.push(format!("Removed {}", rules_path.display()));
+        let windsurfrules = project_path.join(".windsurfrules");
+        if remove_file_if_exists(&windsurfrules)? {
+            result.messages.push(format!("Removed {}", windsurfrules.display()));
         }
 
         result.messages.push("AGENTS.md preserved (shared across integrations)".to_string());
@@ -76,15 +85,19 @@ impl ToolAdapter for CursorAdapter {
     fn check(&self, project_path: &Path) -> Result<IntegrationConfig, String> {
         let mut config_files = Vec::new();
 
-        let mcp_path = project_path.join(".cursor").join("mcp.json");
-        let (has_mcp, dev_mode) = check_mcp_entry(&mcp_path)?;
+        let (has_mcp, dev_mode) = check_mcp_entry(&self.mcp_config_path())?;
         if has_mcp {
-            config_files.push(mcp_path.to_string_lossy().to_string());
+            config_files.push(self.mcp_config_path().to_string_lossy().to_string());
         }
 
         let has_agents = has_agents_dir(project_path);
         if has_agents {
             config_files.push(agents_dir_path(project_path).to_string_lossy().to_string());
+        }
+
+        let windsurfrules = project_path.join(".windsurfrules");
+        if windsurfrules.exists() {
+            config_files.push(windsurfrules.to_string_lossy().to_string());
         }
 
         let status = if has_mcp && has_agents {
@@ -96,7 +109,7 @@ impl ToolAdapter for CursorAdapter {
         };
 
         Ok(IntegrationConfig {
-            integration_type: IntegrationType::Cursor,
+            integration_type: IntegrationType::Windsurf,
             status,
             config_files,
             dev_mode,

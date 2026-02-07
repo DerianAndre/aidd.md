@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 use crate::domain::model::{IntegrationConfig, IntegrationResult, IntegrationType};
 use crate::domain::ports::inbound::IntegrationPort;
 use crate::infrastructure::integrations::adapter_trait::ToolAdapter;
-use crate::infrastructure::integrations::{ClaudeAdapter, CursorAdapter, VscodeAdapter, GeminiAdapter};
+use crate::infrastructure::integrations::{ClaudeAdapter, CursorAdapter, VscodeAdapter, GeminiAdapter, WindsurfAdapter};
 
 pub struct IntegrationService {
     framework_path: PathBuf,
@@ -16,6 +16,7 @@ impl IntegrationService {
             Box::new(CursorAdapter),
             Box::new(VscodeAdapter),
             Box::new(GeminiAdapter),
+            Box::new(WindsurfAdapter::new()),
         ];
         Self {
             framework_path: framework_path.to_path_buf(),
@@ -33,13 +34,13 @@ impl IntegrationService {
 }
 
 impl IntegrationPort for IntegrationService {
-    fn integrate(&self, project_path: &str, tool: IntegrationType) -> Result<IntegrationResult, String> {
+    fn integrate(&self, project_path: &str, tool: IntegrationType, dev_mode: bool) -> Result<IntegrationResult, String> {
         let project = Path::new(project_path);
         if !project.exists() {
             return Err(format!("Project path does not exist: {}", project_path));
         }
         let adapter = self.adapter_for(&tool)?;
-        adapter.integrate(project, &self.framework_path)
+        adapter.integrate(project, &self.framework_path, dev_mode)
     }
 
     fn remove_integration(&self, project_path: &str, tool: IntegrationType) -> Result<IntegrationResult, String> {

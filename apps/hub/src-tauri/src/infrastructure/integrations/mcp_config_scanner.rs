@@ -83,6 +83,17 @@ impl McpConfigScanner {
             );
         }
 
+        // ── VS Code: .vscode/mcp.json (dedicated MCP file) ──────────
+
+        // Project: {project}/.vscode/mcp.json
+        if let Some(project) = project_path {
+            self.scan_vscode_config(
+                &Path::new(project).join(".vscode").join("mcp.json"),
+                McpConfigScope::Project,
+                &mut discovered,
+            );
+        }
+
         // ── Gemini ───────────────────────────────────────────────────
 
         // Global: ~/.gemini/settings.json
@@ -102,6 +113,16 @@ impl McpConfigScanner {
                 &mut discovered,
             );
         }
+
+        // ── Windsurf / Antigravity ────────────────────────────────────
+
+        // Global: ~/.codeium/windsurf/mcp_config.json
+        self.scan_standard_config(
+            &self.home_dir.join(".codeium").join("windsurf").join("mcp_config.json"),
+            McpToolSource::Windsurf,
+            McpConfigScope::Global,
+            &mut discovered,
+        );
 
         Ok(discovered)
     }

@@ -72,10 +72,10 @@ export interface NavGroup {
 }
 
 // ---------------------------------------------------------------------------
-// Memory layer types (matching JSON file shapes in .aidd/ and ai/memory/)
+// Memory layer types (matching JSON file shapes in .aidd/memory/)
 // ---------------------------------------------------------------------------
 
-/** ai/memory/decisions.json entries */
+/** .aidd/memory/decisions.json entries */
 export interface DecisionEntry {
   id: string;
   decision: string;
@@ -86,7 +86,7 @@ export interface DecisionEntry {
   sessionId?: string;
 }
 
-/** ai/memory/mistakes.json entries */
+/** .aidd/memory/mistakes.json entries */
 export interface MistakeEntry {
   id: string;
   error: string;
@@ -99,7 +99,7 @@ export interface MistakeEntry {
   sessionId?: string;
 }
 
-/** ai/memory/conventions.json entries */
+/** .aidd/memory/conventions.json entries */
 export interface ConventionEntry {
   id: string;
   convention: string;

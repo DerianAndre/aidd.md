@@ -8,9 +8,10 @@ pub fn integrate_tool(
     ctx: State<'_, AppContext>,
     project_path: String,
     tool: String,
+    dev_mode: bool,
 ) -> Result<IntegrationResult, String> {
     let tool_type = IntegrationType::from_str(&tool)?;
-    ctx.integration_service.integrate(&project_path, tool_type)
+    ctx.integration_service.integrate(&project_path, tool_type, dev_mode)
 }
 
 #[tauri::command]

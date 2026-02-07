@@ -2,14 +2,21 @@ use std::path::Path;
 use crate::domain::model::{
     IntegrationConfig, IntegrationResult, IntegrationStatus, IntegrationType,
 };
-use super::adapter_trait::{ToolAdapter, ensure_file, read_json_or_default, write_json, remove_file_if_exists};
+use super::adapter_trait::{
+    ToolAdapter, ensure_file, remove_file_if_exists,
+    ensure_agents_files, has_agents_dir, agents_dir_path,
+    upsert_mcp_entry, remove_mcp_entry, check_mcp_entry,
+    project_instructions, project_name,
+};
 
 /// Claude Code integration adapter.
 ///
 /// Files managed:
 /// - Global: `~/.claude/mcp.json` — MCP server entry
+/// - Project: `.mcp.json` — project-scoped MCP config (team-shareable)
 /// - Project: `CLAUDE.md` — project instructions
-/// - Project: `AGENTS.md` — agent definitions (shared across tools)
+/// - Project: agents routing.md (config-resolved path)
+/// - Project: `AGENTS.md` — thin redirect (cross-tool compat)
 pub struct ClaudeAdapter {
     home_dir: std::path::PathBuf,
 }
@@ -21,12 +28,8 @@ impl ClaudeAdapter {
         }
     }
 
-    fn claude_dir(&self) -> std::path::PathBuf {
-        self.home_dir.join(".claude")
-    }
-
     fn mcp_json_path(&self) -> std::path::PathBuf {
-        self.claude_dir().join("mcp.json")
+        self.home_dir.join(".claude").join("mcp.json")
     }
 }
 
@@ -35,7 +38,7 @@ impl ToolAdapter for ClaudeAdapter {
         IntegrationType::ClaudeCode
     }
 
-    fn integrate(&self, project_path: &Path, framework_path: &Path) -> Result<IntegrationResult, String> {
+    fn integrate(&self, project_path: &Path, framework_path: &Path, dev_mode: bool) -> Result<IntegrationResult, String> {
         let mut result = IntegrationResult {
             tool: IntegrationType::ClaudeCode,
             files_created: Vec::new(),
@@ -43,59 +46,31 @@ impl ToolAdapter for ClaudeAdapter {
             messages: Vec::new(),
         };
 
-        // 1. Global MCP config: ~/.claude/mcp.json
-        let mcp_path = self.mcp_json_path();
-        let mut mcp_config = read_json_or_default(&mcp_path)?;
+        // 1. Global MCP config
+        upsert_mcp_entry(&self.mcp_json_path(), project_path, dev_mode, &mut result)?;
 
-        let servers = mcp_config
-            .as_object_mut()
-            .ok_or("mcp.json is not a JSON object")?
-            .entry("mcpServers")
-            .or_insert_with(|| serde_json::json!({}));
-
-        let had_entry = servers.get("aidd-engine").is_some();
-        servers.as_object_mut()
-            .ok_or("mcpServers is not a JSON object")?
-            .insert(
-                "aidd-engine".to_string(),
-                serde_json::json!({
-                    "command": "npx",
-                    "args": ["-y", "@aidd.md/mcp-engine"]
-                }),
-            );
-
-        write_json(&mcp_path, &mcp_config)?;
-        if had_entry {
-            result.files_modified.push(mcp_path.to_string_lossy().to_string());
-        } else {
-            result.files_created.push(mcp_path.to_string_lossy().to_string());
+        // 2. Project-scoped .mcp.json (team-shareable via git)
+        let project_mcp = project_path.join(".mcp.json");
+        if !project_mcp.exists() {
+            upsert_mcp_entry(&project_mcp, project_path, dev_mode, &mut result)?;
         }
 
-        // 2. Project CLAUDE.md
+        // 3. Project CLAUDE.md
         let claude_md = project_path.join("CLAUDE.md");
-        let claude_content = generate_claude_md(project_path);
-        if let Some(path) = ensure_file(&claude_md, &claude_content)? {
+        let name = project_name(project_path);
+        let content = project_instructions(
+            &name,
+            "Claude Code",
+            "The aidd.md MCP server is configured globally at `~/.claude/mcp.json` and per-project at `.mcp.json`.",
+        );
+        if let Some(path) = ensure_file(&claude_md, &content)? {
             result.files_created.push(path);
         } else {
             result.messages.push("CLAUDE.md already exists — not overwritten".to_string());
         }
 
-        // 3. Project AGENTS.md
-        let agents_md = project_path.join("AGENTS.md");
-        if !agents_md.exists() {
-            let framework_agents = framework_path.join("AGENTS.md");
-            let content = if framework_agents.exists() {
-                std::fs::read_to_string(&framework_agents)
-                    .map_err(|e| format!("Failed to read framework AGENTS.md: {}", e))?
-            } else {
-                generate_agents_md_template()
-            };
-            if let Some(path) = ensure_file(&agents_md, &content)? {
-                result.files_created.push(path);
-            }
-        } else {
-            result.messages.push("AGENTS.md already exists — not overwritten".to_string());
-        }
+        // 4. Agents files (config-aware)
+        ensure_agents_files(project_path, framework_path, &mut result)?;
 
         Ok(result)
     }
@@ -108,61 +83,48 @@ impl ToolAdapter for ClaudeAdapter {
             messages: Vec::new(),
         };
 
-        // Remove aidd entry from ~/.claude/mcp.json
-        let mcp_path = self.mcp_json_path();
-        if mcp_path.exists() {
-            let mut config = read_json_or_default(&mcp_path)?;
-            if let Some(servers) = config.get_mut("mcpServers").and_then(|s| s.as_object_mut()) {
-                if servers.remove("aidd-engine").is_some() {
-                    write_json(&mcp_path, &config)?;
-                    result.files_modified.push(mcp_path.to_string_lossy().to_string());
-                }
-            }
-        }
+        remove_mcp_entry(&self.mcp_json_path(), &mut result)?;
 
-        // Remove project CLAUDE.md
+        // Remove project-scoped .mcp.json entry
+        let project_mcp = project_path.join(".mcp.json");
+        remove_mcp_entry(&project_mcp, &mut result)?;
+
         let claude_md = project_path.join("CLAUDE.md");
         if remove_file_if_exists(&claude_md)? {
             result.messages.push(format!("Removed {}", claude_md.display()));
         }
 
-        // Do NOT remove AGENTS.md — it's shared across tools
         result.messages.push("AGENTS.md preserved (shared across integrations)".to_string());
-
         Ok(result)
     }
 
     fn check(&self, project_path: &Path) -> Result<IntegrationConfig, String> {
         let mut config_files = Vec::new();
 
-        // Check global MCP config
-        let mcp_path = self.mcp_json_path();
-        let has_mcp = if mcp_path.exists() {
-            let config = read_json_or_default(&mcp_path)?;
-            config.get("mcpServers")
-                .and_then(|s| s.get("aidd-engine"))
-                .is_some()
-        } else {
-            false
-        };
+        let (has_mcp, dev_mode) = check_mcp_entry(&self.mcp_json_path())?;
         if has_mcp {
-            config_files.push(mcp_path.to_string_lossy().to_string());
+            config_files.push(self.mcp_json_path().to_string_lossy().to_string());
         }
 
-        // Check project files
+        // Check project-scoped .mcp.json
+        let project_mcp = project_path.join(".mcp.json");
+        let (has_project_mcp, _) = check_mcp_entry(&project_mcp)?;
+        if has_project_mcp {
+            config_files.push(project_mcp.to_string_lossy().to_string());
+        }
+
         let claude_md = project_path.join("CLAUDE.md");
-        let agents_md = project_path.join("AGENTS.md");
         let has_claude_md = claude_md.exists();
-        let has_agents_md = agents_md.exists();
+        let has_agents = has_agents_dir(project_path);
 
         if has_claude_md {
             config_files.push(claude_md.to_string_lossy().to_string());
         }
-        if has_agents_md {
-            config_files.push(agents_md.to_string_lossy().to_string());
+        if has_agents {
+            config_files.push(agents_dir_path(project_path).to_string_lossy().to_string());
         }
 
-        let status = if has_mcp && has_claude_md && has_agents_md {
+        let status = if has_mcp && has_claude_md && has_agents {
             IntegrationStatus::Configured
         } else if has_mcp || has_claude_md {
             IntegrationStatus::NeedsUpdate
@@ -174,62 +136,8 @@ impl ToolAdapter for ClaudeAdapter {
             integration_type: IntegrationType::ClaudeCode,
             status,
             config_files,
+            dev_mode,
         })
     }
 }
 
-fn generate_claude_md(project_path: &Path) -> String {
-    let project_name = project_path
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| "Project".to_string());
-
-    format!(
-r#"# {} — Project Instructions for Claude Code
-
-> Auto-generated by aidd.md Hub. Edit freely.
-
-## SSOT
-
-`AGENTS.md` is the canonical source of truth for agent roles and coordination.
-
-## Framework
-
-This project uses the [aidd.md](https://aidd.md) framework:
-- **AGENTS.md** — Agent definitions and routing
-- **rules/** — Domain-specific rules
-- **skills/** — Specialized capabilities
-
-## MCP Integration
-
-The aidd.md MCP server is configured globally at `~/.claude/mcp.json`.
-"#,
-        project_name
-    )
-}
-
-fn generate_agents_md_template() -> String {
-    r#"# AGENTS.md — AI Agent Definitions
-
-> Single Source of Truth for AI agent roles and coordination.
-> Auto-generated by aidd.md Hub. Customize for your project.
-
-## Orchestrator
-
-The primary agent that coordinates all sub-agents and routes tasks.
-
-### Capabilities
-- Task classification and routing
-- Context optimization
-- Quality gate enforcement
-
-## Rules
-
-See `rules/` directory for domain-specific rules.
-
-## Skills
-
-See `skills/` directory for specialized capabilities.
-"#
-    .to_string()
-}

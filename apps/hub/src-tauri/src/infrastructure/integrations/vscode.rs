@@ -2,16 +2,20 @@ use std::path::Path;
 use crate::domain::model::{
     IntegrationConfig, IntegrationResult, IntegrationStatus, IntegrationType,
 };
-use super::adapter_trait::{ToolAdapter, ensure_file, remove_file_if_exists};
+use super::adapter_trait::{
+    ToolAdapter, ensure_file, remove_file_if_exists,
+    ensure_agents_files, has_agents_dir, agents_dir_path,
+    read_json_or_default, write_json, mcp_server_entry,
+    project_instructions, project_name,
+};
 
 /// VS Code / GitHub Copilot integration adapter.
 ///
 /// Files managed:
+/// - Project: `.vscode/mcp.json` — MCP server config (VS Code native)
 /// - Project: `.github/copilot-instructions.md` — Copilot instructions
-/// - Project: `AGENTS.md` — agent definitions (shared across tools)
-///
-/// Note: VS Code MCP settings require manual user config (settings.json).
-/// The adapter provides guidance via messages.
+/// - Project: agents routing.md (config-resolved path)
+/// - Project: `AGENTS.md` — thin redirect (cross-tool compat)
 pub struct VscodeAdapter;
 
 impl ToolAdapter for VscodeAdapter {
@@ -19,7 +23,7 @@ impl ToolAdapter for VscodeAdapter {
         IntegrationType::Vscode
     }
 
-    fn integrate(&self, project_path: &Path, framework_path: &Path) -> Result<IntegrationResult, String> {
+    fn integrate(&self, project_path: &Path, framework_path: &Path, dev_mode: bool) -> Result<IntegrationResult, String> {
         let mut result = IntegrationResult {
             tool: IntegrationType::Vscode,
             files_created: Vec::new(),
@@ -27,38 +31,26 @@ impl ToolAdapter for VscodeAdapter {
             messages: Vec::new(),
         };
 
-        // 1. Project: .github/copilot-instructions.md
+        // 1. Auto-generate .vscode/mcp.json (VS Code native MCP config)
+        let vscode_mcp = project_path.join(".vscode").join("mcp.json");
+        upsert_vscode_mcp(&vscode_mcp, project_path, dev_mode, &mut result)?;
+
+        // 2. Copilot instructions
         let copilot_md = project_path.join(".github").join("copilot-instructions.md");
-        let content = generate_copilot_instructions(project_path);
+        let name = project_name(project_path);
+        let content = project_instructions(
+            &name,
+            "Copilot",
+            "The aidd.md MCP server is configured at `.vscode/mcp.json`.",
+        );
         if let Some(path) = ensure_file(&copilot_md, &content)? {
             result.files_created.push(path);
         } else {
             result.messages.push("copilot-instructions.md already exists — not overwritten".to_string());
         }
 
-        // 2. Project AGENTS.md
-        let agents_md = project_path.join("AGENTS.md");
-        if !agents_md.exists() {
-            let framework_agents = framework_path.join("AGENTS.md");
-            let content = if framework_agents.exists() {
-                std::fs::read_to_string(&framework_agents)
-                    .map_err(|e| format!("Failed to read framework AGENTS.md: {}", e))?
-            } else {
-                generate_agents_md_stub()
-            };
-            if let Some(path) = ensure_file(&agents_md, &content)? {
-                result.files_created.push(path);
-            }
-        } else {
-            result.messages.push("AGENTS.md already exists — not overwritten".to_string());
-        }
-
-        // 3. MCP setup guidance
-        result.messages.push(
-            "To enable aidd.md MCP in VS Code, add to your settings.json:\n\
-             \"mcp\": { \"servers\": { \"aidd-engine\": { \"command\": \"npx\", \"args\": [\"-y\", \"@aidd.md/mcp-engine\"] } } }"
-                .to_string(),
-        );
+        // 3. Agents files (config-aware)
+        ensure_agents_files(project_path, framework_path, &mut result)?;
 
         Ok(result)
     }
@@ -71,21 +63,28 @@ impl ToolAdapter for VscodeAdapter {
             messages: Vec::new(),
         };
 
+        // Remove .vscode/mcp.json entry
+        let vscode_mcp = project_path.join(".vscode").join("mcp.json");
+        remove_vscode_mcp(&vscode_mcp, &mut result)?;
+
         let copilot_md = project_path.join(".github").join("copilot-instructions.md");
         if remove_file_if_exists(&copilot_md)? {
             result.messages.push(format!("Removed {}", copilot_md.display()));
         }
 
         result.messages.push("AGENTS.md preserved (shared across integrations)".to_string());
-        result.messages.push(
-            "Remember to remove the MCP entry from VS Code settings.json manually".to_string(),
-        );
-
         Ok(result)
     }
 
     fn check(&self, project_path: &Path) -> Result<IntegrationConfig, String> {
         let mut config_files = Vec::new();
+
+        // Check .vscode/mcp.json
+        let vscode_mcp = project_path.join(".vscode").join("mcp.json");
+        let has_mcp = check_vscode_mcp(&vscode_mcp);
+        if has_mcp {
+            config_files.push(vscode_mcp.to_string_lossy().to_string());
+        }
 
         let copilot_md = project_path.join(".github").join("copilot-instructions.md");
         let has_copilot = copilot_md.exists();
@@ -93,15 +92,14 @@ impl ToolAdapter for VscodeAdapter {
             config_files.push(copilot_md.to_string_lossy().to_string());
         }
 
-        let agents_md = project_path.join("AGENTS.md");
-        let has_agents_md = agents_md.exists();
-        if has_agents_md {
-            config_files.push(agents_md.to_string_lossy().to_string());
+        let has_agents = has_agents_dir(project_path);
+        if has_agents {
+            config_files.push(agents_dir_path(project_path).to_string_lossy().to_string());
         }
 
-        let status = if has_copilot && has_agents_md {
+        let status = if has_mcp && has_copilot && has_agents {
             IntegrationStatus::Configured
-        } else if has_copilot || has_agents_md {
+        } else if has_mcp || has_copilot || has_agents {
             IntegrationStatus::NeedsUpdate
         } else {
             IntegrationStatus::NotConfigured
@@ -111,54 +109,69 @@ impl ToolAdapter for VscodeAdapter {
             integration_type: IntegrationType::Vscode,
             status,
             config_files,
+            dev_mode: false,
         })
     }
 }
 
-fn generate_copilot_instructions(project_path: &Path) -> String {
-    let project_name = project_path
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| "Project".to_string());
+// VS Code uses a different MCP format: { "servers": { ... } } with a "type" field.
 
-    format!(
-r#"# {} — Copilot Instructions
+fn upsert_vscode_mcp(
+    mcp_path: &std::path::Path,
+    project_path: &Path,
+    dev_mode: bool,
+    result: &mut IntegrationResult,
+) -> Result<(), String> {
+    let mut config = read_json_or_default(mcp_path)?;
+    let existed = mcp_path.exists();
 
-> Auto-generated by aidd.md Hub. Edit freely.
+    let servers = config
+        .as_object_mut()
+        .ok_or("mcp.json is not a JSON object")?
+        .entry("servers")
+        .or_insert_with(|| serde_json::json!({}));
 
-## Agent Definitions
+    let mut entry = mcp_server_entry(project_path, dev_mode);
+    // VS Code requires an explicit "type" field
+    entry.as_object_mut().unwrap().insert("type".to_string(), serde_json::json!("stdio"));
 
-See `AGENTS.md` for the canonical source of truth on agent roles and coordination.
+    servers
+        .as_object_mut()
+        .ok_or("servers is not a JSON object")?
+        .insert("aidd-engine".to_string(), entry);
 
-## Framework
-
-This project uses the [aidd.md](https://aidd.md) AI-Driven Development framework.
-
-### Key Files
-- **AGENTS.md** — Agent definitions, routing, and coordination
-- **rules/** — Domain-specific rules for code generation
-- **skills/** — Specialized agent capabilities
-
-## Guidelines
-
-- Follow patterns in AGENTS.md for task routing
-- Apply rules from `rules/` for domain-specific constraints
-- Use TypeScript strict mode, ES modules only
-- Evidence-first: logic/data/principles, never opinions
-"#,
-        project_name
-    )
+    write_json(mcp_path, &config)?;
+    if existed {
+        result.files_modified.push(mcp_path.to_string_lossy().to_string());
+    } else {
+        result.files_created.push(mcp_path.to_string_lossy().to_string());
+    }
+    Ok(())
 }
 
-fn generate_agents_md_stub() -> String {
-    r#"# AGENTS.md — AI Agent Definitions
+fn remove_vscode_mcp(
+    mcp_path: &std::path::Path,
+    result: &mut IntegrationResult,
+) -> Result<(), String> {
+    if !mcp_path.exists() {
+        return Ok(());
+    }
+    let mut config = read_json_or_default(mcp_path)?;
+    if let Some(servers) = config.get_mut("servers").and_then(|s| s.as_object_mut()) {
+        if servers.remove("aidd-engine").is_some() {
+            write_json(mcp_path, &config)?;
+            result.files_modified.push(mcp_path.to_string_lossy().to_string());
+        }
+    }
+    Ok(())
+}
 
-> Single Source of Truth for AI agent roles and coordination.
-> Auto-generated by aidd.md Hub. Customize for your project.
-
-## Orchestrator
-
-The primary agent that coordinates all sub-agents and routes tasks.
-"#
-    .to_string()
+fn check_vscode_mcp(mcp_path: &std::path::Path) -> bool {
+    if !mcp_path.exists() {
+        return false;
+    }
+    read_json_or_default(mcp_path)
+        .ok()
+        .and_then(|c| c.get("servers")?.get("aidd-engine").cloned())
+        .is_some()
 }

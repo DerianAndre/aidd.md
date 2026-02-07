@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -67,6 +67,23 @@ export function ProjectsPage() {
     await switchProject(path);
   };
 
+  const [refreshingPath, setRefreshingPath] = useState<string | null>(null);
+
+  const handleRefresh = useCallback(async (path: string) => {
+    setRefreshingPath(path);
+    try {
+      const info = await detectProject(path);
+      setProjectInfos((prev) => new Map(prev).set(path, info));
+      // Update active project in store if this is the active one
+      const store = useProjectStore.getState();
+      if (store.activeProject?.path === path) {
+        await store.refreshProject(path);
+      }
+    } finally {
+      setRefreshingPath(null);
+    }
+  }, []);
+
   return (
     <div>
       <PageHeader
@@ -111,6 +128,8 @@ export function ProjectsPage() {
                 isActive={activeProject?.path === p.path}
                 onSetActive={() => handleSetActive(p.path)}
                 onRemove={() => handleRemove(p.path)}
+                onRefresh={() => handleRefresh(p.path)}
+                refreshing={refreshingPath === p.path}
               />
             );
           })}
