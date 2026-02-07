@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Chip } from '@/components/ui/chip';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -105,16 +106,20 @@ export function DraftsPage() {
 
         {/* Preview panel */}
         {selectedDraftId && (
-          <div className="rounded-xl border border-border bg-muted/50 p-4">
-            <h3 className="mb-3 text-sm font-semibold text-foreground">{t('page.drafts.preview')}</h3>
-            {draftContent === null ? (
-              <Skeleton className="h-40 rounded-lg" />
-            ) : (
-              <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-muted p-3 text-xs text-foreground">
-                {draftContent}
-              </pre>
-            )}
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">{t('page.drafts.preview')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {draftContent === null ? (
+                <Skeleton className="h-40 rounded-lg" />
+              ) : (
+                <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-muted p-3 text-xs text-foreground">
+                  {draftContent}
+                </pre>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

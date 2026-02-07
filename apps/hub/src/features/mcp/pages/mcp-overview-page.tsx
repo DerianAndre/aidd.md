@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Chip } from '@/components/ui/chip';
-import { Spinner } from '@/components/ui/spinner';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect, useMemo, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   RefreshCw,
   Server,
@@ -17,36 +18,46 @@ import {
   Sparkles,
   Wind,
   StopCircle,
-} from 'lucide-react';
-import { PageHeader } from '../../../components/layout/page-header';
-import { StatCard } from '../../dashboard/components/stat-card';
-import { DiscoveredMcpCard } from '../components/discovered-mcp-card';
-import { PackageCard } from '../components/package-card';
-import { useMcpHealthStore } from '../stores/mcp-health-store';
-import { useMcpServersStore } from '../stores/mcp-servers-store';
-import { useProjectStore } from '../../../stores/project-store';
-import { ROUTES } from '../../../lib/constants';
-import { MCP_PACKAGES } from '../lib/mcp-catalog';
-import type { DiscoveredMcp, McpToolSource, McpServer } from '../../../lib/tauri';
+} from "lucide-react";
+import { PageHeader } from "../../../components/layout/page-header";
+import { StatCard } from "../../dashboard/components/stat-card";
+import { DiscoveredMcpCard } from "../components/discovered-mcp-card";
+import { PackageCard } from "../components/package-card";
+import { useMcpHealthStore } from "../stores/mcp-health-store";
+import { useMcpServersStore } from "../stores/mcp-servers-store";
+import { useProjectStore } from "../../../stores/project-store";
+import { ROUTES } from "../../../lib/constants";
+import { MCP_PACKAGES } from "../lib/mcp-catalog";
+import type {
+  DiscoveredMcp,
+  McpToolSource,
+  McpServer,
+} from "../../../lib/tauri";
 
 // -- Tool metadata --------------------------------------------------------
 
 const TOOL_META: Record<McpToolSource, { label: string; icon: typeof Bot }> = {
-  claude_code: { label: 'Claude Code', icon: Bot },
-  cursor: { label: 'Cursor', icon: MousePointer2 },
-  vscode: { label: 'VS Code', icon: Code },
-  gemini: { label: 'Gemini', icon: Sparkles },
-  windsurf: { label: 'Windsurf', icon: Wind },
+  claude_code: { label: "Claude Code", icon: Bot },
+  cursor: { label: "Cursor", icon: MousePointer2 },
+  vscode: { label: "VS Code", icon: Code },
+  gemini: { label: "Gemini", icon: Sparkles },
+  windsurf: { label: "Windsurf", icon: Wind },
 };
 
-const TOOL_ORDER: McpToolSource[] = ['claude_code', 'cursor', 'vscode', 'gemini', 'windsurf'];
+const TOOL_ORDER: McpToolSource[] = [
+  "claude_code",
+  "cursor",
+  "vscode",
+  "gemini",
+  "windsurf",
+];
 
 /** Maps package dir to the server id used by the Rust backend. */
 const DIR_TO_SERVER_ID: Record<string, string> = {
-  'mcp-aidd-engine': 'engine',
-  'mcp-aidd-core': 'core',
-  'mcp-aidd-memory': 'memory',
-  'mcp-aidd-tools': 'tools',
+  "mcp-aidd-engine": "engine",
+  "mcp-aidd-core": "core",
+  "mcp-aidd-memory": "memory",
+  "mcp-aidd-tools": "tools",
 };
 
 // -- Component ------------------------------------------------------------
@@ -82,7 +93,8 @@ export function McpOverviewPage() {
   }, [healthStale, activeProject?.path, fetchHealth]);
 
   useEffect(() => {
-    if (activeProject?.path && serversStale) void fetchServers(activeProject.path);
+    if (activeProject?.path && serversStale)
+      void fetchServers(activeProject.path);
   }, [activeProject?.path, serversStale, fetchServers]);
 
   const loading = healthLoading || serversLoading;
@@ -115,23 +127,32 @@ export function McpOverviewPage() {
   }, [report]);
 
   const summary = report?.summary;
-  const runningCount = servers.filter((s) => s.status === 'running').length;
+  const runningCount = servers.filter((s) => s.status === "running").length;
   const builtCount = packages.filter((p) => p.built).length;
 
-  const handleStart = useCallback(async (serverId: string) => {
-    await start(serverId, 'hub_hosted');
-  }, [start]);
+  const handleStart = useCallback(
+    async (serverId: string) => {
+      await start(serverId, "hub_hosted");
+    },
+    [start],
+  );
 
-  const handleStop = useCallback(async (serverId: string) => {
-    await stop(serverId);
-  }, [stop]);
+  const handleStop = useCallback(
+    async (serverId: string) => {
+      await stop(serverId);
+    },
+    [stop],
+  );
 
   // -- Loading skeleton ---------------------------------------------------
 
   if (healthLoading && !report) {
     return (
       <div>
-        <PageHeader title={t('page.mcp.title')} description={t('page.mcp.description')} />
+        <PageHeader
+          title={t("page.mcp.title")}
+          description={t("page.mcp.description")}
+        />
         <div className="mb-6 grid gap-3 grid-cols-2 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-20 rounded-xl" />
@@ -151,8 +172,8 @@ export function McpOverviewPage() {
   return (
     <div>
       <PageHeader
-        title={t('page.mcp.title')}
-        description={t('page.mcp.description')}
+        title={t("page.mcp.title")}
+        description={t("page.mcp.description")}
         actions={
           <Button
             size="sm"
@@ -161,7 +182,7 @@ export function McpOverviewPage() {
             disabled={loading}
           >
             {loading ? <Spinner size="sm" /> : <RefreshCw size={14} />}
-            {t('common.refresh')}
+            {t("common.refresh")}
           </Button>
         }
       />
@@ -169,62 +190,72 @@ export function McpOverviewPage() {
       {/* -- Stat cards ---------------------------------------------------- */}
       <div className="mb-6 grid gap-3 grid-cols-2 sm:grid-cols-4">
         <StatCard
-          label={t('page.mcp.totalDiscovered')}
+          label={t("page.mcp.totalDiscovered")}
           value={summary?.total_discovered ?? 0}
           icon={Server}
         />
         <StatCard
-          label={t('page.mcp.aiddMcps')}
+          label={t("page.mcp.aiddMcps")}
           value={summary?.aidd_count ?? 0}
           icon={Shield}
-          color={summary && summary.aidd_count > 0 ? 'success' : 'default'}
+          color={summary && summary.aidd_count > 0 ? "success" : "default"}
         />
         <StatCard
-          label={t('page.mcp.hubStatus')}
+          label={t("page.mcp.hubStatus")}
           value={
             summary
               ? summary.hub_error > 0
                 ? `${summary.hub_running} / ${summary.hub_error} err`
                 : `${summary.hub_running} running`
-              : '\u2014'
+              : "\u2014"
           }
           icon={Zap}
           color={
             summary && summary.hub_error > 0
-              ? 'danger'
+              ? "danger"
               : summary && summary.hub_running > 0
-                ? 'success'
-                : 'default'
+                ? "success"
+                : "default"
           }
         />
         <StatCard
-          label={t('page.mcp.packagesBuilt')}
+          label={t("page.mcp.packagesBuilt")}
           value={`${builtCount}/${packages.length}`}
           icon={Package}
-          color={packages.length > 0 && builtCount === packages.length ? 'success' : 'default'}
+          color={
+            packages.length > 0 && builtCount === packages.length
+              ? "success"
+              : "default"
+          }
         />
       </div>
 
       {/* -- Discovered MCPs ----------------------------------------------- */}
       <div className="mb-8">
         <div className="mb-3 flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-foreground">{t('page.mcp.discoveredMcps')}</h2>
+          <h2 className="text-sm font-semibold text-foreground">
+            {t("page.mcp.discoveredMcps")}
+          </h2>
           {summary && (
-            <Chip size="sm" color="default">{summary.total_discovered}</Chip>
+            <Chip size="sm" color="default">
+              {summary.total_discovered}
+            </Chip>
           )}
         </div>
 
         {report && report.discovered.length === 0 && (
-          <div className="rounded-xl border border-border bg-muted/50 p-8 text-center">
+          <Card className="items-center p-8 text-center">
             <Server size={32} className="mx-auto mb-3 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">{t('page.mcp.noMcps')}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("page.mcp.noMcps")}
+            </p>
             <Link
               to={ROUTES.INTEGRATIONS}
               className="mt-2 inline-block text-xs text-primary hover:underline"
             >
-              {t('page.mcp.noMcpsHint')}
+              {t("page.mcp.noMcpsHint")}
             </Link>
-          </div>
+          </Card>
         )}
 
         <div className="flex flex-col gap-4">
@@ -236,18 +267,16 @@ export function McpOverviewPage() {
             const ToolIcon = meta.icon;
 
             return (
-              <div key={toolKey} className="rounded-xl border border-border bg-muted/50 p-4">
-                {/* Section header */}
-                <div className="mb-3 flex items-center gap-2">
+              <Card key={toolKey}>
+                <CardHeader className="flex-row items-center gap-2">
                   <ToolIcon size={16} className="text-muted-foreground" />
-                  <h3 className="text-sm font-semibold text-foreground">{meta.label}</h3>
+                  <CardTitle className="text-sm">{meta.label}</CardTitle>
                   <Chip size="sm" color="default">
                     {entries.length}
                   </Chip>
-                </div>
+                </CardHeader>
 
-                {/* Entry list */}
-                <div className="flex flex-col gap-2">
+                <CardContent className="flex flex-col gap-2">
                   {entries.map((entry) => (
                     <DiscoveredMcpCard
                       key={`${entry.tool}-${entry.scope}-${entry.name}-${entry.config_path}`}
@@ -255,8 +284,8 @@ export function McpOverviewPage() {
                       hubServer={hubServerMap.get(entry.name)}
                     />
                   ))}
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
@@ -266,13 +295,21 @@ export function McpOverviewPage() {
       <div>
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-foreground">{t('page.mcp.aiddPackages')}</h2>
-            <Chip size="sm" color="default">{MCP_PACKAGES.length}</Chip>
+            <h2 className="text-sm font-semibold text-foreground">
+              {t("page.mcp.aiddPackages")}
+            </h2>
+            <Chip size="sm" color="default">
+              {MCP_PACKAGES.length}
+            </Chip>
           </div>
           {runningCount > 0 && (
-            <Button size="sm" variant="destructive" onClick={() => void stopAll()}>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => void stopAll()}
+            >
               <StopCircle size={14} />
-              {t('page.mcp.stopAll', { count: runningCount })}
+              {t("page.mcp.stopAll", { count: runningCount })}
             </Button>
           )}
         </div>
@@ -281,7 +318,9 @@ export function McpOverviewPage() {
           {MCP_PACKAGES.map((pkg) => {
             const status = packages.find((p) => p.name === pkg.name);
             const serverId = DIR_TO_SERVER_ID[pkg.dir];
-            const server = serverId ? servers.find((s) => s.id === serverId) : undefined;
+            const server = serverId
+              ? servers.find((s) => s.id === serverId)
+              : undefined;
             return (
               <PackageCard
                 key={pkg.name}
@@ -296,23 +335,28 @@ export function McpOverviewPage() {
         </div>
 
         {/* Integration snippet */}
-        <div className="mt-6 rounded-xl border border-border bg-muted/50 p-4">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.mcp.integration')}</h3>
-          <p className="mb-3 text-xs text-muted-foreground">
-            {t('page.mcp.integrationHint')}
-          </p>
-          <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs text-foreground">
-{`{
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-sm">
+              {t("page.mcp.integration")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              {t("page.mcp.integrationHint")}
+            </p>
+            <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs text-foreground">
+              {`{
   "mcpServers": {
     "aidd-engine": {
       "command": "node",
       "args": ["mcps/mcp-aidd-engine/dist/index.js"],
-      "env": { "AIDD_PROJECT_ROOT": "." }
     }
   }
 }`}
-          </pre>
-        </div>
+            </pre>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Target, FlaskConical, Cpu } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -62,21 +63,33 @@ export function AnalyticsPage() {
       </div>
 
       {/* Session timeline */}
-      <div className="mb-6 rounded-xl border border-border bg-muted/50 p-4">
-        <h3 className="mb-3 text-sm font-semibold text-foreground">{t('page.analytics.sessionsOverTime')}</h3>
-        <SessionTimelineChart data={timelineData} />
-      </div>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-sm">{t('page.analytics.sessionsOverTime')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SessionTimelineChart data={timelineData} />
+        </CardContent>
+      </Card>
 
       {/* Two-column charts */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <div className="rounded-xl border border-border bg-muted/50 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-foreground">{t('page.analytics.modelPerformance')}</h3>
-          <ModelPerformanceChart metrics={modelMetrics} />
-        </div>
-        <div className="rounded-xl border border-border bg-muted/50 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-foreground">{t('page.analytics.toolUsage')}</h3>
-          <ToolUsageChart stats={toolStats} />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">{t('page.analytics.modelPerformance')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ModelPerformanceChart metrics={modelMetrics} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">{t('page.analytics.toolUsage')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ToolUsageChart stats={toolStats} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

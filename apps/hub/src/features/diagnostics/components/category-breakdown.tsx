@@ -1,3 +1,4 @@
+import { Card, CardContent } from '@/components/ui/card';
 import { scoreColor } from '../../../lib/utils';
 import type { HealthScore } from '../../../lib/types';
 
@@ -25,23 +26,22 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
   return (
     <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
       {entries.map(([key, value]) => (
-        <div
-          key={key}
-          className="rounded-xl border border-border bg-muted/50 p-3"
-        >
-          <span className="text-[10px] font-medium uppercase text-muted-foreground">
-            {CATEGORY_LABELS[key] ?? key}
-          </span>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="text-lg font-bold text-foreground">{value}</span>
-            <div className="h-1.5 flex-1 rounded-full bg-border">
-              <div
-                className={`h-full rounded-full ${BAR_COLORS[scoreColor(value)]}`}
-                style={{ width: `${Math.min(value, 100)}%` }}
-              />
+        <Card key={key} className="gap-2 py-3">
+          <CardContent>
+            <span className="text-[10px] font-medium uppercase text-muted-foreground">
+              {CATEGORY_LABELS[key] ?? key}
+            </span>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="text-lg font-bold text-foreground">{value}</span>
+              <div className="h-1.5 flex-1 rounded-full bg-border">
+                <div
+                  className={`h-full rounded-full ${BAR_COLORS[scoreColor(value)]}`}
+                  style={{ width: `${Math.min(value, 100)}%` }}
+                />
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { ArrowLeft } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -103,9 +104,9 @@ export function AgentDetailPage() {
 
       {/* Raw section rendered in BlockNote read-only */}
       {agentSection && (
-        <div className="rounded-xl border border-border">
+        <Card className="gap-0 py-0">
           <BlockEditor initialMarkdown={agentSection} editable={false} />
-        </div>
+        </Card>
       )}
     </div>
   );

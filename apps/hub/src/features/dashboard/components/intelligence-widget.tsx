@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
+import { Card, CardHeader, CardTitle, CardAction, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Chip } from '@/components/ui/chip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Target, CheckCircle, Cpu, ArrowRight } from 'lucide-react';
@@ -53,65 +55,70 @@ export function IntelligenceWidget() {
   ];
 
   return (
-    <div className="rounded-xl border border-border bg-muted/50 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">{t('page.dashboard.intelligence')}</h3>
-        <Link
-          to={ROUTES.ANALYTICS}
-          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-        >
-          {t('nav.analytics')} <ArrowRight size={12} />
-        </Link>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm">{t('page.dashboard.intelligence')}</CardTitle>
+        <CardAction>
+          <Link
+            to={ROUTES.ANALYTICS}
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            {t('nav.analytics')} <ArrowRight size={12} />
+          </Link>
+        </CardAction>
+      </CardHeader>
 
       {/* Compact stats row */}
-      <div className="flex flex-wrap gap-4">
-        {stats.map(({ icon: Icon, value, labelKey }) => (
-          <div key={labelKey} className="flex items-center gap-1.5">
-            <Icon size={14} className="text-muted-foreground" />
-            <span className="text-sm font-bold text-foreground">{value}</span>
-            <span className="text-[10px] text-muted-foreground">{t(labelKey)}</span>
-          </div>
-        ))}
-      </div>
+      <CardContent>
+        <div className="flex flex-wrap gap-4">
+          {stats.map(({ icon: Icon, value, labelKey }) => (
+            <div key={labelKey} className="flex items-center gap-1.5">
+              <Icon size={14} className="text-muted-foreground" />
+              <span className="text-sm font-bold text-foreground">{value}</span>
+              <span className="text-[10px] text-muted-foreground">{t(labelKey)}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
 
-      {/* Divider */}
-      <div className="my-3 border-t border-border" />
+      <Separator />
 
       {/* Recent sessions */}
-      {sessionsLoading ? (
-        <Skeleton className="h-16 rounded-lg" />
-      ) : recentSessions.length === 0 ? (
-        <p className="py-2 text-center text-xs text-muted-foreground">{t('page.dashboard.noSessionsYet')}</p>
-      ) : (
-        <div className="space-y-1.5">
-          {recentSessions.map((session) => {
-            const isActive = '_active' in session;
-            const feedback = !isActive ? session.outcome?.userFeedback : undefined;
-            return (
-              <button
-                key={session.memorySessionId ?? session.id}
-                type="button"
-                onClick={() => navigate(`/sessions/${session.memorySessionId ?? session.id}`)}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors hover:bg-accent"
-              >
-                <Chip
-                  size="sm"
-                  color={isActive ? 'accent' : FEEDBACK_COLORS[feedback ?? ''] ?? 'default'}
+      <CardContent>
+        {sessionsLoading ? (
+          <Skeleton className="h-16 rounded-lg" />
+        ) : recentSessions.length === 0 ? (
+          <p className="py-2 text-center text-xs text-muted-foreground">{t('page.dashboard.noSessionsYet')}</p>
+        ) : (
+          <div className="space-y-1.5">
+            {recentSessions.map((session) => {
+              const isActive = '_active' in session;
+              const feedback = !isActive ? session.outcome?.userFeedback : undefined;
+              return (
+                <button
+                  key={session.memorySessionId ?? session.id}
+                  type="button"
+                  onClick={() => navigate(`/sessions/${session.memorySessionId ?? session.id}`)}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors hover:bg-accent"
                 >
-                  {isActive ? t('page.dashboard.sessionActive') : feedback ?? t('page.dashboard.sessionDone')}
-                </Chip>
-                <span className="min-w-0 flex-1 truncate text-xs text-foreground">
-                  {session.aiProvider?.model ?? 'unknown'}
-                </span>
-                <span className="shrink-0 text-[10px] text-muted-foreground">
-                  {formatRelativeTime(session.startedAt)}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
+                  <Chip
+                    size="sm"
+                    color={isActive ? 'accent' : FEEDBACK_COLORS[feedback ?? ''] ?? 'default'}
+                  >
+                    {isActive ? t('page.dashboard.sessionActive') : feedback ?? t('page.dashboard.sessionDone')}
+                  </Chip>
+                  <span className="min-w-0 flex-1 truncate text-xs text-foreground">
+                    {session.aiProvider?.model ?? 'unknown'}
+                  </span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
+                    {formatRelativeTime(session.startedAt)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

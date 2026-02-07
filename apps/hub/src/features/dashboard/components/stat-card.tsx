@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 interface StatCardProps {
   label: string;
@@ -16,7 +17,7 @@ const COLOR_MAP = {
 
 export function StatCard({ label, value, icon: Icon, color = 'default' }: StatCardProps) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
+    <Card className="flex-row items-center gap-3 py-3 px-3">
       <div className={`rounded-lg bg-muted p-2 ${COLOR_MAP[color]}`}>
         <Icon size={18} strokeWidth={1.5} />
       </div>
@@ -24,6 +25,6 @@ export function StatCard({ label, value, icon: Icon, color = 'default' }: StatCa
         <p className="text-lg font-bold text-foreground">{value}</p>
         <p className="text-[10px] text-muted-foreground">{label}</p>
       </div>
-    </div>
+    </Card>
   );
 }

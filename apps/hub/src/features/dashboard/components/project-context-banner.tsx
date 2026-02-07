@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { FolderKanban, ArrowRight, RefreshCw } from 'lucide-react';
@@ -25,7 +26,7 @@ export function ProjectContextBanner() {
 
   if (!activeProject) {
     return (
-      <div className="mb-4 flex items-center justify-between rounded-xl border border-border bg-muted/50 p-4">
+      <Card className="mb-4 flex-row items-center justify-between py-4 px-4 gap-3">
         <div className="flex items-center gap-3 text-muted-foreground">
           <FolderKanban size={20} />
           <span className="text-sm">{t('page.dashboard.noProjectSelected')}</span>
@@ -36,12 +37,12 @@ export function ProjectContextBanner() {
         >
           {t('page.dashboard.selectProject')} <ArrowRight size={12} />
         </Link>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <Card className="mb-4 flex-col gap-3 py-4 px-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3 min-w-0">
         <div className="rounded-lg bg-muted p-2 text-primary">
           <FolderKanban size={20} />
@@ -78,6 +79,6 @@ export function ProjectContextBanner() {
           <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
         </Button>
       </div>
-    </div>
+    </Card>
   );
 }

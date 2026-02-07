@@ -16,6 +16,7 @@ import {
   Store,
   ArrowRight,
 } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PageHeader } from '../../../components/layout/page-header';
 import { ROUTES } from '../../../lib/constants';
 import type { LucideIcon } from 'lucide-react';
@@ -82,23 +83,27 @@ export function HelpPage() {
 
       {/* How They Connect */}
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold text-foreground">{t('page.help.howTheyConnect')}</h2>
-        <div className="rounded-xl border border-border bg-muted/50 p-4">
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            {t('page.help.howTheyConnectBody')}
-          </p>
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
-            <span className="rounded-md bg-accent/50 px-2 py-1 text-accent-foreground">Orchestrator</span>
-            <ArrowRight size={12} />
-            <span className="rounded-md bg-accent/50 px-2 py-1 text-accent-foreground">Agent</span>
-            <ArrowRight size={12} />
-            <span className="rounded-md bg-warning/20 px-2 py-1 text-warning">Skills</span>
-            <span className="text-muted-foreground">+</span>
-            <span className="rounded-md bg-danger/20 px-2 py-1 text-danger">Rules</span>
-            <ArrowRight size={12} />
-            <span className="rounded-md bg-success/20 px-2 py-1 text-success">Workflow</span>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">{t('page.help.howTheyConnect')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {t('page.help.howTheyConnectBody')}
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+              <span className="rounded-md bg-accent/50 px-2 py-1 text-accent-foreground">Orchestrator</span>
+              <ArrowRight size={12} />
+              <span className="rounded-md bg-accent/50 px-2 py-1 text-accent-foreground">Agent</span>
+              <ArrowRight size={12} />
+              <span className="rounded-md bg-warning/20 px-2 py-1 text-warning">Skills</span>
+              <span className="text-muted-foreground">+</span>
+              <span className="rounded-md bg-danger/20 px-2 py-1 text-danger">Rules</span>
+              <ArrowRight size={12} />
+              <span className="rounded-md bg-success/20 px-2 py-1 text-success">Workflow</span>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
       {/* Hub Features */}
@@ -125,12 +130,16 @@ export function HelpPage() {
 
       {/* Getting Started */}
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold text-foreground">{t('page.help.gettingStarted')}</h2>
-        <div className="rounded-xl border border-border bg-muted/50 p-4">
-          <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-            {t('page.help.gettingStartedBody')}
-          </p>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">{t('page.help.gettingStarted')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+              {t('page.help.gettingStartedBody')}
+            </p>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PageHeader } from '../../../components/layout/page-header';
 import { ProjectContextBanner } from '../components/project-context-banner';
 import { McpStatusPanel } from '../components/mcp-status-panel';
@@ -28,10 +29,14 @@ export function DashboardPage() {
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <HealthDiagnosticsWidget />
         <IntelligenceWidget />
-        <div className="rounded-xl border border-border bg-muted/50 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-foreground">{t('page.dashboard.permanentMemory')}</h3>
-          <MemoryWidget />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">{t('page.dashboard.permanentMemory')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MemoryWidget />
+          </CardContent>
+        </Card>
         <EvolutionDraftsWidget />
       </div>
     </div>

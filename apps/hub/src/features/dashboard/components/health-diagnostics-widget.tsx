@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { Card, CardHeader, CardTitle, CardAction, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
 import { useDiagnosticsStore } from '../../diagnostics/stores/diagnostics-store';
@@ -35,66 +37,73 @@ export function HealthDiagnosticsWidget() {
   }, [activeProject?.path, stale, fetchDiag]);
 
   return (
-    <div className="rounded-xl border border-border bg-muted/50 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">{t('page.dashboard.healthDiagnostics')}</h3>
-        <Link
-          to={ROUTES.DIAGNOSTICS}
-          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-        >
-          {t('common.details')} <ArrowRight size={12} />
-        </Link>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm">{t('page.dashboard.healthDiagnostics')}</CardTitle>
+        <CardAction>
+          <Link
+            to={ROUTES.DIAGNOSTICS}
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            {t('common.details')} <ArrowRight size={12} />
+          </Link>
+        </CardAction>
+      </CardHeader>
 
-      {loading ? (
-        <Skeleton className="h-32 rounded-lg" />
-      ) : !healthScore ? (
-        <p className="py-6 text-center text-xs text-muted-foreground">
-          {t('page.dashboard.noHealthScores')}
-        </p>
-      ) : (
-        <>
-          {/* Overall score */}
-          <div className="mb-4 flex items-baseline gap-1">
-            <span className={`text-3xl font-bold text-${scoreColor(healthScore.overall)}`}>
-              {healthScore.overall}
-            </span>
-            <span className="text-sm text-muted-foreground">/100</span>
-          </div>
-
-          {/* Sub-score bars */}
-          <div className="space-y-2">
-            {SUB_CATEGORIES.map(({ key, labelKey }) => {
-              const value = healthScore.categories[key];
-              return (
-                <div key={key} className="flex items-center gap-2">
-                  <span className="w-20 shrink-0 text-xs text-muted-foreground">{t(labelKey)}</span>
-                  <div className="h-1.5 flex-1 rounded-full bg-border">
-                    <div
-                      className={`h-full rounded-full ${barColor(value)}`}
-                      style={{ width: `${Math.min(value, 100)}%` }}
-                    />
-                  </div>
-                  <span className="w-7 shrink-0 text-right text-[10px] font-medium text-muted-foreground">
-                    {value}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Recommendations */}
-          {healthScore.recommendations.length > 0 && (
-            <div className="mt-3 border-t border-border pt-2">
-              {healthScore.recommendations.slice(0, 2).map((rec, i) => (
-                <p key={i} className="text-[10px] text-muted-foreground">
-                  &bull; {rec}
-                </p>
-              ))}
+      <CardContent>
+        {loading ? (
+          <Skeleton className="h-32 rounded-lg" />
+        ) : !healthScore ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">
+            {t('page.dashboard.noHealthScores')}
+          </p>
+        ) : (
+          <>
+            {/* Overall score */}
+            <div className="mb-4 flex items-baseline gap-1">
+              <span className={`text-3xl font-bold text-${scoreColor(healthScore.overall)}`}>
+                {healthScore.overall}
+              </span>
+              <span className="text-sm text-muted-foreground">/100</span>
             </div>
-          )}
-        </>
-      )}
-    </div>
+
+            {/* Sub-score bars */}
+            <div className="space-y-2">
+              {SUB_CATEGORIES.map(({ key, labelKey }) => {
+                const value = healthScore.categories[key];
+                return (
+                  <div key={key} className="flex items-center gap-2">
+                    <span className="w-20 shrink-0 text-xs text-muted-foreground">{t(labelKey)}</span>
+                    <div className="h-1.5 flex-1 rounded-full bg-border">
+                      <div
+                        className={`h-full rounded-full ${barColor(value)}`}
+                        style={{ width: `${Math.min(value, 100)}%` }}
+                      />
+                    </div>
+                    <span className="w-7 shrink-0 text-right text-[10px] font-medium text-muted-foreground">
+                      {value}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Recommendations */}
+            {healthScore.recommendations.length > 0 && (
+              <>
+                <Separator className="mt-3" />
+                <div className="pt-2">
+                  {healthScore.recommendations.slice(0, 2).map((rec, i) => (
+                    <p key={i} className="text-[10px] text-muted-foreground">
+                      &bull; {rec}
+                    </p>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

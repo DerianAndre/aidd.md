@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { ArrowLeft, Save } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { BlockEditor, FrontmatterForm, type FieldDefinition } from '../../../components/editor';
@@ -120,13 +121,13 @@ export function SkillEditorPage() {
         />
       </div>
 
-      <div className="rounded-xl border border-border">
+      <Card className="gap-0 py-0 overflow-hidden">
         <BlockEditor
           initialMarkdown={body}
           editable={true}
           onChange={setBody}
         />
-      </div>
+      </Card>
     </div>
   );
 }

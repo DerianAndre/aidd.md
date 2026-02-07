@@ -11,6 +11,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Spinner } from '@/components/ui/spinner';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -155,18 +156,20 @@ export function MarketplaceDetailPage() {
 
           {/* Long description / markdown */}
           {(entry.longDescription || (!isMcp && (entry as ContentEntry).markdownContent)) && (
-            <div className="rounded-lg border border-border bg-muted/50 p-4">
-              {entry.longDescription && (
-                <div className="prose prose-sm max-w-none text-foreground">
-                  {entry.longDescription}
-                </div>
-              )}
-              {!isMcp && (entry as ContentEntry).markdownContent && (
-                <div className="whitespace-pre-wrap text-sm text-foreground">
-                  {(entry as ContentEntry).markdownContent}
-                </div>
-              )}
-            </div>
+            <Card>
+              <CardContent>
+                {entry.longDescription && (
+                  <div className="prose prose-sm max-w-none text-foreground">
+                    {entry.longDescription}
+                  </div>
+                )}
+                {!isMcp && (entry as ContentEntry).markdownContent && (
+                  <div className="whitespace-pre-wrap text-sm text-foreground">
+                    {(entry as ContentEntry).markdownContent}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           {/* Features list (MCP only) */}
@@ -231,9 +234,11 @@ export function MarketplaceDetailPage() {
 
           {/* Compatibility */}
           {entry.compatibility.length > 0 && (
-            <div className="rounded-lg border border-border bg-muted/50 p-3">
-              <h4 className="mb-2 text-xs font-medium text-muted-foreground">{t('page.marketplace.compatibleWith')}</h4>
-              <div className="flex flex-wrap gap-1.5">
+            <Card className="gap-3 py-3">
+              <CardHeader className="py-0">
+                <CardTitle className="text-xs font-medium text-muted-foreground">{t('page.marketplace.compatibleWith')}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-1.5">
                 {entry.compatibility.map((c) => {
                   const target = COMPATIBILITY_TARGETS.find((t) => t.value === c);
                   return (
@@ -242,37 +247,39 @@ export function MarketplaceDetailPage() {
                     </Chip>
                   );
                 })}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Author + GitHub */}
-          <div className="rounded-lg border border-border bg-muted/50 p-3 space-y-2">
-            <div>
-              <span className="text-xs text-muted-foreground">{t('page.marketplace.author')}</span>
-              <p className="text-sm font-medium text-foreground">{entry.author}</p>
-            </div>
-            {!usingFallback && entry.installCount > 0 && (
+          <Card className="gap-3 py-3">
+            <CardContent className="space-y-2">
               <div>
-                <span className="text-xs text-muted-foreground">{t('page.marketplace.installs')}</span>
-                <p className="text-sm font-medium text-foreground">{formatInstallCount(entry.installCount)}</p>
+                <span className="text-xs text-muted-foreground">{t('page.marketplace.author')}</span>
+                <p className="text-sm font-medium text-foreground">{entry.author}</p>
               </div>
-            )}
-            <div>
-              <span className="text-xs text-muted-foreground">{t('page.marketplace.updated')}</span>
-              <p className="text-sm text-foreground">{entry.updatedAt}</p>
-            </div>
-            {entry.githubUrl && (
-              <a
-                href={entry.githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-sm text-accent hover:underline"
-              >
-                <ExternalLink size={12} /> {t('page.marketplace.viewOnGithub')}
-              </a>
-            )}
-          </div>
+              {!usingFallback && entry.installCount > 0 && (
+                <div>
+                  <span className="text-xs text-muted-foreground">{t('page.marketplace.installs')}</span>
+                  <p className="text-sm font-medium text-foreground">{formatInstallCount(entry.installCount)}</p>
+                </div>
+              )}
+              <div>
+                <span className="text-xs text-muted-foreground">{t('page.marketplace.updated')}</span>
+                <p className="text-sm text-foreground">{entry.updatedAt}</p>
+              </div>
+              {entry.githubUrl && (
+                <a
+                  href={entry.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-sm text-accent hover:underline"
+                >
+                  <ExternalLink size={12} /> {t('page.marketplace.viewOnGithub')}
+                </a>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

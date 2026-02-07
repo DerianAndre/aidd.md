@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { Card, CardHeader, CardAction, CardContent, CardFooter } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { Cpu, ArrowRight } from "lucide-react";
 import { McpPackageMiniCard } from "./mcp-package-mini-card";
@@ -45,9 +46,9 @@ export function McpStatusPanel() {
   const toolsWithConfig = report?.summary.tools_with_config ?? [];
 
   return (
-    <div className="mb-4 rounded-xl border-1 border-primary/20 bg-muted/50 p-4">
+    <Card className="mb-4 border-primary/20 py-4 gap-3">
       {/* Header */}
-      <div className="mb-3 flex items-center justify-between">
+      <CardHeader>
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-primary/10 p-1.5 text-primary">
             <Cpu size={18} />
@@ -67,45 +68,51 @@ export function McpStatusPanel() {
             </Chip>
           )}
         </div>
-        <Link
-          to={ROUTES.MCP}
-          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-        >
-          {t("common.view")} <ArrowRight size={12} />
-        </Link>
-      </div>
+        <CardAction>
+          <Link
+            to={ROUTES.MCP}
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            {t("common.view")} <ArrowRight size={12} />
+          </Link>
+        </CardAction>
+      </CardHeader>
 
       {/* Package grid */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {MCP_SERVERS.map((pkg) => {
-          const status = packages.find((p) => p.dir === pkg.dir);
-          const serverId = DIR_TO_SERVER_ID[pkg.dir];
-          const server = serverId
-            ? servers.find((s) => s.id === serverId)
-            : undefined;
-          return (
-            <McpPackageMiniCard
-              key={pkg.dir}
-              info={pkg}
-              status={status}
-              server={server}
-            />
-          );
-        })}
-      </div>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {MCP_SERVERS.map((pkg) => {
+            const status = packages.find((p) => p.dir === pkg.dir);
+            const serverId = DIR_TO_SERVER_ID[pkg.dir];
+            const server = serverId
+              ? servers.find((s) => s.id === serverId)
+              : undefined;
+            return (
+              <McpPackageMiniCard
+                key={pkg.dir}
+                info={pkg}
+                status={status}
+                server={server}
+              />
+            );
+          })}
+        </div>
+      </CardContent>
 
       {/* Discovery row */}
       {totalDiscovered > 0 && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          {t("page.dashboard.mcpDiscovery", { total: totalDiscovered })}
-          {toolsWithConfig.length > 0 &&
-            ` ${t("page.dashboard.mcpDiscoveryAcross", { tools: toolsWithConfig.join(", ") })}`}{" "}
-          {t("page.dashboard.mcpDiscoveryBreakdown", {
-            aidd: aiddCount,
-            thirdParty: thirdPartyCount,
-          })}
-        </p>
+        <CardFooter>
+          <p className="text-xs text-muted-foreground">
+            {t("page.dashboard.mcpDiscovery", { total: totalDiscovered })}
+            {toolsWithConfig.length > 0 &&
+              ` ${t("page.dashboard.mcpDiscoveryAcross", { tools: toolsWithConfig.join(", ") })}`}{" "}
+            {t("page.dashboard.mcpDiscoveryBreakdown", {
+              aidd: aiddCount,
+              thirdParty: thirdPartyCount,
+            })}
+          </p>
+        </CardFooter>
       )}
-    </div>
+    </Card>
   );
 }

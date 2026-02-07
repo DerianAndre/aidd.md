@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { ArrowLeft, Save } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { BlockEditor } from '../../../components/editor';
@@ -81,13 +82,13 @@ export function RuleEditorPage() {
         }
       />
 
-      <div className="rounded-xl border border-border">
+      <Card className="gap-0 py-0 overflow-hidden">
         <BlockEditor
           initialMarkdown={content}
           editable={true}
           onChange={setEditedContent}
         />
-      </div>
+      </Card>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { ArrowLeft } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -175,9 +176,11 @@ export function SessionDetailPage() {
 
 function MetaItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border bg-muted/50 p-3">
-      <p className="text-[10px] font-medium uppercase text-muted-foreground">{label}</p>
-      <p className="text-sm font-semibold text-foreground">{value}</p>
-    </div>
+    <Card className="gap-3 py-3">
+      <CardContent>
+        <p className="text-[10px] font-medium uppercase text-muted-foreground">{label}</p>
+        <p className="text-sm font-semibold text-foreground">{value}</p>
+      </CardContent>
+    </Card>
   );
 }

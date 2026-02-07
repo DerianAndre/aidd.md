@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Bot, MousePointer2, Code, Sparkles, Wind } from 'lucide-react';
 import type { DiscoveredMcp, McpToolSource, McpServer } from '../../../lib/tauri';
@@ -37,7 +38,7 @@ export function DiscoveredMcpCard({ entry, hubServer }: DiscoveredMcpCardProps) 
     : entry.url ?? null;
 
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2">
+    <Card className="gap-1 px-3 py-2">
       {/* Line 1: icon + name + badges */}
       <div className="flex items-center gap-2 overflow-hidden">
         <ToolIcon size={16} className="shrink-0 text-muted-foreground" />
@@ -58,7 +59,7 @@ export function DiscoveredMcpCard({ entry, hubServer }: DiscoveredMcpCardProps) 
       </div>
 
       {/* Line 2: transport type + config path / command preview */}
-      <div className="mt-1 flex items-center gap-2 pl-6">
+      <div className="flex items-center gap-2 pl-6">
         {entry.transport_type && (
           <Chip size="sm" color={TRANSPORT_COLOR[entry.transport_type] ?? 'default'}>
             {entry.transport_type}
@@ -73,6 +74,6 @@ export function DiscoveredMcpCard({ entry, hubServer }: DiscoveredMcpCardProps) 
             : truncate(entry.config_path, 60)}
         </span>
       </div>
-    </div>
+    </Card>
   );
 }

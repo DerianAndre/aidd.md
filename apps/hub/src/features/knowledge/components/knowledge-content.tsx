@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { BlockEditor } from '../../../components/editor';
 import type { KnowledgeEntity } from '../lib/types';
@@ -33,9 +34,9 @@ export function KnowledgeContent({ entity }: KnowledgeContentProps) {
         <p className="mb-3 text-sm text-muted-foreground">{entity.description}</p>
       )}
 
-      <div className="rounded-xl border border-border">
+      <Card className="gap-0 py-0 overflow-hidden">
         <BlockEditor initialMarkdown={entity.content} editable={false} />
-      </div>
+      </Card>
     </div>
   );
 }
