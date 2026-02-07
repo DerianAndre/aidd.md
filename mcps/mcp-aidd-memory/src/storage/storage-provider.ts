@@ -15,12 +15,12 @@ export class StorageProvider {
     if (this.backend) return this.backend;
     if (!this.initPromise) {
       if (!this.config) throw new Error('StorageProvider not configured — call setConfig() first');
-      this.initPromise = Promise.resolve().then(() => {
+      this.initPromise = (async () => {
         const backend = new SqliteBackend(this.config!);
-        backend.initialize();
+        await backend.initialize();  // ✅ CRITICAL FIX: wait for initialization to complete
         this.backend = backend;
         return backend;
-      });
+      })();
     }
     return this.initPromise;
   }
