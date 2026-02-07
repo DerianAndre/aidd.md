@@ -253,6 +253,7 @@ async function detectAndConfigureIDEs(projectRoot) {
 // ── MCP Config Writer ──────────────────────────────────────────────────────
 
 function writeMcpConfig(configPath, projectRoot, isContributor, toolKey) {
+  const isWindows = process.platform === 'win32';
   const mcpEntry = isContributor
     ? {
         // Contributor: point to local build (fast cold-start, works offline)
@@ -260,12 +261,19 @@ function writeMcpConfig(configPath, projectRoot, isContributor, toolKey) {
         args: [resolve(projectRoot, 'mcps', 'mcp-aidd-engine', 'dist', 'index.js')],
         env: { AIDD_PROJECT_PATH: projectRoot },
       }
-    : {
-        // Adopter: use npx (portable, always resolves from registry)
-        command: 'npx',
-        args: ['-y', '@aidd.md/mcp-engine'],
-        env: { AIDD_PROJECT_PATH: projectRoot },
-      };
+    : isWindows
+      ? {
+          // Adopter (Windows): npx requires cmd /c wrapper
+          command: 'cmd',
+          args: ['/c', 'npx', '-y', '@aidd.md/mcp-engine'],
+          env: { AIDD_PROJECT_PATH: projectRoot },
+        }
+      : {
+          // Adopter (Unix): npx runs directly
+          command: 'npx',
+          args: ['-y', '@aidd.md/mcp-engine'],
+          env: { AIDD_PROJECT_PATH: projectRoot },
+        };
 
   // VS Code uses { "servers": { ... } } with required "type" field
   const isVscode = toolKey === 'vscode';

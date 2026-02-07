@@ -20,8 +20,16 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 const AGENTS_MD_REDIRECT = `# AGENTS.md
 
-> Thin redirect for cross-tool compatibility (Gemini, Copilot, etc.)
-> Canonical agent definitions live in \`.aidd/content/agents/\`.
+> Cross-tool AI instructions for aidd.md projects.
+
+## Startup Protocol
+
+**At the start of every conversation, do one of the following:**
+
+1. **MCP available** — Call the \`aidd_bootstrap\` MCP tool.
+2. **MCP unavailable** — Run \`pnpm mcp:check\` in the terminal.
+
+## Agent Definitions
 
 See [.aidd/content/agents/routing.md](.aidd/content/agents/routing.md) for the full agent hierarchy.
 `;

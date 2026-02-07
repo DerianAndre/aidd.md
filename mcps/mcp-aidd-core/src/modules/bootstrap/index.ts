@@ -92,11 +92,7 @@ export const bootstrapModule: AiddModule = {
         const sections: string[] = [];
 
         // --- Project Detection ---
-        sections.push('# AIDD Context\n');
-        sections.push('## Project Detection\n');
-        sections.push(`- **AIDD Detected**: ${info.detected ? 'Yes' : 'No'}`);
-        sections.push(`- **Root**: \`${info.root}\``);
-        sections.push(`- **AIDD Root**: \`${info.aiddRoot}\``);
+        sections.push('[\[aidd.md\]](https://aidd.md) Engine - ON');
 
         if (info.stack.name) {
           sections.push(`- **Package**: ${info.stack.name}${info.stack.version ? ` v${info.stack.version}` : ''}`);

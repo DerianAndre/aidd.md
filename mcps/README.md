@@ -206,42 +206,42 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 
 ### Memory: The Memory (33 tools)
 
-| Tool                         | Purpose                                                                    |
-| ---------------------------- | -------------------------------------------------------------------------- |
-| `aidd_session`               | Multi-action session state (start/update/end/get/list) + session threading |
-| `aidd_branch`                | Multi-action branch context (get/save/promote/list/merge)                  |
-| `aidd_memory_search`         | 3-layer L1: compact index search (~50-100 tokens/result)                   |
-| `aidd_memory_context`        | 3-layer L2: timeline view around a specific entry                          |
-| `aidd_memory_get`            | 3-layer L3: fetch full details by IDs (batch)                              |
-| `aidd_memory_add_decision`   | Record architectural decision with rationale                               |
-| `aidd_memory_add_mistake`    | Record mistake with root cause + fix + prevention                          |
-| `aidd_memory_add_convention` | Record project convention with examples                                    |
-| `aidd_observation`           | Record typed observation with discoveryTokens ROI tracking                 |
-| `aidd_memory_prune`          | Remove outdated memory entries                                             |
-| `aidd_lifecycle_get`         | AIDD 6-phase definition with entry/exit criteria                           |
-| `aidd_lifecycle_init`        | Initialize new AIDD lifecycle session                                      |
-| `aidd_lifecycle_advance`     | Advance phase after verifying exit criteria                                |
-| `aidd_lifecycle_status`      | Current lifecycle session state                                            |
-| `aidd_lifecycle_list`        | List all lifecycle sessions                                                |
-| `aidd_evolution_analyze`     | Analyze sessions, identify patterns, generate candidates                   |
-| `aidd_evolution_status`      | Engine learnings + pending changes                                         |
-| `aidd_evolution_review`      | Review auto-changes before/after apply                                     |
-| `aidd_evolution_revert`      | Undo an auto-applied change                                                |
-| `aidd_draft_create`          | Generate draft artifact (rule, skill, TKB, workflow)                       |
-| `aidd_draft_list`            | List pending drafts with confidence scores                                 |
-| `aidd_draft_approve`         | Promote draft to AIDD directory                                            |
-| `aidd_model_performance`     | AI provider/model performance metrics                                      |
-| `aidd_model_compare`         | Side-by-side model comparison across dimensions                            |
-| `aidd_model_recommend`       | Task-type-aware model recommendation                                       |
-| `aidd_diagnose_error`        | Search memory for similar past mistakes + fixes                            |
-| `aidd_project_health`        | Data-driven health score from analytics                                    |
-| `aidd_memory_export`         | Export permanent memory from SQLite to JSON files                          |
-| `aidd_pattern_audit`         | Full pattern audit: detect banned patterns, fingerprint, 5D score          |
-| `aidd_pattern_list`          | List active banned patterns by category or model scope                     |
-| `aidd_pattern_add`           | Add new banned pattern for AI output detection                             |
-| `aidd_pattern_stats`         | Pattern detection statistics per model with frequency breakdown            |
-| `aidd_pattern_score`         | Quick 5-dimension text quality evaluation with verdict                     |
-| `aidd_pattern_false_positive`| Report pattern as false positive, reduce confidence                        |
+| Tool                          | Purpose                                                                    |
+| ----------------------------- | -------------------------------------------------------------------------- |
+| `aidd_session`                | Multi-action session state (start/update/end/get/list) + session threading |
+| `aidd_branch`                 | Multi-action branch context (get/save/promote/list/merge)                  |
+| `aidd_memory_search`          | 3-layer L1: compact index search (~50-100 tokens/result)                   |
+| `aidd_memory_context`         | 3-layer L2: timeline view around a specific entry                          |
+| `aidd_memory_get`             | 3-layer L3: fetch full details by IDs (batch)                              |
+| `aidd_memory_add_decision`    | Record architectural decision with rationale                               |
+| `aidd_memory_add_mistake`     | Record mistake with root cause + fix + prevention                          |
+| `aidd_memory_add_convention`  | Record project convention with examples                                    |
+| `aidd_observation`            | Record typed observation with discoveryTokens ROI tracking                 |
+| `aidd_memory_prune`           | Remove outdated memory entries                                             |
+| `aidd_lifecycle_get`          | AIDD 6-phase definition with entry/exit criteria                           |
+| `aidd_lifecycle_init`         | Initialize new AIDD lifecycle session                                      |
+| `aidd_lifecycle_advance`      | Advance phase after verifying exit criteria                                |
+| `aidd_lifecycle_status`       | Current lifecycle session state                                            |
+| `aidd_lifecycle_list`         | List all lifecycle sessions                                                |
+| `aidd_evolution_analyze`      | Analyze sessions, identify patterns, generate candidates                   |
+| `aidd_evolution_status`       | Engine learnings + pending changes                                         |
+| `aidd_evolution_review`       | Review auto-changes before/after apply                                     |
+| `aidd_evolution_revert`       | Undo an auto-applied change                                                |
+| `aidd_draft_create`           | Generate draft artifact (rule, skill, TKB, workflow)                       |
+| `aidd_draft_list`             | List pending drafts with confidence scores                                 |
+| `aidd_draft_approve`          | Promote draft to AIDD directory                                            |
+| `aidd_model_performance`      | AI provider/model performance metrics                                      |
+| `aidd_model_compare`          | Side-by-side model comparison across dimensions                            |
+| `aidd_model_recommend`        | Task-type-aware model recommendation                                       |
+| `aidd_diagnose_error`         | Search memory for similar past mistakes + fixes                            |
+| `aidd_project_health`         | Data-driven health score from analytics                                    |
+| `aidd_memory_export`          | Export permanent memory from SQLite to JSON files                          |
+| `aidd_pattern_audit`          | Full pattern audit: detect banned patterns, fingerprint, 5D score          |
+| `aidd_pattern_list`           | List active banned patterns by category or model scope                     |
+| `aidd_pattern_add`            | Add new banned pattern for AI output detection                             |
+| `aidd_pattern_stats`          | Pattern detection statistics per model with frequency breakdown            |
+| `aidd_pattern_score`          | Quick 5-dimension text quality evaluation with verdict                     |
+| `aidd_pattern_false_positive` | Report pattern as false positive, reduce confidence                        |
 
 ### Tools: The Hands (19 tools)
 
@@ -766,7 +766,7 @@ pnpm mcp:check
 ```
 
 ```
-[aidd.md] Engine - ON — 5/5 packages ready
+[aidd.md] Engine - ONy
 ```
 
 Use this in CLAUDE.md startup protocol or similar automation.

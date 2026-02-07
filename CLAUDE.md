@@ -9,14 +9,13 @@
 
 **Run at the start of every conversation:**
 
-```bash
-pnpm mcp:check
-```
+1. **MCP available** — Call the `aidd_bootstrap` MCP tool. This returns project detection, agent summary, active rules, and suggested next steps.
+2. **MCP unavailable (fallback)** — Run `pnpm mcp:check` in the terminal.
 
-This outputs a single-line status indicator:
-- `[aidd.md] Engine - ON — 5/5 packages ready` — All MCP packages built and ready
-- `[aidd.md] Engine - PARTIAL — 3/5 packages ready` — Some packages need rebuilding
-- `[aidd.md] Engine - OFF — 0/5 packages ready` — Setup required
+Expected status from fallback:
+- `[aidd.md] Engine - ONy` — All MCP packages built and ready
+- `[aidd.md] Engine - PARTIAL` — Some packages need rebuilding
+- `[aidd.md] Engine - OFF` — Setup required
 
 If the check fails, follow the remediation hint in the output.
 
