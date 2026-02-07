@@ -10,6 +10,7 @@ import { createAnalyticsModule } from './analytics/index.js';
 import { createEvolutionModule } from './evolution/index.js';
 import { createDraftsModule } from './drafts/index.js';
 import { createDiagnosticsModule } from './diagnostics/index.js';
+import { createPatternKillerModule } from './pattern-killer/index.js';
 
 // ---------------------------------------------------------------------------
 // Storage coordination
@@ -50,4 +51,6 @@ export const memoryModules: AiddModule[] = [
   createEvolutionModule(provider),
   createDraftsModule(provider),
   createDiagnosticsModule(provider),
+  // Pattern Killer
+  createPatternKillerModule(provider),
 ];
