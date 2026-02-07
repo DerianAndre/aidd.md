@@ -44,10 +44,10 @@ export const memoryModules: AiddModule[] = [
   createBranchModule(provider),
   createMemoryModule(provider),
   createObservationModule(provider),
-  createLifecycleModule(),
+  createLifecycleModule(provider),
   // Phase 4-5: Evolution Engine + Diagnostics
   createAnalyticsModule(provider),
   createEvolutionModule(provider),
-  createDraftsModule(),
+  createDraftsModule(provider),
   createDiagnosticsModule(provider),
 ];

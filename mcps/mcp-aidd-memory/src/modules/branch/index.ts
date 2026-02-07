@@ -1,13 +1,8 @@
-import { resolve } from 'node:path';
 import { z } from 'zod';
 import {
   registerTool,
   createJsonResult,
   createErrorResult,
-  readJsonFile,
-  writeJsonFile,
-  listFiles,
-  ensureDir,
   now,
 } from '@aidd.md/mcp-shared';
 import type {
@@ -21,14 +16,6 @@ import type { StorageProvider } from '../../storage/index.js';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function sanitizeBranch(branch: string): string {
-  return branch.replace(/\//g, '--');
-}
-
-function branchPath(aiddDir: string, branch: string): string {
-  return resolve(aiddDir, 'branches', `${sanitizeBranch(branch)}.json`);
-}
 
 function emptyBranchContext(branch: string): BranchContext {
   return {
@@ -53,10 +40,7 @@ export function createBranchModule(storage: StorageProvider): AiddModule {
     name: 'branch',
     description: 'Branch context management — accumulate decisions, errors, files across sessions',
 
-    register(server: McpServer, context: ModuleContext) {
-      const branchesDir = resolve(context.aiddDir, 'branches');
-      const archiveDir = resolve(context.aiddDir, 'branches', 'archive');
-
+    register(server: McpServer, _context: ModuleContext) {
       registerTool(server, {
         name: 'aidd_branch',
         description:
@@ -92,21 +76,20 @@ export function createBranchModule(storage: StorageProvider): AiddModule {
         handler: async (args) => {
           const a = args as Record<string, unknown>;
           const action = a['action'] as string;
+          const backend = await storage.getBackend();
 
           switch (action) {
             case 'get': {
               if (!a['branch']) return createErrorResult('branch is required for get');
-              const filePath = branchPath(context.aiddDir, a['branch'] as string);
-              const ctx = readJsonFile<BranchContext>(filePath);
-              if (!ctx) return createJsonResult(emptyBranchContext(a['branch'] as string));
-              return createJsonResult(ctx);
+              const branchName = a['branch'] as string;
+              const ctx = await backend.getBranch(branchName);
+              return createJsonResult(ctx ?? emptyBranchContext(branchName));
             }
 
             case 'save': {
               if (!a['branch']) return createErrorResult('branch is required for save');
-              const branch = a['branch'] as string;
-              const filePath = branchPath(context.aiddDir, branch);
-              const existing = readJsonFile<BranchContext>(filePath) ?? emptyBranchContext(branch);
+              const branchName = a['branch'] as string;
+              const existing = (await backend.getBranch(branchName)) ?? emptyBranchContext(branchName);
 
               // Merge fields
               if (a['feature']) existing.feature = a['feature'] as string;
@@ -127,22 +110,19 @@ export function createBranchModule(storage: StorageProvider): AiddModule {
               }
               existing.updatedAt = now();
 
-              ensureDir(branchesDir);
-              writeJsonFile(filePath, existing);
-              return createJsonResult({ branch, saved: true, updatedAt: existing.updatedAt });
+              await backend.saveBranch(existing);
+              return createJsonResult({ branch: branchName, saved: true, updatedAt: existing.updatedAt });
             }
 
             case 'promote': {
               if (!a['sessionId']) return createErrorResult('sessionId is required for promote');
               if (!a['branch']) return createErrorResult('branch is required for promote');
 
-              const backend = await storage.getBackend();
               const session = await backend.getSession(a['sessionId'] as string);
               if (!session) return createErrorResult(`Session ${a['sessionId']} not found`);
 
-              const branch = a['branch'] as string;
-              const filePath = branchPath(context.aiddDir, branch);
-              const existing = readJsonFile<BranchContext>(filePath) ?? emptyBranchContext(branch);
+              const branchName = a['branch'] as string;
+              const existing = (await backend.getBranch(branchName)) ?? emptyBranchContext(branchName);
 
               // Copy session data to branch
               for (const d of session.decisions) {
@@ -172,10 +152,9 @@ export function createBranchModule(storage: StorageProvider): AiddModule {
 
               existing.updatedAt = now();
 
-              ensureDir(branchesDir);
-              writeJsonFile(filePath, existing);
+              await backend.saveBranch(existing);
               return createJsonResult({
-                branch,
+                branch: branchName,
                 promoted: true,
                 sessionId: session.id,
                 decisionsAdded: session.decisions.length,
@@ -184,52 +163,32 @@ export function createBranchModule(storage: StorageProvider): AiddModule {
             }
 
             case 'list': {
-              ensureDir(branchesDir);
-              const files = listFiles(branchesDir, { extensions: ['.json'] });
-              const branches = files
-                .filter((f) => !f.includes('archive'))
-                .map((f) => {
-                  const ctx = readJsonFile<BranchContext>(f);
-                  return ctx
-                    ? {
-                        branch: ctx.branch,
-                        feature: ctx.feature,
-                        phase: ctx.phase,
-                        sessions: ctx.sessionsCount,
-                        decisions: ctx.decisions.length,
-                        updatedAt: ctx.updatedAt,
-                      }
-                    : null;
-                })
-                .filter(Boolean);
-
-              return createJsonResult({ count: branches.length, branches });
+              const branches = await backend.listBranches({ archived: false });
+              return createJsonResult({
+                count: branches.length,
+                branches: branches.map((ctx) => ({
+                  branch: ctx.branch,
+                  feature: ctx.feature,
+                  phase: ctx.phase,
+                  sessions: ctx.sessionsCount,
+                  decisions: ctx.decisions.length,
+                  updatedAt: ctx.updatedAt,
+                })),
+              });
             }
 
             case 'merge': {
               if (!a['branch']) return createErrorResult('branch is required for merge');
-              const branch = a['branch'] as string;
-              const filePath = branchPath(context.aiddDir, branch);
-              const ctx = readJsonFile<BranchContext>(filePath);
-              if (!ctx) return createErrorResult(`Branch context for "${branch}" not found`);
+              const branchName = a['branch'] as string;
+              const ctx = await backend.getBranch(branchName);
+              if (!ctx) return createErrorResult(`Branch context for "${branchName}" not found`);
 
-              // Archive
-              ensureDir(archiveDir);
-              const archivePath = resolve(archiveDir, `${sanitizeBranch(branch)}-${Date.now()}.json`);
-              writeJsonFile(archivePath, ctx);
-
-              // Remove active branch file
-              try {
-                const { unlinkSync } = await import('node:fs');
-                unlinkSync(filePath);
-              } catch {
-                // Already removed
-              }
+              await backend.archiveBranch(branchName);
 
               return createJsonResult({
-                branch,
+                branch: branchName,
                 merged: true,
-                archived: archivePath,
+                archived: true,
                 decisions: ctx.decisions.length,
                 sessions: ctx.sessionsCount,
               });

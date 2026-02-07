@@ -5,49 +5,28 @@ import {
   registerTool,
   createJsonResult,
   createErrorResult,
-  readJsonFile,
-  writeJsonFile,
   writeFileSafe,
   ensureDir,
-  readFileOrNull,
   generateId,
   now,
 } from '@aidd.md/mcp-shared';
-import type { AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
+import type { AiddModule, ModuleContext, DraftEntry } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { DraftManifest, DraftEntry, DraftCategory } from './types.js';
+import type { StorageProvider } from '../../storage/index.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function manifestPath(aiddDir: string): string {
-  return resolve(aiddDir, 'drafts', 'manifest.json');
-}
-
-function draftContentPath(aiddDir: string, category: string, id: string): string {
-  return resolve(aiddDir, 'drafts', category, `${id}.md`);
-}
-
-function readManifest(aiddDir: string): DraftManifest {
-  return readJsonFile<DraftManifest>(manifestPath(aiddDir)) ?? { drafts: [], updatedAt: now() };
-}
-
-function writeManifest(aiddDir: string, manifest: DraftManifest): void {
-  ensureDir(resolve(aiddDir, 'drafts'));
-  writeJsonFile(manifestPath(aiddDir), manifest);
-}
+type DraftCategory = 'rules' | 'knowledge' | 'skills' | 'workflows';
 
 function resolveTargetDir(projectRoot: string, category: DraftCategory): string {
-  // Check if project uses ai/ prefix
   const aiPrefixed = resolve(projectRoot, 'ai', category);
   if (existsSync(aiPrefixed)) return aiPrefixed;
 
-  // Check root-level
   const rootLevel = resolve(projectRoot, category);
   if (existsSync(rootLevel)) return rootLevel;
 
-  // Default to ai/ prefix
   return aiPrefixed;
 }
 
@@ -55,7 +34,7 @@ function resolveTargetDir(projectRoot: string, category: DraftCategory): string 
 // Factory
 // ---------------------------------------------------------------------------
 
-export function createDraftsModule(): AiddModule {
+export function createDraftsModule(storage: StorageProvider): AiddModule {
   return {
     name: 'drafts',
     description: 'Content draft management — create, review, approve drafts for rules/knowledge/skills/workflows',
@@ -65,7 +44,7 @@ export function createDraftsModule(): AiddModule {
       registerTool(server, {
         name: 'aidd_draft_create',
         description:
-          'Create a new content draft in .aidd/drafts/. Drafts can be rules, knowledge entries, skills, or workflows awaiting approval.',
+          'Create a new content draft. Drafts can be rules, knowledge entries, skills, or workflows awaiting approval.',
         schema: {
           category: z.enum(['rules', 'knowledge', 'skills', 'workflows']).describe('Draft category'),
           title: z.string().describe('Draft title'),
@@ -92,6 +71,7 @@ export function createDraftsModule(): AiddModule {
             category: a.category,
             title: a.title,
             filename: a.filename,
+            content: a.content,
             confidence: a.confidence,
             source: a.source,
             evolutionCandidateId: a.evolutionCandidateId,
@@ -100,16 +80,8 @@ export function createDraftsModule(): AiddModule {
             updatedAt: now(),
           };
 
-          // Write content file
-          const contentDir = resolve(context.aiddDir, 'drafts', a.category);
-          ensureDir(contentDir);
-          writeFileSafe(draftContentPath(context.aiddDir, a.category, entry.id), a.content);
-
-          // Update manifest
-          const manifest = readManifest(context.aiddDir);
-          manifest.drafts.push(entry);
-          manifest.updatedAt = now();
-          writeManifest(context.aiddDir, manifest);
+          const backend = await storage.getBackend();
+          await backend.saveDraft(entry);
 
           return createJsonResult({
             id: entry.id,
@@ -140,18 +112,12 @@ export function createDraftsModule(): AiddModule {
             limit: number;
           };
 
-          const manifest = readManifest(context.aiddDir);
-          let drafts = manifest.drafts;
-
-          if (category) drafts = drafts.filter((d) => d.category === category);
-          if (status) drafts = drafts.filter((d) => d.status === status);
-
-          // Sort by confidence descending
-          drafts.sort((a, b) => b.confidence - a.confidence);
+          const backend = await storage.getBackend();
+          const drafts = await backend.listDrafts({ category, status, limit });
 
           return createJsonResult({
-            count: Math.min(drafts.length, limit),
-            drafts: drafts.slice(0, limit).map((d) => ({
+            count: drafts.length,
+            drafts: drafts.map((d) => ({
               id: d.id,
               category: d.category,
               title: d.title,
@@ -178,31 +144,26 @@ export function createDraftsModule(): AiddModule {
         handler: async (args) => {
           const { id, targetPath } = args as { id: string; targetPath?: string };
 
-          const manifest = readManifest(context.aiddDir);
-          const draft = manifest.drafts.find((d) => d.id === id);
+          const backend = await storage.getBackend();
+          const draft = await backend.getDraft(id);
           if (!draft) return createErrorResult(`Draft ${id} not found`);
           if (draft.status !== 'pending') return createErrorResult(`Draft ${id} is already ${draft.status}`);
+          if (!draft.content) return createErrorResult(`Draft ${id} has no content`);
 
-          // Read draft content
-          const contentPath = draftContentPath(context.aiddDir, draft.category, draft.id);
-          const content = readFileOrNull(contentPath);
-          if (!content) return createErrorResult(`Draft content file not found: ${contentPath}`);
-
-          // Resolve target
+          // Resolve target path
           const target = targetPath
             ? resolve(context.projectRoot, targetPath)
-            : resolve(resolveTargetDir(context.projectRoot, draft.category), draft.filename);
+            : resolve(resolveTargetDir(context.projectRoot, draft.category as DraftCategory), draft.filename);
 
           // Write to project directory
           ensureDir(resolve(target, '..'));
-          writeFileSafe(target, content);
+          writeFileSafe(target, draft.content);
 
-          // Update manifest
+          // Update draft status in DB
           draft.status = 'approved';
           draft.approvedAt = now();
           draft.updatedAt = now();
-          manifest.updatedAt = now();
-          writeManifest(context.aiddDir, manifest);
+          await backend.updateDraft(draft);
 
           return createJsonResult({
             id: draft.id,

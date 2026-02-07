@@ -415,11 +415,17 @@ export interface DraftEntry {
   id: string;
   category: string;
   title: string;
+  filename: string;
   content: string;
+  confidence: number;
+  source: 'evolution' | 'manual';
+  evolutionCandidateId?: string;
   status: 'pending' | 'approved' | 'rejected';
   data?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  approvedAt?: string;
+  rejectedReason?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -586,6 +592,7 @@ export interface ToolUsageEntry {
 export interface EvolutionCandidateFilter {
   type?: EvolutionType;
   title?: string;
+  status?: string;
   modelScope?: string;
   minConfidence?: number;
 }
@@ -612,6 +619,7 @@ export interface PatternStatsFilter {
 export interface DraftFilter {
   category?: string;
   status?: string;
+  limit?: number;
 }
 
 /** Filter for lifecycle sessions. */

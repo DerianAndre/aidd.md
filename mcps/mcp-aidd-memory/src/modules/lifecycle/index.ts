@@ -1,44 +1,30 @@
-import { resolve } from 'node:path';
 import { z } from 'zod';
 import {
   registerTool,
   createJsonResult,
   createErrorResult,
-  readJsonFile,
-  writeJsonFile,
-  listFiles,
-  ensureDir,
   generateId,
   now,
 } from '@aidd.md/mcp-shared';
-import type { AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
+import type { AiddModule, ModuleContext, LifecycleSession } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { StorageProvider } from '../../storage/index.js';
 import {
   AIDD_PHASES,
   PHASE_DEFINITIONS,
 } from './types.js';
-import type { AiddPhase, LifecycleSession } from './types.js';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function lifecyclePath(aiddDir: string, id: string): string {
-  return resolve(aiddDir, 'sessions', 'active', `${id}.lifecycle.json`);
-}
+import type { AiddPhase } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
 
-export function createLifecycleModule(): AiddModule {
+export function createLifecycleModule(storage: StorageProvider): AiddModule {
   return {
     name: 'lifecycle',
     description: 'AIDD lifecycle management — 6-phase development lifecycle',
 
-    register(server: McpServer, context: ModuleContext) {
-      const activeDir = resolve(context.aiddDir, 'sessions', 'active');
-
+    register(server: McpServer, _context: ModuleContext) {
       // ---- Get AIDD definition ----
       registerTool(server, {
         name: 'aidd_lifecycle_get',
@@ -88,8 +74,8 @@ export function createLifecycleModule(): AiddModule {
             updatedAt: now(),
           };
 
-          ensureDir(activeDir);
-          writeJsonFile(lifecyclePath(context.aiddDir, lifecycle.id), lifecycle);
+          const backend = await storage.getBackend();
+          await backend.saveLifecycle(lifecycle);
 
           const phaseDef = PHASE_DEFINITIONS.find((p) => p.name === startPhase);
 
@@ -115,14 +101,14 @@ export function createLifecycleModule(): AiddModule {
         },
         annotations: { idempotentHint: false },
         handler: async (args) => {
-          const { lifecycleId, notes, force } = args as {
+          const { lifecycleId, notes } = args as {
             lifecycleId: string;
             notes?: string;
             force?: boolean;
           };
 
-          const filePath = lifecyclePath(context.aiddDir, lifecycleId);
-          const lifecycle = readJsonFile<LifecycleSession>(filePath);
+          const backend = await storage.getBackend();
+          const lifecycle = await backend.getLifecycle(lifecycleId);
           if (!lifecycle) return createErrorResult(`Lifecycle ${lifecycleId} not found`);
           if (lifecycle.status !== 'active') return createErrorResult(`Lifecycle ${lifecycleId} is ${lifecycle.status}`);
 
@@ -142,7 +128,7 @@ export function createLifecycleModule(): AiddModule {
           if (currentIdx === AIDD_PHASES.length - 1) {
             lifecycle.status = 'completed';
             lifecycle.updatedAt = now();
-            writeJsonFile(filePath, lifecycle);
+            await backend.saveLifecycle(lifecycle);
 
             return createJsonResult({
               id: lifecycle.id,
@@ -156,19 +142,11 @@ export function createLifecycleModule(): AiddModule {
           const nextPhase = AIDD_PHASES[currentIdx + 1]!;
           const nextDef = PHASE_DEFINITIONS.find((p) => p.name === nextPhase);
 
-          if (!force && nextDef) {
-            // Return exit criteria for the current phase as guidance
-            const currentDef = PHASE_DEFINITIONS.find((p) => p.name === lifecycle.currentPhase);
-            if (currentDef) {
-              // We don't block — just include the criteria in the response for the AI to validate
-            }
-          }
-
           lifecycle.currentPhase = nextPhase;
           lifecycle.phases.push({ name: nextPhase, enteredAt: now() });
           lifecycle.updatedAt = now();
 
-          writeJsonFile(filePath, lifecycle);
+          await backend.saveLifecycle(lifecycle);
 
           return createJsonResult({
             id: lifecycle.id,
@@ -196,8 +174,8 @@ export function createLifecycleModule(): AiddModule {
         handler: async (args) => {
           const { lifecycleId } = args as { lifecycleId: string };
 
-          const filePath = lifecyclePath(context.aiddDir, lifecycleId);
-          const lifecycle = readJsonFile<LifecycleSession>(filePath);
+          const backend = await storage.getBackend();
+          const lifecycle = await backend.getLifecycle(lifecycleId);
           if (!lifecycle) return createErrorResult(`Lifecycle ${lifecycleId} not found`);
 
           const currentDef = PHASE_DEFINITIONS.find((p) => p.name === lifecycle.currentPhase);
@@ -237,36 +215,23 @@ export function createLifecycleModule(): AiddModule {
         handler: async (args) => {
           const { status, limit } = args as { status?: string; limit: number };
 
-          ensureDir(activeDir);
-          const files = listFiles(activeDir, { extensions: ['.json'] });
-          const lifecycles: Array<{
-            id: string;
-            feature: string;
-            status: string;
-            currentPhase: string;
-            progress: string;
-            updatedAt: string;
-          }> = [];
+          const backend = await storage.getBackend();
+          const lifecycles = await backend.listLifecycles({ status, limit });
 
-          for (const file of files) {
-            if (!file.endsWith('.lifecycle.json')) continue;
-            const lc = readJsonFile<LifecycleSession>(file);
-            if (!lc) continue;
-            if (status && lc.status !== status) continue;
-
-            const idx = AIDD_PHASES.indexOf(lc.currentPhase);
-            lifecycles.push({
-              id: lc.id,
-              feature: lc.feature,
-              status: lc.status,
-              currentPhase: lc.currentPhase,
-              progress: `${idx}/${AIDD_PHASES.length}`,
-              updatedAt: lc.updatedAt,
-            });
-          }
-
-          lifecycles.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-          return createJsonResult({ count: Math.min(lifecycles.length, limit), lifecycles: lifecycles.slice(0, limit) });
+          return createJsonResult({
+            count: lifecycles.length,
+            lifecycles: lifecycles.map((lc) => {
+              const idx = AIDD_PHASES.indexOf(lc.currentPhase);
+              return {
+                id: lc.id,
+                feature: lc.feature,
+                status: lc.status,
+                currentPhase: lc.currentPhase,
+                progress: `${idx}/${AIDD_PHASES.length}`,
+                updatedAt: lc.updatedAt,
+              };
+            }),
+          });
         },
       });
     },

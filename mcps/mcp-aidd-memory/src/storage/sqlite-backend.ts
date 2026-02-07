@@ -520,6 +520,10 @@ export class SqliteBackend implements StorageBackend {
       conditions.push('title LIKE ?');
       params.push(`%${filter.title}%`);
     }
+    if (filter?.status) {
+      conditions.push('status = ?');
+      params.push(filter.status);
+    }
     if (filter?.modelScope) {
       conditions.push('model_scope = ?');
       params.push(filter.modelScope);
@@ -612,6 +616,16 @@ export class SqliteBackend implements StorageBackend {
   // ---- Drafts ----
 
   async saveDraft(draft: DraftEntry): Promise<void> {
+    const extra: Record<string, unknown> = {
+      filename: draft.filename,
+      confidence: draft.confidence,
+      source: draft.source,
+    };
+    if (draft.evolutionCandidateId) extra['evolutionCandidateId'] = draft.evolutionCandidateId;
+    if (draft.approvedAt) extra['approvedAt'] = draft.approvedAt;
+    if (draft.rejectedReason) extra['rejectedReason'] = draft.rejectedReason;
+    if (draft.data) extra['data'] = draft.data;
+
     this.db.prepare(`
       INSERT OR REPLACE INTO drafts (id, category, title, content, status, data, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -621,7 +635,7 @@ export class SqliteBackend implements StorageBackend {
       draft.title,
       draft.content,
       draft.status,
-      draft.data ? JSON.stringify(draft.data) : null,
+      JSON.stringify(extra),
       draft.createdAt,
       draft.updatedAt,
     );
@@ -649,14 +663,25 @@ export class SqliteBackend implements StorageBackend {
     }
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const limit = filter?.limit ?? 50;
     const rows = this.db.prepare(
-      `SELECT * FROM drafts ${where} ORDER BY updated_at DESC`,
-    ).all(...params) as Array<Record<string, unknown>>;
+      `SELECT * FROM drafts ${where} ORDER BY updated_at DESC LIMIT ?`,
+    ).all(...params, limit) as Array<Record<string, unknown>>;
 
     return rows.map(r => this.rowToDraft(r));
   }
 
   async updateDraft(draft: DraftEntry): Promise<void> {
+    const extra: Record<string, unknown> = {
+      filename: draft.filename,
+      confidence: draft.confidence,
+      source: draft.source,
+    };
+    if (draft.evolutionCandidateId) extra['evolutionCandidateId'] = draft.evolutionCandidateId;
+    if (draft.approvedAt) extra['approvedAt'] = draft.approvedAt;
+    if (draft.rejectedReason) extra['rejectedReason'] = draft.rejectedReason;
+    if (draft.data) extra['data'] = draft.data;
+
     this.db.prepare(`
       UPDATE drafts SET category = ?, title = ?, content = ?, status = ?, data = ?, updated_at = ?
       WHERE id = ?
@@ -665,7 +690,7 @@ export class SqliteBackend implements StorageBackend {
       draft.title,
       draft.content,
       draft.status,
-      draft.data ? JSON.stringify(draft.data) : null,
+      JSON.stringify(extra),
       draft.updatedAt,
       draft.id,
     );
@@ -1009,15 +1034,22 @@ export class SqliteBackend implements StorageBackend {
   }
 
   private rowToDraft(row: Record<string, unknown>): DraftEntry {
+    const extra = row['data'] ? (JSON.parse(String(row['data'])) as Record<string, unknown>) : {};
     return {
       id: String(row['id']),
       category: String(row['category']),
       title: String(row['title']),
+      filename: String(extra['filename'] ?? ''),
       content: String(row['content'] ?? ''),
+      confidence: Number(extra['confidence'] ?? 50),
+      source: (String(extra['source'] ?? 'manual')) as DraftEntry['source'],
+      evolutionCandidateId: extra['evolutionCandidateId'] ? String(extra['evolutionCandidateId']) : undefined,
       status: String(row['status']) as DraftEntry['status'],
-      data: row['data'] ? (JSON.parse(String(row['data'])) as Record<string, unknown>) : undefined,
+      data: extra['data'] as Record<string, unknown> | undefined,
       createdAt: String(row['created_at']),
       updatedAt: String(row['updated_at']),
+      approvedAt: extra['approvedAt'] ? String(extra['approvedAt']) : undefined,
+      rejectedReason: extra['rejectedReason'] ? String(extra['rejectedReason']) : undefined,
     };
   }
 
