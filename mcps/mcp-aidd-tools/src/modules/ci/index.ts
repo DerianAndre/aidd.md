@@ -97,7 +97,7 @@ export const ciModule: AiddModule = {
         lines.push(`  CI tools: ${report.ciTools}`);
         lines.push(`  Total: ${report.totalTools} tools`);
         lines.push('');
-        lines.push('## ASDD Lifecycle');
+        lines.push('## AIDD Lifecycle');
         lines.push(`  Phases: ${report.phases.join(' -> ')}`);
         lines.push(`  Quality gates: ${report.qualityGates}`);
         lines.push('');

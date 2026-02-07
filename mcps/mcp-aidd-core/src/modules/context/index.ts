@@ -148,7 +148,7 @@ export const contextModule: AiddModule = {
           if (index.workflows.length > 0) inventoryLines.push(`- ${index.workflows.length} workflows`);
           if (index.knowledge.length > 0) inventoryLines.push(`- ${index.knowledge.length} TKB entries`);
           if (index.templates.length > 0) inventoryLines.push(`- ${index.templates.length} templates`);
-          if (index.spec.length > 0) inventoryLines.push(`- ${index.spec.length} specifications`);
+          if (index.specs.length > 0) inventoryLines.push(`- ${index.specs.length} specifications`);
 
           if (inventoryLines.length > 0) {
             builder.addSection('Content Inventory', inventoryLines.join('\n'), 4);

@@ -135,7 +135,7 @@ export const bootstrapModule: AiddModule = {
         if (index.workflows.length > 0) contentSummary.push(`${index.workflows.length} workflows`);
         if (index.knowledge.length > 0) contentSummary.push(`${index.knowledge.length} TKB entries`);
         if (index.templates.length > 0) contentSummary.push(`${index.templates.length} templates`);
-        if (index.spec.length > 0) contentSummary.push(`${index.spec.length} specs`);
+        if (index.specs.length > 0) contentSummary.push(`${index.specs.length} specs`);
 
         if (contentSummary.length > 0) {
           sections.push(`\n## Content Available\n`);

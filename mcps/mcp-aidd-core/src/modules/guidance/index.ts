@@ -29,7 +29,7 @@ let heuristicsCache: Heuristic[] | null = null;
 function loadHeuristics(contentLoader: ContentLoader): void {
   if (heuristicsCache) return;
 
-  const specs = contentLoader.getIndex().spec;
+  const specs = contentLoader.getIndex().specs;
   const heuristicsEntry = specs.find((s) => s.name === 'heuristics.md');
 
   if (!heuristicsEntry) {
@@ -147,7 +147,7 @@ export const guidanceModule: AiddModule = {
       'aidd://specs/heuristics',
       { description: 'AIDD operating heuristics (10 decision principles)', mimeType: 'text/markdown' },
       async (uri) => {
-        const specs = context.contentLoader.getIndex().spec;
+        const specs = context.contentLoader.getIndex().specs;
         const entry = specs.find((s) => s.name === 'heuristics.md');
         const content = entry ? entry.getContent() : 'Heuristics spec not found. Use aidd_scaffold to initialize.';
         return { contents: [{ uri: uri.href, text: content, mimeType: 'text/markdown' }] };
@@ -275,16 +275,16 @@ export const guidanceModule: AiddModule = {
     );
 
     // -----------------------------------------------------------------------
-    // Prompt: aidd_start_feature (ASDD lifecycle)
+    // Prompt: aidd_start_feature (AIDD lifecycle)
     // -----------------------------------------------------------------------
     server.registerPrompt(
       'aidd_start_feature',
       {
-        title: 'Start Feature (ASDD)',
-        description: 'Guide through the AI-Spec-Driven Development lifecycle for a new feature.',
+        title: 'Start Feature (AIDD)',
+        description: 'Guide through the AI-Driven Development lifecycle for a new feature.',
         argsSchema: {
           feature: z.string().describe('Feature description'),
-          phase: z.enum(['planning', 'design', 'implementation', 'testing', 'release']).optional().describe('Starting phase'),
+          phase: z.enum(['understand', 'plan', 'spec', 'build', 'verify', 'ship']).optional().describe('Starting phase'),
         },
       },
       async (args) => {
@@ -297,43 +297,50 @@ export const guidanceModule: AiddModule = {
             content: {
               type: 'text' as const,
               text: [
-                '# Feature Development — ASDD Lifecycle',
+                '# Feature Development — AIDD Lifecycle',
                 '',
                 `**Feature**: ${args.feature}`,
-                `**Starting Phase**: ${args.phase ?? 'planning'}`,
+                `**Starting Phase**: ${args.phase ?? 'understand'}`,
                 `**Project Stack**: ${stack || 'unknown'}`,
                 `**AIDD Active**: ${info.detected}`,
                 '',
-                '## ASDD Phases',
+                '## AIDD Phases',
                 '',
-                '### Phase 1: Planning',
-                '- Analyze requirements, ask clarifying questions if confidence < 90%',
-                '- Check codebase for similar features',
+                '### Phase 1: Understand',
+                '- Load context: branch state, memory, project patterns',
+                '- Gather requirements and define acceptance criteria (Given/When/Then)',
+                '- Identify edge cases, constraints, and similar existing features',
                 '- Use `aidd_classify_task` to route to the right agents',
                 '',
-                '### Phase 2: User Story',
-                '- As a [user], I want [goal], so that [benefit]',
-                '- Given/When/Then acceptance criteria',
-                '',
-                '### Phase 3: Detailed Plan',
-                '- Atomic tasks with files to create/modify',
+                '### Phase 2: Plan',
+                '- Create atomic task list with files to create/modify',
                 '- Use `aidd_apply_heuristics` for design decisions',
-                '- Complexity per task (Low/Medium/High)',
+                '- Assign complexity and model tier per task',
+                '- User approval gate before proceeding',
                 '',
-                '### Phase 4: Implementation',
-                '- Follow plan strictly',
+                '### Phase 3: Spec',
+                '- Persist specification as versioned artifact',
+                '- Create branch if needed (feature/<name> or fix/<name>)',
+                '- Commit spec separately: docs(scope): add spec',
+                '',
+                '### Phase 4: Build',
+                '- Follow plan strictly, mark tasks in_progress/completed',
                 '- Use `aidd_get_agent` for domain-specific guidance',
                 '- Run targeted tests after each change',
+                '- If divergence: update spec first',
                 '',
-                '### Phase 5: Testing',
+                '### Phase 5: Verify',
                 '- Write/update tests matching acceptance criteria',
+                '- Run full verification: typecheck + lint + tests',
+                '- Review for dead code, spec alignment',
                 '- Use `aidd_tech_compatibility` to verify stack choices',
                 '',
-                '### Phase 6: Release',
-                '- Full check: typecheck + lint + test',
-                '- Spec matches implementation (update if diverged)',
+                '### Phase 6: Ship',
+                '- Full check: typecheck + lint + test + build',
+                '- Commit with conventional format',
+                '- Update memory if significant decisions were made',
                 '',
-                `Start from the **${args.phase ?? 'planning'}** phase for: "${args.feature}"`,
+                `Start from the **${args.phase ?? 'understand'}** phase for: "${args.feature}"`,
               ].join('\n'),
             },
           }],
@@ -420,7 +427,7 @@ export const guidanceModule: AiddModule = {
         'Get context-aware suggestions for the next action. Returns tool calls with pre-filled arguments based on current state.',
       schema: {
         currentTask: z.string().optional().describe('What you are currently working on'),
-        phase: z.string().optional().describe('Current ASDD phase (DESIGN, IMPLEMENTATION, QUALITY, RELEASE)'),
+        phase: z.string().optional().describe('Current AIDD phase (DESIGN, IMPLEMENTATION, QUALITY, RELEASE)'),
         recentActions: z.array(z.string()).optional().describe('Recent tool names or actions taken'),
       },
       annotations: { readOnlyHint: true, idempotentHint: true },

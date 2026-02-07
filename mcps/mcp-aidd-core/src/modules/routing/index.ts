@@ -102,7 +102,7 @@ function parseDecisionTree(context: ModuleContext): void {
   if (decisionRulesCache) return;
 
   const rules = context.contentLoader.getIndex().rules;
-  const dtEntry = rules.find((r) => r.name === 'decision-tree.md');
+  const dtEntry = rules.find((r) => r.name === 'orchestrator.md');
 
   if (!dtEntry) {
     decisionRulesCache = [];
@@ -412,7 +412,7 @@ export const routingModule: AiddModule = {
     registerTool(server, {
       name: 'aidd_model_route',
       description:
-        'Route to the optimal model for a given tier and optional constraints. Uses the multi-provider model matrix (SSOT: templates/model-matrix.md). Compose with aidd_classify_task to get the tier first.',
+        'Route to the optimal model for a given tier and optional constraints. Uses the multi-provider model matrix (SSOT: content/specs/model-matrix.md). Compose with aidd_classify_task to get the tier first.',
       schema: {
         tier: z
           .number()

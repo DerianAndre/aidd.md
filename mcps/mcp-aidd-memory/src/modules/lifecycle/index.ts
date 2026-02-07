@@ -14,10 +14,10 @@ import {
 import type { AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
-  ASDD_PHASES,
+  AIDD_PHASES,
   PHASE_DEFINITIONS,
 } from './types.js';
-import type { AsddPhase, LifecycleSession } from './types.js';
+import type { AiddPhase, LifecycleSession } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -34,21 +34,21 @@ function lifecyclePath(aiddDir: string, id: string): string {
 export function createLifecycleModule(): AiddModule {
   return {
     name: 'lifecycle',
-    description: 'ASDD lifecycle management — 8-phase development lifecycle',
+    description: 'AIDD lifecycle management — 6-phase development lifecycle',
 
     register(server: McpServer, context: ModuleContext) {
       const activeDir = resolve(context.aiddDir, 'sessions', 'active');
 
-      // ---- Get ASDD definition ----
+      // ---- Get AIDD definition ----
       registerTool(server, {
         name: 'aidd_lifecycle_get',
         description:
-          'Get the 8-phase ASDD lifecycle definition with entry/exit criteria and key activities for each phase.',
+          'Get the 6-phase AIDD lifecycle definition with entry/exit criteria and key activities for each phase.',
         schema: {},
         annotations: { readOnlyHint: true, idempotentHint: true },
         handler: async () => {
           return createJsonResult({
-            name: 'AI-Spec-Driven Development (ASDD)',
+            name: 'AI-Driven Development (AIDD)',
             phases: PHASE_DEFINITIONS,
             totalPhases: PHASE_DEFINITIONS.length,
           });
@@ -59,22 +59,22 @@ export function createLifecycleModule(): AiddModule {
       registerTool(server, {
         name: 'aidd_lifecycle_init',
         description:
-          'Start a new ASDD lifecycle session for a feature. Begins at the SYNC phase by default.',
+          'Start a new AIDD lifecycle session for a feature. Begins at the UNDERSTAND phase by default.',
         schema: {
           feature: z.string().describe('Feature name/description'),
           sessionId: z.string().optional().describe('Associated session ID'),
           startPhase: z
-            .enum(['SYNC', 'STORY', 'PLAN', 'COMMIT_SPEC', 'EXECUTE', 'TEST', 'VERIFY', 'COMMIT_IMPL'])
+            .enum(['UNDERSTAND', 'PLAN', 'SPEC', 'BUILD', 'VERIFY', 'SHIP'])
             .optional()
-            .default('SYNC')
-            .describe('Starting phase (default: SYNC)'),
+            .default('UNDERSTAND')
+            .describe('Starting phase (default: UNDERSTAND)'),
         },
         annotations: { idempotentHint: false },
         handler: async (args) => {
           const { feature, sessionId, startPhase } = args as {
             feature: string;
             sessionId?: string;
-            startPhase: AsddPhase;
+            startPhase: AiddPhase;
           };
 
           const lifecycle: LifecycleSession = {
@@ -107,7 +107,7 @@ export function createLifecycleModule(): AiddModule {
       registerTool(server, {
         name: 'aidd_lifecycle_advance',
         description:
-          'Advance an ASDD lifecycle session to the next phase. Validates the exit criteria have been met. Advancing from COMMIT_IMPL completes the lifecycle.',
+          'Advance an AIDD lifecycle session to the next phase. Validates the exit criteria have been met. Advancing from SHIP completes the lifecycle.',
         schema: {
           lifecycleId: z.string().describe('Lifecycle session ID'),
           notes: z.string().optional().describe('Notes about phase completion'),
@@ -126,7 +126,7 @@ export function createLifecycleModule(): AiddModule {
           if (!lifecycle) return createErrorResult(`Lifecycle ${lifecycleId} not found`);
           if (lifecycle.status !== 'active') return createErrorResult(`Lifecycle ${lifecycleId} is ${lifecycle.status}`);
 
-          const currentIdx = ASDD_PHASES.indexOf(lifecycle.currentPhase);
+          const currentIdx = AIDD_PHASES.indexOf(lifecycle.currentPhase);
           if (currentIdx === -1) return createErrorResult(`Unknown phase: ${lifecycle.currentPhase}`);
 
           // Close current phase
@@ -139,7 +139,7 @@ export function createLifecycleModule(): AiddModule {
           }
 
           // Check if this is the last phase
-          if (currentIdx === ASDD_PHASES.length - 1) {
+          if (currentIdx === AIDD_PHASES.length - 1) {
             lifecycle.status = 'completed';
             lifecycle.updatedAt = now();
             writeJsonFile(filePath, lifecycle);
@@ -153,7 +153,7 @@ export function createLifecycleModule(): AiddModule {
           }
 
           // Advance to next phase
-          const nextPhase = ASDD_PHASES[currentIdx + 1]!;
+          const nextPhase = AIDD_PHASES[currentIdx + 1]!;
           const nextDef = PHASE_DEFINITIONS.find((p) => p.name === nextPhase);
 
           if (!force && nextDef) {
@@ -172,14 +172,14 @@ export function createLifecycleModule(): AiddModule {
 
           return createJsonResult({
             id: lifecycle.id,
-            previousPhase: ASDD_PHASES[currentIdx],
+            previousPhase: AIDD_PHASES[currentIdx],
             currentPhase: nextPhase,
             phaseDescription: nextDef?.description,
             entryCriteria: nextDef?.entryCriteria,
             exitCriteria: nextDef?.exitCriteria,
             keyActivities: nextDef?.keyActivities,
             phasesCompleted: currentIdx + 1,
-            phasesRemaining: ASDD_PHASES.length - currentIdx - 1,
+            phasesRemaining: AIDD_PHASES.length - currentIdx - 1,
           });
         },
       });
@@ -188,7 +188,7 @@ export function createLifecycleModule(): AiddModule {
       registerTool(server, {
         name: 'aidd_lifecycle_status',
         description:
-          'Get the current status of an ASDD lifecycle session including progress and exit criteria.',
+          'Get the current status of an AIDD lifecycle session including progress and exit criteria.',
         schema: {
           lifecycleId: z.string().describe('Lifecycle session ID'),
         },
@@ -201,7 +201,7 @@ export function createLifecycleModule(): AiddModule {
           if (!lifecycle) return createErrorResult(`Lifecycle ${lifecycleId} not found`);
 
           const currentDef = PHASE_DEFINITIONS.find((p) => p.name === lifecycle.currentPhase);
-          const currentIdx = ASDD_PHASES.indexOf(lifecycle.currentPhase);
+          const currentIdx = AIDD_PHASES.indexOf(lifecycle.currentPhase);
 
           return createJsonResult({
             id: lifecycle.id,
@@ -212,8 +212,8 @@ export function createLifecycleModule(): AiddModule {
             exitCriteria: currentDef?.exitCriteria,
             keyActivities: currentDef?.keyActivities,
             phasesCompleted: currentIdx,
-            totalPhases: ASDD_PHASES.length,
-            progress: `${currentIdx}/${ASDD_PHASES.length}`,
+            totalPhases: AIDD_PHASES.length,
+            progress: `${currentIdx}/${AIDD_PHASES.length}`,
             phases: lifecycle.phases,
             sessionId: lifecycle.sessionId,
             createdAt: lifecycle.createdAt,
@@ -225,7 +225,7 @@ export function createLifecycleModule(): AiddModule {
       // ---- List lifecycle sessions ----
       registerTool(server, {
         name: 'aidd_lifecycle_list',
-        description: 'List ASDD lifecycle sessions, optionally filtered by status.',
+        description: 'List AIDD lifecycle sessions, optionally filtered by status.',
         schema: {
           status: z
             .enum(['active', 'completed', 'abandoned'])
@@ -254,13 +254,13 @@ export function createLifecycleModule(): AiddModule {
             if (!lc) continue;
             if (status && lc.status !== status) continue;
 
-            const idx = ASDD_PHASES.indexOf(lc.currentPhase);
+            const idx = AIDD_PHASES.indexOf(lc.currentPhase);
             lifecycles.push({
               id: lc.id,
               feature: lc.feature,
               status: lc.status,
               currentPhase: lc.currentPhase,
-              progress: `${idx}/${ASDD_PHASES.length}`,
+              progress: `${idx}/${AIDD_PHASES.length}`,
               updatedAt: lc.updatedAt,
             });
           }

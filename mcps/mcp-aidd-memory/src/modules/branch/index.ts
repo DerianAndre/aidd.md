@@ -66,7 +66,7 @@ export function createBranchModule(storage: StorageProvider): AiddModule {
           branch: z.string().optional().describe('Branch name (required for get/save/promote/merge)'),
           // save params
           feature: z.string().optional().describe('Feature description'),
-          phase: z.string().optional().describe('Current ASDD phase'),
+          phase: z.string().optional().describe('Current AIDD phase'),
           spec: z.string().optional().describe('Spec reference'),
           plan: z.string().optional().describe('Plan reference'),
           completedTasks: z.array(z.string()).optional().describe('Tasks to append as completed'),

@@ -169,7 +169,7 @@ mcps/
 │   │   │   ├── branch/           # aidd_branch (multi-action)
 │   │   │   ├── memory/           # 3-layer search: search, context, get + CRUD
 │   │   │   ├── observation/      # aidd_observation (typed observations with discoveryTokens)
-│   │   │   ├── lifecycle/        # ASDD lifecycle sessions
+│   │   │   ├── lifecycle/        # AIDD lifecycle sessions
 │   │   │   ├── evolution/        # Pattern recognition, auto-apply, snapshots, rollback
 │   │   │   ├── drafts/           # Content authoring: create, list, approve
 │   │   │   ├── analytics/        # Passive tracking + model performance
@@ -416,7 +416,7 @@ interface StorageBackend {
 | 1   | `aidd_detect_project`        | Scan directory for AIDD markers + parse package.json stack                   | readOnly    |
 | 2   | `aidd_get_config`            | Return active MCP configuration                                              | readOnly    |
 | 3   | `aidd_bootstrap`             | One-call conversation start: project + agents + rules + memory + suggestions | readOnly    |
-| 4   | `aidd_classify_task`         | Task → agent roles, workflows, templates (decision-tree.md)                  | readOnly    |
+| 4   | `aidd_classify_task`         | Task → agent roles, workflows, templates (orchestrator.md)                   | readOnly    |
 | 5   | `aidd_get_routing_table`     | Complete routing table from templates/routing.md                             | readOnly    |
 | 6   | `aidd_query_tkb`             | Filter/search TKB by category, maturity, keyword, use case                   | readOnly    |
 | 7   | `aidd_get_tkb_entry`         | Full content of a specific TKB entry                                         | readOnly    |
@@ -442,8 +442,8 @@ interface StorageBackend {
 | 8   | `aidd_memory_add_convention` | Record project convention with examples                                   | write       |
 | 9   | `aidd_observation`           | Record typed observation with discoveryTokens (pattern, insight, etc.)    | write       |
 | 10  | `aidd_memory_prune`          | Remove outdated entries                                                   | destructive |
-| 11  | `aidd_lifecycle_get`         | ASDD 8-phase definition with entry/exit criteria                          | readOnly    |
-| 12  | `aidd_lifecycle_init`        | Initialize new ASDD session                                               | write       |
+| 11  | `aidd_lifecycle_get`         | AIDD 6-phase definition with entry/exit criteria                          | readOnly    |
+| 12  | `aidd_lifecycle_init`        | Initialize new AIDD session                                               | write       |
 | 13  | `aidd_lifecycle_advance`     | Advance phase after verifying exit criteria                               | write       |
 | 14  | `aidd_lifecycle_status`      | Current lifecycle session state                                           | readOnly    |
 | 15  | `aidd_lifecycle_list`        | List all lifecycle sessions                                               | readOnly    |
@@ -477,7 +477,7 @@ interface StorageBackend {
 | 11  | `aidd_scan_secrets`            | Scan for exposed secrets                       | readOnly    |
 | 12  | `aidd_check_compliance`        | Check code against AIDD rules                  | readOnly    |
 | 13  | `aidd_verify_version`          | 4-step Version Verification Protocol           | readOnly    |
-| 14  | `aidd_check_quality_gates`     | Validate ASDD quality gates                    | readOnly    |
+| 14  | `aidd_check_quality_gates`     | Validate AIDD quality gates                    | readOnly    |
 | 15  | `aidd_explain_violation`       | Explain why a rule exists with examples        | readOnly    |
 | 16  | `aidd_generate_commit_message` | Analyze changes → conventional commit          | readOnly    |
 | 17  | `aidd_plan_migration`          | Framework upgrade plan with guardrails         | readOnly    |
@@ -502,7 +502,7 @@ interface StorageBackend {
 │           conventions) or project memory files        │
 ├─────────────────────────────────────────────────────┤
 │  Layer 3: LIFECYCLE                                  │
-│  Scope: Feature/task lifecycle (ASDD 8 phases)       │
+│  Scope: Feature/task lifecycle (AIDD 6 phases)       │
 │  Storage: .aidd/sessions/active/<id>.json            │
 ├─────────────────────────────────────────────────────┤
 │  Layer 2: BRANCH                                     │
@@ -660,7 +660,7 @@ Proven patterns to port from the EnXingaPay MCP implementation:
 | #   | Task                                                                                       | Module    |
 | --- | ------------------------------------------------------------------------------------------ | --------- |
 | 6   | detect_project, get_config, bootstrap                                                      | bootstrap |
-| 7   | classify_task, routing_table (implements decision-tree.md)                                 | routing   |
+| 7   | classify_task, routing_table (implements orchestrator.md)                                  | routing   |
 | 8   | TKB indexing, query engine, get_agent, competency_matrix                                   | knowledge |
 | 9   | apply_heuristics, suggest_next, tech_compatibility                                         | guidance  |
 | 10  | optimize_context + **ContextBuilder pipeline** (token-budget-aware progressive disclosure) | context   |
@@ -677,7 +677,7 @@ Proven patterns to port from the EnXingaPay MCP implementation:
 | 15   | Multi-action branch tool (Layer 2)                                                                                                                                           | branch          |
 | 16   | **3-layer search**: `aidd_memory_search` (compact index), `aidd_memory_context` (timeline), `aidd_memory_get` (batch full details) + CRUD for decisions/mistakes/conventions | memory          |
 | 16.5 | **Observation system**: `aidd_observation` tool — typed observations with `discoveryTokens` ROI tracking                                                                     | observation     |
-| 17   | ASDD sessions, phase validation (Layer 3)                                                                                                                                    | lifecycle       |
+| 17   | AIDD sessions, phase validation (Layer 3)                                                                                                                                    | lifecycle       |
 
 ### Phase 4: Evolution Engine
 
@@ -781,8 +781,8 @@ Proven patterns to port from the EnXingaPay MCP implementation:
 
 | File                                                  | Used By                     |
 | ----------------------------------------------------- | --------------------------- |
-| `rules/decision-tree.md`                              | Core: routing classifier    |
-| `specs/asdd-lifecycle.md`                             | Memory: lifecycle phases    |
+| `rules/orchestrator.md`                               | Core: routing classifier    |
+| `specs/aidd-lifecycle.md`                             | Memory: lifecycle phases    |
 | `specs/memory-layer.md`                               | Memory: schemas             |
 | `specs/heuristics.md`                                 | Core: 10 heuristics         |
 | `specs/version-protocol.md`                           | Tools: version verifier     |

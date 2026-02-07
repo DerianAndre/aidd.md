@@ -30,19 +30,19 @@ const AGENTS_MD = `# AIDD — AI-Driven Development
 ### Master Orchestrator
 
 **Purpose:** Entry point for all requests. Decomposes intent, maps execution paths.
-**Skills:** \`skills/orchestrator/\`
+**Skills:** \`content/skills/orchestrator/\`
 **Activation:** All requests (first responder)
 
 ### System Architect
 
 **Purpose:** System design, architecture analysis, technical debt assessment
-**Skills:** \`skills/system-architect/\`
+**Skills:** \`content/skills/system-architect/\`
 **Activation:** /audit, /review, architecture tasks
 
 ### Quality Engineer
 
 **Purpose:** Test generation, coverage analysis, edge cases
-**Skills:** \`skills/quality-engineer/\`
+**Skills:** \`content/skills/quality-engineer/\`
 **Activation:** /test, /analyze, testing tasks
 
 ---
@@ -94,7 +94,7 @@ interface FileToCreate {
 function getMinimalFiles(): FileToCreate[] {
   return [
     { path: 'AGENTS.md', content: AGENTS_MD },
-    { path: 'rules/global.md', content: GLOBAL_RULES },
+    { path: 'content/rules/global.md', content: GLOBAL_RULES },
   ];
 }
 
@@ -102,15 +102,15 @@ function getStandardFiles(): FileToCreate[] {
   return [
     ...getMinimalFiles(),
     {
-      path: 'skills/README.md',
+      path: 'content/skills/README.md',
       content: '# Skills\n\nAgent-specific skill definitions. Each agent has a `SKILL.md`.\n',
     },
     {
-      path: 'workflows/README.md',
+      path: 'content/workflows/README.md',
       content: '# Workflows\n\nStep-by-step guides for multi-agent coordination.\n',
     },
     {
-      path: 'templates/README.md',
+      path: 'content/templates/README.md',
       content: '# Templates\n\nTask routing templates and decision frameworks.\n',
     },
   ];
@@ -120,11 +120,11 @@ function getFullFiles(): FileToCreate[] {
   return [
     ...getStandardFiles(),
     {
-      path: 'specs/README.md',
+      path: 'content/specs/README.md',
       content: '# Specifications\n\nAIDD standard specifications: lifecycle, heuristics, memory.\n',
     },
     {
-      path: 'knowledge/README.md',
+      path: 'content/knowledge/README.md',
       content: '# Technology Knowledge Base (TKB)\n\nStructured technology entries for AI-driven decisions.\n',
     },
     {

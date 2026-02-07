@@ -38,7 +38,7 @@ function extractConstraints(ruleContent: string): Array<{ pattern: string; type:
 }
 
 // ---------------------------------------------------------------------------
-// ASDD Quality Gates
+// AIDD Quality Gates
 // ---------------------------------------------------------------------------
 
 interface QualityGate {
@@ -47,15 +47,13 @@ interface QualityGate {
   description: string;
 }
 
-const ASDD_PHASES = [
-  { name: 'sync', objective: 'Analyze request, ask clarifying questions' },
-  { name: 'story', objective: 'Write user story with acceptance criteria' },
-  { name: 'plan', objective: 'Create atomic task list with files to modify' },
-  { name: 'commit_spec', objective: 'Commit specification as docs(scope)' },
-  { name: 'execute', objective: 'Implement following the plan strictly' },
-  { name: 'test', objective: 'Write/update tests matching acceptance criteria' },
-  { name: 'verify', objective: 'Run full verification: typecheck + lint + tests' },
-  { name: 'commit_impl', objective: 'Commit implementation as feat/fix(scope)' },
+const AIDD_PHASES = [
+  { name: 'understand', objective: 'Load context, gather requirements, define acceptance criteria' },
+  { name: 'plan', objective: 'Create atomic task list with tier assignments' },
+  { name: 'spec', objective: 'Commit specification as docs(scope)' },
+  { name: 'build', objective: 'Implement following the plan strictly' },
+  { name: 'verify', objective: 'Write tests + run typecheck/lint/tests + dead code review' },
+  { name: 'ship', objective: 'Commit implementation as feat/fix(scope)' },
 ];
 
 const QUALITY_GATES: QualityGate[] = [
@@ -263,22 +261,22 @@ export const enforcementModule: AiddModule = {
     // -----------------------------------------------------------------------
     registerTool(server, {
       name: 'aidd_check_quality_gates',
-      description: 'Validate ASDD quality gates for a given phase. Returns required exit criteria and evaluates a provided checklist.',
+      description: 'Validate AIDD quality gates for a given phase. Returns required exit criteria and evaluates a provided checklist.',
       schema: {
-        phase: z.string().describe('ASDD phase name (sync, story, plan, commit_spec, execute, test, verify, commit_impl)'),
+        phase: z.string().describe('AIDD phase name (understand, plan, spec, build, verify, ship)'),
         checklist: z.record(z.string(), z.boolean()).optional().describe('Optional checklist: { gateId: true/false }. Returns evaluation if provided.'),
       },
       annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { phase: phaseName, checklist } = args as { phase: string; checklist?: Record<string, boolean> };
-        const phase = ASDD_PHASES.find((p) => p.name === phaseName.toLowerCase());
+        const phase = AIDD_PHASES.find((p) => p.name === phaseName.toLowerCase());
         if (!phase) {
-          const validPhases = ASDD_PHASES.map((p) => p.name).join(', ');
+          const validPhases = AIDD_PHASES.map((p) => p.name).join(', ');
           return createErrorResult(`Unknown phase "${phaseName}". Valid phases: ${validPhases}`);
         }
 
         const lines: string[] = [];
-        lines.push(`ASDD Phase: ${phase.name}`);
+        lines.push(`AIDD Phase: ${phase.name}`);
         lines.push(`Objective: ${phase.objective}\n`);
         lines.push('Quality Gates:');
 

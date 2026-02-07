@@ -218,8 +218,8 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 | `aidd_memory_add_convention` | Record project convention with examples                                    |
 | `aidd_observation`           | Record typed observation with discoveryTokens ROI tracking                 |
 | `aidd_memory_prune`          | Remove outdated memory entries                                             |
-| `aidd_lifecycle_get`         | ASDD 8-phase definition with entry/exit criteria                           |
-| `aidd_lifecycle_init`        | Initialize new ASDD lifecycle session                                      |
+| `aidd_lifecycle_get`         | AIDD 6-phase definition with entry/exit criteria                           |
+| `aidd_lifecycle_init`        | Initialize new AIDD lifecycle session                                      |
 | `aidd_lifecycle_advance`     | Advance phase after verifying exit criteria                                |
 | `aidd_lifecycle_status`      | Current lifecycle session state                                            |
 | `aidd_lifecycle_list`        | List all lifecycle sessions                                                |
@@ -253,7 +253,7 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 | `aidd_scan_secrets`            | Scan for exposed secrets                       |
 | `aidd_check_compliance`        | Check code against AIDD rules                  |
 | `aidd_verify_version`          | 4-step Version Verification Protocol           |
-| `aidd_check_quality_gates`     | Validate ASDD quality gates                    |
+| `aidd_check_quality_gates`     | Validate AIDD quality gates                    |
 | `aidd_explain_violation`       | Explain why a rule exists with examples        |
 | `aidd_generate_commit_message` | Analyze changes → conventional commit          |
 | `aidd_plan_migration`          | Framework upgrade plan with guardrails         |
@@ -275,7 +275,7 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 │  Storage: ai/memory/ (or project memory files)       │
 ├─────────────────────────────────────────────────────┤
 │  Layer 3: LIFECYCLE                                  │
-│  ASDD 8-phase tracking + quality gates               │
+│  AIDD 6-phase tracking + quality gates               │
 │  Storage: .aidd/sessions/active/<id>.json            │
 ├─────────────────────────────────────────────────────┤
 │  Layer 2: BRANCH                                     │
@@ -790,5 +790,5 @@ Use this in CLAUDE.md startup protocol or similar automation.
 | `aidd_plan_task`         | Plan using AIDD orchestrator + BLUF-6 format |
 | `aidd_select_technology` | TKB-driven technology comparison             |
 | `aidd_review_code`       | Rule-based code review                       |
-| `aidd_start_feature`     | Full ASDD 8-phase lifecycle guide            |
+| `aidd_start_feature`     | Full AIDD 6-phase lifecycle guide            |
 | `aidd_security_audit`    | OWASP-based security audit                   |

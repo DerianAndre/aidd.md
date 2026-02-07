@@ -1,26 +1,22 @@
-export type AsddPhase =
-  | 'SYNC'
-  | 'STORY'
+export type AiddPhase =
+  | 'UNDERSTAND'
   | 'PLAN'
-  | 'COMMIT_SPEC'
-  | 'EXECUTE'
-  | 'TEST'
+  | 'SPEC'
+  | 'BUILD'
   | 'VERIFY'
-  | 'COMMIT_IMPL';
+  | 'SHIP';
 
-export const ASDD_PHASES: AsddPhase[] = [
-  'SYNC',
-  'STORY',
+export const AIDD_PHASES: AiddPhase[] = [
+  'UNDERSTAND',
   'PLAN',
-  'COMMIT_SPEC',
-  'EXECUTE',
-  'TEST',
+  'SPEC',
+  'BUILD',
   'VERIFY',
-  'COMMIT_IMPL',
+  'SHIP',
 ];
 
 export interface PhaseDefinition {
-  name: AsddPhase;
+  name: AiddPhase;
   description: string;
   entryCriteria: string[];
   exitCriteria: string[];
@@ -29,65 +25,51 @@ export interface PhaseDefinition {
 
 export const PHASE_DEFINITIONS: PhaseDefinition[] = [
   {
-    name: 'SYNC',
-    description: 'Synchronize context — load memory, branch state, and project configuration',
-    entryCriteria: ['New feature request or task assignment'],
-    exitCriteria: ['Project context loaded', 'Memory consulted', 'Branch state known'],
-    keyActivities: ['Load session history', 'Check branch context', 'Query memory for similar work'],
-  },
-  {
-    name: 'STORY',
-    description: 'Define user story with acceptance criteria',
-    entryCriteria: ['Context synchronized'],
-    exitCriteria: ['User story written (As a / I want / So that)', 'Given/When/Then acceptance criteria defined'],
-    keyActivities: ['Write user story', 'Define acceptance criteria', 'Identify edge cases'],
+    name: 'UNDERSTAND',
+    description: 'Active comprehension — load context, gather requirements, define acceptance criteria',
+    entryCriteria: ['New feature request, task assignment, or bug report'],
+    exitCriteria: ['Project context loaded', 'Requirements clear', 'Acceptance criteria defined (Given/When/Then)', 'Edge cases identified'],
+    keyActivities: ['Load session history and branch context', 'Query memory for similar work', 'Analyze codebase: structure, patterns, dependencies', 'Define acceptance criteria', 'Identify edge cases and constraints'],
   },
   {
     name: 'PLAN',
-    description: 'Create detailed implementation plan with atomic tasks',
-    entryCriteria: ['User story approved'],
-    exitCriteria: ['Task list created', 'Files to modify identified', 'Complexity per task estimated'],
-    keyActivities: ['Break into atomic tasks', 'Map files to modify', 'Estimate complexity'],
+    description: 'Task decomposition with tier assignments, issue tracking, and architecture decisions',
+    entryCriteria: ['Requirements understood and approved'],
+    exitCriteria: ['Task list created with file paths', 'Complexity and tier assigned per task', 'Dependencies ordered', 'User approved plan'],
+    keyActivities: ['Break into atomic tasks', 'Map files to create/modify', 'Assign complexity and model tier per task', 'Check for reusable features', 'Create issue document if tracking a bug'],
   },
   {
-    name: 'COMMIT_SPEC',
-    description: 'Commit specification and plan before implementation',
-    entryCriteria: ['Plan approved'],
-    exitCriteria: ['Spec committed: docs(scope): add spec for [feature]'],
-    keyActivities: ['Write spec document', 'Commit spec separately from implementation'],
+    name: 'SPEC',
+    description: 'Persist specification as a versioned artifact before implementation',
+    entryCriteria: ['Plan approved by user'],
+    exitCriteria: ['Spec committed: docs(scope): add spec for [feature]', 'Branch created if needed'],
+    keyActivities: ['Check branch — suggest feature/<name> or fix/<name> if on main', 'Write spec document in docs/plans/active/', 'Commit spec separately from implementation'],
   },
   {
-    name: 'EXECUTE',
-    description: 'Implement the feature following the plan',
+    name: 'BUILD',
+    description: 'Implement the feature following the plan with per-task model dispatch',
     entryCriteria: ['Spec committed'],
     exitCriteria: ['All planned tasks completed', 'Code compiles', 'No type errors'],
-    keyActivities: ['Follow plan strictly', 'Mark tasks in_progress/completed', 'Run targeted tests'],
-  },
-  {
-    name: 'TEST',
-    description: 'Write and run tests matching acceptance criteria',
-    entryCriteria: ['Implementation complete'],
-    exitCriteria: ['Tests written for acceptance criteria', 'All tests passing'],
-    keyActivities: ['Write test cases', 'Run targeted tests', 'Fix failures'],
+    keyActivities: ['Follow plan strictly', 'Mark tasks in_progress/completed', 'Dispatch per-task model tier', 'If divergence: update spec first', 'Run targeted tests after each change'],
   },
   {
     name: 'VERIFY',
-    description: 'Full verification — typecheck, lint, test suite',
-    entryCriteria: ['Targeted tests passing'],
-    exitCriteria: ['TypeScript clean', 'Linter clean', 'Full test suite passing'],
-    keyActivities: ['Run typecheck', 'Run linter', 'Run full test suite'],
+    description: 'Single verification pass — tests, typecheck, lint, dead code review, spec alignment',
+    entryCriteria: ['Implementation complete'],
+    exitCriteria: ['Tests written for acceptance criteria', 'All tests passing', 'TypeScript clean', 'Linter clean', 'No dead code', 'Spec matches implementation'],
+    keyActivities: ['Write/update tests matching acceptance criteria', 'Run typecheck', 'Run linter', 'Run test suite', 'Review for dead code and magic strings', 'Confirm spec matches final implementation'],
   },
   {
-    name: 'COMMIT_IMPL',
-    description: 'Commit implementation with proper format',
+    name: 'SHIP',
+    description: 'Implementation commit, memory updates, plan archival, and PR creation',
     entryCriteria: ['All verification passing'],
-    exitCriteria: ['Implementation committed: feat/fix(scope): description'],
-    keyActivities: ['Stage changes', 'Commit with conventional format', 'Verify commit'],
+    exitCriteria: ['Implementation committed: feat/fix(scope): description', 'Memory updated if needed'],
+    keyActivities: ['Run full check suite: typecheck + lint + test + build', 'Commit with conventional format', 'Update memory if significant decisions were made', 'Move spec to docs/plans/done/ if complete', 'Ask user: create PR, merge, or leave on branch'],
   },
 ];
 
 export interface LifecyclePhaseRecord {
-  name: AsddPhase;
+  name: AiddPhase;
   enteredAt: string;
   exitedAt?: string;
   notes?: string;
@@ -97,7 +79,7 @@ export interface LifecycleSession {
   id: string;
   sessionId?: string;
   feature: string;
-  currentPhase: AsddPhase;
+  currentPhase: AiddPhase;
   status: 'active' | 'completed' | 'abandoned';
   phases: LifecyclePhaseRecord[];
   createdAt: string;

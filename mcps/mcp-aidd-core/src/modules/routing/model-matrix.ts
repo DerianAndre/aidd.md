@@ -1,7 +1,7 @@
 import type { ModelEntry, ModelTier, ModelRoutingResult } from '@aidd.md/mcp-shared';
 
 // ---------------------------------------------------------------------------
-// Runtime model matrix — mirrors templates/model-matrix.md (SSOT)
+// Runtime model matrix — mirrors content/specs/model-matrix.md (SSOT)
 // Update this constant when the markdown SSOT changes.
 // ---------------------------------------------------------------------------
 
