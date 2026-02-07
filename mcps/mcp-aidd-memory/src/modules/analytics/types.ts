@@ -1,3 +1,5 @@
+import type { ModelFingerprint } from '@aidd.md/mcp-shared';
+
 // ---------------------------------------------------------------------------
 // Model analytics types
 // ---------------------------------------------------------------------------
@@ -13,6 +15,12 @@ export interface ModelMetrics {
   testPassRate: number;
   positiveRate: number;
   taskTypes: Record<string, number>;
+  // Extended metrics (available when data exists)
+  avgInputTokens?: number;
+  avgOutputTokens?: number;
+  avgContextEfficiency?: number;
+  patternScore?: number;
+  avgFingerprint?: ModelFingerprint;
 }
 
 export interface ModelComparison {

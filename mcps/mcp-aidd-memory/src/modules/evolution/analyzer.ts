@@ -1,5 +1,5 @@
 import { generateId, now } from '@aidd.md/mcp-shared';
-import type { SessionState, AiddConfig } from '@aidd.md/mcp-shared';
+import type { SessionState, AiddConfig, PatternStats } from '@aidd.md/mcp-shared';
 import type { EvolutionCandidate } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -252,12 +252,157 @@ function detectSkillCombos(
 }
 
 // ---------------------------------------------------------------------------
+// New detectors (Phase 6)
+// ---------------------------------------------------------------------------
+
+function detectContextEfficiency(
+  sessions: SessionState[],
+  minSessions: number,
+): EvolutionCandidate[] {
+  const candidates: EvolutionCandidate[] = [];
+
+  // Group by (domain, complexity) → modelId → token stats
+  const groups = new Map<string, Map<string, { outputTokens: number; tasks: number; count: number; ids: string[] }>>();
+
+  for (const s of sessions) {
+    if (!s.tokenUsage || !s.outcome || s.tasksCompleted.length === 0) continue;
+    const key = `${s.taskClassification?.domain ?? 'unknown'}:${s.taskClassification?.complexity ?? 'unknown'}`;
+    if (!groups.has(key)) groups.set(key, new Map());
+    const modelMap = groups.get(key)!;
+    const modelId = s.aiProvider.modelId;
+    const entry = modelMap.get(modelId) ?? { outputTokens: 0, tasks: 0, count: 0, ids: [] };
+    entry.outputTokens += s.tokenUsage.outputTokens;
+    entry.tasks += s.tasksCompleted.length;
+    entry.count++;
+    entry.ids.push(s.id);
+    modelMap.set(modelId, entry);
+  }
+
+  for (const [taskKey, modelMap] of groups) {
+    const models = [...modelMap.entries()]
+      .filter(([, d]) => d.count >= minSessions && d.tasks > 0)
+      .map(([modelId, d]) => ({
+        modelId,
+        tokensPerTask: d.outputTokens / d.tasks,
+        count: d.count,
+        ids: d.ids,
+      }));
+
+    if (models.length < 2) continue;
+    models.sort((a, b) => a.tokensPerTask - b.tokensPerTask);
+
+    const best = models[0]!;
+    const worst = models[models.length - 1]!;
+    const ratio = worst.tokensPerTask / Math.max(best.tokensPerTask, 1);
+
+    if (ratio >= 2) {
+      const confidence = Math.min(100, Math.round(best.count * 8 + ratio * 10));
+      candidates.push({
+        id: generateId(),
+        type: 'context_efficiency',
+        title: `${best.modelId} is ${Math.round(ratio)}x more token-efficient for ${taskKey}`,
+        description: `${best.modelId}: ${Math.round(best.tokensPerTask)} tokens/task vs ${worst.modelId}: ${Math.round(worst.tokensPerTask)} tokens/task`,
+        confidence,
+        sessionCount: best.count + worst.count,
+        evidence: [...best.ids.slice(0, 3), ...worst.ids.slice(0, 3)],
+        discoveryTokensTotal: 0,
+        suggestedAction: `Prefer ${best.modelId} for ${taskKey} tasks to reduce token usage`,
+        createdAt: now(),
+        updatedAt: now(),
+      });
+    }
+  }
+
+  return candidates;
+}
+
+function detectModelDrift(
+  sessions: SessionState[],
+  windowSize: number,
+): EvolutionCandidate[] {
+  const candidates: EvolutionCandidate[] = [];
+
+  // Group sessions by modelId, sorted by start time
+  const byModel = new Map<string, SessionState[]>();
+  for (const s of sessions) {
+    if (!s.outcome) continue;
+    const list = byModel.get(s.aiProvider.modelId) ?? [];
+    list.push(s);
+    byModel.set(s.aiProvider.modelId, list);
+  }
+
+  for (const [modelId, group] of byModel) {
+    if (group.length < windowSize * 2) continue;
+
+    // Sort by startedAt
+    group.sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+
+    const firstWindow = group.slice(0, windowSize);
+    const lastWindow = group.slice(-windowSize);
+
+    const firstAvg = firstWindow.reduce((sum, s) => sum + s.outcome!.complianceScore, 0) / windowSize;
+    const lastAvg = lastWindow.reduce((sum, s) => sum + s.outcome!.complianceScore, 0) / windowSize;
+
+    const drift = ((lastAvg - firstAvg) / Math.max(firstAvg, 1)) * 100;
+
+    if (Math.abs(drift) >= 15) {
+      const direction = drift > 0 ? 'improving' : 'degrading';
+      const confidence = Math.min(100, Math.round(Math.abs(drift) * 1.5));
+      candidates.push({
+        id: generateId(),
+        type: 'model_recommendation',
+        title: `Model ${modelId} is ${direction} (${drift > 0 ? '+' : ''}${Math.round(drift)}% drift)`,
+        description: `Compliance shifted from ${Math.round(firstAvg)} (first ${windowSize} sessions) to ${Math.round(lastAvg)} (last ${windowSize} sessions).`,
+        confidence,
+        sessionCount: group.length,
+        evidence: [...firstWindow.slice(0, 2).map((s) => s.id), ...lastWindow.slice(-2).map((s) => s.id)],
+        discoveryTokensTotal: 0,
+        suggestedAction: drift > 0
+          ? `Model ${modelId} is trending positive — consider expanding its use`
+          : `Model ${modelId} is trending negative — consider alternatives`,
+        createdAt: now(),
+        updatedAt: now(),
+      });
+    }
+  }
+
+  return candidates;
+}
+
+function detectModelPatternFrequency(
+  patternStats: PatternStats,
+): EvolutionCandidate[] {
+  const candidates: EvolutionCandidate[] = [];
+
+  for (const stat of patternStats.topPatterns) {
+    if (stat.count >= 5 && stat.uniqueSessions >= 3) {
+      candidates.push({
+        id: generateId(),
+        type: 'model_pattern_ban',
+        title: `Frequent pattern: "${stat.pattern}" (${stat.category})`,
+        description: `Detected ${stat.count} times across ${stat.uniqueSessions} sessions. Category: ${stat.category}.`,
+        confidence: Math.min(100, stat.count * 8 + stat.uniqueSessions * 5),
+        sessionCount: stat.uniqueSessions,
+        evidence: [],
+        discoveryTokensTotal: 0,
+        suggestedAction: `Consider banning pattern "${stat.pattern}" (${stat.category})`,
+        createdAt: now(),
+        updatedAt: now(),
+      });
+    }
+  }
+
+  return candidates;
+}
+
+// ---------------------------------------------------------------------------
 // Main analyzer
 // ---------------------------------------------------------------------------
 
 export function analyzePatterns(
   sessions: SessionState[],
   config: AiddConfig,
+  patternStats?: PatternStats,
 ): EvolutionCandidate[] {
   const minSessions = config.evolution.learningPeriodSessions;
   const candidates: EvolutionCandidate[] = [];
@@ -266,6 +411,13 @@ export function analyzePatterns(
   candidates.push(...detectRecurringMistakes(sessions, Math.max(3, Math.floor(minSessions / 2))));
   candidates.push(...detectToolSequences(sessions, minSessions));
   candidates.push(...detectSkillCombos(sessions, minSessions));
+
+  // Phase 6 detectors
+  candidates.push(...detectContextEfficiency(sessions, minSessions));
+  candidates.push(...detectModelDrift(sessions, Math.max(5, minSessions)));
+  if (patternStats) {
+    candidates.push(...detectModelPatternFrequency(patternStats));
+  }
 
   return candidates;
 }

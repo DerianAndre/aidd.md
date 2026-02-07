@@ -7,6 +7,7 @@ import {
 import type {
   AiddModule,
   ModuleContext,
+  ModelFingerprint,
   SessionState,
 } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -42,6 +43,25 @@ function computeMetrics(modelId: string, sessions: SessionState[]): ModelMetrics
   let outcomeCount = 0;
   const taskTypes: Record<string, number> = {};
 
+  // Token usage accumulators
+  let totalInput = 0;
+  let totalOutput = 0;
+  let tokenCount = 0;
+  let totalEfficiency = 0;
+  let efficiencyCount = 0;
+
+  // Fingerprint accumulators
+  let fpCount = 0;
+  const fpSums: Record<keyof ModelFingerprint, number> = {
+    avgSentenceLength: 0,
+    sentenceLengthVariance: 0,
+    typeTokenRatio: 0,
+    avgParagraphLength: 0,
+    passiveVoiceRatio: 0,
+    fillerDensity: 0,
+    questionFrequency: 0,
+  };
+
   for (const s of sessions) {
     if (s.outcome) {
       outcomeCount++;
@@ -50,6 +70,21 @@ function computeMetrics(modelId: string, sessions: SessionState[]): ModelMetrics
       totalReworks += s.outcome.reworks;
       if (s.outcome.testsPassing) testPassCount++;
       if (s.outcome.userFeedback === 'positive') positiveCount++;
+      if (s.outcome.contextEfficiency != null) {
+        efficiencyCount++;
+        totalEfficiency += s.outcome.contextEfficiency;
+      }
+    }
+    if (s.tokenUsage) {
+      tokenCount++;
+      totalInput += s.tokenUsage.inputTokens;
+      totalOutput += s.tokenUsage.outputTokens;
+    }
+    if (s.fingerprint) {
+      fpCount++;
+      for (const key of Object.keys(fpSums) as (keyof ModelFingerprint)[]) {
+        fpSums[key] += s.fingerprint[key];
+      }
     }
     const domain = s.taskClassification?.domain ?? 'unknown';
     taskTypes[domain] = (taskTypes[domain] ?? 0) + 1;
@@ -68,16 +103,39 @@ function computeMetrics(modelId: string, sessions: SessionState[]): ModelMetrics
     testPassRate: Math.round((testPassCount / count) * 100) / 100,
     positiveRate: Math.round((positiveCount / count) * 100) / 100,
     taskTypes,
+    // Extended metrics
+    avgInputTokens: tokenCount > 0 ? Math.round(totalInput / tokenCount) : undefined,
+    avgOutputTokens: tokenCount > 0 ? Math.round(totalOutput / tokenCount) : undefined,
+    avgContextEfficiency: efficiencyCount > 0
+      ? Math.round((totalEfficiency / efficiencyCount) * 100) / 100
+      : undefined,
+    avgFingerprint: fpCount > 0
+      ? {
+          avgSentenceLength: Math.round((fpSums.avgSentenceLength / fpCount) * 100) / 100,
+          sentenceLengthVariance: Math.round((fpSums.sentenceLengthVariance / fpCount) * 100) / 100,
+          typeTokenRatio: Math.round((fpSums.typeTokenRatio / fpCount) * 1000) / 1000,
+          avgParagraphLength: Math.round((fpSums.avgParagraphLength / fpCount) * 100) / 100,
+          passiveVoiceRatio: Math.round((fpSums.passiveVoiceRatio / fpCount) * 1000) / 1000,
+          fillerDensity: Math.round((fpSums.fillerDensity / fpCount) * 100) / 100,
+          questionFrequency: Math.round((fpSums.questionFrequency / fpCount) * 100) / 100,
+        }
+      : undefined,
   };
 }
 
 function scoreModel(m: ModelMetrics): number {
-  return (
-    m.avgComplianceScore * 0.4 +
+  const base =
+    m.avgComplianceScore * 0.35 +
     m.testPassRate * 100 * 0.3 +
-    (1 - Math.min(m.avgReverts, 5) / 5) * 100 * 0.2 +
-    m.positiveRate * 100 * 0.1
-  );
+    (1 - Math.min(m.avgReverts, 5) / 5) * 100 * 0.15 +
+    m.positiveRate * 100 * 0.1;
+
+  // Context efficiency: 10% weight (neutral 50 if no data)
+  const efficiency = m.avgContextEfficiency != null
+    ? Math.min(m.avgContextEfficiency * 10, 100)
+    : 50;
+
+  return base + efficiency * 0.1;
 }
 
 // ---------------------------------------------------------------------------

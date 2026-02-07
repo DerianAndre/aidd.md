@@ -13,6 +13,7 @@ import type {
 } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { StorageProvider } from '../../storage/index.js';
+import { hookBus } from '../hooks.js';
 import { detectPatterns, computeFingerprint, computeAuditScore } from './detector.js';
 
 // ---------------------------------------------------------------------------
@@ -268,6 +269,75 @@ export function createPatternKillerModule(storage: StorageProvider): AiddModule 
             reason,
           });
         },
+      });
+
+      // ---- Auto-hooks (zero AI token cost, server-side) ----
+
+      // 6.1: Auto-detect patterns in observation narratives
+      hookBus.register('pattern-auto-detect', async (event) => {
+        if (event.type !== 'observation_saved') return;
+
+        const backend = await storage.getBackend();
+        const obs = await backend.getObservation(event.observationId);
+        if (!obs?.narrative || obs.narrative.length < 50) return;
+
+        const session = await backend.getSession(event.sessionId);
+        if (!session) return;
+
+        const modelId = session.aiProvider.modelId;
+        const patterns = await backend.listBannedPatterns({ active: true, modelScope: modelId });
+        const detections = detectPatterns(obs.narrative, patterns);
+
+        for (const d of detections) {
+          await backend.recordPatternDetection({
+            sessionId: event.sessionId,
+            modelId,
+            patternId: d.patternId,
+            matchedText: d.matchedText,
+            context: d.context,
+            source: 'auto',
+            createdAt: now(),
+          });
+        }
+      });
+
+      // 6.4: Auto-generate evolution candidates for model-specific pattern bans
+      hookBus.register('pattern-model-profile', async (event) => {
+        if (event.type !== 'session_ended') return;
+
+        const backend = await storage.getBackend();
+        const session = await backend.getSession(event.sessionId);
+        if (!session) return;
+
+        const modelId = session.aiProvider.modelId;
+        const stats = await backend.getPatternStats({ modelId });
+
+        for (const stat of stats.topPatterns) {
+          if (stat.count >= 5 && stat.uniqueSessions >= 3) {
+            const existing = await backend.listEvolutionCandidates({
+              type: 'model_pattern_ban',
+              modelScope: modelId,
+            });
+            const alreadyTracked = existing.some((c) => c.title.includes(stat.pattern));
+            if (!alreadyTracked) {
+              await backend.saveEvolutionCandidate({
+                id: generateId(),
+                type: 'model_pattern_ban',
+                title: `Ban "${stat.pattern}" for ${modelId}`,
+                description: `Detected ${stat.count} times across ${stat.uniqueSessions} sessions`,
+                confidence: Math.min(100, stat.count * 10),
+                sessionCount: stat.uniqueSessions,
+                evidence: [],
+                discoveryTokensTotal: 0,
+                suggestedAction: `Add "${stat.pattern}" to banned patterns for ${modelId}`,
+                modelScope: modelId,
+                modelEvidence: { [modelId]: stat.uniqueSessions },
+                createdAt: now(),
+                updatedAt: now(),
+              });
+            }
+          }
+        }
       });
     },
   };
