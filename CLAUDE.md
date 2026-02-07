@@ -26,7 +26,8 @@ If the check fails, follow the remediation hint in the output.
 
 This is the **aidd.md** repository — the open standard for AI-Driven Development. It contains:
 
-- **AGENTS.md** — Single Source of Truth (SSOT) for agent roles and coordination
+- **AGENTS.md** — Thin redirect to content/agents/ (Gemini compatibility)
+- **content/agents/** — Agent definitions (routing.md + per-agent files)
 - **content/rules/** — Domain-specific rules (global, orchestrator, frontend, backend, etc.)
 - **content/skills/** — Specialized agent capabilities with SKILL.md + validation scripts
 - **content/workflows/** — Step-by-step guides for complex multi-agent tasks
@@ -35,12 +36,13 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 - **content/templates/** — Task routing and decision templates
 - **packages/** — Shared libraries and CLI
 - **mcps/** — MCP server packages (Core, Memory, Tools + Engine)
+- **.aidd/** — This repo's project state (uses content/ via config)
 
 ---
 
 ## SSOT
 
-`AGENTS.md` is the canonical source. If there is conflict between AGENTS.md and other files, AGENTS.md wins.
+`content/agents/routing.md` is the canonical agent hierarchy. Root `AGENTS.md` is a thin redirect for Gemini compatibility. If there is conflict between agent definitions and other files, agents win.
 
 ---
 
@@ -74,13 +76,15 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 
 ## Rules
 
-1. Follow `AGENTS.md` as SSOT for agent roles
+1. Follow `content/agents/routing.md` as SSOT for agent roles
 2. Load domain-specific rules from `content/rules/` as needed
 3. Use skills from `content/skills/[agent]/SKILL.md` for specialized tasks
 4. Follow workflows from `content/workflows/` for multi-step procedures
 5. ES modules only (`import`/`export`), never `require`
 6. TypeScript strict mode, no `any` without documented exception
 7. Evidence-first: logic/data/principles, never opinions
+
+**Note:** This repo's `.aidd/config.json` points to `../content/*` because `content/` at root IS the framework source that gets bundled in npm packages. Adopter projects copy `content/` into their `.aidd/content/` directory.
 
 ---
 

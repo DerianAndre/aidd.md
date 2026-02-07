@@ -38,12 +38,26 @@
 ## Directory Structure
 
 ```
-.aidd/                          # Project state directory
+.aidd/                          # Project root directory
 ├── config.json                 # Configuration (committed)
 ├── .gitignore                  # Controls what's shared vs private
 ├── data.db                     # SQLite database (gitignored)
 ├── data.db-wal                 # WAL journal (gitignored)
 ├── data.db-shm                 # Shared memory (gitignored)
+├── content/                    # Project AIDD content
+│   ├── agents/                 # Agent definitions (index.md + per-agent)
+│   ├── rules/                  # Domain-specific rules
+│   ├── skills/                 # Agent capabilities (SKILL.md)
+│   ├── workflows/              # Multi-step procedures
+│   ├── specs/                  # Specifications
+│   ├── knowledge/              # Technology Knowledge Base
+│   └── templates/              # Task templates
+├── memory/                     # Permanent memory (committed)
+│   ├── decisions.json          # Architectural decisions
+│   ├── mistakes.json           # Mistakes + fixes
+│   ├── conventions.json        # Project conventions
+│   ├── insights.md             # Auto-learning dashboard
+│   └── state-dump.sql          # Diffable state export
 ├── sessions/
 │   ├── active/                 # In-progress sessions (gitignored)
 │   └── completed/              # Completed session summaries
@@ -112,7 +126,7 @@ The config file lives at `.aidd/config.json`. All fields are optional — missin
     // Custom content paths — all optional, relative to project root
     "paths": {
       "content": "content",               // Base content directory (default: "content")
-      "agents": "AGENTS.md",              // AGENTS.md location (default: "AGENTS.md")
+      "agents": "content/agents",          // Agents directory (default: "content/agents")
       "rules": "content/rules",           // Rules directory (default: "content/rules")
       "skills": "content/skills",         // Skills directory (default: "content/skills")
       "workflows": "content/workflows",   // Workflows directory (default: "content/workflows")
@@ -142,14 +156,14 @@ The config file lives at `.aidd/config.json`. All fields are optional — missin
 
 ### Content paths
 
-All paths in `content.paths` are relative to the project root (or AIDD root if using an `ai/` subfolder). Every field is optional — missing fields use defaults.
+All paths in `content.paths` are relative to the `.aidd/` root. Every field is optional — missing fields use defaults.
 
 **Priority**: Granular paths (e.g. `paths.rules`) take priority over the base `paths.content` directory. This means you can move the entire content directory *and* override individual subdirectories independently.
 
 | Field       | Default               | Description                                                                                         |
 | ----------- | --------------------- | --------------------------------------------------------------------------------------------------- |
 | `content`   | `"content"`           | Base content directory. All subdirectories resolve relative to this unless overridden individually. |
-| `agents`    | `"AGENTS.md"`         | Path to the AGENTS.md file.                                                                         |
+| `agents`    | `"content/agents"`    | Agents directory.                                                                         |
 | `rules`     | `"content/rules"`     | Rules directory.                                                                                    |
 | `skills`    | `"content/skills"`    | Skills directory.                                                                                   |
 | `workflows` | `"content/workflows"` | Workflows directory.                                                                                |
@@ -158,20 +172,6 @@ All paths in `content.paths` are relative to the project root (or AIDD root if u
 | `templates` | `"content/templates"` | Templates directory.                                                                                |
 
 **Examples:**
-
-Move all content under `ai/`:
-
-```jsonc
-{
-  "content": {
-    "overrideMode": "merge",
-    "paths": {
-      "content": "ai/content",
-      "agents": "ai/AGENTS.md"
-    }
-  }
-}
-```
 
 Keep defaults but override one directory:
 
@@ -328,11 +328,11 @@ The MCP engine auto-generates these files for git visibility:
 
 | File                       | Purpose                                  | Update Frequency                      |
 | -------------------------- | ---------------------------------------- | ------------------------------------- |
-| `ai/memory/insights.md`    | Auto-learning dashboard (~150 tokens)    | Every 5th session                     |
-| `ai/memory/state-dump.sql` | SQL INSERT statements for diffable state | On session end                        |
-| `ai/memory/*.json`         | Permanent memory export                  | On explicit `aidd_memory_export` call |
+| `.aidd/memory/insights.md`    | Auto-learning dashboard (~150 tokens)    | Every 5th session                     |
+| `.aidd/memory/state-dump.sql` | SQL INSERT statements for diffable state | On session end                        |
+| `.aidd/memory/*.json`         | Permanent memory export                  | On explicit `aidd_memory_export` call |
 
-These files live in `ai/memory/` (not `.aidd/`) so they're visible in git diffs and provide transparency into what the MCP has learned.
+These files live in `.aidd/memory/` and are visible in git diffs, providing transparency into what the MCP has learned.
 
 ---
 
@@ -355,7 +355,8 @@ aidd_scaffold --preset full    # Creates .aidd/ + config.json + framework files
 ### Create `.aidd/` manually
 
 ```bash
-mkdir -p .aidd/sessions/active .aidd/sessions/completed \
+mkdir -p .aidd/content/agents .aidd/content/rules \
+  .aidd/memory .aidd/sessions/active .aidd/sessions/completed \
   .aidd/branches/archive .aidd/drafts .aidd/analytics \
   .aidd/evolution/snapshots .aidd/cache
 ```

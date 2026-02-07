@@ -15,12 +15,12 @@
 
 ## What is AIDD?
 
-**AIDD** is an open standard for structuring AI-assisted development. It provides a modular, composable framework of agent roles, rules, skills, workflows, templates, and specifications — all under the `content/` directory — that any AI system can consume, enabling consistent, evidence-based development across IDEs and providers.
+**AIDD** is an open standard for structuring AI-assisted development. It provides a modular, composable framework of agent roles, rules, skills, workflows, templates, and specifications — all under `.aidd/content/` in your project — that any AI system can consume, enabling consistent, evidence-based development across IDEs and providers.
 
 **Core principles**: Evidence-First engineering, First Principles thinking, BLUF-6 communication, Zero Trust verification, Lean Antifragility.
 
 **Key benefits**:
-- Multi-IDE compatible (Antigravity, Cursor, Claude Code, Warp)
+- Multi-IDE compatible (Claude Code, Cursor, VS Code, Gemini, Windsurf)
 - AI-agnostic (works with Claude, Gemini, ChatGPT, local models)
 - Modular and composable (load only what you need)
 - Evidence-based (every decision traceable to data or principles)
@@ -54,8 +54,10 @@ npx @aidd.md/cli init    # copies framework, sets up .aidd/, integrates IDEs
 
 ```bash
 # Copy the AIDD framework into your project
-cp aidd.md/AGENTS.md your-project/AGENTS.md
-cp -r aidd.md/content/ your-project/content/
+mkdir -p your-project/.aidd/content
+cp -r aidd.md/content/ your-project/.aidd/content/
+# Create thin AGENTS.md redirect at root (for Gemini compat)
+echo "See [.aidd/content/agents/](.aidd/content/agents/) for agent definitions." > your-project/AGENTS.md
 ```
 
 ### Activate the agent system
@@ -63,13 +65,13 @@ cp -r aidd.md/content/ your-project/content/
 Use this prompt with any AI:
 
 ```
-Read AGENTS.md and assume the most appropriate role for my task.
+Read .aidd/content/agents/routing.md and assume the most appropriate role for my task.
 
 IMPERATIVES:
-1. Respect ALL rules in content/rules/global.md
+1. Respect ALL rules in .aidd/content/rules/global.md
 2. Load domain-specific rules as needed
-3. Use skills from content/skills/ directories
-4. Follow workflows in content/workflows/ for multi-step tasks
+3. Use skills from .aidd/content/skills/ directories
+4. Follow workflows in .aidd/content/workflows/ for multi-step tasks
 
 Confirm your role and loaded rules before proceeding.
 ```
@@ -214,7 +216,8 @@ aidd.md/
 │   ├── claude/
 │   ├── cursor/
 │   ├── gemini/
-│   └── warp/
+│   ├── vscode/
+│   └── windsurf/
 │
 ├── examples/                    # Project setup examples
 │   ├── minimal/
@@ -230,12 +233,13 @@ aidd.md/
 
 `pnpm setup` auto-detects and configures all supported IDEs:
 
-| IDE | Detection | Config | How It Works |
-|-----|-----------|--------|--------------|
-| Claude Code | `~/.claude/` exists | `~/.claude/mcp.json` | MCP engine auto-starts on session open |
-| Cursor | Always available | `.cursor/mcp.json` | MCP engine auto-starts on project open |
-| VS Code | `.vscode/` or `code` CLI | `.vscode/mcp.json` | MCP engine auto-starts via Copilot |
-| Gemini | `AGENTS.md` exists | Auto-detected | Reads AGENTS.md directly (no MCP needed) |
+| IDE | Detection | Config Files | How It Works |
+|-----|-----------|-------------|--------------|
+| Claude Code | `~/.claude/` exists | `~/.claude/mcp.json` + `.mcp.json` | MCP engine via global + project-scoped config |
+| Cursor | Always available | `.cursor/mcp.json` + `.cursor/rules/aidd.mdc` | MCP engine + rules pointer |
+| VS Code | `.vscode/` or `code` CLI | `.vscode/mcp.json` + `.github/copilot-instructions.md` | MCP engine via Copilot |
+| Gemini | `AGENTS.md` exists | `.gemini/settings.json` | Reads AGENTS.md directly (no MCP needed) |
+| Windsurf | `~/.codeium/windsurf/` exists | `~/.codeium/windsurf/mcp_config.json` + `.windsurfrules` | MCP engine + rules pointer |
 
 Run `pnpm mcp:doctor` to verify IDE integration status.
 
