@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
+import { detectProject } from '@aidd.md/mcp-shared';
 import { loadHubData, saveHubData, type ProjectEntry } from '../lib/hub-store.js';
 
 /**
@@ -41,7 +42,7 @@ export function addProject(projectPath: string): void {
 
   // Detect project
   const name = detectProjectName(absPath);
-  const detected = hasAiddMarkers(absPath);
+  const detected = detectProject(absPath).detected;
 
   const entry: ProjectEntry = { name, path: absPath, detected };
   data.projects.push(entry);
@@ -96,11 +97,3 @@ function detectProjectName(dir: string): string {
   return basename(dir);
 }
 
-function hasAiddMarkers(dir: string): boolean {
-  return (
-    existsSync(resolve(dir, 'AGENTS.md')) ||
-    existsSync(resolve(dir, 'ai', 'AGENTS.md')) ||
-    existsSync(resolve(dir, 'content', 'rules')) ||
-    existsSync(resolve(dir, 'ai', 'content', 'rules'))
-  );
-}
