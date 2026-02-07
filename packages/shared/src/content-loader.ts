@@ -102,7 +102,7 @@ export class ContentLoader {
       rules: mergeEntries(bundled.rules, project.rules),
       skills: mergeEntries(bundled.skills, project.skills),
       workflows: mergeEntries(bundled.workflows, project.workflows),
-      specs: bundled.specs, // Specs always come from bundled
+      specs: mergeEntries(bundled.specs, project.specs), // Allow project specs if bundled is empty
       knowledge: mergeEntries(bundled.knowledge, project.knowledge),
       templates: mergeEntries(bundled.templates, project.templates),
     };

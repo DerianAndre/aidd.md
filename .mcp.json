@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "aidd-engine": {
+      "args": [
+        "C:\\Archivos de proyecto\\GitHub\\DerianAndre\\aidd.md\\mcps\\mcp-aidd-engine\\dist\\index.js"
+      ],
+      "command": "node"
+    }
+  }
+}
