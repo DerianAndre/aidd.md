@@ -1,10 +1,10 @@
-# 🎨 Frontend Development Rules
+# Frontend Development Rules
 
 > **Activation:** Projects containing React, Vue, Angular, Tailwind, or frontend patterns
 
 ---
 
-## ♿ Accessibility: WCAG 2.1 Level AA (Mandatory)
+## Accessibility: WCAG 2.1 Level AA (Mandatory)
 
 ### Semantic HTML
 
@@ -60,7 +60,7 @@ button:focus-visible {
 
 ---
 
-## 🎭 Component Design Patterns
+## Component Design Patterns
 
 ### Composition > Configuration
 
@@ -108,7 +108,7 @@ export const Button: React.FC<ButtonProps> = ({ ... }) => { ... };
 
 ---
 
-## 🎨 Styling: Tailwind CSS Best Practices
+## Styling: Tailwind CSS Best Practices
 
 ### Utility-First (Preferred)
 
@@ -161,7 +161,7 @@ const cardStyles = {
 
 ---
 
-## ⚡ Performance Optimization
+## Performance Optimization
 
 ### Code Splitting
 
@@ -211,7 +211,7 @@ const handleClick = useCallback(() => {
 
 ---
 
-## 🧪 Testing Standards
+## Testing Standards
 
 ### Testing Library Philosophy
 
@@ -268,7 +268,7 @@ describe("Button", () => {
 
 ---
 
-## 📦 State Management
+## State Management
 
 ### Local State (useState)
 
@@ -315,7 +315,7 @@ export const useCartStore = create<CartStore>((set) => ({
 
 ---
 
-## 🚨 Common Anti-Patterns to Avoid
+## Common Anti-Patterns to Avoid
 
 ### 1. Prop Drilling
 
@@ -358,3 +358,73 @@ const onClick = useCallback(() => handleClick(id), [id]);
 ---
 
 **Enforcement:** Use `/design` workflow for accessibility audits and `/test` for component testing.
+
+---
+
+## Template: Frontend Development
+
+> Absorbed from `templates/frontend.md`
+
+### Multi-Perspective Analysis
+
+Think from ALL 4 perspectives simultaneously when building UI:
+
+| Role | Focus |
+|------|-------|
+| **Frontend Engineer** | Structure, data flow, state management, TypeScript types |
+| **UX/UI Lead** | Design tokens, spacing, colors (OKLCH), visual hierarchy, consistency |
+| **Copywriter** | Labels, error messages, placeholders, microcopy, i18n readiness |
+| **Motion Designer** | Transitions, loading animations, skeleton states, micro-interactions |
+
+### Component Architecture — Atomic Design
+
+Structure components following the atomic design hierarchy:
+
+```
+atoms → molecules → organisms → templates → pages
+```
+
+- One component per file
+- Props interface with TypeScript strict types
+- Export descriptor for handle topology (if applicable)
+
+### Mandatory States Checklist
+
+Every interactive component MUST implement ALL of these states:
+
+- [ ] **Default** — Normal resting state
+- [ ] **Hover** — Visual feedback on pointer hover
+- [ ] **Focus** — Visible indicator (never removed, high-contrast)
+- [ ] **Active/Pressed** — Feedback during interaction
+- [ ] **Disabled** — Visually distinct + `aria-disabled`
+- [ ] **Loading** — Skeleton or spinner + `aria-busy`
+- [ ] **Empty** — Helpful message + action CTA
+- [ ] **Error** — Descriptive message + recovery action
+- [ ] **Success** — Confirmation + next step
+
+### Responsive Design Checklist
+
+- Mobile-first approach (always start mobile, scale up)
+- Test at breakpoints: **320px**, **768px**, **1024px**, **1440px**
+- Fluid typography and spacing where appropriate
+- No horizontal scroll at any breakpoint
+- Touch targets >= 44x44px on mobile
+
+### i18n Readiness
+
+- All user-facing strings in locale files (i18next)
+- Support interpolation for dynamic values
+- Handle plural forms
+- RTL consideration for future locales
+- No hardcoded strings in components
+
+### Quality Gates
+
+- [ ] All states implemented (default, hover, focus, active, disabled, loading, empty, error, success)
+- [ ] WCAG 2.1 AA compliant
+- [ ] Responsive at all breakpoints (320/768/1024/1440)
+- [ ] No hardcoded strings (all in i18n)
+- [ ] TypeScript strict (no `any`)
+- [ ] Design tokens used (no hardcoded colors/spacing)
+- [ ] Keyboard navigable
+- [ ] Screen reader tested

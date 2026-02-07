@@ -1,10 +1,10 @@
-# 📚 Technology Knowledge Base (TKB)
+# Technology Knowledge Base (TKB)
 
 > **Purpose:** Centralized repository of technology metrics, patterns, and best practices for evidence-based decision making.
 
 ---
 
-## 🎯 Philosophy
+## Philosophy
 
 The TKB is **descriptive, not prescriptive**. It stores quantified data, benchmarks, and trade-offs to enable the **Master Orchestrator** to make context-aware technology recommendations based on:
 
@@ -18,7 +18,7 @@ The TKB is **descriptive, not prescriptive**. It stores quantified data, benchma
 
 ---
 
-## 🗂️ Structure
+## Structure
 
 ```
 knowledge/
@@ -53,7 +53,7 @@ knowledge/
 
 ---
 
-## 📝 Entry Schema
+## Entry Schema
 
 Every `.md` file follows this structure:
 
@@ -77,7 +77,7 @@ maturity: stable | emerging | experimental | deprecated
 
 ---
 
-## 🔍 Usage (For the Orchestrator)
+## Usage (For the Orchestrator)
 
 ### Query Pattern
 
@@ -107,7 +107,7 @@ const results = await queryTKB(query);
 
 ---
 
-## ✍️ Contributing to the TKB
+## Contributing to the TKB
 
 ### Adding a New Entry
 
@@ -125,7 +125,7 @@ const results = await queryTKB(query);
 
 ---
 
-## 🔄 Maintenance
+## Maintenance
 
 - **Quarterly Review:** Check `last_updated` dates
 - **Deprecation Policy:** Mark technologies with breaking changes or sunset announcements
@@ -133,7 +133,7 @@ const results = await queryTKB(query);
 
 ---
 
-## 🎯 Example: Runtime Selection
+## Example: Runtime Selection
 
 **User Request:** "I need a backend for a high-traffic API"
 
@@ -164,7 +164,7 @@ const results = await queryTKB(query);
 
 ---
 
-## 📊 Current Coverage
+## Current Coverage
 
 Total Entries: **105** (65 initial + 40 expansion)
 
@@ -182,7 +182,7 @@ Total Entries: **105** (65 initial + 40 expansion)
 
 ---
 
-## 📚 Related Documentation
+## Related Documentation
 
 - [`rules/orchestrator.md`](../rules/orchestrator.md) - How the Orchestrator uses TKB
 - [`workflows/technology-selection.md`](../workflows/technology-selection.md) - Step-by-step selection workflow

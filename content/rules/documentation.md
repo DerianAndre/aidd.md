@@ -140,7 +140,67 @@ Plans track implementation work from inception to completion.
 
 ---
 
-**Cross-references:** [specs/asdd-lifecycle.md](../specs/asdd-lifecycle.md) (PLAN and COMMIT_SPEC phases), [rules/global.md](global.md) (evidence-first, communication standards)
+**Cross-references:** [specs/aidd-lifecycle.md](../specs/aidd-lifecycle.md) (PLAN and SPEC phases), [rules/global.md](global.md) (evidence-first, communication standards)
+
+---
+
+## Template: Documentation
+
+> Absorbed from `templates/documentation.md`
+
+### Documentation Types
+
+| Type | Purpose | Audience |
+|------|---------|----------|
+| **Guide** | Step-by-step, task-oriented ("How to set up X") | Developers |
+| **Reference** | Complete API/configuration docs, exhaustive | Developers |
+| **Spec** | Formal specification, precise, unambiguous | Architects |
+| **ADR** | Architecture Decision Record | Team |
+| **Changelog** | Version changes log | All |
+| **README** | Project overview, quick start | New developers |
+
+### Writing Process
+
+**Step 1 -- Classify Document Type**
+
+Determine which type (Guide, Reference, Spec, ADR, Changelog, README) before writing.
+
+**Step 2 -- Apply Normalized Pattern**
+
+Title + tagline + metadata + ToC + numbered sections. Last Updated MUST be current date.
+
+**Step 3 -- Write Content**
+
+- **Accurate**: verify against actual code/behavior
+- **Concise**: remove words that do not add meaning
+- **Example-rich**: show, do not just tell
+- **Scannable**: headers, lists, tables, code blocks
+
+**Step 4 -- Verify**
+
+- Code examples compile/run
+- Links resolve (no broken references)
+- No stale information
+- Cross-references accurate
+
+### Documentation Quality Gates
+
+- [ ] Normalized pattern applied
+- [ ] Code examples verified (compile/run)
+- [ ] No broken links
+- [ ] Last Updated is current date
+- [ ] ToC matches actual sections
+- [ ] Target audience appropriate language level
+
+### Documentation Anti-Patterns (Template)
+
+- Undated documents
+- Missing table of contents
+- Code examples that do not compile
+- Mixing guide and reference styles
+- Documenting implementation instead of behavior
+- "TODO: write this later" placeholders left in
+- Stale docs that no longer match code
 
 **Version:** 1.0.0
 **Last Updated:** 2026-02-04

@@ -2,13 +2,20 @@
 description: 🔍 Technology selection workflow using the Technology Knowledge Base
 ---
 
-# 🔍 Workflow: Technology Selection (Evidence-Based)
+# Workflow: Technology Selection (Evidence-Based)
 
 > **Purpose:** Structured process for the Master Orchestrator to query the TKB and recommend optimal technologies based on project constraints.
 
+## Invocation
+
+| Type | Items |
+|------|-------|
+| **Skills** | brainstorming |
+| **MCPs** | WebSearch, Context7 |
+
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 - [ ] User requirements clarified (performance, budget, team skills, timeline)
 - [ ] Technology Knowledge Base populated (`knowledge/`)
@@ -16,7 +23,9 @@ description: 🔍 Technology selection workflow using the Technology Knowledge B
 
 ---
 
-## 🎯 Step 1: Requirements Gathering
+## Step 1: Requirements Gathering
+
+**Indicator**: `[aidd.md] Workflow - technology-selection (Requirements Gathering)`
 
 **Extract Technical Constraints:**
 
@@ -40,7 +49,9 @@ To recommend the best technology, I need to understand:
 
 ---
 
-## 🔧 Step 2: TKB Query
+## Step 2: TKB Query
+
+**Indicator**: `[aidd.md] Workflow - technology-selection (TKB Query)`
 
 **Identify Relevant Categories:**
 
@@ -64,7 +75,9 @@ const relevantEntries = await query({
 
 ---
 
-## 🎯 Step 3: Constraint Filtering
+## Step 3: Constraint Filtering
+
+**Indicator**: `[aidd.md] Workflow - technology-selection (Constraint Filtering)`
 
 **Apply Hard Constraints:**
 
@@ -85,7 +98,9 @@ Remove options that violate non-negotiable requirements:
 
 ---
 
-## 📊 Step 4: Trade-off Analysis
+## Step 4: Trade-off Analysis
+
+**Indicator**: `[aidd.md] Workflow - technology-selection (Trade-off Analysis)`
 
 **Generate Comparison Matrix:**
 
@@ -119,7 +134,9 @@ Present top 2-3 options side-by-side:
 
 ---
 
-## 🗣️ Step 5: Evidence-Based Recommendation
+## Step 5: Evidence-Based Recommendation
+
+**Indicator**: `[aidd.md] Workflow - technology-selection (Evidence-Based Recommendation)`
 
 **Present to User:**
 
@@ -136,7 +153,9 @@ Present top 2-3 options side-by-side:
 
 ---
 
-## 📝 Step 6: Capture Decision
+## Step 6: Capture Decision
+
+**Indicator**: `[aidd.md] Workflow - technology-selection (Capture Decision)`
 
 **Record User Choice:**
 
@@ -154,7 +173,7 @@ This context informs future architecture, workflow, and skill selections.
 
 ---
 
-## 🚨 Edge Cases
+## Edge Cases
 
 ### Insufficient TKB Data
 
@@ -175,7 +194,7 @@ This context informs future architecture, workflow, and skill selections.
 
 ---
 
-## 📚 Skills & Tools
+## Skills & Tools
 
 - **Skill:** `knowledge-architect` - For TKB curation and updates
 - **Skill:** `system-architect` - For architecture-level stack decisions

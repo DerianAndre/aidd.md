@@ -125,7 +125,7 @@ When brainstorming is complete, produce a structured summary:
 - **Recommended Approach**: [1 paragraph]
 ```
 
-This artifact feeds directly into the Research phase (`templates/research.md`) or the Plan phase (`specs/asdd-lifecycle.md` Phase 3).
+This artifact feeds directly into the Research phase (`templates/research.md`) or the Plan phase (`specs/aidd-lifecycle.md` Phase 3).
 
 ---
 
@@ -156,10 +156,10 @@ This artifact feeds directly into the Research phase (`templates/research.md`) o
 ## Cross-References
 
 - **Next phase (Research)**: `templates/research.md`
-- **Orchestration pipeline**: `workflows/orchestrators/architect-mode.md`
+- **Orchestration pipeline**: `workflows/orchestrator.md`
 - **Workflow**: `workflows/product.md`
-- **Decision tree**: `rules/decision-tree.md`
+- **Decision tree**: `rules/orchestrator.md`
 - **System Architect skill**: `skills/system-architect/SKILL.md`
 - **BLUF-6 output format**: `specs/bluf-6.md`
 - **Technology selection workflow**: `workflows/technology-selection.md`
-- **ASDD lifecycle**: `specs/asdd-lifecycle.md`
+- **AIDD lifecycle**: `specs/aidd-lifecycle.md`

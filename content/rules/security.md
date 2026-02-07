@@ -1,10 +1,10 @@
-# 🛡️ Security Standards & Practices
+# Security Standards & Practices
 
 > **Activation:** All code reviews, deployment workflows, and security audits
 
 ---
 
-## ⚠️ OWASP Top 10 (2025) Compliance
+## OWASP Top 10 (2025) Compliance
 
 ### A01: Broken Access Control
 
@@ -334,7 +334,7 @@ app.get("/fetch", async (req, res) => {
 
 ---
 
-## 🔐 Secret Management
+## Secret Management
 
 ### Hardcoded Secret Detection (Regex Patterns)
 
@@ -366,7 +366,7 @@ if (!apiKey) throw new Error("STRIPE_API_KEY not set");
 
 ---
 
-## 🧪 Security Testing
+## Security Testing
 
 ### Automated Scans (CI/CD Integration)
 
@@ -399,7 +399,7 @@ jobs:
 
 ---
 
-## 📋 Security Checklist (Pre-deployment)
+## Security Checklist (Pre-deployment)
 
 - [ ] All secrets in environment variables (not hardcoded)
 - [ ] HTTPS enforced (redirect HTTP → HTTPS)

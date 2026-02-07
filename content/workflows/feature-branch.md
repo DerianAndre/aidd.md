@@ -2,13 +2,21 @@
 description: 🚀 Complete flow for feature branch creation, development, and Pull Request
 ---
 
-# 🚀 Workflow: Feature Branch (Complete Git Workflow)
+# Workflow: Feature Branch (Complete Git Workflow)
 
 > **Purpose:** Step-by-step guide to create features using Git Flow and best practices
 
+## Invocation
+
+| Type | Items |
+|------|-------|
+| **Skills** | finishing-a-development-branch, requesting-code-review |
+
 ---
 
-## 🌳 Step 1: Create Feature Branch
+## Step 1: Create Feature Branch
+
+**Indicator**: `[aidd.md] Workflow - feature-branch (Create Feature Branch)`
 
 ```bash
 # Update main
@@ -32,7 +40,9 @@ git checkout -b feature/123-user-auth
 
 ---
 
-## 💻 Step 2: Development
+## Step 2: Development
+
+**Indicator**: `[aidd.md] Workflow - feature-branch (Development)`
 
 ### Atomic Commits
 
@@ -74,7 +84,9 @@ git commit -m "test(auth): add login flow tests"
 
 ---
 
-## 🧪 Step 3: Testing Local
+## Step 3: Testing Local
+
+**Indicator**: `[aidd.md] Workflow - feature-branch (Testing Local)`
 
 ```bash
 # Run tests
@@ -105,7 +117,9 @@ npm run test:coverage
 
 ---
 
-## 🔄 Step 4: Sync with Main (Rebase)
+## Step 4: Sync with Main (Rebase)
+
+**Indicator**: `[aidd.md] Workflow - feature-branch (Sync with Main)`
 
 ```bash
 # Fetch latest changes
@@ -131,7 +145,9 @@ git push origin feature/add-user-authentication --force-with-lease
 
 ---
 
-## 📤 Step 5: Push to Remote
+## Step 5: Push to Remote
+
+**Indicator**: `[aidd.md] Workflow - feature-branch (Push to Remote)`
 
 ```bash
 # First time
@@ -143,7 +159,9 @@ git push
 
 ---
 
-## 🔍 Step 6: Create Pull Request
+## Step 6: Create Pull Request
+
+**Indicator**: `[aidd.md] Workflow - feature-branch (Create Pull Request)`
 
 ### PR Title (follow Conventional Commits)
 
@@ -154,34 +172,34 @@ feat(auth): implement JWT authentication with refresh tokens
 ### PR Description Template
 
 ```markdown
-## 📝 Description
+## Description
 
 Implements JWT-based authentication system with access and refresh tokens.
 
-## 🎯 Related Issue
+## Related Issue
 
 Closes #123
 
-## 🔧 Changes Made
+## Changes Made
 
 - Created `AuthService` with login/logout/refresh methods
 - Added JWT middleware for protected routes
 - Implemented token refresh mechanism
 - Added unit tests for AuthService
 
-## 🧪 Testing
+## Testing
 
 - [x] Unit tests added (coverage: 95%)
 - [x] Manual testing in dev environment
 - [x] Tested token expiration and refresh
 
-## 🛡️ Security
+## Security
 
 - [x] No hardcoded secrets
 - [x] Passwords hashed with bcrypt (cost: 12)
 - [x] JWTs use secure signing algorithm (HS256)
 
-## 📸 Screenshots (if applicable)
+## Screenshots (if applicable)
 
 [Add screenshots of UI changes]
 
@@ -196,7 +214,9 @@ Closes #123
 
 ---
 
-## 👀 Step 7: Code Review Process
+## Step 7: Code Review Process
+
+**Indicator**: `[aidd.md] Workflow - feature-branch (Code Review Process)`
 
 ### As Author
 
@@ -230,7 +250,9 @@ Closes #123
 
 ---
 
-## ✅ Step 8: Merge
+## Step 8: Merge
+
+**Indicator**: `[aidd.md] Workflow - feature-branch (Merge)`
 
 ### Pre-Merge Preparation
 
@@ -264,7 +286,9 @@ git rebase origin/main
 
 ---
 
-## 🗑️ Step 9: Cleanup
+## Step 9: Cleanup
+
+**Indicator**: `[aidd.md] Workflow - feature-branch (Cleanup)`
 
 ```bash
 # After merge, local cleanup
@@ -281,7 +305,7 @@ git push origin --delete feature/add-user-authentication
 
 ---
 
-## 📋 Quick Reference
+## Quick Reference
 
 ### Daily Commands
 
@@ -305,7 +329,7 @@ git checkout main && git pull && git branch -d feature/my-feature
 
 ---
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Conflicts during Rebase
 
@@ -343,7 +367,7 @@ git checkout -b feature/my-feature <commit-hash>
 
 ---
 
-## 📚 References
+## References
 
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Git Flow](https://nvie.com/posts/a-successful-git-branching-model/)

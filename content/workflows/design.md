@@ -2,13 +2,21 @@
 description: 🎨 WCAG and Tailwind audit. Ensures accessibility, pixel-perfect design and mobile-first approach. Commands /visual-audit, /pixel-perfect
 ---
 
-# 🎨 Workflow: Design (WCAG + Tailwind Audit)
+# Workflow: Design (WCAG + Tailwind Audit)
 
 > **Purpose:** Complete WCAG 2.1 AA accessibility and Tailwind CSS visual design audit
 
+## Invocation
+
+| Type | Items |
+|------|-------|
+| **Skills** | verification-before-completion |
+| **Specialized** | frontend-design |
+| **MCPs** | Context7, WebSearch |
+
 ---
 
-## 📋 Audit Scope
+## Audit Scope
 
 - **Accessibility:** WCAG 2.1 Level AA compliance
 - **Visual Design:** Tailwind CSS best practices, mobile-first
@@ -17,7 +25,9 @@ description: 🎨 WCAG and Tailwind audit. Ensures accessibility, pixel-perfect 
 
 ---
 
-## ♿ Step 1: WCAG 2.1 Accessibility Audit
+## Step 1: WCAG 2.1 Accessibility Audit
+
+**Indicator**: `[aidd.md] Workflow - design (WCAG 2.1 Accessibility Audit)`
 
 ### Automated Testing
 
@@ -113,7 +123,9 @@ pa11y http://localhost:3000 --standard WCAG2AA
 
 ---
 
-## 🎨 Step 2: Tailwind CSS Best Practices
+## Step 2: Tailwind CSS Best Practices
+
+**Indicator**: `[aidd.md] Workflow - design (Tailwind CSS Best Practices)`
 
 ### Utility-First Review
 
@@ -185,7 +197,9 @@ const Button = ({ children, ...props }) => (
 
 ---
 
-## 📱 Step 3: Responsive Design Audit
+## Step 3: Responsive Design Audit
+
+**Indicator**: `[aidd.md] Workflow - design (Responsive Design Audit)`
 
 ### Mobile-First Verification
 
@@ -216,7 +230,9 @@ const Button = ({ children, ...props }) => (
 
 ---
 
-## 🖼️ Step 4: Visual Design Review
+## Step 4: Visual Design Review
+
+**Indicator**: `[aidd.md] Workflow - design (Visual Design Review)`
 
 ### Typography
 
@@ -247,7 +263,9 @@ const Button = ({ children, ...props }) => (
 
 ---
 
-## ⚡ Step 5: Performance Audit
+## Step 5: Performance Audit
+
+**Indicator**: `[aidd.md] Workflow - design (Performance Audit)`
 
 ### Bundle Size
 
@@ -287,7 +305,9 @@ import Image from "next/image";
 
 ---
 
-## 🎯 Step 6: Pixel-Perfect Review
+## Step 6: Pixel-Perfect Review
+
+**Indicator**: `[aidd.md] Workflow - design (Pixel-Perfect Review)`
 
 ### Compare with Design Mockup
 
@@ -306,7 +326,9 @@ import Image from "next/image";
 
 ---
 
-## 📊 Step 7: Component Storybook Review
+## Step 7: Component Storybook Review
+
+**Indicator**: `[aidd.md] Workflow - design (Component Storybook Review)`
 
 **Verify all components have:**
 
@@ -328,7 +350,7 @@ npm run storybook
 
 ---
 
-## 🚨 Blocking Criteria (NO SHIP)
+## Blocking Criteria (NO SHIP)
 
 ❌ **CRITICAL - Block deployment:**
 
@@ -354,7 +376,7 @@ npm run storybook
 
 ---
 
-## 🤖 Automation (CI/CD)
+## Automation (CI/CD)
 
 ```yaml
 # .github/workflows/design-audit.yml
@@ -401,7 +423,7 @@ jobs:
 
 ---
 
-## 📚 Skills & References
+## Skills & References
 
 - **Skill:** `interface-artisan` - Component generation, WCAG audit
 - **Reference:** `skills/interface-artisan/references/accessibility-checklist.md`

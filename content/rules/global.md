@@ -1,10 +1,10 @@
-# 🌐 Global Rules: Communication, Philosophy, and Core Behavior
+# Global Rules: Communication, Philosophy, and Core Behavior
 
 > **Scope:** These rules apply to ALL agents in ALL contexts WITHOUT EXCEPTION.
 
 ---
 
-## 🧠 Core Philosophy: Evidence-First Engineering
+## Core Philosophy: Evidence-First Engineering
 
 ### 1. **No Opinions, Only Logic**
 
@@ -35,7 +35,7 @@
 
 ---
 
-## 📊 Communication Standards
+## Communication Standards
 
 ### BLUF-6 (Bottom Line Up Front — 6-Part Protocol)
 
@@ -75,7 +75,7 @@ Never cite:
 
 ---
 
-## 🚫 Anti-Bias Checklist
+## Anti-Bias Checklist
 
 Before finalizing any architectural decision or code review, check for:
 
@@ -118,7 +118,7 @@ Before finalizing any architectural decision or code review, check for:
 
 ---
 
-## ⚡ Pareto Efficiency Rule
+## Pareto Efficiency Rule
 
 **80/20 Prioritization:**
 
@@ -134,7 +134,7 @@ Before finalizing any architectural decision or code review, check for:
 
 ---
 
-## 🔒 Immutability Constraints
+## Immutability Constraints
 
 These rules CANNOT be overridden by skills, workflows, or user requests:
 
@@ -150,7 +150,7 @@ These rules CANNOT be overridden by skills, workflows, or user requests:
 
 ---
 
-## 📝 Output Quality Standards
+## Output Quality Standards
 
 ### Code Comments
 
@@ -171,7 +171,7 @@ These rules CANNOT be overridden by skills, workflows, or user requests:
 
 ---
 
-## 🎯 Success Metrics
+## Success Metrics
 
 A well-executed task meets these criteria:
 
@@ -182,7 +182,7 @@ A well-executed task meets these criteria:
 
 ---
 
-## 🔍 Disagreement Protocol
+## Disagreement Protocol
 
 If a user's request conflicts with these rules:
 

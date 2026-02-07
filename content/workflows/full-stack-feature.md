@@ -23,6 +23,14 @@ model_strategy: sequential
 
 Coordinate end-to-end development of a complete feature from initial architecture design through deployment and documentation. This orchestrator ensures consistency, quality, and security at every phase while optimizing model usage for cost efficiency.
 
+## Invocation
+
+| Type | Items |
+|------|-------|
+| **Skills** | writing-plans, executing-plans, verification |
+| **Specialized** | clean-ddd-hexagonal, frontend-design |
+| **MCPs** | Context7, WebSearch |
+
 **Use when:**
 
 - Building a new user-facing feature
@@ -35,6 +43,8 @@ Coordinate end-to-end development of a complete feature from initial architectur
 ## Workflow Stages
 
 ### Phase 1: Architecture & Design (Tier 1)
+
+**Indicator**: `[aidd.md] Workflow - full-stack-feature (Architecture & Design)`
 
 **1. System Architecture:** `system-architect` (Tier 1)
 
@@ -65,6 +75,8 @@ Coordinate end-to-end development of a complete feature from initial architectur
 
 ### Phase 2: UI/UX Design (Tier 2)
 
+**Indicator**: `[aidd.md] Workflow - full-stack-feature (UI/UX Design)`
+
 **4. Design System:** `design-architect` (Tier 2)
 
 - **Task:** Generate design tokens, component specifications, accessibility targets
@@ -85,6 +97,8 @@ Coordinate end-to-end development of a complete feature from initial architectur
 
 ### Phase 3: Implementation (Tier 3)
 
+**Indicator**: `[aidd.md] Workflow - full-stack-feature (Implementation)`
+
 **6. UI Components:** `interface-artisan` (Tier 3)
 
 - **Task:** Build React components with WCAG compliance, Tailwind styling
@@ -95,6 +109,8 @@ Coordinate end-to-end development of a complete feature from initial architectur
   - Component documentation
 
 ### Phase 4: Quality Assurance (Tier 3 + Tier 1)
+
+**Indicator**: `[aidd.md] Workflow - full-stack-feature (Quality Assurance)`
 
 **7. Test Suites:** `quality-engineer` (Tier 3)
 
@@ -115,6 +131,8 @@ Coordinate end-to-end development of a complete feature from initial architectur
   - Compliance checklist (OWASP 2025)
 
 ### Phase 5: Deployment & Operations (Tier 2 + Tier 3)
+
+**Indicator**: `[aidd.md] Workflow - full-stack-feature (Deployment & Operations)`
 
 **9. CI/CD Pipeline:** `platform-engineer` (Tier 2)
 

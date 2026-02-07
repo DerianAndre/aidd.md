@@ -1,5 +1,5 @@
 ---
-name: architect-mode
+name: orchestrator
 description: Systematic ideation-to-execution pipeline with adaptive model selection, phase gates, and parallel dispatch
 complexity: high
 estimated_duration: 120 minutes
@@ -10,7 +10,7 @@ skills_required:
 model_strategy: hybrid
 ---
 
-# Architect Mode Orchestrator
+# AIDD Orchestrator
 
 ## Purpose
 
@@ -55,7 +55,7 @@ Coordinate the full brainstorm → research → plan → execute → complete pi
 
 ### Stage 1: Brainstorm (Tier 1 — inline)
 
-**Indicator**: `[aidd.md] Workflow - architect-mode (Brainstorm)`
+**Indicator**: `[aidd.md] Workflow - orchestrator (Brainstorm)`
 **Task:** Extract what the user actually needs through structured questioning.
 **Input:** User's initial request + intake classification.
 **Output:** Brainstorm Summary artifact.
@@ -72,7 +72,7 @@ Protocol:
 
 ### Stage 2: Research (Tier 2 subagents + Tier 1 synthesis)
 
-**Indicator**: `[aidd.md] Workflow - architect-mode (Research)`
+**Indicator**: `[aidd.md] Workflow - orchestrator (Research)`
 **Task:** Ground decisions in evidence through parallel multi-source investigation.
 **Input:** Brainstorm Summary or clear feature description.
 **Output:** Research Summary with trade-off matrix.
@@ -91,11 +91,11 @@ Tier 1 orchestrator synthesizes findings into a trade-off matrix.
 
 ### Stage 3: Plan (Tier 1 — inline)
 
-**Indicator**: `[aidd.md] Workflow - architect-mode (Plan)`
+**Indicator**: `[aidd.md] Workflow - orchestrator (Plan)`
 **Task:** Produce an atomic, idempotent, executable plan document.
 **Input:** Brainstorm Summary + Research Summary (or just clear requirements).
 **Output:** Plan document at `docs/plans/active/<YYYY-MM-DD>-<feature>.md`.
-**Reference:** `specs/asdd-lifecycle.md` → Phases 1-3
+**Reference:** `specs/aidd-lifecycle.md` → Phases 1-2 (UNDERSTAND, PLAN)
 
 The plan document includes:
 - Context (problem statement, research reference)
@@ -112,7 +112,7 @@ The plan document includes:
 **Task:** Create structured issue document for bug reports or tracked problems.
 **Input:** Bug report or problem description.
 **Output:** Issue at `docs/issues/<YYYY-MM-DD>-<feature>.md`.
-**Reference:** `specs/asdd-lifecycle.md` → Phase 3B
+**Reference:** `specs/aidd-lifecycle.md` → PLAN phase (issue tracking)
 
 ---
 
@@ -121,7 +121,7 @@ The plan document includes:
 **Task:** Version-control the plan before any implementation.
 **Input:** Approved plan document.
 **Output:** Git commit (`docs(scope): add plan for <feature>`).
-**Reference:** `specs/asdd-lifecycle.md` → Phase 4
+**Reference:** `specs/aidd-lifecycle.md` → Phase 3 (SPEC)
 
 Steps:
 1. Check current branch — suggest `feature/<name>` or `fix/<name>` if on `main`
@@ -135,7 +135,7 @@ Steps:
 **Task:** Implement the plan with verification at each step.
 **Input:** Committed plan document.
 **Output:** Working implementation.
-**Reference:** `specs/asdd-lifecycle.md` → Phase 5
+**Reference:** `specs/aidd-lifecycle.md` → Phase 4 (BUILD)
 
 Dispatch strategy:
 - Assign model per the plan's Tier column
@@ -145,7 +145,7 @@ Dispatch strategy:
 - If plan diverges from reality: update plan FIRST, then continue
 - If blocked: stop, document blocker, ask user
 
-See `templates/model-matrix.md` → Parallel Dispatch Pattern for execution examples.
+See `specs/model-matrix.md` → Parallel Dispatch Pattern for execution examples.
 
 ---
 
@@ -154,7 +154,7 @@ See `templates/model-matrix.md` → Parallel Dispatch Pattern for execution exam
 **Task:** Verify, clean up, and archive.
 **Input:** Completed implementation.
 **Output:** Clean commit, passing checks, archived plan.
-**Reference:** `specs/asdd-lifecycle.md` → Phases 6-8
+**Reference:** `specs/aidd-lifecycle.md` → Phases 5-6 (VERIFY, SHIP)
 
 Task-to-tier assignment:
 - Run typecheck/lint/tests → Tier 3

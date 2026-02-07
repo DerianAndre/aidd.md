@@ -109,6 +109,86 @@ type FlowNode = Record<string, any>;
 
 **Cross-references:** [rules/global.md](global.md) (immutability constraints, naming conventions), [rules/backend.md](backend.md) (TypeScript patterns, error handling), [rules/frontend.md](frontend.md) (component patterns, accessibility)
 
+---
+
+## Template: Refactoring
+
+> Absorbed from `templates/refactoring.md`
+
+### Core Principle
+
+Every step independently verifiable. Green before, green after, or revert immediately. Refactoring changes structure without changing behavior.
+
+### Preconditions
+
+- [ ] Green test baseline confirmed (all tests pass before starting)
+- [ ] Clear refactoring goal defined (what structural improvement and why)
+- [ ] Scope bounded (which files/modules are affected)
+- [ ] No unrelated changes in the working tree (clean git state preferred)
+- [ ] Understanding of existing test coverage for affected code
+
+### Atomic Transformation Sequence
+
+Design a sequence where:
+
+- Each step is a single, focused transformation
+- Each step is independently deployable (the codebase works after each step)
+- Steps are ordered to minimize risk (safest first)
+- No step combines multiple unrelated changes
+
+### Common Atomic Transformations
+
+- Extract function/method
+- Rename symbol
+- Move to separate file
+- Replace conditional with polymorphism
+- Introduce interface/abstraction
+- Inline unnecessary abstraction
+- Consolidate duplicated logic
+
+### Execution Protocol
+
+For each transformation in the sequence:
+
+1. **Make the change** -- One focused structural modification
+2. **Run tests immediately** -- Execute targeted tests for the affected code
+3. **Run type checking** -- Verify types if types are affected
+4. **Evaluate result**:
+   - All green: Proceed to next transformation
+   - Any red: **Revert immediately**, analyze why, plan alternative approach
+
+### Failure Handling
+
+If a transformation breaks tests:
+
+1. **Revert** the change immediately (do not attempt to "fix forward")
+2. **Analyze** why the test broke (behavior change? missing dependency? wrong assumption?)
+3. **Decompose** the transformation into smaller steps, or choose a different approach
+4. **Retry** with the revised plan
+
+### Refactoring Anti-Patterns
+
+| Anti-Pattern | Mitigation |
+|-------------|------------|
+| **Refactoring Without Tests** | Verify green baseline; if coverage is insufficient, write tests first |
+| **Big-Bang Refactoring** | Enforce atomic steps; one transformation, one test run |
+| **Fix Forward** | Always revert on red; analyze and retry with a different approach |
+| **Feature Mixing** | Refactoring changes structure, not behavior; keep feature work separate |
+| **API Breaking** | If public APIs must change, provide a deprecation/migration plan first |
+| **Invisible Rationale** | Every transformation must have a documented reason |
+| **Coverage Assumption** | Verify coverage for affected code before starting; add tests if gaps exist |
+
+### Refactoring Quality Gates
+
+- [ ] Green baseline verified before first change
+- [ ] Tests run after every single transformation (not batched)
+- [ ] No test failures were "fixed forward" (all failures triggered revert)
+- [ ] No behavior changes introduced (unless explicitly intended and documented)
+- [ ] No new dependencies added without justification
+- [ ] Type checking passes after all transformations
+- [ ] Final diff reviewed for accidental changes
+- [ ] Refactoring goal demonstrably achieved
+
 **Version:** 1.0.0
 **Last Updated:** 2026-02-04
 **Applies To:** All TypeScript/JavaScript projects

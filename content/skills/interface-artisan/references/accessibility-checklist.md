@@ -4,7 +4,7 @@
 
 ---
 
-## 🎯 Interactive Elements
+## Interactive Elements
 
 ### Roles & Semantics
 
@@ -51,7 +51,7 @@
 
 ---
 
-## ⌨️ Keyboard Navigation
+## Keyboard Navigation
 
 ### Focus Management
 
@@ -127,7 +127,7 @@
 
 ---
 
-## 🔊 Dynamic State Communication
+## Dynamic State Communication
 
 ### ARIA States
 
@@ -177,7 +177,7 @@
 
 ---
 
-##🖼️ Images & Media
+## Images & Media
 
 ### Alt Text
 
@@ -212,7 +212,7 @@
 
 ---
 
-## 🎨 Color & Contrast
+## Color & Contrast
 
 ### Contrast Ratios (WCAG AA)
 
@@ -245,7 +245,7 @@
 
 ---
 
-## 📱 Responsive & Mobile
+## Responsive & Mobile
 
 - [ ] **Touch targets ≥44×44px** (WCAG 2.1 Level AAA: ≥48×48px)
 - [ ] **Zoom up to 200%** without horizontal scrolling
@@ -253,7 +253,7 @@
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Automated Tools
 
@@ -294,7 +294,7 @@ it("has no accessibility violations", async () => {
 
 ---
 
-## 🔗 Resources
+## Resources
 
 - [WCAG 2.1 Quick Reference](https://www.w3.org/WAI/WCAG21/quickref/)
 - [A11y Project Checklist](https://www.a11yproject.com/checklist/)

@@ -49,17 +49,39 @@ model_strategy: sequential|hybrid # Model usage pattern
 
 Brief description of what problem this orchestrator solves and when to use it.
 
+## Invocation
+
+| Type | Items |
+|------|-------|
+| **Skills** | skill-1, skill-2 |
+| **Specialized** | specialized-1 |
+| **MCPs** | Context7, WebSearch |
+
+## Activation
+
+| Type | Items |
+|------|-------|
+| **Agents** | agent-1, agent-2 |
+| **Rules** | `rules/name.md` |
+| **Specs** | `specs/name.md` |
+| **Templates** | `templates/name.md` |
+
 ## Workflow Stages
 
 Sequential stages with skill, model tier, and specific task:
 
 1. **Stage 1:** `skill-name` (model-tier)
 
+   **Indicator**: `[aidd.md] Workflow - <name> (<Stage Name>)`
+
    - Task: What this stage does
    - Input: What it needs
    - Output: What it produces
 
 2. **Stage 2:** `skill-name` (model-tier)
+
+   **Indicator**: `[aidd.md] Workflow - <name> (<Stage Name>)`
+
    - Task: What this stage does
    - Input: Previous stage output
    - Output: What it produces
@@ -182,24 +204,44 @@ model_strategy: hybrid
 
 Perform a comprehensive security audit of REST APIs against OWASP Top 10 (2025).
 
+## Invocation
+
+| Type | Items |
+|------|-------|
+| **Skills** | verification-before-completion |
+| **Specialized** | clean-ddd-hexagonal |
+| **MCPs** | Context7 |
+
 ## Workflow Stages
 
 1. **Stage 1:** `contract-architect` (Tier 1)
+
+   **Indicator**: `[aidd.md] Workflow - api-security-audit (Spec Validation)`
+
    - Task: Validate OpenAPI spec completeness
    - Input: api-spec.yaml
    - Output: Spec validation report
 
 2. **Stage 2:** `security-architect` (Tier 1)
+
+   **Indicator**: `[aidd.md] Workflow - api-security-audit (OWASP Scan)`
+
    - Task: OWASP Top 10 vulnerability scan
    - Input: Source code + spec
    - Output: Vulnerability report (JSON)
 
 3. **Stage 3:** `data-architect` (Tier 2)
+
+   **Indicator**: `[aidd.md] Workflow - api-security-audit (SQL Injection Review)`
+
    - Task: SQL injection prevention review
    - Input: Database queries
    - Output: Query safety report
 
 4. **Stage 4:** `security-architect` (Tier 1)
+
+   **Indicator**: `[aidd.md] Workflow - api-security-audit (Remediation Plan)`
+
    - Task: Generate remediation plan
    - Input: All reports
    - Output: security-remediation.md

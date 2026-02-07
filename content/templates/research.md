@@ -157,7 +157,7 @@ When research is complete, produce a structured summary:
 - **Open Questions**: [what remains uncertain]
 ```
 
-This artifact feeds directly into the Plan phase (`specs/asdd-lifecycle.md` Phase 3).
+This artifact feeds directly into the Plan phase (`specs/aidd-lifecycle.md` Phase 3).
 
 **Gate**: Present findings as a trade-off matrix. User chooses approach → proceed to Plan.
 
@@ -194,8 +194,8 @@ This artifact feeds directly into the Plan phase (`specs/asdd-lifecycle.md` Phas
 ## Cross-References
 
 - **Previous phase (Brainstorming)**: `templates/brainstorming.md`
-- **Next phase (Plan)**: `specs/asdd-lifecycle.md`
-- **Orchestration pipeline**: `workflows/orchestrators/architect-mode.md`
+- **Next phase (Plan)**: `specs/aidd-lifecycle.md`
+- **Orchestration pipeline**: `workflows/orchestrator.md`
 - **BLUF-6 format**: `specs/bluf-6.md`
 - **Knowledge Architect skill**: `skills/knowledge-architect/SKILL.md`
 - **Technology selection workflow**: `workflows/technology-selection.md`

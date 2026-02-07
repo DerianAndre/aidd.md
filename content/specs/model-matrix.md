@@ -300,7 +300,7 @@ These are **suggestions only** — never auto-applied. Human review is required 
 
 ## Cross-References
 
-- **Architect Mode**: `workflows/orchestrators/architect-mode.md` — phases, escalation rules, parallel dispatch
+- **Architect Mode**: `workflows/orchestrator.md` — phases, escalation rules, parallel dispatch
 - **Routing Table**: `templates/routing.md` — task-to-agent/workflow/template mapping
 - **CLAUDE.md**: `~/.claude/CLAUDE.md` — model intelligence tiers (Section 2)
 - **MCP Tool**: `aidd_model_route` — programmatic routing via the model matrix

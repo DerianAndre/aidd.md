@@ -1,10 +1,10 @@
-# 🧪 Testing Standards & Best Practices
+# Testing Standards & Best Practices
 
 > **Activation:** When writing tests, reviewing code, or analyzing coverage
 
 ---
 
-## 🎯 Coverage Philosophy
+## Coverage Philosophy
 
 ### Coverage is NOT a Goal, It's a Side Effect
 
@@ -23,7 +23,7 @@ npx eslint . --plugin complexity --rule 'complexity: ["error", 8]'
 
 ---
 
-## 🏗️ Test Pyramid
+## Test Pyramid
 
 ```
         /\
@@ -43,7 +43,7 @@ npx eslint . --plugin complexity --rule 'complexity: ["error", 8]'
 
 ---
 
-## 📝 AAA Pattern (Arrange-Act-Assert)
+## AAA Pattern (Arrange-Act-Assert)
 
 ### Template
 
@@ -77,7 +77,7 @@ describe("Feature: User Registration", () => {
 
 ---
 
-## 🎭 Test Doubles: Mocks vs Stubs vs Spies
+## Test Doubles: Mocks vs Stubs vs Spies
 
 ### When to Use Which
 
@@ -114,7 +114,7 @@ it("sends welcome email", async () => {
 
 ---
 
-## 🔬 Testing Business Logic (Domain Layer)
+## Testing Business Logic (Domain Layer)
 
 ### Characteristics of Good Unit Tests
 
@@ -151,7 +151,7 @@ describe("calculateDiscount", () => {
 
 ---
 
-## 🔌 Integration Testing
+## Integration Testing
 
 ### Database Tests (Use Transactions for Isolation)
 
@@ -219,7 +219,7 @@ describe("POST /api/users", () => {
 
 ---
 
-## 🌐 E2E Testing (Playwright/Cypress)
+## E2E Testing (Playwright/Cypress)
 
 ### Critical User Journeys Only
 
@@ -249,7 +249,7 @@ test("User can complete checkout flow", async ({ page }) => {
 
 ---
 
-## 🚫 What NOT to Test
+## What NOT to Test
 
 ### 1. Third-Party Library Internals
 
@@ -296,7 +296,7 @@ it("module exports UserService", () => {
 
 ---
 
-## 📊 Coverage Reports
+## Coverage Reports
 
 ### Vitest Configuration
 
@@ -343,7 +343,7 @@ open coverage/index.html
 
 ---
 
-## 🔍 Test Naming Conventions
+## Test Naming Conventions
 
 ### Pattern: `should [expected behavior] when [condition]`
 
@@ -361,7 +361,7 @@ it('should call repository', () => { ... }); // Too low-level
 
 ---
 
-## 🎯 Prioritization Matrix
+## Prioritization Matrix
 
 | Code Type           | Complexity | Risk   | Test Priority |
 | ------------------- | ---------- | ------ | ------------- |
@@ -379,3 +379,87 @@ it('should call repository', () => { ... }); // Too low-level
 - Run tests on every commit (pre-commit hook)
 - Block PRs with <80% coverage on changed files
 - Use `/test` workflow for generating comprehensive test suites
+
+---
+
+## Template: Testing Strategy
+
+> Absorbed from `templates/testing.md`
+
+### Coverage Targets by Layer
+
+| Layer | Target | Rationale |
+|-------|--------|-----------|
+| Domain | 100% | Business logic is non-negotiable |
+| Application | 90% | Schemas, use cases |
+| Infrastructure | 80% | Adapters, critical integrations |
+| Presentation | 70% | Interaction paths, not visual details |
+
+### Test Case Identification from Acceptance Criteria
+
+Derive test cases systematically:
+
+1. From acceptance criteria (Given/When/Then)
+2. Happy path first
+3. Edge cases: boundaries, nulls, empty, max values
+4. Error cases: invalid input, failures, timeouts
+5. Concurrent: race conditions, abort signals
+
+### Mock Strategy
+
+- Mock at PORT boundaries (not deep internals)
+- Use `vi.fn()` for spies
+- Use `vi.useFakeTimers()` for timing-dependent tests
+- Reset ALL state in `beforeEach` (stores, mocks, timers)
+- Contract tests: verify adapters satisfy port interfaces
+
+### Contract Test Pattern
+
+Verify adapters implement port contracts correctly:
+
+```typescript
+// FlowRepository.contract.ts
+export function testFlowRepositoryContract(repo: FlowRepository) {
+  it('should save and retrieve flow', async () => { ... });
+  it('should delete flow', async () => { ... });
+  // ... all port methods
+}
+```
+
+### Abort Signal Testing Pattern
+
+```typescript
+it('should abort on signal', async () => {
+  const controller = new AbortController();
+  const promise = service.execute({ signal: controller.signal });
+  controller.abort();
+  await expect(promise).rejects.toThrow(ExecutionAbortedException);
+});
+```
+
+### Store Testing Pattern (Zustand)
+
+```typescript
+beforeEach(() => {
+  useFlowStore.setState(useFlowStore.getInitialState());
+});
+```
+
+### Testing Quality Gates
+
+- [ ] Coverage targets met per layer
+- [ ] All acceptance criteria have corresponding tests
+- [ ] No skipped/disabled tests
+- [ ] Tests run independently (no order dependency)
+- [ ] Mocks at port boundaries only
+- [ ] State reset in `beforeEach`
+
+### Testing Anti-Patterns (Template)
+
+- Testing implementation details instead of behavior
+- 100% coverage obsession on presentation layer
+- Slow tests in unit suite (move to integration)
+- Shared mutable state between tests
+- Testing framework internals
+- Disabling tests to make CI pass
+- Testing private methods directly

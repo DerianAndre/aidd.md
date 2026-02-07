@@ -2,13 +2,20 @@
 description: 🧪 Generates Vitest/TS tests with 100% coverage. Uses cyclomatic analysis, AAA pattern and isolation for critical logic and edge cases
 ---
 
-# 🧪 Workflow: Test (Complete Test Generation)
+# Workflow: Test (Complete Test Generation)
 
 > **Purpose:** Generate complete test suites with Vitest, React Testing Library, and 100% coverage in critical logic
 
+## Invocation
+
+| Type | Items |
+|------|-------|
+| **Skills** | test-driven-development, verification |
+| **MCPs** | Context7 |
+
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 - [ ] Vitest configured (`vitest.config.ts`)
 - [ ] React Testing Library installed (for UI components)
@@ -16,7 +23,7 @@ description: 🧪 Generates Vitest/TS tests with 100% coverage. Uses cyclomatic 
 
 ---
 
-## 🎯 Testing Strategy
+## Testing Strategy
 
 ### Prioritization by Cyclomatic Complexity
 
@@ -33,7 +40,9 @@ npx eslint src --rule 'complexity: ["error", 8]' --format json > complexity-repo
 
 ---
 
-## 🔧 Step 1: Analysis of Code
+## Step 1: Analysis of Code
+
+**Indicator**: `[aidd.md] Workflow - test (Analysis of Code)`
 
 **Identify:**
 
@@ -63,7 +72,9 @@ export function calculateDiscount(price: number, tier: string): number {
 
 ---
 
-## 🧪 Step 2: Generate Unit Tests (AAA Pattern)
+## Step 2: Generate Unit Tests (AAA Pattern)
+
+**Indicator**: `[aidd.md] Workflow - test (Generate Unit Tests)`
 
 **Activate skill:** `quality-engineer`
 
@@ -123,7 +134,9 @@ describe("calculateDiscount", () => {
 
 ---
 
-## 🎨 Step 3: Generate Component Tests (React)
+## Step 3: Generate Component Tests (React)
+
+**Indicator**: `[aidd.md] Workflow - test (Generate Component Tests)`
 
 **For UI components, use:**
 
@@ -147,7 +160,9 @@ Component to test:
 
 ---
 
-## 📊 Step 4: Verify Coverage
+## Step 4: Verify Coverage
+
+**Indicator**: `[aidd.md] Workflow - test (Verify Coverage)`
 
 ```bash
 # Run tests with coverage
@@ -171,7 +186,9 @@ open coverage/index.html
 
 ---
 
-## 🔍 Step 5: Test Quality Review
+## Step 5: Test Quality Review
+
+**Indicator**: `[aidd.md] Workflow - test (Test Quality Review)`
 
 ### Checklist
 
@@ -211,7 +228,9 @@ it("should add two numbers correctly", () => {
 
 ---
 
-## 🎯 Step 6: Integration Tests (Optional)
+## Step 6: Integration Tests (Optional)
+
+**Indicator**: `[aidd.md] Workflow - test (Integration Tests)`
 
 **For:**
 
@@ -242,7 +261,7 @@ describe("POST /api/users", () => {
 
 ---
 
-## 📈 Coverage Objectives
+## Coverage Objectives
 
 ### By Layer
 
@@ -264,7 +283,7 @@ describe("POST /api/users", () => {
 
 ---
 
-## 🚀 Automation (CI)
+## Automation (CI)
 
 ```yaml
 # .github/workflows/test.yml
@@ -291,7 +310,7 @@ jobs:
 
 ---
 
-## 📚 Skills & References
+## Skills & References
 
 - **Skill:** `quality-engineer` - For Test generation
 - **Testing Library:** [https://testing-library.com/](https://testing-library.com/)

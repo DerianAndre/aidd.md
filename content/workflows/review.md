@@ -2,13 +2,21 @@
 description: 🔍 Architecture and security audit. Reviews technical debt and generates pre-merge checklists for branch, changes or staged changes
 ---
 
-# 🔍 Workflow: Review (Pre-Merge Audit)
+# Workflow: Review (Pre-Merge Audit)
 
 > **Purpose:** Complete code review before merge, focused on architecture, security, and technical debt
 
+## Invocation
+
+| Type | Items |
+|------|-------|
+| **Skills** | code-review, receiving-code-review |
+| **Specialized** | clean-ddd-hexagonal |
+| **MCPs** | WebSearch |
+
 ---
 
-## 📋 Review Scope
+## Review Scope
 
 - **Branch review:** Complete changes from the feature branch vs main
 - **Staged changes:** Only files in the Git staging area
@@ -16,7 +24,9 @@ description: 🔍 Architecture and security audit. Reviews technical debt and ge
 
 ---
 
-## 🔧 Step 1: Identify Changes
+## Step 1: Identify Changes
+
+**Indicator**: `[aidd.md] Workflow - review (Identify Changes)`
 
 ```bash
 # View full diff
@@ -31,7 +41,9 @@ git diff --cached
 
 ---
 
-## 🏗️ Step 2: Architectural Review
+## Step 2: Architectural Review
+
+**Indicator**: `[aidd.md] Workflow - review (Architectural Review)`
 
 ### Hexagonal Architecture Compliance
 
@@ -59,7 +71,9 @@ Check:
 
 ---
 
-## 🛡️ Step 3: Security Review (OWASP)
+## Step 3: Security Review (OWASP)
+
+**Indicator**: `[aidd.md] Workflow - review (Security Review)`
 
 **Security Checklist:**
 
@@ -100,7 +114,9 @@ npm run scan:secrets src/
 
 ---
 
-## 📊 Step 4: Code Quality Review
+## Step 4: Code Quality Review
+
+**Indicator**: `[aidd.md] Workflow - review (Code Quality Review)`
 
 ### Cyclomatic Complexity
 
@@ -133,7 +149,9 @@ npx eslint src --rule 'complexity: ["error", 15]'
 
 ---
 
-## 🧪 Step 5: Testing Review
+## Step 5: Testing Review
+
+**Indicator**: `[aidd.md] Workflow - review (Testing Review)`
 
 **Verify:**
 
@@ -154,7 +172,9 @@ git diff --name-only | grep "\.ts$" | xargs npm run test:coverage --
 
 ---
 
-## 📝 Step 6: Documentation Review
+## Step 6: Documentation Review
+
+**Indicator**: `[aidd.md] Workflow - review (Documentation Review)`
 
 **Checklist:**
 
@@ -175,7 +195,9 @@ npm run validate:openapi docs/api-spec.yaml
 
 ---
 
-## 🚨 Step 7: Blocking Criteria
+## Step 7: Blocking Criteria
+
+**Indicator**: `[aidd.md] Workflow - review (Blocking Criteria)`
 
 ### ❌ BLOCKERS (NO MERGE)
 
@@ -199,7 +221,7 @@ npm run validate:openapi docs/api-spec.yaml
    - Lint errors (no warnings)
    - Cyclomatic complexity >20
 
-### ⚠️ WARNINGS (Fix before merge)
+### WARNINGS (Fix before merge)
 
 -Complexity 15-20
 
@@ -209,12 +231,14 @@ npm run validate:openapi docs/api-spec.yaml
 
 ---
 
-## 📋 Step 8: Generate Pre-Merge Checklist
+## Step 8: Generate Pre-Merge Checklist
+
+**Indicator**: `[aidd.md] Workflow - review (Pre-Merge Checklist)`
 
 **Template:**
 
 ```markdown
-## 📋 Pre-Merge Checklist
+## Pre-Merge Checklist
 
 ### ✅ Approved
 
@@ -223,23 +247,23 @@ npm run validate:openapi docs/api-spec.yaml
 - [x] No critical vulnerabilities
 - [x] Hexagonal architecture respected
 
-### ⚠️ Warnings
+### Warnings
 
 - [ ] **Performance:** `UserService.findAll()` has N+1 query
   - **Action:** Use `include` in Prisma query
 - [ ] **Complexity:** `OrderProcessor.calculate()` has CC: 18
   - **Action:** Refactor by extracting `calculateTaxes()`
 
-### 🚫 Blockers
+### Blockers
 
 None
 
-### 📝 Architecture Comments
+### Architecture Comments
 
 - Good: Use of Repository pattern for abstraction
 - Consider: Add cache layer for frequent queries
 
-### 🎯 Next Step
+### Next Step
 
 - [ ] Fix N+1 query
 - [ ] Refactor complex function
@@ -249,16 +273,16 @@ None
 
 ---
 
-## 🤖 Automation (GitHub PR Template)
+## Automation (GitHub PR Template)
 
 ```markdown
 <!-- .github/pull_request_template.md -->
 
-## 📝 Description
+## Description
 
 [Describe your changes]
 
-## 🔍 Type of Change
+## Type of Change
 
 - [ ] Bug fix
 - [ ] New feature
@@ -273,13 +297,13 @@ None
 - [ ] Documentation updated
 - [ ] Coverage ≥80% on changed files
 
-## 🛡️ Security Review
+## Security Review
 
 - [ ] No hardcoded secrets
 - [ ] Input validation implemented
 - [ ] Authorization checks in place
 
-## 📊 Performance Impact
+## Performance Impact
 
 - [ ] No N+1 queries introduced
 - [ ] Bundle size impact: [+/-X KB]
@@ -287,9 +311,71 @@ None
 
 ---
 
-## 📚 Skills Used
+## Skills Used
 
 - `system-architect` - Architectural review
 - `security-architect` - OWASP audit
 - `quality-engineer` - coverage analysis
 - `data-architect` - Query/schema review
+
+---
+
+## Template: Code Review
+
+> Absorbed from `templates/code-review.md`
+
+### Sub-Agent Roles
+
+| Role                 | Focus                                          |
+| -------------------- | ---------------------------------------------- |
+| **Senior Reviewer**  | Architecture, design patterns, business logic  |
+| **Security Auditor** | Vulnerability scanning, input validation, auth |
+
+### Review Order (Priority)
+
+1. **Architecture compliance** (most critical, hardest to fix later)
+2. **Security** (vulnerabilities, input validation, auth)
+3. **Performance** (N+1 queries, re-renders, bundle impact)
+4. **Testing coverage** (new code has tests, edge cases)
+5. **Code quality** (types, naming, conventions)
+6. **Accessibility** (WCAG, keyboard, screen reader — if frontend)
+7. **Documentation** (complex logic explained, APIs documented)
+
+### Severity Levels
+
+| Level          | Description                                                    | Action Required                     |
+| -------------- | -------------------------------------------------------------- | ----------------------------------- |
+| **Blocker**    | Security vulnerabilities, data loss risk, broken functionality | Must fix before merge               |
+| **Critical**   | Architecture violations, missing tests for critical paths      | Should fix before merge             |
+| **Major**      | Code quality issues, missing edge cases                        | Fix in this PR or tracked follow-up |
+| **Minor**      | Naming, minor style improvements                               | Nice to have                        |
+| **Suggestion** | Alternative approaches, future considerations                  | Optional                            |
+
+### Consolidated Checklist
+
+- [ ] Architecture: dependencies flow inward, domain pure
+- [ ] Security: no injection, no hardcoded secrets, input validated
+- [ ] Performance: no N+1, no unnecessary re-renders
+- [ ] Testing: new code tested, coverage met
+- [ ] Types: TypeScript strict, no unjustified `any`
+- [ ] Naming: project conventions followed
+- [ ] i18n: no hardcoded user-facing strings
+- [ ] Accessibility: WCAG 2.1 AA (if frontend)
+- [ ] Dead code: no commented-out blocks, no unused imports
+- [ ] Spec alignment: implementation matches specification
+
+### Quality Gates
+
+- [ ] All blockers resolved
+- [ ] All critical items resolved or tracked
+- [ ] Review summary provided in BLUF format
+- [ ] Security quick check completed
+
+### Anti-Patterns
+
+- Rubber stamping (approving without reading)
+- Style-only feedback (missing architecture/security issues)
+- Reviewing without running the code
+- Personal preference over project conventions
+- Nitpicking while missing major architectural issues
+- Blocking on subjective style when functionality is correct

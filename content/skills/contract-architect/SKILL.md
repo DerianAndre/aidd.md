@@ -154,3 +154,130 @@ components:
 
 - [OpenAPI 3.0 Specification](https://swagger.io/specification/)
 - [OpenAPI Generator](https://openapi-generator.tech/)
+
+---
+
+## Template: API Design
+
+> Absorbed from `templates/api-design.md`
+
+### Protocol Selection Matrix
+
+| Protocol | When to Use |
+|----------|-------------|
+| **REST** (default) | CRUD operations, simple relationships, broad client compatibility |
+| **GraphQL** | Complex nested relationships, multiple client types with different data needs |
+| **gRPC** | High-performance internal service-to-service, streaming, strong typing |
+
+### Zod Schema Patterns
+
+Every request and response has a Zod schema at serialization boundaries:
+
+```typescript
+const CreateResourceSchema = z.object({
+  name: z.string().min(1).max(255),
+  type: z.enum(['typeA', 'typeB']),
+  metadata: z.record(z.string(), z.string()).optional(),
+});
+
+const ResourceResponseSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  type: z.enum(['typeA', 'typeB']),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+```
+
+### Error Responses (RFC 7807)
+
+ALL errors follow Problem Details format:
+
+```typescript
+interface ProblemDetail {
+  type: string;       // URI reference identifying the problem type
+  title: string;      // Short human-readable summary
+  status: number;     // HTTP status code
+  detail: string;     // Human-readable explanation specific to this occurrence
+  instance?: string;  // URI reference identifying the specific occurrence
+}
+```
+
+Standard error mapping:
+
+| Domain Exception | HTTP Status | Type |
+|-----------------|-------------|------|
+| ValidationException | 400 | /errors/validation |
+| AuthenticationException | 401 | /errors/authentication |
+| AuthorizationException | 403 | /errors/authorization |
+| NotFoundException | 404 | /errors/not-found |
+| ConflictException | 409 | /errors/conflict |
+| RateLimitException | 429 | /errors/rate-limit |
+| DomainException | 422 | /errors/domain |
+| InternalException | 500 | /errors/internal |
+
+### Pagination Patterns
+
+**Cursor-based** (preferred):
+
+```json
+{
+  "data": [],
+  "pagination": {
+    "cursor": "eyJpZCI6MTAwfQ==",
+    "hasMore": true,
+    "total": 1523
+  }
+}
+```
+
+**Offset-based** (when cursor not practical):
+
+```json
+{
+  "data": [],
+  "pagination": {
+    "offset": 0,
+    "limit": 20,
+    "total": 1523
+  }
+}
+```
+
+### Security Standards
+
+- **Authentication**: JWT in HttpOnly cookies (web), Bearer token (API clients)
+- **Rate limiting**: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset headers
+- **CORS**: Strict origin allowlist, NEVER wildcard in production
+- **Input validation**: Zod at every endpoint (reject before processing)
+- **Output filtering**: Return only what the consumer needs (no data leakage)
+
+### Implementation Pattern
+
+- Controllers are THIN: validate -> delegate -> respond
+- Business logic in domain services, never in controllers
+- Adapters handle external integrations
+- Every endpoint returns Content-Type header
+- Consistent response envelope across all endpoints
+
+### Quality Gates
+
+- [ ] OpenAPI spec complete BEFORE implementation
+- [ ] All error cases documented with RFC 7807 format
+- [ ] Pagination on all list endpoints
+- [ ] Rate limiting configured
+- [ ] CORS restricted (no wildcard)
+- [ ] Zod schemas for all request/response types
+- [ ] Authentication/authorization on protected endpoints
+- [ ] Versioning strategy documented
+
+### Anti-Patterns
+
+- Implementation before contract (spec drift)
+- Inconsistent error formats across endpoints
+- Missing pagination on list endpoints
+- Overfetching: returning entire objects when consumer needs 3 fields
+- No versioning strategy (breaking changes break clients)
+- Business logic in controllers
+- Using HTTP status codes incorrectly (200 for errors, 500 for validation)
+- Exposing internal IDs or implementation details

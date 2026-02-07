@@ -501,3 +501,86 @@ Activate `i18n-specialist` when:
 - [ICU Message Format](https://unicode-org.github.io/icu/userguide/format_parse/messages/)
 - [W3C i18n Best Practices](https://www.w3.org/International/techniques/authoring-html)
 - [Crowdin Developer Docs](https://developer.crowdin.com/)
+
+---
+
+## Template: Copywriting & i18n
+
+> Absorbed from `templates/copywriting.md`
+
+### String Inventory Process
+
+Catalog ALL user-facing text in the feature by category:
+
+- Labels, buttons, headings, descriptions
+- Errors, tooltips, placeholders, confirmations
+
+### Draft Copy Rules
+
+- Active voice preferred ("Save changes" not "Changes will be saved")
+- Present tense for UI states ("Saving..." not "Will save")
+- Concise: remove words that don't add meaning
+- Consistent terminology across the entire application
+
+### Error Message Framework
+
+Every error message must answer 3 questions:
+
+1. **What happened?** -- Clear description of the error
+2. **Why?** -- Brief explanation of the cause
+3. **What to do next?** -- Actionable recovery step
+
+Examples:
+
+- Bad: "Error 500"
+- Bad: "Something went wrong"
+- Good: "Could not save your changes. The server is temporarily unavailable. Please try again in a few minutes."
+
+### Copy Standards
+
+| Element | Rules |
+|---------|-------|
+| **Labels** | Concise, descriptive, consistent terminology |
+| **Buttons** | Action verb (Save, Delete, Submit), not "OK" or "Yes" |
+| **Placeholders** | Example format, NEVER instructions (use labels for that) |
+| **Tooltips** | Additional context, not essential information |
+| **Confirmations** | Clear consequence + action verb on confirm button |
+| **Empty states** | Helpful message + action CTA to fill the state |
+| **Loading** | Context-aware ("Loading messages..." not just "Loading...") |
+
+### i18n Preparation Workflow
+
+- Extract ALL strings to locale files (i18next)
+- Key naming: `namespace.section.element` (e.g., `chat.input.placeholder`)
+- Interpolation for dynamic values: `{{count}} messages`
+- Plural forms: use i18next plural rules
+- Date/time: use Intl.DateTimeFormat, never hardcode formats
+- Numbers: use Intl.NumberFormat
+- Plan for RTL locales (logical properties: margin-inline-start)
+
+### Copy Review Checklist
+
+- Read aloud: does it sound natural?
+- Remove jargon: use user's language, not developer's
+- Consistency check: same concept = same word everywhere
+- Truncation test: does it work with longer translations (German ~30% longer)?
+
+### Quality Gates
+
+- [ ] All strings in locale files (zero hardcoded text)
+- [ ] Error messages are actionable (what + why + next step)
+- [ ] Consistent terminology across app
+- [ ] Pluralization handled
+- [ ] No technical jargon in user-facing text
+- [ ] Interpolation for dynamic values
+
+### Anti-Patterns
+
+- Hardcoded strings in components
+- Technical jargon in user messages
+- Vague errors ("Something went wrong")
+- Inconsistent terminology (same thing, different words)
+- Missing plural forms
+- Instructions in placeholder text
+- "Click here" (describe the action instead)
+- Assuming English word order for all locales

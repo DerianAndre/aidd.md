@@ -2,15 +2,23 @@
 description: 📋 Creates technical plans and Gherkin without ambiguity. Ensures the Definition of Ready. Includes /spec and /refine commands
 ---
 
-# 📋 Workflow: Product (Technical Specification & Gherkin)
+# Workflow: Product (Technical Specification & Gherkin)
 
 > **💡 Pro Tip:** For complete feature implementation from architecture to deployment, see [`/orchestrate full-stack-feature`](../orchestrators/full-stack-feature.md)
 
 > **Purpose:** Create unambiguous technical specifications and Gherkin scenarios for Definition of Ready
 
+## Invocation
+
+| Type | Items |
+|------|-------|
+| **Skills** | brainstorming, writing-plans |
+| **Specialized** | clean-ddd-hexagonal |
+| **MCPs** | Context7, WebSearch |
+
 ---
 
-## 📋 Scope
+## Scope
 
 - **Spec:** Detailed technical documents for features
 - **Gherkin:** BDD scenarios (Given-When-Then) for testing
@@ -19,7 +27,9 @@ description: 📋 Creates technical plans and Gherkin without ambiguity. Ensures
 
 ---
 
-## 📝 Step 1: Spec (Create Technical Specification)
+## Step 1: Spec (Create Technical Specification)
+
+**Indicator**: `[aidd.md] Workflow - product (Create Technical Specification)`
 
 ### Specification Template
 
@@ -28,7 +38,7 @@ description: 📋 Creates technical plans and Gherkin without ambiguity. Ensures
 ```markdown
 # Feature Spec: [Feature Name]
 
-## 📊 Overview
+## Overview
 
 **Feature:** [One-line description]
 **User Story:** As a [user type], I want [goal] so that [benefit]
@@ -37,7 +47,7 @@ description: 📋 Creates technical plans and Gherkin without ambiguity. Ensures
 
 ---
 
-## 🎯 Goals & Non-Goals
+## Goals & Non-Goals
 
 ### Goals
 
@@ -52,7 +62,7 @@ description: 📋 Creates technical plans and Gherkin without ambiguity. Ensures
 
 ---
 
-## 👥 Stakeholders
+## Stakeholders
 
 - **Product Owner:** @name
 - **Tech Lead:** @name
@@ -61,7 +71,7 @@ description: 📋 Creates technical plans and Gherkin without ambiguity. Ensures
 
 ---
 
-## 🔍 Requirements
+## Requirements
 
 ### Functional Requirements
 
@@ -104,7 +114,7 @@ description: 📋 Creates technical plans and Gherkin without ambiguity. Ensures
 
 ---
 
-## 🏗️ Technical Design
+## Technical Design
 
 ### Architecture Diagram
 
@@ -167,7 +177,7 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 ---
 
-## 🧪 Testing Strategy
+## Testing Strategy
 
 ### Unit Tests
 
@@ -187,7 +197,7 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 ---
 
-## 🚧 Implementation Plan
+## Implementation Plan
 
 ### Phase 1: Backend (2 days)
 
@@ -212,7 +222,7 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 ---
 
-## 🚨 Risks & Mitigations
+## Risks & Mitigations
 
 | Risk                | Probability | Impact   | Mitigation                             |
 | ------------------- | ----------- | -------- | -------------------------------------- |
@@ -222,7 +232,7 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 ---
 
-## 📋 Definition of Ready Checklist
+## Definition of Ready Checklist
 
 - [ ] All functional requirements defined
 - [ ] Non-functional requirements specified (performance, security)
@@ -235,7 +245,7 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 ---
 
-## 📚 References
+## References
 
 - [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
 - [JWT Best Practices](https://tools.ietf.org/html/rfc8725)
@@ -243,7 +253,9 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 ---
 
-## 🥒 Step 2: Gherkin (BDD Scenarios)
+## Step 2: Gherkin (BDD Scenarios)
+
+**Indicator**: `[aidd.md] Workflow - product (Gherkin BDD Scenarios)`
 
 ### Create Given-When-Then Scenarios
 
@@ -346,7 +358,9 @@ Then(
 
 ---
 
-## 🔍 Step 3: Refine (Remove Ambiguities)
+## Step 3: Refine (Remove Ambiguities)
+
+**Indicator**: `[aidd.md] Workflow - product (Refine Ambiguities)`
 
 ### Refinement Checklist
 
@@ -392,7 +406,9 @@ Then(
 
 ---
 
-## ✅ Step 4: Definition of Ready
+## Step 4: Definition of Ready
+
+**Indicator**: `[aidd.md] Workflow - product (Definition of Ready)`
 
 ### Complete Checklist
 
@@ -435,7 +451,7 @@ Then(
 
 ---
 
-## 🤖 Automation
+## Automation
 
 ### Spec Template Generator
 
@@ -461,7 +477,7 @@ npm run docs:cucumber
 
 ---
 
-## 📊 Output Examples
+## Output Examples
 
 ### Minimal Spec (Simple Feature)
 
@@ -499,7 +515,7 @@ Use full template above (15+ pages)
 
 ---
 
-## 📚 Skills & References
+## Skills & References
 
 - **Skill:** `system-architect` - Architecture diagrams
 - **Skill:** `contract-architect` - OpenAPI generation

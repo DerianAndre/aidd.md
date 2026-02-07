@@ -119,7 +119,7 @@ These rules CANNOT be overridden:
 
 ---
 
-**Cross-references:** [specs/asdd-lifecycle.md](../specs/asdd-lifecycle.md) (COMMIT_SPEC and COMMIT_IMPL phases), [rules/security.md](security.md) (no secrets in version control)
+**Cross-references:** [specs/aidd-lifecycle.md](../specs/aidd-lifecycle.md) (SPEC and SHIP phases), [rules/security.md](security.md) (no secrets in version control)
 
 **Version:** 1.0.0
 **Last Updated:** 2026-02-04

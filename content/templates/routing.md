@@ -18,7 +18,7 @@
 
 ## 1. How Routing Works
 
-The Orchestrator (specs/asdd-lifecycle.md) classifies each task, then consults this file:
+The Orchestrator (specs/aidd-lifecycle.md) classifies each task, then consults this file:
 
 1. **AIDD Mode**: If `AGENTS.md` + `rules/` + `skills/` detected in the project → map directly to AIDD skills/workflows
 2. **Fallback Mode**: If no AIDD → match task keywords to local templates in `templates/`
@@ -49,7 +49,7 @@ When the project has AIDD installed (detected by presence of `AGENTS.md` + `rule
 | Technology selection, evaluation         | Orchestrator        | technology-selection.md         |
 | Code review, pre-merge                   | Quality Engineer    | review.md                       |
 | Brainstorming, ideation                  | Orchestrator        | product.md                      |
-| Architect mode (brainstorm→plan→execute) | Orchestrator        | orchestrators/architect-mode.md |
+| Architect mode (brainstorm→plan→execute) | Orchestrator        | orchestrator.md |
 
 **AIDD takes priority**. When detected, AIDD agents and workflows are the SSOT. Templates serve as supplementary reference only.
 
@@ -57,49 +57,42 @@ When the project has AIDD installed (detected by presence of `AGENTS.md` + `rule
 
 ## 3. Fallback Mode
 
-When no AIDD is detected, match task keywords to local templates:
+When no AIDD is detected, match task keywords to local templates.
 
-### Core Development
+> **Note**: Most domain-specific templates have been absorbed into rules/, skills/, and workflows/. The remaining templates are standalone protocols that don't map to a single rule or skill.
 
-| Domain        | Keywords                                                                                                                                    | Template         | Default Tier |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------ |
-| Brainstorming | brainstorm, ideas, plan, design, explore, trade-offs, options, new feature, build, create, add, improve, enhance, ideate, redesign, rethink | brainstorming.md | 1            |
-| Analysis      | analyze, audit, review, profile, investigate, diagnose                                                                                      | analysis.md      | 1            |
-| Refactoring   | refactor, extract, rename, split, cleanup, simplify, decouple                                                                               | refactoring.md   | 1→2          |
-| Frontend      | component, UI, layout, style, animation, form, modal, page                                                                                  | frontend.md      | 2            |
-| Backend       | API, endpoint, domain, aggregate, port, adapter, service, module                                                                            | backend.md       | 2            |
-| Database      | schema, migration, query, index, SQL, ORM, table, seed                                                                                      | database.md      | 2            |
-| Testing       | test, coverage, mock, TDD, e2e, unit, integration, spec                                                                                     | testing.md       | 3→1          |
+### Available Templates (5)
 
-### Design & Content
+| Domain              | Keywords                                                                                                                                    | Template               | Default Tier |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------------ |
+| Brainstorming       | brainstorm, ideas, plan, design, explore, trade-offs, options, new feature, build, create, add, improve, enhance, ideate, redesign, rethink | brainstorming.md       | 1            |
+| Research            | research, deep dive, investigate, landscape, comparison                                                                                     | research.md            | 1            |
+| Penetration Testing | pentest, CTF, exploit, red team, attack surface, offensive                                                                                  | penetration-testing.md | 1            |
+| Migration           | upgrade, migrate, breaking changes, version, deprecation                                                                                    | migration.md           | 1→2          |
+| Full Lifecycle      | new feature, AIDD, from scratch, full implementation                                                                                        | specs/aidd-lifecycle.md | 1→2→3       |
 
-| Domain        | Keywords                                                       | Template         | Default Tier |
-| ------------- | -------------------------------------------------------------- | ---------------- | ------------ |
-| UX/UI         | design system, user flow, a11y, WCAG, wireframe, prototype     | ux-ui.md         | 1            |
-| Copywriting   | copy, i18n, translate, error message, label, locale, microcopy | copywriting.md   | 3            |
-| Documentation | document, docs, README, guide, spec, changelog                 | documentation.md | 3→2          |
+### Absorbed Templates → New Locations
 
-### Infrastructure & Security
+Domain-specific content has been absorbed into the AIDD framework:
 
-| Domain              | Keywords                                                   | Template               | Default Tier |
-| ------------------- | ---------------------------------------------------------- | ---------------------- | ------------ |
-| CI/CD               | pipeline, CI, CD, deploy, Docker, workflow, release        | cicd.md                | 2            |
-| Security Audit      | security, OWASP, vulnerability, audit, hardening, CVE      | security-audit.md      | 1            |
-| Penetration Testing | pentest, CTF, exploit, red team, attack surface, offensive | penetration-testing.md | 1            |
-| DevOps              | Docker, K8s, monitoring, observability, infra, scaling     | devops.md              | 2            |
-
-### Specialized
-
-| Domain              | Keywords                                                                         | Template                              | Default Tier |
-| ------------------- | -------------------------------------------------------------------------------- | ------------------------------------- | ------------ |
-| API Design          | OpenAPI, REST, GraphQL, gRPC, contract-first, endpoints                          | api-design.md                         | 1→2          |
-| System Architecture | C4, ADR, system design, architecture diagram, boundaries                         | system-architecture.md                | 1            |
-| Performance         | optimize, profile, bundle, LCP, memory leak, benchmark                           | performance.md                        | 1→2          |
-| Migration           | upgrade, migrate, breaking changes, version, deprecation                         | migration.md                          | 1→2          |
-| Code Review         | review, pre-merge, PR review, quality gate, standards                            | code-review.md                        | 1            |
-| Research            | research, deep dive, investigate, landscape, comparison                          | research.md                           | 1            |
-| Architect Mode      | architect, architect-mode, brainstorm+plan, ideation-to-execution, full pipeline | orchestrators/architect-mode.md       | 1→2→3        |
-| Full Lifecycle      | new feature, ASDD, from scratch, full implementation                             | ASDD inline (specs/asdd-lifecycle.md) | 1→2→3        |
+| Domain              | Keywords                                                    | Now In                                | Type     |
+| ------------------- | ----------------------------------------------------------- | ------------------------------------- | -------- |
+| Analysis            | analyze, audit, review, profile, investigate                | `rules/orchestrator.md`               | Rule     |
+| Frontend            | component, UI, layout, style, animation, form               | `rules/frontend.md`                   | Rule     |
+| Backend             | API, endpoint, domain, service, module                      | `rules/backend.md`                    | Rule     |
+| Database            | schema, migration, query, SQL, ORM, table                   | `rules/backend.md`                    | Rule     |
+| Testing             | test, coverage, mock, TDD, e2e, unit                        | `rules/testing.md`                    | Rule     |
+| Refactoring         | refactor, extract, rename, cleanup, simplify                | `rules/code-style.md`                 | Rule     |
+| Performance         | optimize, profile, bundle, LCP, benchmark                   | `rules/performance.md`                | Rule     |
+| Documentation       | document, docs, README, guide, changelog                    | `rules/documentation.md`              | Rule     |
+| UX/UI               | design system, user flow, a11y, WCAG                        | `skills/design-architect/SKILL.md`    | Skill    |
+| Copywriting/i18n    | copy, i18n, translate, error message, locale                | `skills/i18n-specialist/SKILL.md`     | Skill    |
+| API Design          | OpenAPI, REST, GraphQL, contract-first                      | `skills/contract-architect/SKILL.md`  | Skill    |
+| System Architecture | C4, ADR, system design, boundaries                          | `skills/system-architect/SKILL.md`    | Skill    |
+| CI/CD + DevOps      | pipeline, CI, CD, Docker, K8s, monitoring                   | `skills/platform-engineer/SKILL.md`   | Skill    |
+| Security Audit      | security, OWASP, vulnerability, hardening                   | `workflows/analyze.md`                | Workflow |
+| Code Review         | review, pre-merge, PR review, quality gate                  | `workflows/review.md`                 | Workflow |
+| Orchestrator        | architect, brainstorm+plan, full pipeline                   | `workflows/orchestrator.md`           | Workflow |
 
 ---
 
@@ -111,7 +104,7 @@ When a task spans multiple domains:
 1. Load ALL relevant templates
 2. Use the **highest** effort tier among loaded templates
 3. Think from ALL sub-agent perspectives across templates
-4. Follow the most structured process (typically ASDD for complex multi-domain)
+4. Follow the most structured process (typically AIDD lifecycle for complex multi-domain)
 
 ### Tier Transitions
 
@@ -134,7 +127,7 @@ Format `X→Y` means: starts at tier X for planning, transitions to tier Y for e
 
 When a task is classified with a tier (1, 2, or 3), resolve the tier to a specific model using the **Model Routing Matrix**:
 
-> **SSOT**: [templates/model-matrix.md](model-matrix.md)
+> **SSOT**: [specs/model-matrix.md](../specs/model-matrix.md)
 > **MCP Tool**: `aidd_model_route` — accepts `{ tier, provider?, task? }`, returns optimal model with alternatives and fallback chain.
 
 ### Resolution Flow
@@ -159,11 +152,11 @@ aidd_model_recommend → historical performance override
 
 ## Cross-References
 
-- **Architect Mode orchestrator**: `workflows/orchestrators/architect-mode.md`
-- **Model matrix**: `templates/model-matrix.md`
+- **Architect Mode orchestrator**: `workflows/orchestrator.md`
+- **Model matrix**: `specs/model-matrix.md`
 - **Orchestrator logic**: `rules/orchestrator.md`
-- **Decision tree**: `rules/decision-tree.md`
-- **ASDD lifecycle**: `specs/asdd-lifecycle.md`
+- **Decision tree**: `rules/orchestrator.md (Section 4)`
+- **AIDD lifecycle**: `specs/aidd-lifecycle.md`
 - **BLUF-6 format**: `specs/bluf-6.md`
 - **All skills**: `skills/*/SKILL.md`
 - **All workflows**: `workflows/*.md`

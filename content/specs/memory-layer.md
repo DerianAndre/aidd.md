@@ -13,7 +13,7 @@
 2. [File Location](#2-file-location)
 3. [Schema Definitions](#3-schema-definitions)
 4. [Usage Pattern](#4-usage-pattern)
-5. [ASDD Integration](#5-asdd-integration)
+5. [AIDD Integration](#5-aidd-integration)
 6. [Maintenance](#6-maintenance)
 
 ---
@@ -172,16 +172,16 @@ const ConventionsFile = z.object({
 
 ---
 
-## 5. ASDD Integration
+## 5. AIDD Integration
 
-The Memory Layer integrates with the ASDD lifecycle at specific phases:
+The Memory Layer integrates with the AIDD lifecycle at specific phases:
 
-| ASDD Phase | Memory Action |
+| AIDD Phase | Memory Action |
 |------------|---------------|
-| **PHASE 1 — SYNC** | Read all three memory files. Load decisions and conventions into active context. Note relevant past mistakes. |
-| **PHASE 3 — PLAN** | Check `decisions.json` for prior decisions that affect the plan. Check `mistakes.json` for known pitfalls in the planned area. |
-| **PHASE 5 — EXECUTE** | Consult `conventions.json` to ensure implementation matches project patterns. |
-| **PHASE 8 — COMMIT_IMPL** | Update `decisions.json` if new architectural decisions were made. Update `mistakes.json` if errors were encountered and resolved. Update `conventions.json` if new patterns were established. |
+| **PHASE 1 — UNDERSTAND** | Read all three memory files. Load decisions and conventions into active context. Note relevant past mistakes. |
+| **PHASE 2 — PLAN** | Check `decisions.json` for prior decisions that affect the plan. Check `mistakes.json` for known pitfalls in the planned area. |
+| **PHASE 4 — BUILD** | Consult `conventions.json` to ensure implementation matches project patterns. |
+| **PHASE 6 — SHIP** | Update `decisions.json` if new architectural decisions were made. Update `mistakes.json` if errors were encountered and resolved. Update `conventions.json` if new patterns were established. |
 
 The memory is not updated in every phase. Only when a significant, reusable insight emerges.
 

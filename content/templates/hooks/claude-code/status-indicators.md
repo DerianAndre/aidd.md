@@ -72,6 +72,6 @@ When hooks are not configured, the orchestrator LLM should emit indicators manua
 ## Cross-References
 
 - **Indicator catalog**: `rules/orchestrator.md` Section 6
-- **ASDD phase indicators**: `specs/asdd-lifecycle.md` (per-phase)
-- **Architect mode stage indicators**: `workflows/orchestrators/architect-mode.md` (per-stage)
+- **AIDD phase indicators**: `specs/aidd-lifecycle.md` (per-phase)
+- **Architect mode stage indicators**: `workflows/orchestrator.md` (per-stage)
 - **Claude Code hooks docs**: https://docs.anthropic.com/en/docs/claude-code/hooks

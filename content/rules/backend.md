@@ -1,10 +1,10 @@
-# 🔧 Backend Development Rules
+# Backend Development Rules
 
 > **Activation:** Projects containing `nest`, `express`, `fastify`, `.prisma`, `.sql`, or backend-related patterns
 
 ---
 
-## 🏛️ Architecture: Hexagonal (Ports & Adapters)
+## Architecture: Hexagonal (Ports & Adapters)
 
 ### Mandatory Layer Separation
 
@@ -31,7 +31,7 @@ src/
 
 ---
 
-## 🗄️ Database Best Practices
+## Database Best Practices
 
 ### ORM Usage (Prisma/TypeORM)
 
@@ -75,7 +75,7 @@ await db.$transaction(async (tx) => {
 
 ---
 
-## 🔐 Security Standards
+## Security Standards
 
 ### Authentication & Authorization
 
@@ -115,7 +115,7 @@ db.query("SELECT * FROM users WHERE email = ?", [email]);
 
 ---
 
-## 📡 API Design (REST)
+## API Design (REST)
 
 ### Naming Conventions
 
@@ -144,7 +144,7 @@ db.query("SELECT * FROM users WHERE email = ?", [email]);
 
 ---
 
-## ⚡ Performance
+## Performance
 
 ### Caching Strategy
 
@@ -174,7 +174,7 @@ interface PaginationQuery {
 
 ---
 
-## 🧪 Testing Requirements
+## Testing Requirements
 
 ### Coverage Targets
 
@@ -207,7 +207,7 @@ describe("UserService.createUser", () => {
 
 ---
 
-## 📦 Dependency Management
+## Dependency Management
 
 ### Allowed ORMs
 
@@ -223,7 +223,7 @@ describe("UserService.createUser", () => {
 
 ---
 
-## 🚨 Error Handling
+## Error Handling
 
 ### Custom Exception Hierarchy
 
@@ -269,3 +269,168 @@ export class AllExceptionsFilter implements ExceptionFilter {
 ---
 
 **Enforcement:** These rules are checked by `/review` and `/audit` workflows.
+
+---
+
+## Template: Backend Development
+
+> Absorbed from `templates/backend.md`
+
+### Domain-Driven Service Engineering Process
+
+Follow this sequence when building backend services: **Domain -> Schemas -> Adapters -> Wiring**.
+
+**Step 1 -- Domain Model**
+
+- Identify entities, value objects, aggregates
+- Define aggregate boundaries (consistency boundaries)
+- Map domain events (what happened, not what to do)
+- Define domain exceptions (business rule violations)
+
+**Step 2 -- Ports (Interfaces)**
+
+Define what the domain NEEDS (not how):
+
+- Repository ports: `save`, `findById`, `findAll`, `delete`
+- Service ports: external integrations (LLM, email, payment)
+- Event ports: `publish`, `subscribe`
+
+**Step 3 -- Schemas (Anti-Corruption Layer)**
+
+Zod schemas at EVERY serialization boundary:
+
+- API request/response validation
+- Storage serialization/deserialization
+- Import/export format validation
+
+**Step 4 -- Domain Services**
+
+- Pure business logic, ZERO framework dependencies
+- Only depends on: TypeScript, Zod, domain utilities
+- Operations return new instances (immutable)
+- Factory methods: `Entity.create()` not `new Entity()`
+
+**Step 5 -- Adapters**
+
+- Implement port interfaces
+- Framework-specific code lives HERE (and only here)
+- Repository adapters: database queries, ORM calls
+- Client adapters: HTTP calls, SDK usage
+
+**Step 6 -- Wiring (Composition Root)**
+
+- Connect adapters to ports
+- Dependency injection at application entry point
+- Configuration loading and validation
+
+**Step 7 -- Controllers/Handlers**
+
+- Thin layer: validate input -> call domain -> format output
+- Error mapping: domain exceptions -> HTTP status codes
+- Request validation via Zod schemas
+
+### Architecture Dependency Flow
+
+```
+Domain (pure)      -> ZERO framework dependencies
+Ports (interfaces) -> Defined in domain/ports/
+Adapters (impl)    -> Framework-specific, in infrastructure/
+Dependencies       -> Flow INWARD only
+```
+
+### Exception Layer Hierarchy
+
+| Layer | Class | Purpose |
+|-------|-------|---------|
+| Domain | `DomainException` | Business rule violations |
+| Application | `ApplicationException` | Use case failures |
+| Infrastructure | `InfrastructureException` | Technical failures (DB down, API timeout) |
+
+### Backend Quality Gates
+
+- [ ] Domain has zero framework imports
+- [ ] All ports have adapter implementations
+- [ ] Zod schemas at every boundary
+- [ ] No `SELECT *` in production queries
+- [ ] No raw SQL without parameterization
+- [ ] Error responses follow RFC 7807
+- [ ] Dependencies flow inward only
+
+---
+
+## Template: Database Engineering
+
+> Absorbed from `templates/database.md`
+
+### Schema-Driven Data Design Process
+
+Follow this sequence: **ERD -> Schema -> Queries -> Verify**.
+
+**Step 1 -- ERD Design**
+
+- Entities with attributes and types
+- Relationships: 1:1, 1:N, N:M (with junction tables)
+- Cardinality and optionality
+- Identify natural vs surrogate keys
+
+**Step 2 -- Schema/Migration**
+
+- Reversible migrations ALWAYS
+- Column types: use most restrictive appropriate type
+- NOT NULL by default, nullable only when justified
+- Default values for new columns on existing tables
+- Constraints: CHECK, UNIQUE, FK with ON DELETE strategy
+
+**Step 3 -- Index Strategy**
+
+- Query-driven indexing (not speculative)
+- Foreign keys: always indexed
+- Frequent WHERE clauses: indexed
+- Composite indexes: most selective column first
+- Partial indexes for filtered queries
+- EXPLAIN ANALYZE to verify index usage
+
+**Step 4 -- Query Patterns**
+
+- Parameterized ALWAYS (never string concatenation)
+- No `SELECT *` (specify columns explicitly)
+- N+1 prevention: eager loading, joins, or batch queries
+- Pagination: cursor-based (preferred) or offset-based
+- Transactions for multi-table operations
+
+**Step 5 -- Verification**
+
+- EXPLAIN ANALYZE on critical queries
+- Check index coverage
+- Verify N+1 elimination
+- Load test with representative data volume
+
+### ORM-Specific Standards
+
+| ORM | Key Practices |
+|-----|---------------|
+| **Prisma** | Schema as SSOT, `prisma migrate dev`, type-safe queries, `include`/`select` for eager loading, `createMany`/`updateMany` for batch |
+| **Drizzle** | Schema in TypeScript, query builder pattern, type inference from schema, prepared statements for frequent queries |
+| **TypeORM** | Decorators for entity definition, Repository pattern, QueryBuilder for complex queries, migration generation |
+| **Raw SQL** | Always parameterized (`$1`/`$2` or `?`), stored procedures for complex logic, views for commonly-joined queries |
+
+### Database Anti-Patterns
+
+- `SELECT *` in production
+- N+1 queries (1 query per related record)
+- Non-reversible migrations
+- Business logic in SQL queries
+- Missing indexes on foreign keys
+- Storing computed values that can be derived
+- VARCHAR without length limit
+- No default values on new columns for existing tables
+
+### Database Quality Gates
+
+- [ ] All migrations reversible
+- [ ] No `SELECT *`
+- [ ] Indexes on all FKs and frequent WHERE columns
+- [ ] N+1 queries eliminated
+- [ ] Data integrity in schema (not just app code)
+- [ ] EXPLAIN ANALYZE on critical queries
+- [ ] Parameterized queries (no string concatenation)

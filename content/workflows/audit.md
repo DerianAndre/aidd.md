@@ -2,13 +2,21 @@
 description: 🏗️ Evaluates hexagonal architecture and monorepo boundaries. Ensures framework agnosticism and complete decoupling. Includes /blueprint and /decouple
 ---
 
-# 🏗️ Workflow: Audit (Hexagonal Architecture)
+# Workflow: Audit (Hexagonal Architecture)
 
 > **Purpose:** Complete hexagonal architecture, monorepo boundaries, and decoupling audit
 
+## Invocation
+
+| Type | Items |
+|------|-------|
+| **Skills** | verification-before-completion |
+| **Specialized** | clean-ddd-hexagonal |
+| **MCPs** | Context7 |
+
 ---
 
-## 📋 Audit Scope
+## Audit Scope
 
 - **Hexagonal Architecture:** Domain → Application → Infrastructure
 - **Monorepo Boundaries:** Package dependencies, shared code
@@ -17,7 +25,9 @@ description: 🏗️ Evaluates hexagonal architecture and monorepo boundaries. E
 
 ---
 
-## 🏛️ Step 1: Hexagonal Architecture Audit
+## Step 1: Hexagonal Architecture Audit
+
+**Indicator**: `[aidd.md] Workflow - audit (Hexagonal Architecture Audit)`
 
 ### Verify Directory Structure
 
@@ -105,7 +115,9 @@ export class PrismaUserRepository implements UserRepository {
 
 ---
 
-## 🔗 Step 2: Monorepo Boundaries Audit
+## Step 2: Monorepo Boundaries Audit
+
+**Indicator**: `[aidd.md] Workflow - audit (Monorepo Boundaries Audit)`
 
 **If using monorepo (Nx, Turborepo, Lerna):**
 
@@ -176,7 +188,9 @@ import { mobileAuthHelper } from "@app/mobile"; // VIOLATION!
 
 ---
 
-## 🔓 Step 3: Decoupling Audit
+## Step 3: Decoupling Audit
+
+**Indicator**: `[aidd.md] Workflow - audit (Decoupling Audit)`
 
 ### Framework Agnosticism
 
@@ -245,7 +259,9 @@ const userService = new UserService(userRepo);
 
 ---
 
-## 📐 Step 4: Blueprint Generation
+## Step 4: Blueprint Generation
+
+**Indicator**: `[aidd.md] Workflow - audit (Blueprint Generation)`
 
 **Generate architecture diagram:**
 
@@ -289,7 +305,9 @@ Rel(infra, queue, "Publishes/Consumes")
 
 ---
 
-## 🔍 Step 5: Decouple Action Plan
+## Step 5: Decouple Action Plan
+
+**Indicator**: `[aidd.md] Workflow - audit (Decouple Action Plan)`
 
 **If violations found:**
 
@@ -332,7 +350,7 @@ Rel(infra, queue, "Publishes/Consumes")
 
 ---
 
-## ✅ Hexagonal Architecture Checklist
+## Hexagonal Architecture Checklist
 
 - [ ] **Domain Layer**
 
@@ -366,7 +384,7 @@ Rel(infra, queue, "Publishes/Consumes")
 
 ---
 
-## 🤖 Automation (Linting)
+## Automation (Linting)
 
 **Custom ESLint rule:**
 
@@ -404,7 +422,7 @@ module.exports = {
 
 ---
 
-## 📚 Skills & References
+## Skills & References
 
 - **Skill:** `system-architect` - For blueprint and C4 diagrams
 - **References:**
