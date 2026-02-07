@@ -27,7 +27,7 @@ impl SqliteMemoryAdapter {
 
         let db_path = PathBuf::from(active_path)
             .join(".aidd")
-            .join("memory.db");
+            .join("data.db");
 
         Ok(db_path)
     }
