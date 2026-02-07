@@ -6,13 +6,12 @@
 
 ## Package Index
 
-| Package                             | npm                   | Role    | Tools | Description                                                                                          |
-| ----------------------------------- | --------------------- | ------- | ----- | ---------------------------------------------------------------------------------------------------- |
-| [mcp-aidd-engine](mcp-aidd-engine/) | `@aidd.md/mcp-engine` | Engine  | 63    | All-in-one server — combines Core + Memory + Tools in a single process                               |
-| [mcp-aidd-core](mcp-aidd-core/)     | `@aidd.md/mcp-core`   | Brain   | 17    | Guidance, routing, knowledge — project detection, task classification, TKB queries, model routing    |
-| [mcp-aidd-memory](mcp-aidd-memory/) | `@aidd.md/mcp-memory` | Memory  | 27    | Sessions, observations, search, branch context, lifecycle, analytics, evolution, drafts, diagnostics |
-| [mcp-aidd-tools](mcp-aidd-tools/)   | `@aidd.md/mcp-tools`  | Hands   | 19    | Validation, enforcement, execution, CI — rule checking, code generation, pipeline integration        |
-| [shared](../packages/shared/)       | `@aidd.md/mcp-shared` | Library | —     | Shared types, utilities, schemas, server factory, content loader                                     |
+| Package                             | npm                   | Role   | Tools | Description                                                                                          |
+| ----------------------------------- | --------------------- | ------ | ----- | ---------------------------------------------------------------------------------------------------- |
+| [mcp-aidd-engine](mcp-aidd-engine/) | `@aidd.md/mcp-engine` | Engine | 63    | All-in-one server — combines Core + Memory + Tools in a single process                               |
+| [mcp-aidd-core](mcp-aidd-core/)     | `@aidd.md/mcp-core`   | Brain  | 17    | Guidance, routing, knowledge — project detection, task classification, TKB queries, model routing    |
+| [mcp-aidd-memory](mcp-aidd-memory/) | `@aidd.md/mcp-memory` | Memory | 27    | Sessions, observations, search, branch context, lifecycle, analytics, evolution, drafts, diagnostics |
+| [mcp-aidd-tools](mcp-aidd-tools/)   | `@aidd.md/mcp-tools`  | Hands  | 19    | Validation, enforcement, execution, CI — rule checking, code generation, pipeline integration        |
 
 ---
 

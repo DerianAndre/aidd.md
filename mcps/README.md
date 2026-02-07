@@ -46,54 +46,54 @@ That's it. The MCP detects your project, loads bundled AIDD content, and adapts 
 git clone https://github.com/DerianAndre/aidd.md
 cd aidd.md
 pnpm install
-pnpm mcp:setup
+pnpm setup
 ```
 
-`pnpm mcp:setup` does everything:
+`pnpm setup` handles everything in 7 steps:
 
 ```
-=== AIDD MCP Setup ===
+[aidd.md] Setup
 
-[1/4] Checking prerequisites...
+[1/7] Checking prerequisites...
 ✅ Node.js v22.x, pnpm 10.x
 
-[2/4] Installing dependencies...
+[2/7] Installing dependencies...
 ✅ Dependencies installed
 
-[3/4] Building MCP packages...
+[3/7] Building MCP packages...
 ✅ MCP packages built
 
-[4/4] Initializing project state...
+[4/7] Initializing project state...
 ✅ .aidd/ directory initialized
 
-=== Final Verification ===
+[5/7] Detecting IDE integrations...
+  Detected:
+    ● Claude Code → ~/.claude/mcp.json
+    ● Cursor → .cursor/mcp.json
+    ● VS Code → .vscode/mcp.json
+    ● Gemini → AGENTS.md (auto-detected)
 
-Environment
-  ✅ Node.js v22.x
-  ✅ pnpm 10.x
+  Configure these IDEs? [Y/n] Y
 
-MCP Packages
-  ✅ @aidd.md/mcp-shared built
-  ✅ @aidd.md/mcp-engine built
-  ✅ @aidd.md/mcp-core built
-  ✅ @aidd.md/mcp-memory built
-  ✅ @aidd.md/mcp-tools built
+  Mode: contributor (local build path)
 
-AIDD Framework
-  ✅ AGENTS.md found
-  ✅ rules/ (11 files)
-  ✅ skills/ (11 agents)
-  ✅ knowledge/ (106 entries)
+  ✅ Claude Code — configured
+  ✅ Cursor — configured
+  ✅ VS Code — configured
+  ✅ Gemini — auto-detected
 
-Project State (.aidd/)
-  ✅ .aidd/ directory found
-  ✅ sessions/ directory exists
-  ✅ evolution/ directory exists
+[6/7] Running diagnostics...
+[aidd.md] All checks passed!
 
-All checks passed!
+[7/7] Setup Complete
+
+  Next steps:
+    1. Open your IDE and start coding — MCPs auto-start
+    2. pnpm mcp:check  — quick status check
+    3. pnpm mcp:doctor — full diagnostics
 ```
 
-Ready to use.
+Contributors get a local build path (`node dist/index.js`) for fast MCP cold start (<1s). Open your IDE and MCPs auto-start.
 
 ---
 
@@ -101,7 +101,7 @@ Ready to use.
 
 | Command              | Description                                                                                                        |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `pnpm mcp:setup`     | **Full setup**: install deps + build + init `.aidd/` + verify                                                      |
+| `pnpm setup`         | **Full setup**: install deps + build + detect IDEs + configure + verify (alias: `pnpm mcp:setup`)                  |
 | `pnpm mcp:build`     | Build all MCP packages                                                                                             |
 | `pnpm mcp:dev`       | Watch mode for development                                                                                         |
 | `pnpm mcp:test`      | Run MCP tests                                                                                                      |
@@ -115,11 +115,11 @@ Ready to use.
 
 ```bash
 # First time (or after major changes)
-pnpm mcp:setup
+pnpm setup
 
 # Daily (after pulling latest)
-pnpm mcp:status          # quick — are packages built?
-pnpm mcp:build           # only if status says "not built"
+pnpm mcp:check           # quick — single-line status
+pnpm mcp:build           # only if check says packages not built
 
 # Something broken?
 pnpm mcp:doctor          # full diagnostic with suggested fixes
