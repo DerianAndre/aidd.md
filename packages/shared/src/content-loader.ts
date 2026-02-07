@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { readFileOrNull, listFiles } from './fs.js';
 import { aiddPaths } from './paths.js';
 import { parseFrontmatter } from './utils.js';
-import type { AiddConfig } from './types.js';
+import type { AiddConfig, ContentPaths } from './types.js';
 
 export interface ContentEntry {
   path: string;
@@ -35,6 +35,7 @@ export class ContentLoader {
     private readonly bundledRoot: string | null,
     private readonly projectAiddRoot: string | null,
     private readonly overrideMode: AiddConfig['content']['overrideMode'],
+    private readonly pathOverrides?: ContentPaths,
   ) {}
 
   /** Build or return the cached content index. */
@@ -59,7 +60,7 @@ export class ContentLoader {
   }
 
   private scanRoot(root: string): ContentIndex {
-    const paths = aiddPaths(root);
+    const paths = aiddPaths(root, this.pathOverrides);
 
     return {
       agents: this.scanFile(paths.agentsMd),

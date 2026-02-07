@@ -22,6 +22,7 @@
   ],
   "type": "module",
   "scripts": {
+    "setup": "node scripts/mcp-setup.mjs",
     "mcp:setup": "node scripts/mcp-setup.mjs",
     "mcp:build": "pnpm --filter \"./packages/shared\" --filter \"./mcps/**\" build",
     "mcp:dev": "pnpm --filter \"./packages/shared\" --filter \"./mcps/**\" dev",

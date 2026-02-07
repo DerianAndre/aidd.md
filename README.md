@@ -7,7 +7,7 @@
 > The open standard for AI-Driven Development. Multi-IDE, AI-agnostic agent coordination.
 
 **Version**: 1.0.0
-**Last Updated**: 2026-02-05
+**Last Updated**: 2026-02-07
 **License**: MIT
 **Domain**: https://aidd.md
 
@@ -30,7 +30,27 @@
 
 ## Quick Start
 
-### 1. Copy AIDD into your project
+### Contributors (clone the repo)
+
+```bash
+git clone https://github.com/DerianAndre/aidd.md.git
+cd aidd.md
+pnpm install
+pnpm setup          # builds, detects IDEs, configures, verifies
+# Open your IDE — MCPs auto-start
+```
+
+### Adopters (use in your project)
+
+**Option A — CLI (recommended):**
+
+```bash
+cd my-project
+npx @aidd.md/cli init    # copies framework, sets up .aidd/, integrates IDEs
+# Open your IDE — MCPs auto-start
+```
+
+**Option B — Manual:**
 
 ```bash
 # Copy the AIDD framework into your project
@@ -38,7 +58,7 @@ cp aidd.md/AGENTS.md your-project/AGENTS.md
 cp -r aidd.md/content/ your-project/content/
 ```
 
-### 2. Activate the agent system
+### Activate the agent system
 
 Use this prompt with any AI:
 
@@ -52,16 +72,6 @@ IMPERATIVES:
 4. Follow workflows in content/workflows/ for multi-step tasks
 
 Confirm your role and loaded rules before proceeding.
-```
-
-### 3. Install validation scripts (optional)
-
-```bash
-npm install
-npm run validate:mermaid "C4Context..."
-npm run validate:openapi spec.yaml
-npm run validate:sql schema.sql
-npm run scan:secrets src/config.ts
 ```
 
 ---
@@ -109,16 +119,16 @@ Immutable constraints — prescriptive, MUST follow. Located in `content/rules/`
 
 Formal reference documents — descriptive, detailed rationale. Located in `content/specs/`:
 
-| Specs                  | Content                                                     |
-| ---------------------- | ----------------------------------------------------------- |
-| `aidd-lifecycle.md`    | 6-phase AI-Driven Development lifecycle                     |
-| `bluf-6.md`            | 6-part communication protocol                               |
-| `heuristics.md`        | 10 decision heuristics with examples                        |
-| `version-protocol.md`  | 4-step version verification                                 |
-| `memory-layer.md`      | Project memory integration (decisions/mistakes/conventions) |
-| `supported-agents.md`  | Agent registry and role definitions                         |
-| `model-matrix.md`      | Multi-provider model routing matrix                         |
-| `prompt-evolution.md`  | Prompt evolution and optimization patterns                  |
+| Specs                 | Content                                                     |
+| --------------------- | ----------------------------------------------------------- |
+| `aidd-lifecycle.md`   | 6-phase AI-Driven Development lifecycle                     |
+| `bluf-6.md`           | 6-part communication protocol                               |
+| `heuristics.md`       | 10 decision heuristics with examples                        |
+| `version-protocol.md` | 4-step version verification                                 |
+| `memory-layer.md`     | Project memory integration (decisions/mistakes/conventions) |
+| `supported-agents.md` | Agent registry and role definitions                         |
+| `model-matrix.md`     | Multi-provider model routing matrix                         |
+| `prompt-evolution.md` | Prompt evolution and optimization patterns                  |
 
 ### Skills (11 directories)
 
@@ -132,13 +142,13 @@ Multi-step procedures located in `content/workflows/`: orchestrator, analyze, au
 
 Standalone protocol templates located in `content/templates/`. Domain-specific content has been absorbed into `content/rules/`, `content/skills/`, and `content/workflows/`. See `content/templates/routing.md` for the full routing table.
 
-| Template               | Purpose                                               |
-| ---------------------- | ----------------------------------------------------- |
-| brainstorming.md       | Diverge → Analyze → Converge → Document protocol      |
-| research.md            | Multi-source investigation and synthesis               |
-| penetration-testing.md | Authorized offensive security testing                  |
-| migration.md           | Version upgrades and breaking change management        |
-| routing.md             | Task-to-template/rule/skill/workflow routing (SSOT)    |
+| Template               | Purpose                                             |
+| ---------------------- | --------------------------------------------------- |
+| brainstorming.md       | Diverge → Analyze → Converge → Document protocol    |
+| research.md            | Multi-source investigation and synthesis            |
+| penetration-testing.md | Authorized offensive security testing               |
+| migration.md           | Version upgrades and breaking change management     |
+| routing.md             | Task-to-template/rule/skill/workflow routing (SSOT) |
 
 ### Knowledge Base (106 entries)
 
@@ -218,12 +228,16 @@ aidd.md/
 
 ## IDE Integration
 
-| IDE         | Setup                                | Details                |
-| ----------- | ------------------------------------ | ---------------------- |
-| Antigravity | Auto-loads AGENTS.md natively        | See `adapters/gemini/` |
-| Cursor      | Symlink `.cursor/rules` → `content/rules/` | See `adapters/cursor/` |
-| Claude Code | Auto-discovers skills from `content/skills/` | See `adapters/claude/` |
-| Warp        | WARP.md guidance file                | See `adapters/warp/`   |
+`pnpm setup` auto-detects and configures all supported IDEs:
+
+| IDE | Detection | Config | How It Works |
+|-----|-----------|--------|--------------|
+| Claude Code | `~/.claude/` exists | `~/.claude/mcp.json` | MCP engine auto-starts on session open |
+| Cursor | Always available | `.cursor/mcp.json` | MCP engine auto-starts on project open |
+| VS Code | `.vscode/` or `code` CLI | `.vscode/mcp.json` | MCP engine auto-starts via Copilot |
+| Gemini | `AGENTS.md` exists | Auto-detected | Reads AGENTS.md directly (no MCP needed) |
+
+Run `pnpm mcp:doctor` to verify IDE integration status.
 
 ---
 

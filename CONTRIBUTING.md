@@ -26,25 +26,27 @@ Thank you for your interest in contributing to AIDD. This document provides guid
 
 1. Fork the repository
 2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/aidd.md.git`
-3. Create a feature branch: `git checkout -b feature/your-contribution`
-4. Install dependencies: `npm install` (for validation scripts)
+3. Install and setup: `pnpm install && pnpm setup`
+4. Create a feature branch: `git checkout -b feature/your-contribution`
 5. Make your changes following the guidelines below
 6. Submit a pull request
+
+`pnpm setup` handles everything: installs dependencies, builds MCP packages, detects your IDEs (Claude Code, Cursor, VS Code), configures MCP auto-start, and runs diagnostics.
 
 ---
 
 ## 2. Types of Contributions
 
-| Type      | Location                          | Description                                            |
-| --------- | --------------------------------- | ------------------------------------------------------ |
-| Rule      | `content/rules/`                  | Immutable constraint files (prescriptive, MUST follow) |
-| Skill     | `content/skills/<name>/SKILL.md`  | Specialized agent capabilities with optional scripts   |
-| Workflow  | `content/workflows/`              | Multi-step procedures for common tasks                 |
-| Template  | `content/templates/`              | Task-specific development templates                    |
-| Specs     | `content/specs/`                  | Formal specification documents (descriptive reference) |
-| Knowledge | `content/knowledge/<domain>/`     | Technology Knowledge Base entries                      |
-| Adapter   | `adapters/<ide>/`                 | IDE/AI integration guides                              |
-| Example   | `examples/`                       | Example project setups                                 |
+| Type      | Location                         | Description                                            |
+| --------- | -------------------------------- | ------------------------------------------------------ |
+| Rule      | `content/rules/`                 | Immutable constraint files (prescriptive, MUST follow) |
+| Skill     | `content/skills/<name>/SKILL.md` | Specialized agent capabilities with optional scripts   |
+| Workflow  | `content/workflows/`             | Multi-step procedures for common tasks                 |
+| Template  | `content/templates/`             | Task-specific development templates                    |
+| Specs     | `content/specs/`                 | Formal specification documents (descriptive reference) |
+| Knowledge | `content/knowledge/<domain>/`    | Technology Knowledge Base entries                      |
+| Adapter   | `adapters/<ide>/`                | IDE/AI integration guides                              |
+| Example   | `examples/`                      | Example project setups                                 |
 
 ---
 
@@ -170,7 +172,7 @@ The Technology Knowledge Base (TKB) contains quantified metrics. Place in `conte
 
 1. Ensure your contribution follows the format guidelines above
 2. Update `AGENTS.md` if your change affects the system map or agent roles
-3. Run validation scripts if applicable: `npm run validate:mermaid`, `npm run validate:openapi`, etc.
+3. Run validation scripts if applicable: `pnpm validate:mermaid`, `pnpm validate:openapi`, etc.
 4. Write a clear PR description explaining what you're adding and why
 5. Reference any related issues
 

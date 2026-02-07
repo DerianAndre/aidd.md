@@ -117,7 +117,28 @@ export interface AiddConfig {
   };
   content: {
     overrideMode: 'merge' | 'project_only' | 'bundled_only';
+    paths?: ContentPaths;
   };
+}
+
+/** Custom content paths — all relative to project root. */
+export interface ContentPaths {
+  /** Override the base content directory (default: "content"). */
+  content?: string;
+  /** Override AGENTS.md location (default: "AGENTS.md"). */
+  agents?: string;
+  /** Override rules directory (default: "content/rules"). */
+  rules?: string;
+  /** Override skills directory (default: "content/skills"). */
+  skills?: string;
+  /** Override workflows directory (default: "content/workflows"). */
+  workflows?: string;
+  /** Override specs directory (default: "content/specs"). */
+  specs?: string;
+  /** Override knowledge directory (default: "content/knowledge"). */
+  knowledge?: string;
+  /** Override templates directory (default: "content/templates"). */
+  templates?: string;
 }
 
 export const DEFAULT_CONFIG: AiddConfig = {

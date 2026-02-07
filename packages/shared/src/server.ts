@@ -34,7 +34,12 @@ export function createAiddServer(options: AiddServerOptions): McpServer {
 
   // Create content loader
   // TODO: bundledRoot will be set when content bundling is implemented
-  const contentLoader = new ContentLoader(null, aiddRoot, config.content.overrideMode);
+  const contentLoader = new ContentLoader(
+    null,
+    aiddRoot,
+    config.content.overrideMode,
+    config.content.paths,
+  );
 
   // Build module context
   const context: ModuleContext = {

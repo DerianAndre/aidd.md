@@ -26,6 +26,7 @@ export type {
   BannedPattern,
   BannedPatternFilter,
   BranchContext,
+  ContentPaths,
   ContextBudget,
   DraftEntry,
   DraftFilter,

@@ -1,7 +1,7 @@
 # AIDD — Project Instructions for Claude Code
 
 > AI-Driven Development Framework — MCP Ecosystem
-> **Last Updated**: 2026-02-06
+> **Last Updated**: 2026-02-07
 
 ---
 
@@ -48,7 +48,7 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 
 | Command              | Purpose                                                                                         |
 | -------------------- | ----------------------------------------------------------------------------------------------- |
-| `pnpm mcp:setup`     | Full setup: install deps, build packages, init .aidd/                                           |
+| `pnpm setup`         | Full setup: install deps, build, detect IDEs, configure, verify (alias: `pnpm mcp:setup`)       |
 | `pnpm mcp:build`     | Build all MCP packages                                                                          |
 | `pnpm mcp:dev`       | Watch mode for MCP development                                                                  |
 | `pnpm mcp:test`      | Run MCP tests                                                                                   |

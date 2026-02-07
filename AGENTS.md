@@ -2,7 +2,7 @@
 
 > The open standard for AI-Driven Development. Multi-IDE, AI-agnostic agent coordination.
 
-**Last Updated**: 2026-02-05
+**Last Updated**: 2026-02-07
 **Version**: 1.0.0
 **Maintainer**: DerianAndre
 **License**: MIT
@@ -177,8 +177,17 @@ See [`content/workflows/SPEC.md`](./content/workflows/SPEC.md) for orchestrator 
 ## Core Operation Commands
 
 ```bash
-# Not applicable for this framework repo
-# In real projects, define specific commands here
+# Setup (one-time — builds, configures IDEs, verifies)
+pnpm setup
+
+# Quick status check
+pnpm mcp:check
+
+# Full diagnostics
+pnpm mcp:doctor
+
+# Rebuild MCP packages after changes
+pnpm mcp:build
 ```
 
 ---
@@ -235,27 +244,29 @@ your-project/
 
 ## Multi-IDE Integration
 
-### Antigravity (Current)
+Run `pnpm setup` to auto-detect and configure all supported IDEs. The setup script detects installed tools, asks for confirmation, and writes the appropriate MCP config files.
 
-- **Path:** Project root (AGENTS.md + content/)
-- **Activation:** Automatic reading of `AGENTS.md` at session start
-- **Workflows:** Auto-detected in `content/workflows/*.md`
+| IDE | Detection | Config Location | Mode |
+|-----|-----------|-----------------|------|
+| Claude Code | `~/.claude/` exists | `~/.claude/mcp.json` (global) | MCP auto-start |
+| Cursor | Always available | `.cursor/mcp.json` (project) | MCP auto-start |
+| VS Code | `.vscode/` or `code` CLI | `.vscode/mcp.json` (project) | MCP auto-start |
+| Gemini | `AGENTS.md` exists | Auto-detected (no config needed) | Reads AGENTS.md directly |
 
-### Cursor
+Contributors get a local build path for fast startup (<1s). Adopters using `npx @aidd.md/cli init` get the `npx` command (portable, always resolves).
 
-```bash
-# Create symlink to AIDD content directory
-mklink /D .cursor\rules content\rules
-```
+### Manual configuration
 
-### Claude Code
+If `pnpm setup` doesn't detect your IDE, use `aidd integrate <tool>` or manually add to your MCP config:
 
 ```json
-// In project configuration
 {
-  "mcp": {
-    "skillsPath": "content/skills",
-    "rulesPath": "content/rules"
+  "mcpServers": {
+    "aidd-engine": {
+      "command": "npx",
+      "args": ["-y", "@aidd.md/mcp-engine"],
+      "env": { "AIDD_PROJECT_PATH": "/path/to/project" }
+    }
   }
 }
 ```

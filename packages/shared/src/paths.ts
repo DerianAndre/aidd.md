@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import type { ContentPaths } from './types.js';
 
 /**
  * Finds the project root by walking up from a start directory.
@@ -41,17 +42,33 @@ export function detectAiddRoot(projectRoot: string): string {
   return projectRoot;
 }
 
-/** Standard AIDD paths relative to an AIDD root. */
-export function aiddPaths(aiddRoot: string) {
-  const content = resolve(aiddRoot, 'content');
+/**
+ * Standard AIDD paths relative to an AIDD root.
+ * Accepts optional path overrides from config.content.paths.
+ * Granular paths (e.g. paths.rules) take priority over the base content path.
+ */
+export function aiddPaths(aiddRoot: string, overrides?: ContentPaths) {
+  const contentDir = overrides?.content
+    ? resolve(aiddRoot, overrides.content)
+    : resolve(aiddRoot, 'content');
   return {
-    agentsMd: resolve(aiddRoot, 'AGENTS.md'),
-    rules: resolve(content, 'rules'),
-    skills: resolve(content, 'skills'),
-    workflows: resolve(content, 'workflows'),
-    specs: resolve(content, 'specs'),
-    knowledge: resolve(content, 'knowledge'),
-    templates: resolve(content, 'templates'),
+    agentsMd: overrides?.agents
+      ? resolve(aiddRoot, overrides.agents)
+      : resolve(aiddRoot, 'AGENTS.md'),
+    rules: overrides?.rules ? resolve(aiddRoot, overrides.rules) : resolve(contentDir, 'rules'),
+    skills: overrides?.skills
+      ? resolve(aiddRoot, overrides.skills)
+      : resolve(contentDir, 'skills'),
+    workflows: overrides?.workflows
+      ? resolve(aiddRoot, overrides.workflows)
+      : resolve(contentDir, 'workflows'),
+    specs: overrides?.specs ? resolve(aiddRoot, overrides.specs) : resolve(contentDir, 'specs'),
+    knowledge: overrides?.knowledge
+      ? resolve(aiddRoot, overrides.knowledge)
+      : resolve(contentDir, 'knowledge'),
+    templates: overrides?.templates
+      ? resolve(aiddRoot, overrides.templates)
+      : resolve(contentDir, 'templates'),
   } as const;
 }
 
