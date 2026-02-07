@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import { loadHubData } from '../lib/hub-store.js';
-import { integrate, integrateAll, listTools, type IntegrationTool } from '../lib/integrations.js';
+import { integrate, integrateAll, listTools, type IntegrationTool } from '../lib/integrations/index.js';
 
 /**
  * `aidd integrate <tool> [--project <path>]` — Configure integration.
