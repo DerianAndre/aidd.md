@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PageHeader } from '../../../components/layout/page-header';
 import { ProjectContextBanner } from '../components/project-context-banner';
 import { McpStatusPanel } from '../components/mcp-status-panel';
+import { MemoryPanel } from '../../memory/components/memory-panel';
 import { FrameworkOverviewGrid } from '../components/framework-overview-grid';
 import { HealthDiagnosticsWidget } from '../components/health-diagnostics-widget';
 import { IntelligenceWidget } from '../components/intelligence-widget';
@@ -21,6 +22,9 @@ export function DashboardPage() {
 
       {/* B. MCP Engine — prominent panel */}
       <McpStatusPanel />
+
+      {/* B2. Memory Status — session and evolution overview */}
+      <MemoryPanel />
 
       {/* C. Framework overview — 6 category cells */}
       <FrameworkOverviewGrid />
