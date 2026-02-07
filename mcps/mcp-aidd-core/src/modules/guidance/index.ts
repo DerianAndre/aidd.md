@@ -458,12 +458,12 @@ export const guidanceModule: AiddModule = {
         }
 
         if (!currentTask) {
-          if (!recentSet.has('aidd_bootstrap')) {
+          if (!recentSet.has('aidd_start')) {
             suggestions.push({
-              action: 'Bootstrap conversation context',
-              tool: 'aidd_bootstrap',
+              action: 'Start AIDD conversation',
+              tool: 'aidd_start',
               args: {},
-              reason: 'Start every conversation with project context',
+              reason: 'Start every conversation with aidd_start (auto-starts session + loads framework)',
             });
           }
           suggestions.push({

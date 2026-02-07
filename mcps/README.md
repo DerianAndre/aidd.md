@@ -191,7 +191,7 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 | ---------------------------- | ---------------------------------------------------------------------------- |
 | `aidd_detect_project`        | Scan directory for AIDD markers + parse package.json stack                   |
 | `aidd_get_config`            | Return active MCP configuration                                              |
-| `aidd_bootstrap`             | One-call conversation start: project + agents + rules + memory + suggestions |
+| `aidd_start`                 | One-call startup: auto-starts session + loads agents, rules, workflows, skills, specs |
 | `aidd_classify_task`         | Task description → agent roles, workflows, templates                         |
 | `aidd_get_routing_table`     | Complete task→agent→workflow routing table                                   |
 | `aidd_query_tkb`             | Filter/search Technology Knowledge Base by category, maturity, keyword       |
@@ -344,7 +344,7 @@ AIDD provides optional hook templates for automatic memory capture:
 templates/hooks/
   claude-code/
     hooks.json          # Claude Code hook definitions
-    session-start.mjs   # Auto-inject context via aidd_bootstrap
+    session-start.mjs   # Auto-inject context via aidd_start
     post-tool-use.mjs   # Auto-capture observations
     session-end.mjs     # Auto-generate session summary
   cursor/

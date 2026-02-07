@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardAction, CardContent } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Brain, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
+import { Brain, ArrowRight, AlertCircle, RefreshCw, DatabaseZap } from 'lucide-react';
 import { useMemoryStore } from '../stores/memory-store';
 import { ROUTES } from '@/lib/constants';
 
@@ -38,6 +38,7 @@ export function MemoryPanel() {
   const sessionActive = sessionSummary?.active ?? 0;
   const evolutionPending = evolutionStatus?.pending_count ?? 0;
   const patternActive = patternStats?.active_patterns ?? 0;
+  const isEmpty = !loading && !error && sessionTotal === 0 && evolutionPending === 0 && patternActive === 0;
 
   return (
     <Card className="mb-4 border-primary/20 py-4 gap-3">
@@ -99,8 +100,19 @@ export function MemoryPanel() {
           </div>
         )}
 
+        {/* Empty State */}
+        {isEmpty && (
+          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-muted-foreground/20 py-6 text-center">
+            <DatabaseZap size={24} className="text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">No memory data yet</p>
+            <p className="text-xs text-muted-foreground/70">
+              Start an AIDD MCP session to begin recording decisions, observations, and patterns.
+            </p>
+          </div>
+        )}
+
         {/* Stats Grid */}
-        {!loading && !error && (
+        {!loading && !error && !isEmpty && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {/* Sessions */}
             <div className="flex flex-col gap-1 rounded-lg bg-secondary/30 p-3">

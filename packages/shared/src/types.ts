@@ -15,6 +15,13 @@ export interface ModuleContext {
   readonly logger: Logger;
   readonly projectRoot: string;
   readonly aiddDir: string;
+  /**
+   * Cross-module service registry.
+   * Modules register callable services during `register()`.
+   * Other modules invoke them later in tool handlers.
+   * The `readonly` prevents reassigning the object, but allows adding keys.
+   */
+  readonly services: Record<string, (...args: unknown[]) => Promise<unknown>>;
 }
 
 /** Module interface — every AIDD module implements this. */

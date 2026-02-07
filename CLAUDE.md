@@ -7,13 +7,15 @@
 
 ## Startup Protocol
 
-**Run at the start of every conversation:**
+**Run at the start of every conversation — no exceptions, including continuation sessions:**
 
-1. **MCP available** — Call the `aidd_bootstrap` MCP tool. This returns project detection, agent summary, active rules, and suggested next steps.
+1. **MCP available** — Call `aidd_start`. This single call detects the project, auto-starts a session, loads agents, enforces rules, and returns the full AIDD framework context. Pass `aiProvider` and `taskClassification` if known.
 2. **MCP unavailable (fallback)** — Run `pnpm mcp:check` in the terminal.
 
+Step 1 is **mandatory**. `aidd_start` replaces the old `aidd_bootstrap` + `aidd_session` two-step flow.
+
 Expected status from fallback:
-- `[aidd.md] Engine - ONy` — All MCP packages built and ready
+- `[aidd.md] Engine - ON` — All MCP packages built and ready
 - `[aidd.md] Engine - PARTIAL` — Some packages need rebuilding
 - `[aidd.md] Engine - OFF` — Setup required
 

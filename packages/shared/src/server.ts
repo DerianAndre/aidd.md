@@ -49,6 +49,7 @@ export function createAiddServer(options: AiddServerOptions): McpServer {
     logger,
     projectRoot,
     aiddDir: state.root,
+    services: {},
   };
 
   // Create MCP server

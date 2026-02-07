@@ -26,7 +26,7 @@ const AGENTS_MD_REDIRECT = `# AGENTS.md
 
 **At the start of every conversation, do one of the following:**
 
-1. **MCP available** — Call the \`aidd_bootstrap\` MCP tool.
+1. **MCP available** — Call the \`aidd_start\` MCP tool.
 2. **MCP unavailable** — Run \`pnpm mcp:check\` in the terminal.
 
 ## Agent Definitions

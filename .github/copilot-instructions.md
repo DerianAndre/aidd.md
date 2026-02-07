@@ -4,7 +4,7 @@
 
 ## Startup Protocol
 
-At the start of every conversation, call the `aidd_bootstrap` MCP tool.
+At the start of every conversation, call the `aidd_start` MCP tool.
 If MCP is unavailable, run `pnpm mcp:check` in the terminal.
 
 ## Agent Definitions

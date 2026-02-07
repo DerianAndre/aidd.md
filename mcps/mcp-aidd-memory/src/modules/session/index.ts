@@ -98,7 +98,49 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
     name: 'session',
     description: 'Session lifecycle management — start, update, end, list',
 
-    register(server: McpServer, _context: ModuleContext) {
+    register(server: McpServer, context: ModuleContext) {
+      // -----------------------------------------------------------------------
+      // Cross-module service: startSession
+      // Called by aidd_start in core to auto-start sessions.
+      // -----------------------------------------------------------------------
+      context.services['startSession'] = async (...args: unknown[]) => {
+        const params = (args[0] ?? {}) as Record<string, unknown>;
+        const backend = await storage.getBackend();
+
+        const session: SessionState = {
+          id: generateId(),
+          memorySessionId: params['memorySessionId'] as string | undefined,
+          parentSessionId: params['parentSessionId'] as string | undefined,
+          branch: (params['branch'] as string) || 'main',
+          startedAt: now(),
+          aiProvider: (params['aiProvider'] as AiProvider) ?? {
+            provider: 'unknown',
+            model: 'unknown',
+            modelId: 'unknown',
+            client: 'unknown',
+          },
+          decisions: [],
+          errorsResolved: [],
+          filesModified: [],
+          tasksCompleted: [],
+          tasksPending: [],
+          agentsUsed: [],
+          skillsUsed: [],
+          toolsCalled: [],
+          rulesApplied: [],
+          workflowsFollowed: [],
+          tkbEntriesConsulted: [],
+          taskClassification: (params['taskClassification'] as SessionState['taskClassification']) ?? {
+            domain: 'unknown',
+            nature: 'unknown',
+            complexity: 'unknown',
+          },
+        };
+
+        await backend.saveSession(session);
+        return { id: session.id, status: 'active', startedAt: session.startedAt };
+      };
+
       registerTool(server, {
         name: 'aidd_session',
         description:

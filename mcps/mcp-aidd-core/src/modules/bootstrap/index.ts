@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { execFileSync } from 'node:child_process';
 import {
   registerTool,
   createJsonResult,
@@ -8,9 +9,30 @@ import {
 import type { AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Detect current git branch from project root. Falls back to 'main'. */
+function detectGitBranch(projectRoot: string): string {
+  try {
+    return execFileSync('git', ['branch', '--show-current'], {
+      cwd: projectRoot,
+      encoding: 'utf8',
+      timeout: 3000,
+    }).trim() || 'main';
+  } catch {
+    return 'main';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Module
+// ---------------------------------------------------------------------------
+
 export const bootstrapModule: AiddModule = {
   name: 'bootstrap',
-  description: 'Project detection, configuration, and conversation bootstrapping',
+  description: 'Project detection, configuration, and comprehensive AIDD startup',
 
   register(server: McpServer, context: ModuleContext) {
     // -----------------------------------------------------------------------
@@ -61,7 +83,6 @@ export const bootstrapModule: AiddModule = {
         if (agentsEntries.length === 0) {
           return { contents: [{ uri: uri.href, text: 'No agent definitions found. Use aidd_scaffold to initialize.', mimeType: 'text/markdown' }] };
         }
-        // Concatenate all agent files, index.md first
         const sorted = [...agentsEntries].sort((a, b) =>
           a.name === 'index.md' ? -1 : b.name === 'index.md' ? 1 : a.name.localeCompare(b.name),
         );
@@ -71,10 +92,11 @@ export const bootstrapModule: AiddModule = {
     );
 
     // -----------------------------------------------------------------------
-    // aidd_bootstrap
+    // aidd_start — THE single startup call
+    // Replaces aidd_bootstrap. Auto-starts session + loads full framework.
     // -----------------------------------------------------------------------
     registerTool(server, {
-      name: 'aidd_bootstrap',
+      name: 'aidd_start',
       description:
         'One-call conversation starter: returns project detection, agent summary, active rules, and suggested next steps. Call this at the beginning of every conversation.',
       schema: {
@@ -82,18 +104,88 @@ export const bootstrapModule: AiddModule = {
           .string()
           .optional()
           .describe('Project path to bootstrap from. Defaults to detected project root.'),
+        branch: z
+          .string()
+          .optional()
+          .describe('Git branch name. Auto-detected if omitted.'),
+        aiProvider: z
+          .object({
+            provider: z.string(),
+            model: z.string(),
+            modelId: z.string(),
+            client: z.string(),
+            modelTier: z.string().optional(),
+          })
+          .optional()
+          .describe('AI provider info. Uses defaults if omitted.'),
+        taskClassification: z
+          .object({
+            domain: z.string(),
+            nature: z.string(),
+            complexity: z.string(),
+          })
+          .optional()
+          .describe('Task classification'),
+        memorySessionId: z
+          .string()
+          .optional()
+          .describe('Cross-session continuity ID'),
+        parentSessionId: z
+          .string()
+          .optional()
+          .describe('Parent session for threading'),
       },
-      annotations: { readOnlyHint: true, idempotentHint: true },
+      annotations: { idempotentHint: false },
       handler: async (args) => {
-        const projectPath = (args as { path?: string }).path;
+        const a = args as Record<string, unknown>;
+        const projectPath = a['path'] as string | undefined;
         const info = projectPath ? detectProject(projectPath) : context.projectInfo;
         const index = context.contentLoader.getIndex();
 
         const sections: string[] = [];
 
-        // --- Project Detection ---
-        sections.push('[\[aidd.md\]](https://aidd.md) Engine - ON');
+        // =================================================================
+        // 1. Auto-start session via cross-module service
+        // =================================================================
+        let sessionId: string | null = null;
+        const startSession = context.services['startSession'];
 
+        if (startSession) {
+          try {
+            const branch = (a['branch'] as string) || detectGitBranch(context.projectRoot);
+            const result = await startSession({
+              branch,
+              aiProvider: a['aiProvider'] ?? {
+                provider: 'unknown',
+                model: 'unknown',
+                modelId: 'unknown',
+                client: 'unknown',
+              },
+              taskClassification: a['taskClassification'],
+              memorySessionId: a['memorySessionId'],
+              parentSessionId: a['parentSessionId'],
+            }) as { id: string; status: string; startedAt: string };
+
+            sessionId = result.id;
+          } catch (err) {
+            context.logger.error('Failed to auto-start session:', err);
+          }
+        }
+
+        // =================================================================
+        // 2. Engine header
+        // =================================================================
+        sections.push('\\[\\[aidd.md\\]\\](https://aidd.md) Engine - ON');
+
+        if (sessionId) {
+          sections.push(`- **Session**: \`${sessionId}\` (active)`);
+        } else {
+          sections.push('- **Session**: failed to auto-start — call `aidd_session { action: "start" }` manually');
+        }
+
+        // =================================================================
+        // 3. Project detection
+        // =================================================================
         if (info.stack.name) {
           sections.push(`- **Package**: ${info.stack.name}${info.stack.version ? ` v${info.stack.version}` : ''}`);
         }
@@ -111,55 +203,99 @@ export const bootstrapModule: AiddModule = {
           sections.push(`- **Markers**: ${markers.join(', ')}`);
         }
 
-        // --- Agents Summary ---
+        // =================================================================
+        // 4. Agents (SSOT) — full routing.md content
+        // =================================================================
         if (index.agents.length > 0) {
           sections.push('\n## Agents (SSOT)\n');
-          // Prefer routing.md as overview, fall back to first entry
-          const mainAgent = index.agents.find((a) => a.name === 'routing.md') ?? index.agents[0]!;
-          const agentsContent = mainAgent.getContent();
-          // Show first ~30 lines (agent definitions overview)
-          const agentsLines = agentsContent.split('\n').slice(0, 30);
-          sections.push(agentsLines.join('\n'));
-          if (agentsContent.split('\n').length > 30) {
-            sections.push('\n*[Use `aidd_get_agent` or `aidd_get_competency_matrix` for full details]*');
-          }
+          const mainAgent = index.agents.find((ag) => ag.name === 'routing.md') ?? index.agents[0]!;
+          sections.push(mainAgent.getContent());
           if (index.agents.length > 1) {
-            sections.push(`\n*${index.agents.length} agent definition files available*`);
+            sections.push(`\n*${index.agents.length} agent files available — use \`aidd_get_agent\` for individual agents*`);
           }
         }
 
-        // --- Active Rules ---
+        // =================================================================
+        // 5. Active Rules — full content (must be enforced)
+        // =================================================================
         if (index.rules.length > 0) {
-          sections.push('\n## Active Rules\n');
+          sections.push('\n## Active Rules (ENFORCE)\n');
           for (const rule of index.rules) {
-            const label = rule.frontmatter['title'] ?? rule.name.replace('.md', '');
-            sections.push(`- ${label}`);
+            const title = rule.frontmatter['title'] ?? rule.name.replace('.md', '');
+            const content = rule.getContent();
+            sections.push(`### ${title}\n`);
+            sections.push(content);
+            sections.push('');
           }
         }
 
-        // --- Content Summary ---
-        const contentSummary: string[] = [];
-        if (index.skills.length > 0) contentSummary.push(`${index.skills.length} skills`);
-        if (index.workflows.length > 0) contentSummary.push(`${index.workflows.length} workflows`);
-        if (index.knowledge.length > 0) contentSummary.push(`${index.knowledge.length} TKB entries`);
-        if (index.templates.length > 0) contentSummary.push(`${index.templates.length} templates`);
-        if (index.specs.length > 0) contentSummary.push(`${index.specs.length} specs`);
-
-        if (contentSummary.length > 0) {
-          sections.push(`\n## Content Available\n`);
-          sections.push(contentSummary.join(' | '));
+        // =================================================================
+        // 6. Workflows — list with descriptions
+        // =================================================================
+        if (index.workflows.length > 0) {
+          sections.push('\n## Workflows\n');
+          for (const wf of index.workflows) {
+            const title = wf.frontmatter['title'] ?? wf.name.replace('.md', '');
+            const desc = wf.frontmatter['description'] ?? '';
+            const invocation = wf.frontmatter['invocation'] ?? '';
+            sections.push(`- **${title}**${invocation ? ` (\`${invocation}\`)` : ''}${desc ? ` — ${desc}` : ''}`);
+          }
         }
 
-        // --- Suggestions ---
-        sections.push('\n## Suggested Next Steps\n');
+        // =================================================================
+        // 7. Skills — list with triggers
+        // =================================================================
+        if (index.skills.length > 0) {
+          sections.push('\n## Skills\n');
+          for (const skill of index.skills) {
+            const title = skill.frontmatter['title'] ?? skill.name.replace('.md', '');
+            const triggers = skill.frontmatter['triggers'] ?? '';
+            sections.push(`- **${title}**${triggers ? ` — triggers: ${triggers}` : ''}`);
+          }
+        }
+
+        // =================================================================
+        // 8. Specs — list
+        // =================================================================
+        if (index.specs.length > 0) {
+          sections.push('\n## Specs\n');
+          for (const spec of index.specs) {
+            const title = spec.frontmatter['title'] ?? spec.name.replace('.md', '');
+            sections.push(`- ${title}`);
+          }
+        }
+
+        // =================================================================
+        // 9. Knowledge (TKB) — list with categories
+        // =================================================================
+        if (index.knowledge.length > 0) {
+          sections.push('\n## Knowledge (TKB)\n');
+          for (const entry of index.knowledge) {
+            const name = entry.frontmatter['name'] ?? entry.name.replace('.md', '');
+            const category = entry.frontmatter['category'] ?? '';
+            const maturity = entry.frontmatter['maturity'] ?? '';
+            sections.push(`- **${name}**${category ? ` [${category}]` : ''}${maturity ? ` (${maturity})` : ''}`);
+          }
+        }
+
+        // =================================================================
+        // 10. Templates — list
+        // =================================================================
+        if (index.templates.length > 0) {
+          sections.push('\n## Templates\n');
+          for (const tpl of index.templates) {
+            const title = tpl.frontmatter['title'] ?? tpl.name.replace('.md', '');
+            sections.push(`- ${title}`);
+          }
+        }
+
+        // =================================================================
+        // 11. Suggested next steps (only if AIDD not detected)
+        // =================================================================
         if (!info.detected) {
+          sections.push('\n## Setup Required\n');
           sections.push('1. **Initialize AIDD**: `aidd_scaffold { preset: "standard" }`');
           sections.push('2. **Classify your task**: `aidd_classify_task { description: "..." }`');
-        } else {
-          sections.push('1. **Classify your task**: `aidd_classify_task { description: "..." }`');
-          sections.push('2. **Explore technologies**: `aidd_query_tkb { category: "..." }`');
-          sections.push('3. **Apply heuristics**: `aidd_apply_heuristics { decision: "..." }`');
-          sections.push('4. **Get optimal context**: `aidd_optimize_context`');
         }
 
         return createTextResult(sections.join('\n'));

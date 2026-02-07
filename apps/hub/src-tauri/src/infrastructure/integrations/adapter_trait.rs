@@ -121,7 +121,7 @@ pub(crate) fn agents_redirect() -> String {
 
 **At the start of every conversation, do one of the following:**
 
-1. **MCP available** — Call the `aidd_bootstrap` MCP tool.
+1. **MCP available** — Call the `aidd_start` MCP tool.
 2. **MCP unavailable** — Run `pnpm mcp:check` in the terminal.
 
 ## Agent Definitions
@@ -191,7 +191,7 @@ r#"# {} — {} Instructions
 
 **At the start of every conversation, do one of the following:**
 
-1. **MCP available** — Call the `aidd_bootstrap` MCP tool.
+1. **MCP available** — Call the `aidd_start` MCP tool.
 2. **MCP unavailable** — Run `pnpm mcp:check` in the terminal.
 
 ## SSOT
@@ -220,7 +220,7 @@ pub(crate) fn rules_pointer() -> String {
 
 ## Startup Protocol
 
-At the start of every conversation, call the `aidd_bootstrap` MCP tool.
+At the start of every conversation, call the `aidd_start` MCP tool.
 If MCP is unavailable, run `pnpm mcp:check` in the terminal.
 
 ## Framework

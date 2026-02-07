@@ -49,29 +49,29 @@ export const useMemoryStore = create<MemoryStoreState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      // Call Tauri commands to fetch data from the backend
+      // Call Tauri commands — collect errors instead of swallowing them
+      const errors: string[] = [];
+
       const [sessionSummary, evolutionStatus, patternStats] = await Promise.all([
-        invoke<SessionSummary>('get_sessions').catch(() => ({
-          total: 0,
-          active: 0,
-          completed: 0,
-          recent_sessions: [],
-        })),
-        invoke<EvolutionStatus>('get_evolution_status').catch(() => ({
-          pending_count: 0,
-          approved_count: 0,
-          rejected_count: 0,
-          auto_applied_count: 0,
-        })),
-        invoke<PatternStats>('get_pattern_stats').catch(() => ({
-          total_patterns: 0,
-          active_patterns: 0,
-          total_detections: 0,
-          false_positives: 0,
-        })),
+        invoke<SessionSummary>('get_sessions').catch((e) => {
+          errors.push(String(e));
+          return { total: 0, active: 0, completed: 0, recent_sessions: [] } as SessionSummary;
+        }),
+        invoke<EvolutionStatus>('get_evolution_status').catch((e) => {
+          errors.push(String(e));
+          return { pending_count: 0, approved_count: 0, rejected_count: 0, auto_applied_count: 0 } as EvolutionStatus;
+        }),
+        invoke<PatternStats>('get_pattern_stats').catch((e) => {
+          errors.push(String(e));
+          return { total_patterns: 0, active_patterns: 0, total_detections: 0, false_positives: 0 } as PatternStats;
+        }),
       ]);
 
       const now = new Date().toISOString();
+
+      // If ALL commands failed, surface the first error
+      // If only some failed, still show partial data (graceful degradation)
+      const allFailed = errors.length === 3;
 
       set({
         sessionSummary,
@@ -81,6 +81,7 @@ export const useMemoryStore = create<MemoryStoreState>((set, get) => ({
         loading: false,
         stale: false,
         lastFetch: now,
+        error: allFailed ? errors[0] : null,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch memory data';

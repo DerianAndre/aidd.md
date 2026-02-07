@@ -37,9 +37,18 @@ export function FrameworkOverviewGrid() {
   const initialize = useFrameworkStore((s) => s.initialize);
   const frameworkPath = useFrameworkStore((s) => s.frameworkPath);
 
+  const invalidateAll = useFrameworkStore((s) => s.invalidateAll);
+
   useEffect(() => {
     if (!frameworkPath) void initialize();
   }, [frameworkPath, initialize]);
+
+  // Re-fetch all categories when active project changes
+  useEffect(() => {
+    if (activeProject?.path) {
+      invalidateAll();
+    }
+  }, [activeProject?.path, invalidateAll]);
 
   useEffect(() => {
     for (const cat of CATEGORIES) {
