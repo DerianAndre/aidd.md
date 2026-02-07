@@ -8,7 +8,7 @@ use std::sync::Arc;
 use application::{FrameworkService, IntegrationService, McpService, McpHealthService, OverrideService, ProjectService, MemoryService};
 use infrastructure::filesystem::FileAdapter;
 use infrastructure::persistence::JsonStore;
-use infrastructure::adapters::McpMemoryAdapter;
+use infrastructure::adapters::SqliteMemoryAdapter;
 
 
 /// Shared application context — injected as Tauri managed state.
@@ -51,9 +51,9 @@ pub fn run() {
     let config_scanner = infrastructure::integrations::McpConfigScanner::new();
     let mcp_health_service = Arc::new(McpHealthService::new(config_scanner, process_manager));
 
-    // Memory service with MCP adapter
-    let mcp_memory_adapter = Box::new(McpMemoryAdapter::new(None)); // TODO: pass engine PID
-    let memory_service = Arc::new(MemoryService::new(mcp_memory_adapter));
+    // Memory service with SQLite adapter (wired to active project)
+    let sqlite_memory_adapter = Box::new(SqliteMemoryAdapter::new(project_service.clone()));
+    let memory_service = Arc::new(MemoryService::new(sqlite_memory_adapter));
 
     let ctx = AppContext {
         project_service,
