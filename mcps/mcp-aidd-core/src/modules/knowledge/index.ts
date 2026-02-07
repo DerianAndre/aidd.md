@@ -370,14 +370,15 @@ export const knowledgeModule: AiddModule = {
       schema: {},
       annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async () => {
-        const agentsEntry = context.contentLoader.getIndex().agents;
-        if (!agentsEntry) {
+        const agentsEntries = context.contentLoader.getIndex().agents;
+        if (agentsEntries.length === 0) {
           return createErrorResult(
-            'AGENTS.md not found. Use aidd_scaffold to initialize AIDD in this project.',
+            'No agent definitions found. Use aidd_scaffold to initialize AIDD in this project.',
           );
         }
 
-        const agentsContent = agentsEntry.getContent();
+        // Concatenate all agent definition files for parsing
+        const agentsContent = agentsEntries.map((e) => e.getContent()).join('\n\n');
         const agents = parseAgents(agentsContent);
 
         if (agents.length === 0) {

@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ensureDir, writeJsonFile } from '@aidd.md/mcp-shared';
 import type { StorageBackend, PermanentMemoryEntry } from '@aidd.md/mcp-shared';
@@ -43,13 +42,7 @@ export interface ConventionEntry {
 // ---------------------------------------------------------------------------
 
 export function findMemoryDir(projectRoot: string): string {
-  const aiMemory = resolve(projectRoot, 'ai', 'memory');
-  if (existsSync(aiMemory)) return aiMemory;
-
-  const rootMemory = resolve(projectRoot, 'memory');
-  if (existsSync(rootMemory)) return rootMemory;
-
-  return aiMemory;
+  return resolve(projectRoot, '.aidd', 'memory');
 }
 
 // ---------------------------------------------------------------------------

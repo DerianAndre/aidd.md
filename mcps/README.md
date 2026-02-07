@@ -279,7 +279,7 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 ├─────────────────────────────────────────────────────┤
 │  Layer 4: PERMANENT                                  │
 │  Project-lifetime decisions, mistakes, conventions   │
-│  Storage: .aidd/data.db (permanent_memory table) + ai/memory/*.json exports │
+│  Storage: .aidd/data.db (permanent_memory table) + .aidd/memory/*.json exports │
 ├─────────────────────────────────────────────────────┤
 │  Layer 3: LIFECYCLE                                  │
 │  AIDD 6-phase tracking + quality gates               │
@@ -314,9 +314,9 @@ Single SQLite database for all persistent state:
 │  Schema checksum in meta table                   │
 ├─────────────────────────────────────────────────┤
 │  Auto-generated files — Git-visible              │
-│  ai/memory/insights.md (auto-learning dashboard) │
-│  ai/memory/state-dump.sql (diffable state)       │
-│  ai/memory/*.json (on-demand export)             │
+│  .aidd/memory/insights.md (auto-learning dashboard) │
+│  .aidd/memory/state-dump.sql (diffable state)       │
+│  .aidd/memory/*.json (on-demand export)             │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -424,11 +424,11 @@ AIDD framework content ships inside the npm packages:
 
 ### Project Detection (runtime)
 
-The MCP scans for project-level AIDD files:
-1. AIDD markers: AGENTS.md, rules/, skills/, workflows/
-2. `ai/` prefix variant: `ai/rules/`, `ai/skills/`, etc.
-3. Memory layer: `ai/memory/` or `memory/`
-4. MCP state: `.aidd/`
+The MCP scans for a `.aidd/` directory with AIDD content:
+1. `.aidd/content/agents/` — agent definitions directory
+2. `.aidd/content/rules/` — rule files
+3. `.aidd/content/skills/`, `workflows/`, `specs/`, `knowledge/`, `templates/`
+4. `.aidd/memory/` — permanent memory (decisions, mistakes, conventions)
 5. Stack detection: `package.json`
 
 ### Merge Strategy

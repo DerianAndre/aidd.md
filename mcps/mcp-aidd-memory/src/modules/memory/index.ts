@@ -113,7 +113,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
       registerTool(server, {
         name: 'aidd_memory_add_decision',
         description:
-          'Record a permanent decision. Stored in SQLite; export to ai/memory/decisions.json via aidd_memory_export.',
+          'Record a permanent decision. Stored in SQLite; export to .aidd/memory/decisions.json via aidd_memory_export.',
         schema: {
           decision: z.string().describe('The decision made'),
           reasoning: z.string().describe('Why this decision was made'),
@@ -214,7 +214,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
       registerTool(server, {
         name: 'aidd_memory_add_convention',
         description:
-          'Record a project convention. Stored in SQLite; export to ai/memory/conventions.json via aidd_memory_export.',
+          'Record a project convention. Stored in SQLite; export to .aidd/memory/conventions.json via aidd_memory_export.',
         schema: {
           convention: z.string().describe('The convention to follow'),
           example: z.string().describe('Example of the convention in practice'),
@@ -273,7 +273,7 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
       registerTool(server, {
         name: 'aidd_memory_export',
         description:
-          'Export permanent memory from SQLite to JSON files in ai/memory/ (decisions.json, mistakes.json, conventions.json). For Git visibility and team sharing.',
+          'Export permanent memory from SQLite to JSON files in .aidd/memory/ (decisions.json, mistakes.json, conventions.json). For Git visibility and team sharing.',
         schema: {},
         annotations: { idempotentHint: true },
         handler: async () => {

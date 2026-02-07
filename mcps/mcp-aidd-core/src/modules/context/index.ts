@@ -133,8 +133,10 @@ export const contextModule: AiddModule = {
 
         // Priority 3: Agents summary
         if (includeAll || requestedSections?.includes('agents')) {
-          if (index.agents) {
-            const agentsContent = index.agents.getContent();
+          if (index.agents.length > 0) {
+            // Prefer routing.md as the main agents file, fall back to first entry
+            const mainAgent = index.agents.find((a) => a.name === 'routing.md') ?? index.agents[0]!;
+            const agentsContent = mainAgent.getContent();
             // Take first ~40 lines for summary
             const summary = agentsContent.split('\n').slice(0, 40).join('\n');
             builder.addSection('Agents (SSOT)', summary, 3);

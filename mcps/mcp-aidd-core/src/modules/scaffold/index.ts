@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, relative } from 'node:path';
 import { z } from 'zod';
 import {
   registerTool,
@@ -7,14 +7,24 @@ import {
   writeFileSafe,
   ensureDir,
   writeJsonFile,
+  readJsonFile,
+  aiddPaths,
   DEFAULT_CONFIG,
 } from '@aidd.md/mcp-shared';
-import type { AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
+import type { AiddModule, ModuleContext, ContentPaths } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // ---------------------------------------------------------------------------
 // Template content
 // ---------------------------------------------------------------------------
+
+const AGENTS_MD_REDIRECT = `# AGENTS.md
+
+> Thin redirect for cross-tool compatibility (Gemini, Copilot, etc.)
+> Canonical agent definitions live in \`.aidd/content/agents/\`.
+
+See [.aidd/content/agents/routing.md](.aidd/content/agents/routing.md) for the full agent hierarchy.
+`;
 
 const AGENTS_MD = `# AIDD — AI-Driven Development
 
@@ -87,48 +97,77 @@ const GLOBAL_RULES = `# Global Rules
 // ---------------------------------------------------------------------------
 
 interface FileToCreate {
-  path: string;
+  /** Absolute path to the file */
+  fullPath: string;
+  /** Relative display path (for output) */
+  displayPath: string;
   content: string;
 }
 
-function getMinimalFiles(): FileToCreate[] {
+/** Read config overrides from .aidd/config.json if it exists. */
+function readConfigOverrides(root: string): ContentPaths | undefined {
+  const configPath = resolve(root, '.aidd', 'config.json');
+  const config = readJsonFile<Record<string, unknown>>(configPath);
+  if (!config) return undefined;
+  const content = config['content'] as Record<string, unknown> | undefined;
+  return content?.['paths'] as ContentPaths | undefined;
+}
+
+/** Resolve content directories, respecting config overrides. */
+function resolveContentDirs(root: string): ReturnType<typeof aiddPaths> {
+  const aiddRoot = resolve(root, '.aidd');
+  const overrides = readConfigOverrides(root);
+  return aiddPaths(aiddRoot, overrides);
+}
+
+function getMinimalFiles(root: string): FileToCreate[] {
+  const dirs = resolveContentDirs(root);
   return [
-    { path: 'AGENTS.md', content: AGENTS_MD },
-    { path: 'content/rules/global.md', content: GLOBAL_RULES },
+    { fullPath: resolve(root, 'AGENTS.md'), displayPath: 'AGENTS.md', content: AGENTS_MD_REDIRECT },
+    { fullPath: resolve(dirs.agents, 'routing.md'), displayPath: relative(root, resolve(dirs.agents, 'routing.md')), content: AGENTS_MD },
+    { fullPath: resolve(dirs.rules, 'global.md'), displayPath: relative(root, resolve(dirs.rules, 'global.md')), content: GLOBAL_RULES },
   ];
 }
 
-function getStandardFiles(): FileToCreate[] {
+function getStandardFiles(root: string): FileToCreate[] {
+  const dirs = resolveContentDirs(root);
   return [
-    ...getMinimalFiles(),
+    ...getMinimalFiles(root),
     {
-      path: 'content/skills/README.md',
+      fullPath: resolve(dirs.skills, 'README.md'),
+      displayPath: relative(root, resolve(dirs.skills, 'README.md')),
       content: '# Skills\n\nAgent-specific skill definitions. Each agent has a `SKILL.md`.\n',
     },
     {
-      path: 'content/workflows/README.md',
+      fullPath: resolve(dirs.workflows, 'README.md'),
+      displayPath: relative(root, resolve(dirs.workflows, 'README.md')),
       content: '# Workflows\n\nStep-by-step guides for multi-agent coordination.\n',
     },
     {
-      path: 'content/templates/README.md',
+      fullPath: resolve(dirs.templates, 'README.md'),
+      displayPath: relative(root, resolve(dirs.templates, 'README.md')),
       content: '# Templates\n\nTask routing templates and decision frameworks.\n',
     },
   ];
 }
 
-function getFullFiles(): FileToCreate[] {
+function getFullFiles(root: string): FileToCreate[] {
+  const dirs = resolveContentDirs(root);
   return [
-    ...getStandardFiles(),
+    ...getStandardFiles(root),
     {
-      path: 'content/specs/README.md',
+      fullPath: resolve(dirs.specs, 'README.md'),
+      displayPath: relative(root, resolve(dirs.specs, 'README.md')),
       content: '# Specifications\n\nAIDD standard specifications: lifecycle, heuristics, memory.\n',
     },
     {
-      path: 'content/knowledge/README.md',
+      fullPath: resolve(dirs.knowledge, 'README.md'),
+      displayPath: relative(root, resolve(dirs.knowledge, 'README.md')),
       content: '# Technology Knowledge Base (TKB)\n\nStructured technology entries for AI-driven decisions.\n',
     },
     {
-      path: 'memory/README.md',
+      fullPath: resolve(root, '.aidd', 'memory', 'README.md'),
+      displayPath: '.aidd/memory/README.md',
       content: '# Memory\n\nPersistent memory: decisions, mistakes, conventions.\n',
     },
   ];
@@ -146,7 +185,7 @@ export const scaffoldModule: AiddModule = {
     registerTool(server, {
       name: 'aidd_scaffold',
       description:
-        'Initialize the AIDD framework in a project. Creates AGENTS.md, rules, skills, and other framework files based on the chosen preset.',
+        'Initialize the AIDD framework in a project. Creates .aidd/ directory with agents, rules, skills, and other framework files based on the chosen preset.',
       schema: {
         path: z
           .string()
@@ -157,7 +196,7 @@ export const scaffoldModule: AiddModule = {
           .optional()
           .default('standard')
           .describe(
-            'Initialization preset: minimal (AGENTS.md + rules), standard (+ skills, workflows, templates), full (+ spec, knowledge, memory, .aidd/)',
+            'Initialization preset: minimal (agents + rules), standard (+ skills, workflows, templates), full (+ specs, knowledge, memory, state)',
           ),
       },
       annotations: { destructiveHint: true, idempotentHint: true },
@@ -171,27 +210,26 @@ export const scaffoldModule: AiddModule = {
         const created: string[] = [];
         const skipped: string[] = [];
 
-        // Select files based on preset
+        // Select files based on preset (paths resolved via config overrides)
         let files: FileToCreate[];
         switch (preset) {
           case 'minimal':
-            files = getMinimalFiles();
+            files = getMinimalFiles(root);
             break;
           case 'full':
-            files = getFullFiles();
+            files = getFullFiles(root);
             break;
           default:
-            files = getStandardFiles();
+            files = getStandardFiles(root);
         }
 
         // Create files
         for (const file of files) {
-          const fullPath = resolve(root, file.path);
-          if (existsSync(fullPath)) {
-            skipped.push(file.path);
+          if (existsSync(file.fullPath)) {
+            skipped.push(file.displayPath);
           } else {
-            writeFileSafe(fullPath, file.content);
-            created.push(file.path);
+            writeFileSafe(file.fullPath, file.content);
+            created.push(file.displayPath);
           }
         }
 
@@ -199,6 +237,7 @@ export const scaffoldModule: AiddModule = {
         if (preset === 'full') {
           const aiddDir = resolve(root, '.aidd');
           const dirs = [
+            'memory',
             'sessions/active',
             'sessions/completed',
             'branches',

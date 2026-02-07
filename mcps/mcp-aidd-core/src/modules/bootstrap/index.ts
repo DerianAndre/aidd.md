@@ -55,10 +55,17 @@ export const bootstrapModule: AiddModule = {
     server.registerResource(
       'agents',
       'aidd://agents',
-      { description: 'AGENTS.md — Single Source of Truth for agent roles', mimeType: 'text/markdown' },
+      { description: 'Agent definitions — Single Source of Truth for agent roles', mimeType: 'text/markdown' },
       async (uri) => {
-        const agentsEntry = context.contentLoader.getIndex().agents;
-        const content = agentsEntry ? agentsEntry.getContent() : 'AGENTS.md not found. Use aidd_scaffold to initialize.';
+        const agentsEntries = context.contentLoader.getIndex().agents;
+        if (agentsEntries.length === 0) {
+          return { contents: [{ uri: uri.href, text: 'No agent definitions found. Use aidd_scaffold to initialize.', mimeType: 'text/markdown' }] };
+        }
+        // Concatenate all agent files, index.md first
+        const sorted = [...agentsEntries].sort((a, b) =>
+          a.name === 'index.md' ? -1 : b.name === 'index.md' ? 1 : a.name.localeCompare(b.name),
+        );
+        const content = sorted.map((e) => e.getContent()).join('\n\n---\n\n');
         return { contents: [{ uri: uri.href, text: content, mimeType: 'text/markdown' }] };
       },
     );
@@ -109,14 +116,19 @@ export const bootstrapModule: AiddModule = {
         }
 
         // --- Agents Summary ---
-        if (index.agents) {
+        if (index.agents.length > 0) {
           sections.push('\n## Agents (SSOT)\n');
-          const agentsContent = index.agents.getContent();
+          // Prefer routing.md as overview, fall back to first entry
+          const mainAgent = index.agents.find((a) => a.name === 'routing.md') ?? index.agents[0]!;
+          const agentsContent = mainAgent.getContent();
           // Show first ~30 lines (agent definitions overview)
           const agentsLines = agentsContent.split('\n').slice(0, 30);
           sections.push(agentsLines.join('\n'));
           if (agentsContent.split('\n').length > 30) {
             sections.push('\n*[Use `aidd_get_agent` or `aidd_get_competency_matrix` for full details]*');
+          }
+          if (index.agents.length > 1) {
+            sections.push(`\n*${index.agents.length} agent definition files available*`);
           }
         }
 
