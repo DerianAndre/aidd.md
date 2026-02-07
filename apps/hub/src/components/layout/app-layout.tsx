@@ -5,6 +5,7 @@ import { AppHeader } from "./app-header";
 import { ErrorBoundary } from "../error-boundary";
 import { useEntityWatcher } from "../../lib/hooks/use-entity-watcher";
 import { useProjectStore } from "../../stores/project-store";
+import { AppFooter } from "./app-footer";
 
 export function AppLayout() {
   const loading = useProjectStore((s) => s.loading);
@@ -30,9 +31,7 @@ export function AppLayout() {
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
-          <div className="text-xs text-muted-foreground mt-2">
-            <span>DerianAndre 🧔🏻‍♂️ & 🤖 AI </span>
-          </div>
+          <AppFooter />
         </main>
       </div>
     </div>
