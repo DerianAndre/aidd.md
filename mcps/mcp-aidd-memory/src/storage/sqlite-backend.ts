@@ -217,6 +217,21 @@ export class SqliteBackend implements StorageBackend {
     return this.rowToObservation(row);
   }
 
+  async listObservations(filter?: { sessionId?: string; limit?: number }): Promise<SessionObservation[]> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    if (filter?.sessionId) {
+      conditions.push('session_id = ?');
+      params.push(filter.sessionId);
+    }
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const limit = filter?.limit ?? 500;
+    const rows = this.db.prepare(
+      `SELECT * FROM observations ${where} ORDER BY created_at ASC LIMIT ?`,
+    ).all(...params, limit) as Record<string, unknown>[];
+    return rows.map((r) => this.rowToObservation(r));
+  }
+
   // ---- Search (3-layer) ----
 
   async search(query: string, options?: SearchOptions): Promise<MemoryIndexEntry[]> {

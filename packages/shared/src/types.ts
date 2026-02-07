@@ -659,6 +659,7 @@ export interface StorageBackend {
   // Observations
   saveObservation(observation: SessionObservation): Promise<void>;
   getObservation(id: string): Promise<SessionObservation | null>;
+  listObservations(filter?: { sessionId?: string; limit?: number }): Promise<SessionObservation[]>;
 
   // Search (3-layer)
   search(query: string, options?: SearchOptions): Promise<MemoryIndexEntry[]>;

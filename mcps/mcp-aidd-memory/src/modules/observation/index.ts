@@ -10,6 +10,7 @@ import {
 import type { AiddModule, ModuleContext, SessionObservation } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { StorageProvider } from '../../storage/index.js';
+import { hookBus } from '../hooks.js';
 
 // ---------------------------------------------------------------------------
 // Factory
@@ -76,6 +77,13 @@ export function createObservationModule(storage: StorageProvider): AiddModule {
           };
 
           await backend.saveObservation(observation);
+
+          // Hook fires AFTER response — fire-and-forget, silent
+          hookBus.emit({
+            type: 'observation_saved',
+            observationId: observation.id,
+            sessionId: observation.sessionId,
+          }).catch(() => {});
 
           return createJsonResult({
             id: observation.id,

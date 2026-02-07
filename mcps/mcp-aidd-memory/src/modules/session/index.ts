@@ -12,9 +12,82 @@ import type {
   SessionState,
   AiProvider,
   TokenUsage,
+  ModelFingerprint,
+  StorageBackend,
 } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { StorageProvider } from '../../storage/index.js';
+import { hookBus } from '../hooks.js';
+
+// ---------------------------------------------------------------------------
+// Fingerprint computation — pure math, zero AI token cost
+// ---------------------------------------------------------------------------
+
+const PASSIVE_RE = /\b(?:was|were|been|being|is|are)\s+\w+ed\b/gi;
+const QUESTION_RE = /\?/g;
+
+const FILLER_PATTERNS = [
+  /\blet me\b/gi, /\bcertainly\b/gi, /\bI'd be happy to\b/gi,
+  /\babsolutely\b/gi, /\bgreat question\b/gi, /\bit's worth noting\b/gi,
+  /\bI should mention\b/gi, /\bas an AI\b/gi, /\bin order to\b/gi,
+  /\bit is important to note\b/gi, /\blet's dive into\b/gi,
+];
+
+async function computeSessionFingerprint(
+  sessionId: string,
+  backend: StorageBackend,
+): Promise<ModelFingerprint | null> {
+  const observations = await backend.listObservations({ sessionId });
+  const texts: string[] = [];
+  for (const obs of observations) {
+    if (obs.narrative && obs.narrative.length > 50) texts.push(obs.narrative);
+  }
+
+  const fullText = texts.join('\n\n');
+  if (fullText.length < 200) return null;
+
+  const sentences = fullText.split(/[.!?]+/).filter((s) => s.trim().length > 0);
+  const words = fullText.toLowerCase().split(/\s+/).filter((w) => w.length > 0);
+  const paragraphs = fullText.split(/\n\n+/).filter((p) => p.trim().length > 0);
+
+  // Sentence length stats
+  const sentLengths = sentences.map((s) => s.split(/\s+/).length);
+  const avgSentLen = sentLengths.reduce((a, b) => a + b, 0) / Math.max(sentLengths.length, 1);
+  const variance = sentLengths.reduce((sum, l) => sum + (l - avgSentLen) ** 2, 0) / Math.max(sentLengths.length, 1);
+
+  // Type-token ratio (vocabulary richness)
+  const uniqueWords = new Set(words);
+  const ttr = words.length > 0 ? uniqueWords.size / words.length : 0;
+
+  // Paragraph length
+  const avgParaLen = paragraphs.reduce((sum, p) => sum + p.split(/\s+/).length, 0) / Math.max(paragraphs.length, 1);
+
+  // Passive voice ratio
+  const passiveMatches = fullText.match(PASSIVE_RE) ?? [];
+  const passiveRatio = sentences.length > 0 ? passiveMatches.length / sentences.length : 0;
+
+  // Filler density (AI patterns per 1000 words)
+  let fillerCount = 0;
+  for (const pat of FILLER_PATTERNS) {
+    const matches = fullText.match(pat);
+    if (matches) fillerCount += matches.length;
+  }
+  const fillerDensity = words.length > 0 ? (fillerCount / words.length) * 1000 : 0;
+
+  // Question frequency
+  const questions = fullText.match(QUESTION_RE) ?? [];
+  const questionFreq = words.length > 0 ? (questions.length / words.length) * 1000 : 0;
+
+  return {
+    avgSentenceLength: Math.round(avgSentLen * 100) / 100,
+    sentenceLengthVariance: Math.round(variance * 100) / 100,
+    typeTokenRatio: Math.round(ttr * 1000) / 1000,
+    avgParagraphLength: Math.round(avgParaLen * 100) / 100,
+    passiveVoiceRatio: Math.round(passiveRatio * 1000) / 1000,
+    fillerDensity: Math.round(fillerDensity * 100) / 100,
+    questionFrequency: Math.round(questionFreq * 100) / 100,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Factory
@@ -218,7 +291,15 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
                 }
               }
 
+              // Compute fingerprint from observation narratives (server-side, free)
+              const fingerprint = await computeSessionFingerprint(session.id, backend);
+              if (fingerprint) session.fingerprint = fingerprint;
+
               await backend.saveSession(session);
+
+              // Hook fires AFTER response — fire-and-forget, silent
+              hookBus.emit({ type: 'session_ended', sessionId: session.id }).catch(() => {});
+
               return createJsonResult({
                 id: session.id,
                 status: 'completed',
