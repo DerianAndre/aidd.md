@@ -63,18 +63,46 @@ export function createAiddServer(options: AiddServerOptions): McpServer {
     mod.register(server, context);
   }
 
-  // Run onReady hooks (fire and forget — non-blocking)
-  Promise.allSettled(
-    options.modules
-      .filter((m) => m.onReady)
-      .map((m) => m.onReady!(context)),
-  ).then((results) => {
-    for (const result of results) {
-      if (result.status === 'rejected') {
-        logger.error('Module onReady failed', result.reason);
+  // Run onReady hooks with proper error handling
+  // CRITICAL: Storage coordinator must complete before other modules use storage
+  const onReadyModules = options.modules.filter((m) => m.onReady);
+
+  // Separate storage coordinator (must run first) from other modules
+  const isStorageCoordinator = (m: typeof options.modules[0]) => m.name === 'storage-coordinator';
+  const storageCoordinator = onReadyModules.find(isStorageCoordinator);
+  const otherModules = onReadyModules.filter((m) => !isStorageCoordinator(m));
+
+  // Run storage coordinator first, wait for completion
+  async function initializeModules() {
+    try {
+      if (storageCoordinator) {
+        logger.info('Initializing storage coordinator...');
+        await storageCoordinator.onReady!(context);
+        logger.info('Storage coordinator initialized successfully');
       }
+
+      // Then run other modules in parallel
+      const results = await Promise.allSettled(
+        otherModules.map((m) => {
+          logger.info(`Initializing module: ${m.name}`);
+          return m.onReady!(context);
+        }),
+      );
+
+      for (const result of results) {
+        if (result.status === 'rejected') {
+          logger.error('Module onReady failed', result.reason);
+        }
+      }
+
+      logger.info('All modules initialized successfully');
+    } catch (error) {
+      logger.error('Critical error during module initialization:', error);
     }
-  });
+  }
+
+  // Run initialization without blocking the server creation
+  void initializeModules();
 
   return server;
 }

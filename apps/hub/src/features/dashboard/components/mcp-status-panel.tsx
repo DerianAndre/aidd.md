@@ -18,6 +18,17 @@ const DIR_TO_SERVER_ID: Record<string, string> = {
   "mcp-aidd-tools": "tools",
 };
 
+/**
+ * Get the effective server ID for a package
+ * When engine is running, core/memory/tools are included (no standalone servers)
+ */
+function getEffectiveServerId(pkg: typeof MCP_SERVERS[0], engineRunning: boolean): string | undefined {
+  if (engineRunning && ["mcp-aidd-core", "mcp-aidd-memory", "mcp-aidd-tools"].includes(pkg.dir)) {
+    return "engine"; // Core/memory/tools are part of engine
+  }
+  return DIR_TO_SERVER_ID[pkg.dir];
+}
+
 export function McpStatusPanel() {
   const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
@@ -40,6 +51,7 @@ export function McpStatusPanel() {
 
   const builtCount = packages.filter((p) => p.built).length;
   const runningCount = servers.filter((s) => s.status === "running").length;
+  const engineRunning = servers.some((s) => s.id === "engine" && s.status === "running");
   const totalDiscovered = report?.summary.total_discovered ?? 0;
   const aiddCount = report?.summary.aidd_count ?? 0;
   const thirdPartyCount = report?.summary.third_party_count ?? 0;
@@ -83,7 +95,7 @@ export function McpStatusPanel() {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {MCP_SERVERS.map((pkg) => {
             const status = packages.find((p) => p.dir === pkg.dir);
-            const serverId = DIR_TO_SERVER_ID[pkg.dir];
+            const serverId = getEffectiveServerId(pkg, engineRunning);
             const server = serverId
               ? servers.find((s) => s.id === serverId)
               : undefined;
