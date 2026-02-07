@@ -1,10 +1,13 @@
-export type AiddPhase =
-  | 'UNDERSTAND'
-  | 'PLAN'
-  | 'SPEC'
-  | 'BUILD'
-  | 'VERIFY'
-  | 'SHIP';
+// Re-export canonical types from shared
+export type {
+  AiddPhase,
+  LifecyclePhaseRecord,
+  LifecycleSession,
+} from '@aidd.md/mcp-shared';
+
+import type { AiddPhase } from '@aidd.md/mcp-shared';
+
+// Module-specific constants
 
 export const AIDD_PHASES: AiddPhase[] = [
   'UNDERSTAND',
@@ -67,21 +70,3 @@ export const PHASE_DEFINITIONS: PhaseDefinition[] = [
     keyActivities: ['Run full check suite: typecheck + lint + test + build', 'Commit with conventional format', 'Update memory if significant decisions were made', 'Move spec to docs/plans/done/ if complete', 'Ask user: create PR, merge, or leave on branch'],
   },
 ];
-
-export interface LifecyclePhaseRecord {
-  name: AiddPhase;
-  enteredAt: string;
-  exitedAt?: string;
-  notes?: string;
-}
-
-export interface LifecycleSession {
-  id: string;
-  sessionId?: string;
-  feature: string;
-  currentPhase: AiddPhase;
-  status: 'active' | 'completed' | 'abandoned';
-  phases: LifecyclePhaseRecord[];
-  createdAt: string;
-  updatedAt: string;
-}

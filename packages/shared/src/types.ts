@@ -177,6 +177,30 @@ export interface ModelRoutingResult {
 }
 
 // ---------------------------------------------------------------------------
+// Token Tracking
+// ---------------------------------------------------------------------------
+
+/** Token usage reported by the client (opt-in). */
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens?: number;
+  cacheWriteTokens?: number;
+  totalCost?: number;
+}
+
+/** Statistical fingerprint — computed server-side at zero token cost. */
+export interface ModelFingerprint {
+  avgSentenceLength: number;
+  sentenceLengthVariance: number;
+  typeTokenRatio: number;
+  avgParagraphLength: number;
+  passiveVoiceRatio: number;
+  fillerDensity: number;
+  questionFrequency: number;
+}
+
+// ---------------------------------------------------------------------------
 // Session State (Memory Layer 1)
 // ---------------------------------------------------------------------------
 
@@ -210,6 +234,8 @@ export interface SessionState {
   taskClassification: { domain: string; nature: string; complexity: string };
   outcome?: SessionOutcome;
   lifecycleSessionId?: string;
+  tokenUsage?: TokenUsage;
+  fingerprint?: ModelFingerprint;
 }
 
 export interface SessionOutcome {
@@ -218,6 +244,7 @@ export interface SessionOutcome {
   reverts: number;
   reworks: number;
   userFeedback?: 'positive' | 'neutral' | 'negative';
+  contextEfficiency?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -333,6 +360,175 @@ export const DEFAULT_CONTEXT_BUDGET: ContextBudget = {
 };
 
 // ---------------------------------------------------------------------------
+// Evolution Engine
+// ---------------------------------------------------------------------------
+
+export type EvolutionType =
+  | 'routing_weight'
+  | 'skill_combo'
+  | 'rule_elevation'
+  | 'compound_workflow'
+  | 'tkb_promotion'
+  | 'new_convention'
+  | 'model_recommendation'
+  | 'model_pattern_ban'
+  | 'context_efficiency';
+
+export interface EvolutionCandidate {
+  id: string;
+  type: EvolutionType;
+  title: string;
+  description: string;
+  confidence: number;
+  sessionCount: number;
+  evidence: string[];
+  discoveryTokensTotal: number;
+  suggestedAction: string;
+  modelScope?: string;
+  modelEvidence?: Record<string, number>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EvolutionLogEntry {
+  id: string;
+  candidateId: string;
+  action: 'auto_applied' | 'drafted' | 'pending' | 'reverted' | 'rejected';
+  title: string;
+  confidence: number;
+  snapshot?: string;
+  timestamp: string;
+}
+
+export interface EvolutionSnapshot {
+  id: string;
+  candidateId: string;
+  beforeState: Record<string, string>;
+  appliedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Drafts
+// ---------------------------------------------------------------------------
+
+export interface DraftEntry {
+  id: string;
+  category: string;
+  title: string;
+  content: string;
+  status: 'pending' | 'approved' | 'rejected';
+  data?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle
+// ---------------------------------------------------------------------------
+
+export type AiddPhase =
+  | 'UNDERSTAND'
+  | 'PLAN'
+  | 'SPEC'
+  | 'BUILD'
+  | 'VERIFY'
+  | 'SHIP';
+
+export interface LifecyclePhaseRecord {
+  name: AiddPhase;
+  enteredAt: string;
+  exitedAt?: string;
+  notes?: string;
+}
+
+export interface LifecycleSession {
+  id: string;
+  sessionId?: string;
+  feature: string;
+  currentPhase: AiddPhase;
+  status: 'active' | 'completed' | 'abandoned';
+  phases: LifecyclePhaseRecord[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Permanent Memory
+// ---------------------------------------------------------------------------
+
+export interface PermanentMemoryEntry {
+  id: string;
+  type: ObservationType;
+  title: string;
+  content: string;
+  createdAt: string;
+  sessionId?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Pattern Killer
+// ---------------------------------------------------------------------------
+
+export interface BannedPattern {
+  id: string;
+  category: 'filler' | 'hedge' | 'structure' | 'verbosity' | 'compliance';
+  pattern: string;
+  type: 'exact' | 'regex';
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  modelScope?: string;
+  hint?: string;
+  origin: 'system' | 'learned';
+  active: boolean;
+  useCount: number;
+  lastSeen?: string;
+  createdAt: string;
+}
+
+export interface PatternDetection {
+  id?: number;
+  sessionId?: string;
+  modelId: string;
+  patternId?: string;
+  matchedText: string;
+  context?: string;
+  source: 'ai_output' | 'user_input' | 'auto' | 'false_positive';
+  createdAt: string;
+}
+
+export interface AuditScore {
+  id?: number;
+  sessionId?: string;
+  modelId: string;
+  inputHash: string;
+  totalScore: number;
+  dimensions: {
+    lexicalDiversity: number;
+    structuralVariation: number;
+    voiceAuthenticity: number;
+    patternAbsence: number;
+    semanticPreservation: number;
+  };
+  patternsFound: number;
+  verdict: 'pass' | 'retry' | 'escalate';
+  createdAt: string;
+}
+
+export interface PatternStats {
+  totalDetections: number;
+  models: Array<{
+    modelId: string;
+    detections: number;
+    summary: string;
+  }>;
+  topPatterns: Array<{
+    pattern: string;
+    category: string;
+    count: number;
+    uniqueSessions: number;
+  }>;
+}
+
+// ---------------------------------------------------------------------------
 // Storage Backend
 // ---------------------------------------------------------------------------
 
@@ -386,13 +582,66 @@ export interface ToolUsageEntry {
   timestamp: string;
 }
 
-/** Abstract storage backend — implementations for JSON and SQLite. */
+/** Filter for evolution candidates. */
+export interface EvolutionCandidateFilter {
+  type?: EvolutionType;
+  title?: string;
+  modelScope?: string;
+  minConfidence?: number;
+}
+
+/** Filter for evolution log. */
+export interface EvolutionLogFilter {
+  candidateId?: string;
+  limit?: number;
+}
+
+/** Filter for banned patterns. */
+export interface BannedPatternFilter {
+  active?: boolean;
+  modelScope?: string;
+  category?: string;
+}
+
+/** Filter for pattern stats. */
+export interface PatternStatsFilter {
+  modelId?: string;
+}
+
+/** Filter for drafts. */
+export interface DraftFilter {
+  category?: string;
+  status?: string;
+}
+
+/** Filter for lifecycle sessions. */
+export interface LifecycleFilter {
+  status?: string;
+  limit?: number;
+}
+
+/** Filter for permanent memory. */
+export interface PermanentMemoryFilter {
+  type?: ObservationType;
+  limit?: number;
+}
+
+/** Options for data pruning. */
+export interface PruneOptions {
+  patternDetectionMaxAgeDays?: number;
+  maxObservations?: number;
+  maxSessionsIndexed?: number;
+}
+
+/** Abstract storage backend — SQLite-only implementation. */
 export interface StorageBackend {
   readonly name: string;
 
   // Lifecycle
   initialize(): Promise<void>;
   close(): Promise<void>;
+  checkpoint(): void;
+  pruneStaleData(options?: PruneOptions): void;
 
   // Sessions
   saveSession(session: SessionState): Promise<void>;
@@ -411,6 +660,49 @@ export interface StorageBackend {
   // Analytics
   recordToolUsage(entry: ToolUsageEntry): Promise<void>;
   getAnalytics(query: AnalyticsQuery): Promise<AnalyticsResult>;
+
+  // Branches
+  saveBranch(branch: BranchContext): Promise<void>;
+  getBranch(name: string): Promise<BranchContext | null>;
+  listBranches(filter?: { archived?: boolean }): Promise<BranchContext[]>;
+  archiveBranch(name: string): Promise<void>;
+
+  // Evolution
+  saveEvolutionCandidate(candidate: EvolutionCandidate): Promise<void>;
+  listEvolutionCandidates(filter?: EvolutionCandidateFilter): Promise<EvolutionCandidate[]>;
+  updateEvolutionCandidate(candidate: EvolutionCandidate): Promise<void>;
+  deleteEvolutionCandidate(id: string): Promise<void>;
+  appendEvolutionLog(entry: EvolutionLogEntry): Promise<void>;
+  getEvolutionLog(filter?: EvolutionLogFilter): Promise<EvolutionLogEntry[]>;
+  saveEvolutionSnapshot(snapshot: EvolutionSnapshot): Promise<void>;
+  getEvolutionSnapshot(id: string): Promise<EvolutionSnapshot | null>;
+
+  // Drafts
+  saveDraft(draft: DraftEntry): Promise<void>;
+  getDraft(id: string): Promise<DraftEntry | null>;
+  listDrafts(filter?: DraftFilter): Promise<DraftEntry[]>;
+  updateDraft(draft: DraftEntry): Promise<void>;
+  deleteDraft(id: string): Promise<void>;
+
+  // Lifecycle
+  saveLifecycle(session: LifecycleSession): Promise<void>;
+  getLifecycle(id: string): Promise<LifecycleSession | null>;
+  listLifecycles(filter?: LifecycleFilter): Promise<LifecycleSession[]>;
+
+  // Permanent memory
+  savePermanentMemory(entry: PermanentMemoryEntry): Promise<void>;
+  getPermanentMemory(id: string): Promise<PermanentMemoryEntry | null>;
+  listPermanentMemory(filter?: PermanentMemoryFilter): Promise<PermanentMemoryEntry[]>;
+  deletePermanentMemory(id: string): Promise<void>;
+
+  // Patterns
+  saveBannedPattern(pattern: BannedPattern): Promise<void>;
+  listBannedPatterns(filter?: BannedPatternFilter): Promise<BannedPattern[]>;
+  updateBannedPattern(pattern: BannedPattern): Promise<void>;
+  recordPatternDetection(detection: PatternDetection): Promise<void>;
+  getPatternStats(filter: PatternStatsFilter): Promise<PatternStats>;
+  saveAuditScore(score: AuditScore): Promise<void>;
+  listAuditScores(filter?: { sessionId?: string; modelId?: string; limit?: number }): Promise<AuditScore[]>;
 }
 
 // ---------------------------------------------------------------------------

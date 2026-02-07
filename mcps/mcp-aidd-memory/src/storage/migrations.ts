@@ -1,13 +1,18 @@
-export const SCHEMA_V1 = `
--- AIDD Memory Schema v1
+// ---------------------------------------------------------------------------
+// AIDD Memory — SQLite Schema (single SCHEMA, no migrations)
+// ---------------------------------------------------------------------------
+
+export const SCHEMA = `
+-- AIDD Memory Schema
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
 PRAGMA busy_timeout = 5000;
 
-CREATE TABLE IF NOT EXISTS schema_version (
-  version INTEGER NOT NULL
+-- Meta (schema checksum + system metadata)
+CREATE TABLE IF NOT EXISTS meta (
+  key TEXT PRIMARY KEY,
+  value TEXT
 );
-INSERT INTO schema_version (version) VALUES (1);
 
 -- Sessions
 CREATE TABLE IF NOT EXISTS sessions (
@@ -18,11 +23,14 @@ CREATE TABLE IF NOT EXISTS sessions (
   started_at TEXT NOT NULL,
   ended_at TEXT,
   status TEXT NOT NULL DEFAULT 'active',
+  model_id TEXT,
   data TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_sessions_branch ON sessions(branch);
 CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
 CREATE INDEX IF NOT EXISTS idx_sessions_memory_sid ON sessions(memory_session_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_model_id ON sessions(model_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_started_at ON sessions(started_at);
 
 -- Observations
 CREATE TABLE IF NOT EXISTS observations (
@@ -65,7 +73,7 @@ CREATE TRIGGER IF NOT EXISTS observations_au AFTER UPDATE ON observations BEGIN
   VALUES (new.rowid, new.title, new.content, new.facts, new.concepts);
 END;
 
--- Permanent memory (indexed copy of JSON files)
+-- Permanent memory
 CREATE TABLE IF NOT EXISTS permanent_memory (
   id TEXT PRIMARY KEY,
   type TEXT NOT NULL,
@@ -109,6 +117,63 @@ CREATE TABLE IF NOT EXISTS tool_usage (
 );
 CREATE INDEX IF NOT EXISTS idx_tool_usage_name ON tool_usage(tool_name);
 
+-- Branches
+CREATE TABLE IF NOT EXISTS branches (
+  name TEXT PRIMARY KEY,
+  data TEXT NOT NULL,
+  archived INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL
+);
+
+-- Evolution candidates
+CREATE TABLE IF NOT EXISTS evolution_candidates (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  confidence REAL NOT NULL DEFAULT 0,
+  model_scope TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  data TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_evo_cand_type ON evolution_candidates(type);
+CREATE INDEX IF NOT EXISTS idx_evo_cand_confidence ON evolution_candidates(confidence);
+CREATE INDEX IF NOT EXISTS idx_evo_cand_model_scope ON evolution_candidates(model_scope);
+
+-- Evolution log
+CREATE TABLE IF NOT EXISTS evolution_log (
+  id TEXT PRIMARY KEY,
+  candidate_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  title TEXT NOT NULL,
+  confidence REAL NOT NULL DEFAULT 0,
+  timestamp TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_evo_log_candidate ON evolution_log(candidate_id);
+
+-- Evolution snapshots
+CREATE TABLE IF NOT EXISTS evolution_snapshots (
+  id TEXT PRIMARY KEY,
+  candidate_id TEXT NOT NULL,
+  before_state TEXT NOT NULL,
+  applied_at TEXT NOT NULL
+);
+
+-- Drafts
+CREATE TABLE IF NOT EXISTS drafts (
+  id TEXT PRIMARY KEY,
+  category TEXT NOT NULL,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'pending',
+  data TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_drafts_category ON drafts(category);
+CREATE INDEX IF NOT EXISTS idx_drafts_status ON drafts(status);
+
 -- Lifecycle sessions
 CREATE TABLE IF NOT EXISTS lifecycle_sessions (
   id TEXT PRIMARY KEY,
@@ -118,8 +183,54 @@ CREATE TABLE IF NOT EXISTS lifecycle_sessions (
   status TEXT NOT NULL DEFAULT 'active',
   phases TEXT NOT NULL,
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  data TEXT NOT NULL
+  updated_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_lifecycle_status ON lifecycle_sessions(status);
+
+-- Banned patterns
+CREATE TABLE IF NOT EXISTS banned_patterns (
+  id TEXT PRIMARY KEY,
+  category TEXT NOT NULL,
+  pattern TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'regex',
+  severity TEXT NOT NULL DEFAULT 'medium',
+  model_scope TEXT,
+  origin TEXT NOT NULL DEFAULT 'system',
+  active INTEGER NOT NULL DEFAULT 1,
+  use_count INTEGER NOT NULL DEFAULT 0,
+  hint TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_banned_active ON banned_patterns(active);
+CREATE INDEX IF NOT EXISTS idx_banned_model_scope ON banned_patterns(model_scope);
+CREATE INDEX IF NOT EXISTS idx_banned_category ON banned_patterns(category);
+
+-- Pattern detections
+CREATE TABLE IF NOT EXISTS pattern_detections (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id TEXT,
+  model_id TEXT NOT NULL,
+  pattern_id TEXT,
+  matched_text TEXT NOT NULL,
+  context TEXT,
+  source TEXT NOT NULL DEFAULT 'auto',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_pdet_session ON pattern_detections(session_id);
+CREATE INDEX IF NOT EXISTS idx_pdet_model ON pattern_detections(model_id);
+CREATE INDEX IF NOT EXISTS idx_pdet_pattern ON pattern_detections(pattern_id);
+CREATE INDEX IF NOT EXISTS idx_pdet_created ON pattern_detections(created_at);
+
+-- Audit scores
+CREATE TABLE IF NOT EXISTS audit_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id TEXT,
+  model_id TEXT NOT NULL,
+  input_hash TEXT NOT NULL,
+  scores TEXT NOT NULL,
+  verdict TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_audit_model ON audit_scores(model_id);
+CREATE INDEX IF NOT EXISTS idx_audit_session ON audit_scores(session_id);
 `;

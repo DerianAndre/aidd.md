@@ -1,23 +1,43 @@
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import {
   ensureDir,
-  readJsonFile,
   now,
 } from '@aidd.md/mcp-shared';
 import type {
   AnalyticsQuery,
   AnalyticsResult,
+  AuditScore,
+  BannedPattern,
+  BannedPatternFilter,
+  BranchContext,
+  DraftEntry,
+  DraftFilter,
+  EvolutionCandidate,
+  EvolutionCandidateFilter,
+  EvolutionLogEntry,
+  EvolutionLogFilter,
+  EvolutionSnapshot,
+  LifecycleFilter,
+  LifecycleSession,
   MemoryEntry,
   MemoryIndexEntry,
   MemoryTimelineEntry,
+  PatternDetection,
+  PatternStats,
+  PatternStatsFilter,
+  PermanentMemoryEntry,
+  PermanentMemoryFilter,
+  PruneOptions,
   SearchOptions,
   SessionFilter,
   SessionObservation,
   SessionState,
+  StorageBackend,
   ToolUsageEntry,
 } from '@aidd.md/mcp-shared';
-import type { StorageBackend, StorageConfig } from './types.js';
-import { SCHEMA_V1 } from './migrations.js';
+import type { StorageConfig } from './types.js';
+import { SCHEMA } from './migrations.js';
 
 type BetterSqlite3 = typeof import('better-sqlite3');
 type Database = import('better-sqlite3').Database;
@@ -38,21 +58,69 @@ export class SqliteBackend implements StorageBackend {
     const Database = BetterSqlite3Module.default;
     this.db = new Database(this.dbPath);
 
-    // Check if schema exists
-    const hasSchema = this.db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='schema_version'",
+    // Check if schema exists via meta table
+    const hasMeta = this.db.prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='meta'",
     ).get();
 
-    if (!hasSchema) {
-      this.db.exec(SCHEMA_V1);
+    if (!hasMeta) {
+      this.db.exec(SCHEMA);
     }
 
-    // Sync permanent memory into search index
-    await this.syncPermanentMemory();
+    // Schema checksum verification (R1)
+    const currentHash = createHash('sha256').update(SCHEMA).digest('hex').slice(0, 16);
+    const stored = this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema_hash') as
+      | { value: string }
+      | undefined;
+    if (stored && stored.value !== currentHash) {
+      console.warn('[aidd] Schema Mismatch — DB schema has changed since last run');
+    }
+    this.db.prepare('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)').run('schema_hash', currentHash);
   }
 
   async close(): Promise<void> {
     this.db?.close();
+  }
+
+  // ---- Lifecycle (R2, R3) ----
+
+  checkpoint(): void {
+    this.db.pragma('wal_checkpoint(TRUNCATE)');
+  }
+
+  pruneStaleData(options?: PruneOptions): void {
+    const {
+      patternDetectionMaxAgeDays = 30,
+      maxObservations = 1000,
+      maxSessionsIndexed = 50,
+    } = options ?? {};
+
+    this.db.transaction(() => {
+      // 1. Prune old pattern detections
+      this.db.prepare(
+        `DELETE FROM pattern_detections WHERE created_at < datetime('now', '-' || ? || ' days')`,
+      ).run(patternDetectionMaxAgeDays);
+
+      // 2. Prune oldest observations beyond cap
+      this.db.prepare(
+        `DELETE FROM observations WHERE id NOT IN (SELECT id FROM observations ORDER BY created_at DESC LIMIT ?)`,
+      ).run(maxObservations);
+
+      // 3. Prune observations from sessions beyond the last N
+      const recentSessionIds = this.db.prepare(
+        `SELECT id FROM sessions ORDER BY started_at DESC LIMIT ?`,
+      ).all(maxSessionsIndexed) as Array<{ id: string }>;
+
+      if (recentSessionIds.length > 0) {
+        const placeholders = recentSessionIds.map(() => '?').join(',');
+        this.db.prepare(
+          `DELETE FROM observations WHERE session_id NOT IN (${placeholders}) AND session_id IS NOT NULL`,
+        ).run(...recentSessionIds.map(r => r.id));
+      }
+
+      // 4. Rebuild FTS index after prune
+      this.db.prepare(`INSERT INTO observations_fts(observations_fts) VALUES('rebuild')`).run();
+    })();
   }
 
   // ---- Sessions ----
@@ -60,8 +128,8 @@ export class SqliteBackend implements StorageBackend {
   async saveSession(session: SessionState): Promise<void> {
     const status = session.endedAt ? 'completed' : 'active';
     this.db.prepare(`
-      INSERT OR REPLACE INTO sessions (id, memory_session_id, parent_session_id, branch, started_at, ended_at, status, data)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT OR REPLACE INTO sessions (id, memory_session_id, parent_session_id, branch, started_at, ended_at, status, model_id, data)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       session.id,
       session.memorySessionId ?? null,
@@ -70,6 +138,7 @@ export class SqliteBackend implements StorageBackend {
       session.startedAt,
       session.endedAt ?? null,
       status,
+      session.aiProvider.modelId,
       JSON.stringify(session),
     );
   }
@@ -384,80 +453,503 @@ export class SqliteBackend implements StorageBackend {
     return { metric: query.metric, entries: [], total: 0 };
   }
 
-  // ---- Permanent memory sync ----
+  // ---- Branches ----
 
-  private async syncPermanentMemory(): Promise<void> {
-    const memDir = this.config.memoryDir;
+  async saveBranch(branch: BranchContext): Promise<void> {
+    this.db.prepare(`
+      INSERT OR REPLACE INTO branches (name, data, archived, updated_at)
+      VALUES (?, ?, 0, ?)
+    `).run(branch.branch, JSON.stringify(branch), branch.updatedAt);
+  }
 
-    const syncFile = <T extends { id: string }>(
-      filename: string,
-      type: string,
-      toTitle: (entry: T) => string,
-      toContent: (entry: T) => string,
-      toCreatedAt: (entry: T) => string,
-      toSessionId: (entry: T) => string | null,
-    ) => {
-      const entries = readJsonFile<T[]>(resolve(memDir, filename));
-      if (!entries) return;
+  async getBranch(name: string): Promise<BranchContext | null> {
+    const row = this.db.prepare('SELECT data FROM branches WHERE name = ?').get(name) as
+      | { data: string }
+      | undefined;
+    return row ? (JSON.parse(row.data) as BranchContext) : null;
+  }
 
-      const upsert = this.db.prepare(`
-        INSERT OR REPLACE INTO permanent_memory (id, type, title, content, created_at, session_id)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `);
+  async listBranches(filter?: { archived?: boolean }): Promise<BranchContext[]> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
 
-      const transaction = this.db.transaction(() => {
-        for (const entry of entries) {
-          upsert.run(
-            entry.id,
-            type,
-            toTitle(entry),
-            toContent(entry),
-            toCreatedAt(entry),
-            toSessionId(entry),
-          );
-        }
-      });
+    if (filter?.archived !== undefined) {
+      conditions.push('archived = ?');
+      params.push(filter.archived ? 1 : 0);
+    }
 
-      transaction();
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const rows = this.db.prepare(
+      `SELECT data FROM branches ${where} ORDER BY updated_at DESC`,
+    ).all(...params) as Array<{ data: string }>;
+
+    return rows.map(r => JSON.parse(r.data) as BranchContext);
+  }
+
+  async archiveBranch(name: string): Promise<void> {
+    this.db.prepare('UPDATE branches SET archived = 1 WHERE name = ?').run(name);
+  }
+
+  // ---- Evolution ----
+
+  async saveEvolutionCandidate(candidate: EvolutionCandidate): Promise<void> {
+    this.db.prepare(`
+      INSERT OR REPLACE INTO evolution_candidates (id, type, title, confidence, model_scope, status, data, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+    `).run(
+      candidate.id,
+      candidate.type,
+      candidate.title,
+      candidate.confidence,
+      candidate.modelScope ?? null,
+      JSON.stringify(candidate),
+      candidate.createdAt,
+      candidate.updatedAt,
+    );
+  }
+
+  async listEvolutionCandidates(filter?: EvolutionCandidateFilter): Promise<EvolutionCandidate[]> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+
+    if (filter?.type) {
+      conditions.push('type = ?');
+      params.push(filter.type);
+    }
+    if (filter?.title) {
+      conditions.push('title LIKE ?');
+      params.push(`%${filter.title}%`);
+    }
+    if (filter?.modelScope) {
+      conditions.push('model_scope = ?');
+      params.push(filter.modelScope);
+    }
+    if (filter?.minConfidence !== undefined) {
+      conditions.push('confidence >= ?');
+      params.push(filter.minConfidence);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const rows = this.db.prepare(
+      `SELECT data FROM evolution_candidates ${where} ORDER BY confidence DESC`,
+    ).all(...params) as Array<{ data: string }>;
+
+    return rows.map(r => JSON.parse(r.data) as EvolutionCandidate);
+  }
+
+  async updateEvolutionCandidate(candidate: EvolutionCandidate): Promise<void> {
+    this.db.prepare(`
+      UPDATE evolution_candidates SET type = ?, title = ?, confidence = ?, model_scope = ?, data = ?, updated_at = ?
+      WHERE id = ?
+    `).run(
+      candidate.type,
+      candidate.title,
+      candidate.confidence,
+      candidate.modelScope ?? null,
+      JSON.stringify(candidate),
+      candidate.updatedAt,
+      candidate.id,
+    );
+  }
+
+  async deleteEvolutionCandidate(id: string): Promise<void> {
+    this.db.prepare('DELETE FROM evolution_candidates WHERE id = ?').run(id);
+  }
+
+  async appendEvolutionLog(entry: EvolutionLogEntry): Promise<void> {
+    this.db.prepare(`
+      INSERT INTO evolution_log (id, candidate_id, action, title, confidence, timestamp)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(entry.id, entry.candidateId, entry.action, entry.title, entry.confidence, entry.timestamp);
+  }
+
+  async getEvolutionLog(filter?: EvolutionLogFilter): Promise<EvolutionLogEntry[]> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+
+    if (filter?.candidateId) {
+      conditions.push('candidate_id = ?');
+      params.push(filter.candidateId);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const limit = filter?.limit ?? 50;
+
+    const rows = this.db.prepare(
+      `SELECT * FROM evolution_log ${where} ORDER BY timestamp DESC LIMIT ?`,
+    ).all(...params, limit) as Array<Record<string, unknown>>;
+
+    return rows.map(r => ({
+      id: String(r['id']),
+      candidateId: String(r['candidate_id']),
+      action: String(r['action']) as EvolutionLogEntry['action'],
+      title: String(r['title']),
+      confidence: Number(r['confidence']),
+      timestamp: String(r['timestamp']),
+    }));
+  }
+
+  async saveEvolutionSnapshot(snapshot: EvolutionSnapshot): Promise<void> {
+    this.db.prepare(`
+      INSERT OR REPLACE INTO evolution_snapshots (id, candidate_id, before_state, applied_at)
+      VALUES (?, ?, ?, ?)
+    `).run(snapshot.id, snapshot.candidateId, JSON.stringify(snapshot.beforeState), snapshot.appliedAt);
+  }
+
+  async getEvolutionSnapshot(id: string): Promise<EvolutionSnapshot | null> {
+    const row = this.db.prepare('SELECT * FROM evolution_snapshots WHERE id = ?').get(id) as
+      | Record<string, unknown>
+      | undefined;
+    if (!row) return null;
+    return {
+      id: String(row['id']),
+      candidateId: String(row['candidate_id']),
+      beforeState: JSON.parse(String(row['before_state'])) as Record<string, string>,
+      appliedAt: String(row['applied_at']),
     };
+  }
 
-    type DecisionEntry = {
-      id: string; decision: string; reasoning: string;
-      alternatives?: string[]; context?: string;
-      createdAt: string; sessionId?: string;
-    };
-    syncFile<DecisionEntry>(
-      'decisions.json', 'decision',
-      (d) => d.decision,
-      (d) => `${d.reasoning}${d.context ? `\nContext: ${d.context}` : ''}`,
-      (d) => d.createdAt,
-      (d) => d.sessionId ?? null,
+  // ---- Drafts ----
+
+  async saveDraft(draft: DraftEntry): Promise<void> {
+    this.db.prepare(`
+      INSERT OR REPLACE INTO drafts (id, category, title, content, status, data, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      draft.id,
+      draft.category,
+      draft.title,
+      draft.content,
+      draft.status,
+      draft.data ? JSON.stringify(draft.data) : null,
+      draft.createdAt,
+      draft.updatedAt,
+    );
+  }
+
+  async getDraft(id: string): Promise<DraftEntry | null> {
+    const row = this.db.prepare('SELECT * FROM drafts WHERE id = ?').get(id) as
+      | Record<string, unknown>
+      | undefined;
+    if (!row) return null;
+    return this.rowToDraft(row);
+  }
+
+  async listDrafts(filter?: DraftFilter): Promise<DraftEntry[]> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+
+    if (filter?.category) {
+      conditions.push('category = ?');
+      params.push(filter.category);
+    }
+    if (filter?.status) {
+      conditions.push('status = ?');
+      params.push(filter.status);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const rows = this.db.prepare(
+      `SELECT * FROM drafts ${where} ORDER BY updated_at DESC`,
+    ).all(...params) as Array<Record<string, unknown>>;
+
+    return rows.map(r => this.rowToDraft(r));
+  }
+
+  async updateDraft(draft: DraftEntry): Promise<void> {
+    this.db.prepare(`
+      UPDATE drafts SET category = ?, title = ?, content = ?, status = ?, data = ?, updated_at = ?
+      WHERE id = ?
+    `).run(
+      draft.category,
+      draft.title,
+      draft.content,
+      draft.status,
+      draft.data ? JSON.stringify(draft.data) : null,
+      draft.updatedAt,
+      draft.id,
+    );
+  }
+
+  async deleteDraft(id: string): Promise<void> {
+    this.db.prepare('DELETE FROM drafts WHERE id = ?').run(id);
+  }
+
+  // ---- Lifecycle ----
+
+  async saveLifecycle(session: LifecycleSession): Promise<void> {
+    this.db.prepare(`
+      INSERT OR REPLACE INTO lifecycle_sessions (id, session_id, feature, current_phase, status, phases, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      session.id,
+      session.sessionId ?? null,
+      session.feature,
+      session.currentPhase,
+      session.status,
+      JSON.stringify(session.phases),
+      session.createdAt,
+      session.updatedAt,
+    );
+  }
+
+  async getLifecycle(id: string): Promise<LifecycleSession | null> {
+    const row = this.db.prepare('SELECT * FROM lifecycle_sessions WHERE id = ?').get(id) as
+      | Record<string, unknown>
+      | undefined;
+    if (!row) return null;
+    return this.rowToLifecycle(row);
+  }
+
+  async listLifecycles(filter?: LifecycleFilter): Promise<LifecycleSession[]> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+
+    if (filter?.status) {
+      conditions.push('status = ?');
+      params.push(filter.status);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const limit = filter?.limit ?? 50;
+
+    const rows = this.db.prepare(
+      `SELECT * FROM lifecycle_sessions ${where} ORDER BY updated_at DESC LIMIT ?`,
+    ).all(...params, limit) as Array<Record<string, unknown>>;
+
+    return rows.map(r => this.rowToLifecycle(r));
+  }
+
+  // ---- Permanent Memory ----
+
+  async savePermanentMemory(entry: PermanentMemoryEntry): Promise<void> {
+    this.db.prepare(`
+      INSERT OR REPLACE INTO permanent_memory (id, type, title, content, created_at, session_id)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(entry.id, entry.type, entry.title, entry.content, entry.createdAt, entry.sessionId ?? null);
+  }
+
+  async getPermanentMemory(id: string): Promise<PermanentMemoryEntry | null> {
+    const row = this.db.prepare('SELECT * FROM permanent_memory WHERE id = ?').get(id) as
+      | Record<string, unknown>
+      | undefined;
+    if (!row) return null;
+    return this.rowToPermanentMemory(row);
+  }
+
+  async listPermanentMemory(filter?: PermanentMemoryFilter): Promise<PermanentMemoryEntry[]> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+
+    if (filter?.type) {
+      conditions.push('type = ?');
+      params.push(filter.type);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const limit = filter?.limit ?? 100;
+
+    const rows = this.db.prepare(
+      `SELECT * FROM permanent_memory ${where} ORDER BY created_at DESC LIMIT ?`,
+    ).all(...params, limit) as Array<Record<string, unknown>>;
+
+    return rows.map(r => this.rowToPermanentMemory(r));
+  }
+
+  async deletePermanentMemory(id: string): Promise<void> {
+    this.db.prepare('DELETE FROM permanent_memory WHERE id = ?').run(id);
+  }
+
+  // ---- Patterns ----
+
+  async saveBannedPattern(pattern: BannedPattern): Promise<void> {
+    this.db.prepare(`
+      INSERT OR REPLACE INTO banned_patterns (id, category, pattern, type, severity, model_scope, origin, active, use_count, hint, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      pattern.id,
+      pattern.category,
+      pattern.pattern,
+      pattern.type,
+      pattern.severity,
+      pattern.modelScope ?? null,
+      pattern.origin,
+      pattern.active ? 1 : 0,
+      pattern.useCount,
+      pattern.hint ?? null,
+      pattern.createdAt,
+    );
+  }
+
+  async listBannedPatterns(filter?: BannedPatternFilter): Promise<BannedPattern[]> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+
+    if (filter?.active !== undefined) {
+      conditions.push('active = ?');
+      params.push(filter.active ? 1 : 0);
+    }
+    if (filter?.modelScope) {
+      conditions.push('(model_scope = ? OR model_scope IS NULL)');
+      params.push(filter.modelScope);
+    }
+    if (filter?.category) {
+      conditions.push('category = ?');
+      params.push(filter.category);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const rows = this.db.prepare(
+      `SELECT * FROM banned_patterns ${where} ORDER BY use_count DESC`,
+    ).all(...params) as Array<Record<string, unknown>>;
+
+    return rows.map(r => this.rowToBannedPattern(r));
+  }
+
+  async updateBannedPattern(pattern: BannedPattern): Promise<void> {
+    this.db.prepare(`
+      UPDATE banned_patterns SET category = ?, pattern = ?, type = ?, severity = ?, model_scope = ?, origin = ?, active = ?, use_count = ?, hint = ?
+      WHERE id = ?
+    `).run(
+      pattern.category,
+      pattern.pattern,
+      pattern.type,
+      pattern.severity,
+      pattern.modelScope ?? null,
+      pattern.origin,
+      pattern.active ? 1 : 0,
+      pattern.useCount,
+      pattern.hint ?? null,
+      pattern.id,
+    );
+  }
+
+  async recordPatternDetection(detection: PatternDetection): Promise<void> {
+    this.db.prepare(`
+      INSERT INTO pattern_detections (session_id, model_id, pattern_id, matched_text, context, source, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      detection.sessionId ?? null,
+      detection.modelId,
+      detection.patternId ?? null,
+      detection.matchedText,
+      detection.context ?? null,
+      detection.source,
+      detection.createdAt,
     );
 
-    type MistakeEntry = {
-      id: string; error: string; rootCause: string; fix: string;
-      prevention: string; occurrences: number;
-      createdAt: string; lastSeenAt: string; sessionId?: string;
-    };
-    syncFile<MistakeEntry>(
-      'mistakes.json', 'mistake',
-      (m) => m.error,
-      (m) => `Root cause: ${m.rootCause}\nFix: ${m.fix}\nPrevention: ${m.prevention}`,
-      (m) => m.createdAt,
-      (m) => m.sessionId ?? null,
-    );
+    // Increment use_count on the matched pattern
+    if (detection.patternId) {
+      this.db.prepare('UPDATE banned_patterns SET use_count = use_count + 1 WHERE id = ?').run(detection.patternId);
+    }
+  }
 
-    type ConventionEntry = {
-      id: string; convention: string; example: string;
-      rationale?: string; createdAt: string; sessionId?: string;
+  async getPatternStats(filter: PatternStatsFilter): Promise<PatternStats> {
+    const modelCondition = filter.modelId ? 'WHERE model_id = ?' : '';
+    const modelParams = filter.modelId ? [filter.modelId] : [];
+
+    const totalRow = this.db.prepare(
+      `SELECT COUNT(*) as total FROM pattern_detections ${modelCondition}`,
+    ).get(...modelParams) as { total: number };
+
+    const modelRows = this.db.prepare(`
+      SELECT model_id, COUNT(*) as detections
+      FROM pattern_detections
+      ${modelCondition}
+      GROUP BY model_id
+      ORDER BY detections DESC
+      LIMIT 20
+    `).all(...modelParams) as Array<{ model_id: string; detections: number }>;
+
+    const topPatternRows = this.db.prepare(`
+      SELECT
+        pd.pattern_id,
+        bp.pattern,
+        bp.category,
+        COUNT(*) as count,
+        COUNT(DISTINCT pd.session_id) as unique_sessions
+      FROM pattern_detections pd
+      LEFT JOIN banned_patterns bp ON bp.id = pd.pattern_id
+      ${filter.modelId ? 'WHERE pd.model_id = ?' : ''}
+      GROUP BY pd.pattern_id
+      ORDER BY count DESC
+      LIMIT 20
+    `).all(...modelParams) as Array<{
+      pattern_id: string | null;
+      pattern: string | null;
+      category: string | null;
+      count: number;
+      unique_sessions: number;
+    }>;
+
+    return {
+      totalDetections: totalRow.total,
+      models: modelRows.map(r => ({
+        modelId: r.model_id,
+        detections: r.detections,
+        summary: `${r.detections} detections`,
+      })),
+      topPatterns: topPatternRows.map(r => ({
+        pattern: r.pattern ?? r.pattern_id ?? 'unknown',
+        category: r.category ?? 'unknown',
+        count: r.count,
+        uniqueSessions: r.unique_sessions,
+      })),
     };
-    syncFile<ConventionEntry>(
-      'conventions.json', 'convention',
-      (c) => c.convention,
-      (c) => `Example: ${c.example}${c.rationale ? `\nRationale: ${c.rationale}` : ''}`,
-      (c) => c.createdAt,
-      (c) => c.sessionId ?? null,
+  }
+
+  async saveAuditScore(score: AuditScore): Promise<void> {
+    this.db.prepare(`
+      INSERT INTO audit_scores (session_id, model_id, input_hash, scores, verdict, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(
+      score.sessionId ?? null,
+      score.modelId,
+      score.inputHash,
+      JSON.stringify({ dimensions: score.dimensions, totalScore: score.totalScore, patternsFound: score.patternsFound }),
+      score.verdict,
+      score.createdAt,
     );
+  }
+
+  async listAuditScores(filter?: { sessionId?: string; modelId?: string; limit?: number }): Promise<AuditScore[]> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+
+    if (filter?.sessionId) {
+      conditions.push('session_id = ?');
+      params.push(filter.sessionId);
+    }
+    if (filter?.modelId) {
+      conditions.push('model_id = ?');
+      params.push(filter.modelId);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const limit = filter?.limit ?? 50;
+
+    const rows = this.db.prepare(
+      `SELECT * FROM audit_scores ${where} ORDER BY created_at DESC LIMIT ?`,
+    ).all(...params, limit) as Array<Record<string, unknown>>;
+
+    return rows.map(r => {
+      const scores = JSON.parse(String(r['scores'])) as {
+        dimensions: AuditScore['dimensions'];
+        totalScore: number;
+        patternsFound: number;
+      };
+      return {
+        id: Number(r['id']),
+        sessionId: r['session_id'] ? String(r['session_id']) : undefined,
+        modelId: String(r['model_id']),
+        inputHash: String(r['input_hash']),
+        totalScore: scores.totalScore,
+        dimensions: scores.dimensions,
+        patternsFound: scores.patternsFound,
+        verdict: String(r['verdict']) as AuditScore['verdict'],
+        createdAt: String(r['created_at']),
+      };
+    });
   }
 
   // ---- Row mappers ----
@@ -513,6 +1005,59 @@ export class SqliteBackend implements StorageBackend {
       discoveryTokens: row['discovery_tokens'] ? Number(row['discovery_tokens']) : undefined,
       createdAt: String(row['created_at']),
       sessionId: row['session_id'] ? String(row['session_id']) : undefined,
+    };
+  }
+
+  private rowToDraft(row: Record<string, unknown>): DraftEntry {
+    return {
+      id: String(row['id']),
+      category: String(row['category']),
+      title: String(row['title']),
+      content: String(row['content'] ?? ''),
+      status: String(row['status']) as DraftEntry['status'],
+      data: row['data'] ? (JSON.parse(String(row['data'])) as Record<string, unknown>) : undefined,
+      createdAt: String(row['created_at']),
+      updatedAt: String(row['updated_at']),
+    };
+  }
+
+  private rowToLifecycle(row: Record<string, unknown>): LifecycleSession {
+    return {
+      id: String(row['id']),
+      sessionId: row['session_id'] ? String(row['session_id']) : undefined,
+      feature: String(row['feature']),
+      currentPhase: String(row['current_phase']) as LifecycleSession['currentPhase'],
+      status: String(row['status']) as LifecycleSession['status'],
+      phases: JSON.parse(String(row['phases'])) as LifecycleSession['phases'],
+      createdAt: String(row['created_at']),
+      updatedAt: String(row['updated_at']),
+    };
+  }
+
+  private rowToPermanentMemory(row: Record<string, unknown>): PermanentMemoryEntry {
+    return {
+      id: String(row['id']),
+      type: String(row['type']) as PermanentMemoryEntry['type'],
+      title: String(row['title']),
+      content: String(row['content']),
+      createdAt: String(row['created_at']),
+      sessionId: row['session_id'] ? String(row['session_id']) : undefined,
+    };
+  }
+
+  private rowToBannedPattern(row: Record<string, unknown>): BannedPattern {
+    return {
+      id: String(row['id']),
+      category: String(row['category']) as BannedPattern['category'],
+      pattern: String(row['pattern']),
+      type: String(row['type']) as BannedPattern['type'],
+      severity: String(row['severity']) as BannedPattern['severity'],
+      modelScope: row['model_scope'] ? String(row['model_scope']) : undefined,
+      hint: row['hint'] ? String(row['hint']) : undefined,
+      origin: String(row['origin']) as BannedPattern['origin'],
+      active: Number(row['active']) === 1,
+      useCount: Number(row['use_count']),
+      createdAt: String(row['created_at']),
     };
   }
 }

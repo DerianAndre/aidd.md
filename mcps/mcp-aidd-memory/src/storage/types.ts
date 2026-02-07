@@ -7,5 +7,3 @@ export interface StorageConfig {
   aiddDir: string;
   memoryDir: string;
 }
-
-export const SCHEMA_VERSION = 1;

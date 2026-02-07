@@ -1,6 +1,6 @@
 import type { StorageBackend } from './types.js';
 import type { StorageConfig } from './types.js';
-import { createStorageBackend } from './factory.js';
+import { SqliteBackend } from './sqlite-backend.js';
 
 export class StorageProvider {
   private backend: StorageBackend | null = null;
@@ -15,15 +15,20 @@ export class StorageProvider {
     if (this.backend) return this.backend;
     if (!this.initPromise) {
       if (!this.config) throw new Error('StorageProvider not configured — call setConfig() first');
-      this.initPromise = createStorageBackend(this.config).then((b) => {
-        this.backend = b;
-        return b;
+      this.initPromise = Promise.resolve().then(() => {
+        const backend = new SqliteBackend(this.config!);
+        backend.initialize();
+        this.backend = backend;
+        return backend;
       });
     }
     return this.initPromise;
   }
 
   async close(): Promise<void> {
-    if (this.backend) await this.backend.close();
+    if (this.backend) {
+      this.backend.checkpoint();
+      this.backend.close();
+    }
   }
 }
