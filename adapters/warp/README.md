@@ -32,7 +32,7 @@ npm install
 
 # Validate Mermaid C4 diagrams
 npm run validate:mermaid "C4Container..."
-npx tsx skills/system-architect/scripts/validate-mermaid.ts diagram.mmd
+npx tsx content/skills/system-architect/scripts/validate-mermaid.ts diagram.mmd
 
 # Validate OpenAPI specs
 npm run validate:openapi spec.yaml
@@ -59,13 +59,14 @@ npm run scan:secrets src/config.ts
 
 ```
 AGENTS.md (Single Source of Truth)
-    |-- rules/ (Immutable constraints)
-    |   \-- global.md supersedes all domain rules
-    |-- skills/ (Specialized capabilities)
-    |   \-- Each has SKILL.md + optional scripts/
-    |-- workflows/ (Multi-step procedures)
-    |   \-- orchestrators/ (Multi-agent coordination)
-    \-- knowledge/ (Technology Knowledge Base)
+    |-- content/
+    |   |-- rules/ (Immutable constraints)
+    |   |   \-- global.md supersedes all domain rules
+    |   |-- skills/ (Specialized capabilities)
+    |   |   \-- Each has SKILL.md + optional scripts/
+    |   |-- workflows/ (Multi-step procedures)
+    |   |   \-- orchestrators/ (Multi-agent coordination)
+    |   \-- knowledge/ (Technology Knowledge Base)
 ```
 
 ### Agent Activation Pattern
@@ -73,7 +74,7 @@ AGENTS.md (Single Source of Truth)
 The **Master Orchestrator** is the entry point for all tasks:
 
 1. Validates context (>90% confidence required before execution)
-2. Queries TKB (`knowledge/`) for technology recommendations
+2. Queries TKB (`content/knowledge/`) for technology recommendations
 3. Maps to appropriate Rules, Workflows, and Skills
 4. Delegates to specialized agents (System Architect, Contract Architect, etc.)
 
@@ -87,7 +88,7 @@ Orchestrators optimize cost via tiered model usage:
 
 ### Skill Structure
 
-Skills are defined in `skills/<name>/SKILL.md` with YAML frontmatter:
+Skills are defined in `content/skills/<name>/SKILL.md` with YAML frontmatter:
 
 ```yaml
 ---
@@ -101,7 +102,7 @@ Optional: `scripts/` directory for TypeScript validation tools.
 
 ### Technology Knowledge Base (TKB)
 
-`knowledge/` contains quantified metrics for 50+ technologies organized by domain:
+`content/knowledge/` contains quantified metrics for 50+ technologies organized by domain:
 
 - `runtimes/` - Bun, Node.js, Deno benchmarks
 - `frontend/` - Next.js, Astro, Remix patterns
@@ -138,10 +139,10 @@ Before finalizing decisions, check for:
 
 ## 6. Adding New Components
 
-**New Skill**: Create `skills/<name>/SKILL.md` with YAML frontmatter, add validation scripts to `scripts/`, update `AGENTS.md`.
+**New Skill**: Create `content/skills/<name>/SKILL.md` with YAML frontmatter, add validation scripts to `scripts/`, update `AGENTS.md`.
 
-**New Rule**: Add `rules/<domain>.md`, reference from `AGENTS.md`.
+**New Rule**: Add `content/rules/<domain>.md`, reference from `AGENTS.md`.
 
-**New Workflow**: Create `workflows/<name>.md` with numbered steps.
+**New Workflow**: Create `content/workflows/<name>.md` with numbered steps.
 
-**New Orchestrator**: Follow `workflows/orchestrators/SPEC.md` format -- requires 3+ skills, model tier specs, success criteria, and cost estimation.
+**New Orchestrator**: Follow `content/workflows/SPEC.md` format -- requires 3+ skills, model tier specs, success criteria, and cost estimation.
