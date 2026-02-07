@@ -195,17 +195,19 @@ Execution:
 
 **Indicator**: `[aidd.md] Phase - Entered SHIP`
 **Tier**: 3 (LOW)
-**Objective**: Create the implementation commit, update memory, archive the plan, and optionally open a PR.
+**Objective**: Create the implementation commit, produce implementation summary, update memory, archive the plan, and optionally open a PR.
 
 - Run full check suite: `typecheck + lint + test + build`.
 - Commit with conventional format: `feat(scope): [description]` or `fix(scope): [description]`.
+- **MUST** produce an Implementation Summary (see `specs/implementation-summary.md`).
 - Update `memory/decisions.json` if significant architectural decisions were made.
-- Move spec from `docs/plans/active/` to `docs/plans/done/` (date-prefixed) if the feature is complete.
+- Move plan from `docs/plans/active/` to `docs/plans/done/` (date-prefixed) if the feature is complete.
 - Create a pull request if working on a feature branch (optional, user-directed).
+- Verify all required deliverables are produced (see `rules/deliverables.md`).
 
 **Gate**: `[Commit]` | `[Create PR]` | `[Leave on Branch]`
 
-**Exit criteria**: Clean commit, all checks pass, memory updated, plan archived.
+**Exit criteria**: Clean commit, all checks pass, implementation summary produced, memory updated, plan archived.
 
 ---
 
