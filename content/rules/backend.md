@@ -434,3 +434,5 @@ Follow this sequence: **ERD -> Schema -> Queries -> Verify**.
 - [ ] Data integrity in schema (not just app code)
 - [ ] EXPLAIN ANALYZE on critical queries
 - [ ] Parameterized queries (no string concatenation)
+
+**Last Updated:** 2026-02-06

@@ -1,10 +1,19 @@
 ---
-description: 📋 Creates technical plans and Gherkin without ambiguity. Ensures the Definition of Ready. Includes /spec and /refine commands
+name: product
+description: Creates technical plans and Gherkin without ambiguity. Ensures the Definition of Ready. Includes /spec and /refine commands
+complexity: medium
+estimated_duration: 45 minutes
+skills_required:
+  - system-architect
+  - knowledge-architect
+  - contract-architect
+  - data-architect
+model_strategy: sequential
 ---
 
 # Workflow: Product (Technical Specification & Gherkin)
 
-> **💡 Pro Tip:** For complete feature implementation from architecture to deployment, see [`/orchestrate full-stack-feature`](../orchestrators/full-stack-feature.md)
+> **Pro Tip:** For complete feature implementation from architecture to deployment, see [`/orchestrate full-stack-feature`](./full-stack-feature.md)
 
 > **Purpose:** Create unambiguous technical specifications and Gherkin scenarios for Definition of Ready
 

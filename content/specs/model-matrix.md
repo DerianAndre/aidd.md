@@ -55,7 +55,7 @@ Use the **minimum tier that produces correct output**. Escalate when:
 | Provider | Model | Model ID | Context | Cost (in/out per 1M tokens) | Status |
 |----------|-------|----------|---------|----------------------------|--------|
 | Anthropic | Claude Sonnet 4.5 | `claude-sonnet-4-5-20250929` | 1M | $3 / $15 | active |
-| OpenAI | GPT-4.5 | `gpt-4.5` | 128K | $75 / $150 | active |
+| OpenAI | GPT-5.2 | `gpt-5.2` | 128K | $1.75 / $14 | active |
 | Google | Gemini 2.5 Pro | `gemini-2.5-pro` | 1M | $1.25 / $10 | active |
 | Meta | Llama 4 Maverick | `llama-4-maverick` | 128K | self-hosted | active |
 | Mistral | Mistral Large | `mistral-large-latest` | 128K | $2 / $6 | active |
@@ -147,9 +147,10 @@ Tier 1 unavailable → FAIL (no silent degradation)
 
 | Provider | Model | Deprecation Date | Migrate To | Status |
 |----------|-------|-----------------|------------|--------|
-| OpenAI | GPT-4o | 2026-02-13 | GPT-4.5 | deprecated |
-| OpenAI | GPT-4.1 | 2026-02-13 | GPT-4.5 | deprecated |
-| OpenAI | GPT-4.1 mini | 2026-02-13 | GPT-4.5 | deprecated |
+| OpenAI | GPT-4o | 2026-02-13 | GPT-5.2 | deprecated |
+| OpenAI | GPT-4.1 | 2026-02-13 | GPT-5.2 | deprecated |
+| OpenAI | GPT-4.1 mini | 2026-02-13 | GPT-5.2 | deprecated |
+| OpenAI | GPT-4.5 | 2026-02-13 | GPT-5.2 | deprecated |
 | OpenAI | o4-mini | 2026-02-13 | o3 | deprecated |
 | OpenAI | GPT-5 (Instant/Thinking) | 2026-02-13 | GPT-5.2 | deprecated |
 | Google | Gemini 2.0 Flash | 2026-03-31 | Gemini 2.5 Flash | deprecated |
@@ -263,7 +264,7 @@ The update script fetches model data from two independent sources and cross-vali
 | **CONFLICT** | Sources disagree beyond tolerance | No (manual review) |
 | **UNVERIFIED** | Only one source has data | No (use `--force`) |
 
-The magnitude check (SUSPICIOUS) catches cases where both sources match to the wrong model variant — e.g., both returning data for `gpt-4` instead of `gpt-4.5`.
+The magnitude check (SUSPICIOUS) catches cases where both sources match to the wrong model variant — e.g., both returning data for `gpt-4` instead of `gpt-5.2`.
 
 ### Cost-Based Tier Inference
 

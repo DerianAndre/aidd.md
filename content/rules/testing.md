@@ -463,3 +463,5 @@ beforeEach(() => {
 - Testing framework internals
 - Disabling tests to make CI pass
 - Testing private methods directly
+
+**Last Updated:** 2026-02-06

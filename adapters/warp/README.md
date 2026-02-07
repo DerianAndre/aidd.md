@@ -2,7 +2,7 @@
 
 > AIDD integration guide for Warp (warp.dev)
 
-**Last Updated**: 2026-02-04
+**Last Updated**: 2026-02-06
 **Status**: Reference
 
 ---
@@ -65,7 +65,6 @@ AGENTS.md (Single Source of Truth)
     |   |-- skills/ (Specialized capabilities)
     |   |   \-- Each has SKILL.md + optional scripts/
     |   |-- workflows/ (Multi-step procedures)
-    |   |   \-- orchestrators/ (Multi-agent coordination)
     |   \-- knowledge/ (Technology Knowledge Base)
 ```
 
@@ -145,4 +144,4 @@ Before finalizing decisions, check for:
 
 **New Workflow**: Create `content/workflows/<name>.md` with numbered steps.
 
-**New Orchestrator**: Follow `content/workflows/SPEC.md` format -- requires 3+ skills, model tier specs, success criteria, and cost estimation.
+**New Workflow**: Follow `content/workflows/SPEC.md` format -- complex workflows require 3+ skills, model tier specs, success criteria, and cost estimation.

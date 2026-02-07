@@ -1,5 +1,13 @@
 ---
-description: 🏗️ Evaluates hexagonal architecture and monorepo boundaries. Ensures framework agnosticism and complete decoupling. Includes /blueprint and /decouple
+name: audit
+description: Evaluates hexagonal architecture and monorepo boundaries. Ensures framework agnosticism and complete decoupling. Includes /blueprint and /decouple
+complexity: medium
+estimated_duration: 45 minutes
+skills_required:
+  - system-architect
+  - verification-before-completion
+  - clean-ddd-hexagonal
+model_strategy: sequential
 ---
 
 # Workflow: Audit (Hexagonal Architecture)

@@ -415,3 +415,5 @@ jobs:
 ---
 
 **Enforcement:** Use `/analyze --security` workflow for automated OWASP scans.
+
+**Last Updated:** 2026-02-06

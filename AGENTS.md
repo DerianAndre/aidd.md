@@ -202,7 +202,7 @@ See [`content/workflows/SPEC.md`](./content/workflows/SPEC.md) for orchestrator 
 ## System Map
 
 ```text
-.agentic/ (or . for legacy compatibility)
+your-project/
 ├── AGENTS.md                        ← YOU ARE HERE (Single Source of Truth)
 └── content/                         ← Framework content directory
     ├── rules/                       ← Domain-specific rules
@@ -237,17 +237,15 @@ See [`content/workflows/SPEC.md`](./content/workflows/SPEC.md) for orchestrator 
 
 ### Antigravity (Current)
 
-- **Path:** `.agentic/` or directly in root (as now)
+- **Path:** Project root (AGENTS.md + content/)
 - **Activation:** Automatic reading of `AGENTS.md` at session start
 - **Workflows:** Auto-detected in `content/workflows/*.md`
 
 ### Cursor
 
 ```bash
-# Create symlink for compatibility
-mklink /D .cursor .agentic
-# Or individual:
-mklink /D .cursor\rules .agentic\content\rules
+# Create symlink to AIDD content directory
+mklink /D .cursor\rules content\rules
 ```
 
 ### Claude Code
@@ -256,8 +254,8 @@ mklink /D .cursor\rules .agentic\content\rules
 // In project configuration
 {
   "mcp": {
-    "skillsPath": ".agentic/content/skills",
-    "rulesPath": ".agentic/content/rules"
+    "skillsPath": "content/skills",
+    "rulesPath": "content/rules"
   }
 }
 ```

@@ -1,5 +1,14 @@
 ---
-description: 🎨 WCAG and Tailwind audit. Ensures accessibility, pixel-perfect design and mobile-first approach. Commands /visual-audit, /pixel-perfect
+name: design
+description: WCAG and Tailwind audit. Ensures accessibility, pixel-perfect design and mobile-first approach. Commands /visual-audit, /pixel-perfect
+complexity: high
+estimated_duration: 60 minutes
+skills_required:
+  - interface-artisan
+  - design-architect
+  - experience-engineer
+  - verification-before-completion
+model_strategy: sequential
 ---
 
 # Workflow: Design (WCAG + Tailwind Audit)

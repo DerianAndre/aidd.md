@@ -162,6 +162,7 @@ export interface ModelEntry {
   tier: ModelTier;
   cognitiveProfile: string[];
   contextWindow: number;
+  /** Cost indicator: '$' = budget (<$2/1M out), '$$' = standard ($2-$15/1M out), '$$$' = premium (>$15/1M out) */
   costTier: '$' | '$$' | '$$$';
   status: ModelStatus;
   deprecationDate?: string;

@@ -33,10 +33,9 @@
 ### 1. Copy AIDD into your project
 
 ```bash
-# Clone or copy the AIDD structure into your project
-cp -r aidd.md/.agentic/ your-project/.agentic/
-# Or use AGENTS.md at project root
+# Copy the AIDD framework into your project
 cp aidd.md/AGENTS.md your-project/AGENTS.md
+cp -r aidd.md/content/ your-project/content/
 ```
 
 ### 2. Activate the agent system
@@ -88,7 +87,7 @@ npm run scan:secrets src/config.ts
 | Knowledge Architect | Documentation sync                      | "update docs", "document"       |
 | i18n Specialist     | Internationalization                    | "i18n", "translate"             |
 
-### Rules (10 files)
+### Rules (11 files)
 
 Immutable constraints — prescriptive, MUST follow. Located in `content/rules/`:
 
@@ -104,26 +103,30 @@ Immutable constraints — prescriptive, MUST follow. Located in `content/rules/`
 | `code-style.md`    | Naming conventions, TypeScript strict, import patterns       |
 | `git-workflow.md`  | Commit format, branch strategy, spec-first flow              |
 | `documentation.md` | Normalized patterns, folder structure, ADR format            |
+| `performance.md`   | Performance budgets, optimization patterns                   |
 
-### Specifications (5 files)
+### Specifications (8 files)
 
 Formal reference documents — descriptive, detailed rationale. Located in `content/specs/`:
 
-| Specs                 | Content                                                     |
-| --------------------- | ----------------------------------------------------------- |
-| `aidd-lifecycle.md`   | 6-phase AI-Driven Development lifecycle                     |
-| `bluf-6.md`           | 6-part communication protocol                               |
-| `heuristics.md`       | 10 decision heuristics with examples                        |
-| `version-protocol.md` | 4-step version verification                                 |
-| `memory-layer.md`     | Project memory integration (decisions/mistakes/conventions) |
+| Specs                  | Content                                                     |
+| ---------------------- | ----------------------------------------------------------- |
+| `aidd-lifecycle.md`    | 6-phase AI-Driven Development lifecycle                     |
+| `bluf-6.md`            | 6-part communication protocol                               |
+| `heuristics.md`        | 10 decision heuristics with examples                        |
+| `version-protocol.md`  | 4-step version verification                                 |
+| `memory-layer.md`      | Project memory integration (decisions/mistakes/conventions) |
+| `supported-agents.md`  | Agent registry and role definitions                         |
+| `model-matrix.md`      | Multi-provider model routing matrix                         |
+| `prompt-evolution.md`  | Prompt evolution and optimization patterns                  |
 
 ### Skills (11 directories)
 
 Specialized capabilities with optional validation scripts. Located in `content/skills/`. Each skill has a `SKILL.md` with YAML frontmatter defining name, description, and recommended model tier.
 
-### Workflows (9 + 3 orchestrators)
+### Workflows (11 files)
 
-Multi-step procedures located in `content/workflows/`: analyze, audit, design, docs, feature-branch, product, review, technology-selection, test. Orchestrators: full-stack-feature. Complex workflows: analyze (security + audit), docs (documentation sync).
+Multi-step procedures located in `content/workflows/`: orchestrator, analyze, audit, design, docs, feature-branch, full-stack-feature, product, review, technology-selection, test. The orchestrator is THE single entry point for all tasks.
 
 ### Templates (5 files)
 

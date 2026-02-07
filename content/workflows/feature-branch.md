@@ -1,5 +1,12 @@
 ---
-description: 🚀 Complete flow for feature branch creation, development, and Pull Request
+name: feature-branch
+description: Complete flow for feature branch creation, development, and Pull Request
+complexity: low
+estimated_duration: 30 minutes
+skills_required:
+  - finishing-a-development-branch
+  - requesting-code-review
+model_strategy: sequential
 ---
 
 # Workflow: Feature Branch (Complete Git Workflow)

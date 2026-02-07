@@ -1,5 +1,13 @@
 ---
-description: 🧪 Generates Vitest/TS tests with 100% coverage. Uses cyclomatic analysis, AAA pattern and isolation for critical logic and edge cases
+name: test
+description: Generates Vitest/TS tests with 100% coverage. Uses cyclomatic analysis, AAA pattern and isolation for critical logic and edge cases
+complexity: medium
+estimated_duration: 30 minutes
+skills_required:
+  - quality-engineer
+  - test-driven-development
+  - verification-before-completion
+model_strategy: sequential
 ---
 
 # Workflow: Test (Complete Test Generation)

@@ -1,5 +1,14 @@
 ---
-description: 🔍 Architecture and security audit. Reviews technical debt and generates pre-merge checklists for branch, changes or staged changes
+name: review
+description: Architecture and security audit. Reviews technical debt and generates pre-merge checklists for branch, changes or staged changes
+complexity: medium
+estimated_duration: 45 minutes
+skills_required:
+  - system-architect
+  - security-architect
+  - quality-engineer
+  - data-architect
+model_strategy: sequential
 ---
 
 # Workflow: Review (Pre-Merge Audit)

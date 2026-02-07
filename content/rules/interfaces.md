@@ -398,3 +398,5 @@ npm run validate:contracts
 ---
 
 **Enforcement:** These contracts are validated in CI/CD. PRs fail if contracts are violated.
+
+**Last Updated:** 2026-02-06

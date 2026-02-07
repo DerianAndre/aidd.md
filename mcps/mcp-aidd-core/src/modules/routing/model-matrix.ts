@@ -84,13 +84,13 @@ export const MODEL_MATRIX: ModelEntry[] = [
     status: 'active',
   },
   {
-    id: 'gpt-4.5',
+    id: 'gpt-5.2',
     provider: 'openai',
-    name: 'GPT-4.5',
+    name: 'GPT-5.2',
     tier: 2,
     cognitiveProfile: ['implementation', 'coding', 'chat'],
     contextWindow: 128_000,
-    costTier: '$$$',
+    costTier: '$$',
     status: 'active',
   },
   {

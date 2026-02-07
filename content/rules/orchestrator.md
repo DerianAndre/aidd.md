@@ -321,3 +321,5 @@ Structure the report in this exact format:
 | **Missing Quantitative Data** | Always include measurable metrics; numbers ground the analysis in reality |
 | **Severity Inflation** | Use the full severity range; reserve Critical for production-risk issues |
 | **Recommendation Without Context** | Each recommendation must acknowledge effort, risk, and dependencies |
+
+**Last Updated:** 2026-02-06
