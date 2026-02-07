@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 385 125">
   <style xmlns="http://www.w3.org/2000/svg">
-    .aidd\.md { fill: #222; }
+    .aidd\.md { fill: black; }
     @media (prefers-color-scheme: dark) {
-      .aidd\.md { fill: #aaa; }
+      .aidd\.md { fill: white; }
     }
   </style>
     <g class="aidd.md">
