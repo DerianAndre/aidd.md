@@ -9,7 +9,7 @@
 
 ---
 
-## 🎯 Project Context
+## Project Context
 
 - **Name:** Agents Repository (Multi-Agent Development Framework)
 - **Purpose:** AI-assisted development system with unified rules, skills, and workflows
@@ -18,81 +18,81 @@
 
 ---
 
-## 🧠 Agent System: Hierarchy and Roles
+## Agent System: Hierarchy and Roles
 
-### 👑 Master System Architect & Logic Orchestrator (The Polymath)
+### Master System Architect & Logic Orchestrator (The Polymath)
 
-**Purpose:** Entry point for all requests.### 🧠 **Master Orchestrator** — Strategic Mapping & Delegation
+**Purpose:** Entry point for all requests.### **Master Orchestrator** — Strategic Mapping & Delegation
 
 - **Capability:** Decomposes user intent, queries Technology Knowledge Base (TKB), maps optimal execution paths
 - **Triggers:** All requests (first responder)
 - **Output:** Execution plans with evidence-based technology recommendations
 
-### 📚 **Knowledge Architect** — TKB Curator & Schema Enforcer
+### **Knowledge Architect** — TKB Curator & Schema Enforcer
 
 - **Capability:** Maintains Technology Knowledge Base, validates schema compliance, updates benchmarks
 - **Triggers:** Adding/updating TKB entries, quarterly reviews, resolving contradicting sources
 - **Output:** Accurate, quantified technology entries with cited sources
 
-### 🏗️ System Architect
+### System Architect
 
 **Purpose:** Complete system design, architecture analysis, technical debt assessment  
-**Skills:** `skills/system-architect/`  
+**Skills:** `content/skills/system-architect/`  
 **Activation:** `/audit`, `/review`
 
-### 💻 Fullstack Agent
+### Fullstack Agent
 
 **Purpose:** End-to-end implementation, complete features, integrations
-**Skills:** Composite — coordinates all specialized skills via `workflows/orchestrators/full-stack-feature.md`
+**Skills:** Composite — coordinates all specialized skills via `content/workflows/full-stack-feature.md`
 **Activation:** Development tasks, feature implementation
 
-### 🎨 Interface Artisan
+### Interface Artisan
 
 **Purpose:** UI/UX components, WCAG accessibility, pixel-perfect implementation  
-**Skills:** `skills/interface-artisan/`  
+**Skills:** `content/skills/interface-artisan/`  
 **Activation:** `/design`, `/visual-audit`
 
-### 🧪 Quality Engineer
+### Quality Engineer
 
 **Purpose:** Test generation, coverage analysis, edge cases  
-**Skills:** `skills/quality-engineer/`  
+**Skills:** `content/skills/quality-engineer/`  
 **Activation:** `/test`, `/analyze`
 
-### 🛡️ Security Architect
+### Security Architect
 
 **Purpose:** Security audits, vulnerability analysis, IAM  
-**Skills:** `skills/security-architect/`  
+**Skills:** `content/skills/security-architect/`  
 **Activation:** `/audit --security`, vulnerability reviews
 
-### 📚 Knowledge Architect
+### Knowledge Architect
 
 **Purpose:** Doc-code synchronization, knowledge codification  
-**Skills:** `skills/knowledge-architect/`  
+**Skills:** `content/skills/knowledge-architect/`  
 **Activation:** `/docs`, `/sync-docs`
 
-### 🚀 Platform Engineer
+### Platform Engineer
 
 **Purpose:** CI/CD, infrastructure, deployment, monitoring  
-**Skills:** `skills/platform-engineer/`  
+**Skills:** `content/skills/platform-engineer/`  
 **Activation:** Pipeline issues, deployment tasks
 
-### 🌐 i18n Specialist
+### i18n Specialist
 
 **Purpose:** Internationalization patterns, translation workflows, next-intl  
-**Skills:** `skills/i18n-specialist/`  
+**Skills:** `content/skills/i18n-specialist/`  
 **Activation:** i18n tasks, localization, translation
 
 ---
 
-## 🎭 Workflow Orchestrators
+## Workflow Orchestrators
 
 **Multi-agent coordination systems for complex, end-to-end tasks.**
 
 ### Available Orchestrators
 
-#### 🏗️ Full-Stack Feature
+#### Full-Stack Feature
 
-**File:** `workflows/orchestrators/full-stack-feature.md`  
+**File:** `content/workflows/full-stack-feature.md`  
 **Complexity:** High  
 **Duration:** ~90 minutes  
 **Cost:** ~$0.32
@@ -114,9 +114,9 @@
 
 **Artifacts:** Architecture diagrams, API specs, database schema, design tokens, React components, tests, security reports, CI/CD configs, documentation.
 
-#### 🛡️ Security Hardening
+#### Security Hardening
 
-**File:** `workflows/orchestrators/security-hardening.md`  
+**File:** `content/workflows/analyze.md`  
 **Complexity:** High  
 **Duration:** ~60 minutes  
 **Cost:** ~$0.31
@@ -135,9 +135,9 @@
 
 **Phases:** Scan → Identify → Remediate → Verify
 
-#### 📚 Documentation Sync
+#### Documentation Sync
 
-**File:** `workflows/orchestrators/documentation-sync.md`  
+**File:** `content/workflows/docs.md`  
 **Complexity:** Medium  
 **Duration:** ~30 minutes  
 **Cost:** ~$0.12
@@ -166,15 +166,15 @@
 ### When to Use Orchestrators
 
 - **Complex features** requiring multiple skills (use `full-stack-feature`)
-- **Pre-production** security validation (use `security-hardening`)
-- **Before releases** ensure docs are current (use `documentation-sync`)
+- **Pre-production** security validation (use `analyze`)
+- **Before releases** ensure docs are current (use `docs`)
 - **Major refactoring** requiring architecture + code + docs updates
 
-See [`workflows/orchestrators/SPEC.md`](./workflows/orchestrators/SPEC.md) for orchestrator standards and creation guidelines.
+See [`content/workflows/SPEC.md`](./content/workflows/SPEC.md) for orchestrator standards and creation guidelines.
 
 ---
 
-## 🛠 Core Operation Commands
+## Core Operation Commands
 
 ```bash
 # Not applicable for this framework repo
@@ -183,7 +183,7 @@ See [`workflows/orchestrators/SPEC.md`](./workflows/orchestrators/SPEC.md) for o
 
 ---
 
-## 📜 Golden Rules (Global Constraints)
+## Golden Rules (Global Constraints)
 
 > These rules are **IMMUTABLE** and apply to all agents in all contexts.
 
@@ -199,46 +199,47 @@ See [`workflows/orchestrators/SPEC.md`](./workflows/orchestrators/SPEC.md) for o
 
 ---
 
-## 📂 System Map
+## System Map
 
 ```text
 .agentic/ (or . for legacy compatibility)
-├── AGENTS.md              ← YOU ARE HERE (Single Source of Truth)
-├── rules/                 ← Domain-specific rules
-│   ├── global.md          ← Communication, style, core philosophy
-│   ├── orchestrator.md    ← Operational protocol & planning
-│   ├── backend.md         ← NestJS, DB, APIs, hexagonal architecture
-│   ├── frontend.md        ← React, Tailwind, UX, accessibility
-│   └── testing.md         ← Vitest, coverage, AAA patterns
-├── skills/                ← Specialized capabilities (SKILL.md + scripts)
-│   ├── system-architect/  ← System design, C4 diagrams, ADRs
-│   ├── contract-architect/← OpenAPI 3.1 specs, API governance
-│   ├── data-architect/    ← SQL schemas, 3NF normalization
-│   ├── interface-artisan/ ← UI/UX, WCAG, React components
-│   ├── experience-engineer/← Frontend architecture, state, performance
-│   ├── design-architect/  ← Design systems, tokens, Figma→Code
-│   ├── quality-engineer/  ← Test generation, coverage, quality
-│   ├── security-architect/← Vulnerability scanning, OWASP audits
-│   ├── knowledge-architect/← Documentation sync, knowledge
-│   ├── platform-engineer/ ← CI/CD, infrastructure, deployment
-│   └── i18n-specialist/   ← Internationalization, next-intl
-└── workflows/             ← Step-by-step guides for complex tasks
-    ├── feature-branch.md  ← Branch creation, PR workflow
-    ├── analyze.md         ← Security & quality audit
-    ├── audit.md           ← Hexagonal architecture validation
-    ├── design.md          ← WCAG + Tailwind audit
-    └── review.md          ← Pre-merge code review
+├── AGENTS.md                        ← YOU ARE HERE (Single Source of Truth)
+└── content/                         ← Framework content directory
+    ├── rules/                       ← Domain-specific rules
+    │   ├── global.md                ← Communication, style, core philosophy
+    │   ├── orchestrator.md          ← Operational protocol & planning
+    │   ├── backend.md               ← NestJS, DB, APIs, hexagonal architecture
+    │   ├── frontend.md              ← React, Tailwind, UX, accessibility
+    │   └── testing.md               ← Vitest, coverage, AAA patterns
+    ├── skills/                      ← Specialized capabilities (SKILL.md + scripts)
+    │   ├── system-architect/        ← System design, C4 diagrams, ADRs
+    │   ├── contract-architect/      ← OpenAPI 3.1 specs, API governance
+    │   ├── data-architect/          ← SQL schemas, 3NF normalization
+    │   ├── interface-artisan/       ← UI/UX, WCAG, React components
+    │   ├── experience-engineer/     ← Frontend architecture, state, performance
+    │   ├── design-architect/        ← Design systems, tokens, Figma→Code
+    │   ├── quality-engineer/        ← Test generation, coverage, quality
+    │   ├── security-architect/      ← Vulnerability scanning, OWASP audits
+    │   ├── knowledge-architect/     ← Documentation sync, knowledge
+    │   ├── platform-engineer/       ← CI/CD, infrastructure, deployment
+    │   └── i18n-specialist/         ← Internationalization, next-intl
+    └── workflows/                   ← Step-by-step guides for complex tasks
+        ├── feature-branch.md        ← Branch creation, PR workflow
+        ├── analyze.md               ← Security & quality audit
+        ├── audit.md                 ← Hexagonal architecture validation
+        ├── design.md                ← WCAG + Tailwind audit
+        └── review.md               ← Pre-merge code review
 ```
 
 ---
 
-## 🔗 Multi-IDE Integration
+## Multi-IDE Integration
 
 ### Antigravity (Current)
 
 - **Path:** `.agentic/` or directly in root (as now)
 - **Activation:** Automatic reading of `AGENTS.md` at session start
-- **Workflows:** Auto-detected in `workflows/*.md`
+- **Workflows:** Auto-detected in `content/workflows/*.md`
 
 ### Cursor
 
@@ -246,7 +247,7 @@ See [`workflows/orchestrators/SPEC.md`](./workflows/orchestrators/SPEC.md) for o
 # Create symlink for compatibility
 mklink /D .cursor .agentic
 # Or individual:
-mklink /D .cursor\rules .agentic\rules
+mklink /D .cursor\rules .agentic\content\rules
 ```
 
 ### Claude Code
@@ -255,15 +256,15 @@ mklink /D .cursor\rules .agentic\rules
 // In project configuration
 {
   "mcp": {
-    "skillsPath": ".agentic/skills",
-    "rulesPath": ".agentic/rules"
+    "skillsPath": ".agentic/content/skills",
+    "rulesPath": ".agentic/content/rules"
   }
 }
 ```
 
 ---
 
-## 🚀 Bootstrap Prompt (Agent Initialization)
+## Bootstrap Prompt (Agent Initialization)
 
 When starting a new session, use this prompt:
 
@@ -271,17 +272,17 @@ When starting a new session, use this prompt:
 Analyze `AGENTS.md` in the project root and assume the most appropriate role for the requested task.
 
 IMPERATIVE:
-1. Respect ALL rules in `rules/global.md` without exception.
-2. If your role has specific rules (e.g. `rules/frontend.md`), load them as well.
-3. Use the skills in `skills/[your-role]/SKILL.md` when necessary.
-4. If a relevant workflow exists in `workflows/`, follow it precisely.
+1. Respect ALL rules in `content/rules/global.md` without exception.
+2. If your role has specific rules (e.g. `content/rules/frontend.md`), load them as well.
+3. Use the skills in `content/skills/[your-role]/SKILL.md` when necessary.
+4. If a relevant workflow exists in `content/workflows/`, follow it precisely.
 
 Confirm your assumed role and loaded rules before proceeding.
 ```
 
 ---
 
-## 🗺️ System Map (Dependency Graph)
+## System Map (Dependency Graph)
 
 ```mermaid
 graph TD
@@ -307,7 +308,7 @@ graph TD
 
 ---
 
-## 📊 System Trade-offs Matrix
+## System Trade-offs Matrix
 
 | Factor                        | ✅ Advantage                                     | ⚠️ Disadvantage                  | 🎯 Mitigation            |
 | ----------------------------- | ------------------------------------------------ | -------------------------------- | ------------------------ |
@@ -318,7 +319,7 @@ graph TD
 
 ---
 
-## 🧬 System Design Principles
+## System Design Principles
 
 ### 1. Single Source of Truth (SSOT)
 
@@ -342,11 +343,11 @@ graph TD
 
 ---
 
-## 🔍 Agent System Debugging
+## Agent System Debugging
 
 If an agent misbehaves:
 
-1. **Verify rule loading:** Did it read `rules/global.md` and domain-specific rules?
+1. **Verify rule loading:** Did it read `content/rules/global.md` and domain-specific rules?
 2. **Review active workflows:** Is there a conflicting workflow?
 3. **Inspect loaded skills:** Does the skill have contradictory instructions?
 4. **Validate user prompt:** Is there unresolved ambiguity?
@@ -363,49 +364,49 @@ Please show:
 
 ---
 
-## 📝 System Maintenance
+## System Maintenance
 
 ### Rule Updates
 
 - **When:** When detecting repeated patterns in code reviews.
-- **How:** Add rule in `rules/[domain].md` and reference from AGENTS.md.
+- **How:** Add rule in `content/rules/[domain].md` and reference from AGENTS.md.
 
 ### Skill Creation
 
 - **When:** Complex task repeats 3+ times.
-- **How:** Create `skills/[name]/SKILL.md` with YAML frontmatter + instructions + scripts.
+- **How:** Create `content/skills/[name]/SKILL.md` with YAML frontmatter + instructions + scripts.
 
 ### New Workflows
 
 - **When:** Multi-step process becomes standard.
-- **How:** Document in `workflows/[name].md` with numbered steps.
+- **How:** Document in `content/workflows/[name].md` with numbered steps.
 
 ---
 
-## 🌐 Extensibility
+## Extensibility
 
 This system is **extensible by design**. To add new capabilities:
 
 1. **New Agent:** Add section in "Agent System" above.
-2. **New Skill:** Create directory in `skills/[name]/` with `SKILL.md`.
-3. **New Domain Rule:** Create `rules/[domain].md` and link here.
-4. **New Workflow:** Create `workflows/[task].md` with frontmatter + steps.
+2. **New Skill:** Create directory in `content/skills/[name]/` with `SKILL.md`.
+3. **New Domain Rule:** Create `content/rules/[domain].md` and link here.
+4. **New Workflow:** Create `content/workflows/[task].md` with frontmatter + steps.
 
 ---
 
-## ⚡ Quick Reference Card
+## Quick Reference Card
 
-| You need              | Go to                                 | Command               |
-| --------------------- | ------------------------------------- | --------------------- |
-| **Logic/Planning**    | `rules/orchestrator.md`               | (Implicit/Entry)      |
-| System design         | `skills/system-architect/SKILL.md`    | `/audit`              |
-| API specification     | `skills/contract-architect/SKILL.md`  | (on-demand)           |
-| Database schema       | `skills/data-architect/SKILL.md`      | (on-demand)           |
-| Perfect UI/UX         | `skills/interface-artisan/SKILL.md`   | `/design`             |
-| Frontend architecture | `skills/experience-engineer/SKILL.md` | (on-demand)           |
-| Design systems        | `skills/design-architect/SKILL.md`    | (on-demand)           |
-| Comprehensive tests   | `skills/quality-engineer/SKILL.md`    | `/test`               |
-| Security audits       | `skills/security-architect/SKILL.md`  | `/analyze --security` |
-| Synchronized docs     | `skills/knowledge-architect/SKILL.md` | `/docs`               |
-| Deploy applications   | `skills/platform-engineer/SKILL.md`   | `/deploy`             |
-| Internationalization  | `skills/i18n-specialist/SKILL.md`     | (on-demand)           |
+| You need              | Go to                                         | Command               |
+| --------------------- | --------------------------------------------- | --------------------- |
+| **Logic/Planning**    | `content/rules/orchestrator.md`               | (Implicit/Entry)      |
+| System design         | `content/skills/system-architect/SKILL.md`    | `/audit`              |
+| API specification     | `content/skills/contract-architect/SKILL.md`  | (on-demand)           |
+| Database schema       | `content/skills/data-architect/SKILL.md`      | (on-demand)           |
+| Perfect UI/UX         | `content/skills/interface-artisan/SKILL.md`   | `/design`             |
+| Frontend architecture | `content/skills/experience-engineer/SKILL.md` | (on-demand)           |
+| Design systems        | `content/skills/design-architect/SKILL.md`    | (on-demand)           |
+| Comprehensive tests   | `content/skills/quality-engineer/SKILL.md`    | `/test`               |
+| Security audits       | `content/skills/security-architect/SKILL.md`  | `/analyze --security` |
+| Synchronized docs     | `content/skills/knowledge-architect/SKILL.md` | `/docs`               |
+| Deploy applications   | `content/skills/platform-engineer/SKILL.md`   | `/deploy`             |
+| Internationalization  | `content/skills/i18n-specialist/SKILL.md`     | (on-demand)           |

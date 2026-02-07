@@ -15,7 +15,7 @@
 
 ## What is AIDD?
 
-**AIDD** is an open standard for structuring AI-assisted development. It provides a modular, composable framework of agent roles, rules, skills, workflows, templates, and specifications that any AI system can consume — enabling consistent, evidence-based development across IDEs and providers.
+**AIDD** is an open standard for structuring AI-assisted development. It provides a modular, composable framework of agent roles, rules, skills, workflows, templates, and specifications — all under the `content/` directory — that any AI system can consume, enabling consistent, evidence-based development across IDEs and providers.
 
 **Core principles**: Evidence-First engineering, First Principles thinking, BLUF-6 communication, Zero Trust verification, Lean Antifragility.
 
@@ -47,10 +47,10 @@ Use this prompt with any AI:
 Read AGENTS.md and assume the most appropriate role for my task.
 
 IMPERATIVES:
-1. Respect ALL rules in rules/global.md
+1. Respect ALL rules in content/rules/global.md
 2. Load domain-specific rules as needed
-3. Use skills from skills/ directories
-4. Follow workflows in workflows/ for multi-step tasks
+3. Use skills from content/skills/ directories
+4. Follow workflows in content/workflows/ for multi-step tasks
 
 Confirm your role and loaded rules before proceeding.
 ```
@@ -88,9 +88,9 @@ npm run scan:secrets src/config.ts
 | Knowledge Architect | Documentation sync                      | "update docs", "document"       |
 | i18n Specialist     | Internationalization                    | "i18n", "translate"             |
 
-### Rules (11 files)
+### Rules (10 files)
 
-Immutable constraints — prescriptive, MUST follow:
+Immutable constraints — prescriptive, MUST follow. Located in `content/rules/`:
 
 | Rule               | Scope                                                        |
 | ------------------ | ------------------------------------------------------------ |
@@ -101,18 +101,17 @@ Immutable constraints — prescriptive, MUST follow:
 | `testing.md`       | Test pyramid (70/20/10), AAA pattern, coverage targets       |
 | `security.md`      | OWASP Top 10 (2025), secret management, CI/CD security       |
 | `interfaces.md`    | Zero-fidelity contracts between agents                       |
-| `decision-tree.md` | Automated role selection logic                               |
 | `code-style.md`    | Naming conventions, TypeScript strict, import patterns       |
 | `git-workflow.md`  | Commit format, branch strategy, spec-first flow              |
 | `documentation.md` | Normalized patterns, folder structure, ADR format            |
 
 ### Specifications (5 files)
 
-Formal reference documents — descriptive, detailed rationale:
+Formal reference documents — descriptive, detailed rationale. Located in `content/specs/`:
 
 | Specs                 | Content                                                     |
 | --------------------- | ----------------------------------------------------------- |
-| `asdd-lifecycle.md`   | 8-phase AI-Spec-Driven Development lifecycle                |
+| `aidd-lifecycle.md`   | 6-phase AI-Driven Development lifecycle                     |
 | `bluf-6.md`           | 6-part communication protocol                               |
 | `heuristics.md`       | 10 decision heuristics with examples                        |
 | `version-protocol.md` | 4-step version verification                                 |
@@ -120,43 +119,43 @@ Formal reference documents — descriptive, detailed rationale:
 
 ### Skills (11 directories)
 
-Specialized capabilities with optional validation scripts. Each skill has a `SKILL.md` with YAML frontmatter defining name, description, and recommended model tier.
+Specialized capabilities with optional validation scripts. Located in `content/skills/`. Each skill has a `SKILL.md` with YAML frontmatter defining name, description, and recommended model tier.
 
 ### Workflows (9 + 3 orchestrators)
 
-Multi-step procedures: analyze, audit, design, docs, feature-branch, product, review, technology-selection, test. Orchestrators coordinate multiple skills: full-stack-feature, security-hardening, documentation-sync.
+Multi-step procedures located in `content/workflows/`: analyze, audit, design, docs, feature-branch, product, review, technology-selection, test. Orchestrators: full-stack-feature. Complex workflows: analyze (security + audit), docs (documentation sync).
 
-### Templates (21 files)
+### Templates (5 files)
 
-Task-specific development guides with routing system. See `templates/routing.md` for keyword-to-template mapping.
+Standalone protocol templates located in `content/templates/`. Domain-specific content has been absorbed into `content/rules/`, `content/skills/`, and `content/workflows/`. See `content/templates/routing.md` for the full routing table.
 
-| Category                  | Templates                                                                      |
-| ------------------------- | ------------------------------------------------------------------------------ |
-| Core Development          | brainstorming, analysis, refactoring, frontend, backend, database, testing     |
-| Design & Content          | ux-ui, copywriting, documentation                                              |
-| Infrastructure & Security | cicd, security-audit, penetration-testing, devops                              |
-| Specialized               | api-design, system-architecture, performance, migration, code-review, research |
+| Template               | Purpose                                               |
+| ---------------------- | ----------------------------------------------------- |
+| brainstorming.md       | Diverge → Analyze → Converge → Document protocol      |
+| research.md            | Multi-source investigation and synthesis               |
+| penetration-testing.md | Authorized offensive security testing                  |
+| migration.md           | Version upgrades and breaking change management        |
+| routing.md             | Task-to-template/rule/skill/workflow routing (SSOT)    |
 
 ### Knowledge Base (106 entries)
 
-Quantified technology metrics across 13 categories: runtimes, frontend, backend, data, testing, infrastructure, security, tooling, patterns. The Master Orchestrator queries the TKB for evidence-based technology recommendations.
+Quantified technology metrics across 13 categories located in `content/knowledge/`: runtimes, frontend, backend, data, testing, infrastructure, security, tooling, patterns. The Master Orchestrator queries the TKB for evidence-based technology recommendations.
 
 ---
 
-## ASDD Lifecycle
+## AIDD Lifecycle
 
-AI-Spec-Driven Development — the recommended development workflow:
+AI-Driven Development — the recommended development workflow:
 
 ```
-PLANNING (Tier 1)          EXECUTION (Tier 2)         CLOSURE
-──────────────────         ──────────────────         ──────────
-1. SYNC (read context)     5. EXECUTE (implement)     8. COMMIT_IMPL
-2. STORY (user story)      6. TEST (write tests)
-3. PLAN (atomic tasks)     7. VERIFY (typecheck)
-4. COMMIT_SPEC (spec doc)
+PLANNING (Tier 1)              EXECUTION (Tier 2)         CLOSURE (Tier 3)
+──────────────────             ──────────────────         ────────────────
+1. UNDERSTAND (context+reqs)   4. BUILD (implement)       6. SHIP (commit+PR)
+2. PLAN (atomic tasks)         5. VERIFY (test+check)
+3. SPEC (persist spec)
 ```
 
-See `specs/asdd-lifecycle.md` for full details.
+See `content/specs/aidd-lifecycle.md` for full details.
 
 ---
 
@@ -171,30 +170,32 @@ aidd.md/
 ├── CHANGELOG.md                 # Version history
 ├── package.json                 # Validation script dependencies
 │
-├── specs/                        # Formal specifications (5)
-│   ├── asdd-lifecycle.md
-│   ├── bluf-6.md
-│   ├── heuristics.md
-│   ├── version-protocol.md
-│   └── memory-layer.md
-│
-├── rules/                       # Immutable constraints (11)
-│   ├── global.md
-│   ├── orchestrator.md
-│   ├── backend.md
-│   ├── frontend.md
-│   ├── testing.md
-│   ├── security.md
-│   ├── interfaces.md
-│   ├── decision-tree.md
-│   ├── code-style.md           # NEW
-│   ├── git-workflow.md          # NEW
-│   └── documentation.md         # NEW
-│
-├── skills/                      # Agent capabilities (11)
-├── workflows/                   # Multi-step procedures (9 + 3 orchestrators)
-├── knowledge/                   # Technology Knowledge Base (106 entries)
-├── templates/                   # Task templates (21) with routing
+├── content/                     # Framework content
+│   ├── specs/                   # Formal specifications (6)
+│   │   ├── aidd-lifecycle.md
+│   │   ├── bluf-6.md
+│   │   ├── heuristics.md
+│   │   ├── version-protocol.md
+│   │   ├── memory-layer.md
+│   │   └── model-matrix.md
+│   │
+│   ├── rules/                   # Immutable constraints (12)
+│   │   ├── global.md
+│   │   ├── orchestrator.md
+│   │   ├── backend.md
+│   │   ├── frontend.md
+│   │   ├── testing.md
+│   │   ├── security.md
+│   │   ├── interfaces.md
+│   │   ├── code-style.md
+│   │   ├── git-workflow.md
+│   │   ├── documentation.md
+│   │   └── performance.md
+│   │
+│   ├── skills/                  # Agent capabilities (11)
+│   ├── workflows/               # Multi-step procedures (12)
+│   ├── knowledge/               # Technology Knowledge Base (106 entries)
+│   └── templates/               # Protocol templates (5) with routing
 │
 ├── adapters/                    # IDE/AI integration guides
 │   ├── claude/
@@ -217,8 +218,8 @@ aidd.md/
 | IDE         | Setup                                | Details                |
 | ----------- | ------------------------------------ | ---------------------- |
 | Antigravity | Auto-loads AGENTS.md natively        | See `adapters/gemini/` |
-| Cursor      | Symlink `.cursor/rules` → `rules/`   | See `adapters/cursor/` |
-| Claude Code | Auto-discovers skills from `skills/` | See `adapters/claude/` |
+| Cursor      | Symlink `.cursor/rules` → `content/rules/` | See `adapters/cursor/` |
+| Claude Code | Auto-discovers skills from `content/skills/` | See `adapters/claude/` |
 | Warp        | WARP.md guidance file                | See `adapters/warp/`   |
 
 ---

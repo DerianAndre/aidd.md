@@ -27,12 +27,12 @@ If the check fails, follow the remediation hint in the output.
 This is the **aidd.md** repository — the open standard for AI-Driven Development. It contains:
 
 - **AGENTS.md** — Single Source of Truth (SSOT) for agent roles and coordination
-- **rules/** — Domain-specific rules (global, orchestrator, frontend, backend, etc.)
-- **skills/** — Specialized agent capabilities with SKILL.md + validation scripts
-- **workflows/** — Step-by-step guides for complex multi-agent tasks
-- **specs/** — AIDD standard specifications (ASDD lifecycle, memory layer, heuristics, etc.)
-- **knowledge/** — Technology Knowledge Base (TKB) entries
-- **templates/** — Task routing and decision templates
+- **content/rules/** — Domain-specific rules (global, orchestrator, frontend, backend, etc.)
+- **content/skills/** — Specialized agent capabilities with SKILL.md + validation scripts
+- **content/workflows/** — Step-by-step guides for complex multi-agent tasks
+- **content/specs/** — AIDD standard specifications (lifecycle, memory layer, heuristics, etc.)
+- **content/knowledge/** — Technology Knowledge Base (TKB) entries
+- **content/templates/** — Task routing and decision templates
 - **packages/** — Shared libraries and CLI
 - **mcps/** — MCP server packages (Core, Memory, Tools + Engine)
 
@@ -75,9 +75,9 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 ## Rules
 
 1. Follow `AGENTS.md` as SSOT for agent roles
-2. Load domain-specific rules from `rules/` as needed
-3. Use skills from `skills/[agent]/SKILL.md` for specialized tasks
-4. Follow workflows from `workflows/` for multi-step procedures
+2. Load domain-specific rules from `content/rules/` as needed
+3. Use skills from `content/skills/[agent]/SKILL.md` for specialized tasks
+4. Follow workflows from `content/workflows/` for multi-step procedures
 5. ES modules only (`import`/`export`), never `require`
 6. TypeScript strict mode, no `any` without documented exception
 7. Evidence-first: logic/data/principles, never opinions

@@ -35,22 +35,22 @@ Thank you for your interest in contributing to AIDD. This document provides guid
 
 ## 2. Types of Contributions
 
-| Type      | Location                 | Description                                            |
-| --------- | ------------------------ | ------------------------------------------------------ |
-| Rule      | `rules/`                 | Immutable constraint files (prescriptive, MUST follow) |
-| Skill     | `skills/<name>/SKILL.md` | Specialized agent capabilities with optional scripts   |
-| Workflow  | `workflows/`             | Multi-step procedures for common tasks                 |
-| Template  | `templates/`             | Task-specific development templates                    |
-| Specs     | `specs/`                 | Formal specification documents (descriptive reference) |
-| Knowledge | `knowledge/<domain>/`    | Technology Knowledge Base entries                      |
-| Adapter   | `adapters/<ide>/`        | IDE/AI integration guides                              |
-| Example   | `examples/`              | Example project setups                                 |
+| Type      | Location                          | Description                                            |
+| --------- | --------------------------------- | ------------------------------------------------------ |
+| Rule      | `content/rules/`                  | Immutable constraint files (prescriptive, MUST follow) |
+| Skill     | `content/skills/<name>/SKILL.md`  | Specialized agent capabilities with optional scripts   |
+| Workflow  | `content/workflows/`              | Multi-step procedures for common tasks                 |
+| Template  | `content/templates/`              | Task-specific development templates                    |
+| Specs     | `content/specs/`                  | Formal specification documents (descriptive reference) |
+| Knowledge | `content/knowledge/<domain>/`     | Technology Knowledge Base entries                      |
+| Adapter   | `adapters/<ide>/`                 | IDE/AI integration guides                              |
+| Example   | `examples/`                       | Example project setups                                 |
 
 ---
 
 ## 3. Creating a New Rule
 
-Rules are immutable constraints that apply across all contexts. Place in `rules/`.
+Rules are immutable constraints that apply across all contexts. Place in `content/rules/`.
 
 **Format**:
 ```markdown
@@ -81,14 +81,14 @@ Rules are immutable constraints that apply across all contexts. Place in `rules/
 **Guidelines**:
 - Rules use imperative language (MUST, MUST NOT, SHOULD)
 - Each constraint must be independently verifiable
-- Reference `specs/` documents for detailed rationale
+- Reference `content/specs/` documents for detailed rationale
 - Update `AGENTS.md` Golden Rules section if adding a universal constraint
 
 ---
 
 ## 4. Creating a New Skill
 
-Skills are specialized agent capabilities. Each lives in `skills/<name>/`.
+Skills are specialized agent capabilities. Each lives in `content/skills/<name>/`.
 
 **Required**: `SKILL.md` with YAML frontmatter:
 ```yaml
@@ -112,7 +112,7 @@ tier: 1|2|3
 
 ## 5. Creating a New Workflow
 
-Workflows are multi-step procedures. Place in `workflows/`.
+Workflows are multi-step procedures. Place in `content/workflows/`.
 
 **Format**:
 ```markdown
@@ -126,13 +126,13 @@ Workflows are multi-step procedures. Place in `workflows/`.
 ## Rollback Plan
 ```
 
-**Orchestrators** (multi-agent workflows): Follow `workflows/orchestrators/SPEC.md` — requires 3+ skills, model tier specs, success criteria, and cost estimation.
+**Orchestrators** (multi-agent workflows): Follow `content/workflows/SPEC.md` — requires 3+ skills, model tier specs, success criteria, and cost estimation.
 
 ---
 
 ## 6. Creating a New Template
 
-Templates are task-specific development guides. Place in `templates/`.
+Templates are task-specific development guides. Place in `content/templates/`.
 
 **Format**:
 ```markdown
@@ -141,7 +141,7 @@ Templates are task-specific development guides. Place in `templates/`.
 > Tagline.
 
 **Effort Tier**: 1 (HIGH) | 2 (STANDARD) | 3 (LOW)
-**AIDD Skill**: skills/<name>/SKILL.md
+**AIDD Skill**: content/skills/<name>/SKILL.md
 
 ## Preconditions
 ## Sub-Agent Roles (table)
@@ -154,13 +154,13 @@ Templates are task-specific development guides. Place in `templates/`.
 **Guidelines**:
 - Templates are AI-agnostic (no tool-specific references)
 - Reference AIDD skills, rules, and workflows
-- Update `templates/routing.md` with keyword mappings
+- Update `content/templates/routing.md` with keyword mappings
 
 ---
 
 ## 7. Adding Knowledge Base Entries
 
-The Technology Knowledge Base (TKB) contains quantified metrics. Place in `knowledge/<domain>/`.
+The Technology Knowledge Base (TKB) contains quantified metrics. Place in `content/knowledge/<domain>/`.
 
 **Format**: Follow existing entries — include use case scores (1-10), benchmarks, trade-offs, and alternatives.
 
