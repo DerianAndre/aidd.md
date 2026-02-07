@@ -74,6 +74,14 @@ async function main() {
   console.log(`${DIM}[4/${STEPS}]${RESET} Initializing project state...`);
   const aiddDir = resolve(root, '.aidd');
   const dirs = [
+    'content/agents',
+    'content/rules',
+    'content/skills',
+    'content/workflows',
+    'content/specs',
+    'content/knowledge',
+    'content/templates',
+    'memory',
     'sessions/active',
     'sessions/completed',
     'branches',
@@ -178,6 +186,16 @@ async function detectAndConfigureIDEs(projectRoot) {
     });
   }
 
+  // 5. Windsurf / Antigravity — check if ~/.codeium/windsurf/ exists
+  const windsurfDir = join(homedir(), '.codeium', 'windsurf');
+  if (existsSync(windsurfDir)) {
+    detected.push({
+      name: 'Windsurf',
+      key: 'windsurf',
+      path: join(windsurfDir, 'mcp_config.json'),
+    });
+  }
+
   if (detected.length === 0) {
     console.log(`  No IDEs detected. Run ${BOLD}aidd integrate <tool>${RESET} later.\n`);
     return;
@@ -215,7 +233,7 @@ async function detectAndConfigureIDEs(projectRoot) {
     }
 
     try {
-      writeMcpConfig(ide.path, projectRoot, isContributor);
+      writeMcpConfig(ide.path, projectRoot, isContributor, ide.key);
       results.push({ name: ide.name, status: 'configured' });
     } catch (err) {
       results.push({ name: ide.name, status: `failed: ${err.message}` });
@@ -233,7 +251,7 @@ async function detectAndConfigureIDEs(projectRoot) {
 
 // ── MCP Config Writer ──────────────────────────────────────────────────────
 
-function writeMcpConfig(configPath, projectRoot, isContributor) {
+function writeMcpConfig(configPath, projectRoot, isContributor, toolKey) {
   const mcpEntry = isContributor
     ? {
         // Contributor: point to local build (fast cold-start, works offline)
@@ -247,6 +265,11 @@ function writeMcpConfig(configPath, projectRoot, isContributor) {
         args: ['-y', '@aidd.md/mcp-engine'],
         env: { AIDD_PROJECT_PATH: projectRoot },
       };
+
+  // VS Code uses { "servers": { ... } } with required "type" field
+  const isVscode = toolKey === 'vscode';
+  const serversKey = isVscode ? 'servers' : 'mcpServers';
+  const entry = isVscode ? { type: 'stdio', ...mcpEntry } : mcpEntry;
 
   // Read existing config or start fresh
   let config = {};
@@ -262,8 +285,8 @@ function writeMcpConfig(configPath, projectRoot, isContributor) {
   }
 
   // Merge: only touch our entry, preserve everything else
-  if (!config.mcpServers) config.mcpServers = {};
-  config.mcpServers['aidd-engine'] = mcpEntry;
+  if (!config[serversKey]) config[serversKey] = {};
+  config[serversKey]['aidd-engine'] = entry;
 
   writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
 }

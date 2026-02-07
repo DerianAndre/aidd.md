@@ -10,7 +10,7 @@ export function detectProject(projectPath?: string): ProjectInfo {
   const aiddRoot = detectAiddRoot(root);
 
   const markers = {
-    agentsMd: existsSync(resolve(aiddRoot, 'AGENTS.md')),
+    agents: existsSync(resolve(aiddRoot, 'content', 'agents')),
     rules: existsSync(resolve(aiddRoot, 'content', 'rules')),
     skills: existsSync(resolve(aiddRoot, 'content', 'skills')),
     workflows: existsSync(resolve(aiddRoot, 'content', 'workflows')),
@@ -18,10 +18,10 @@ export function detectProject(projectPath?: string): ProjectInfo {
     knowledge: existsSync(resolve(aiddRoot, 'content', 'knowledge')),
     templates: existsSync(resolve(aiddRoot, 'content', 'templates')),
     aiddDir: existsSync(resolve(root, '.aidd')),
-    memory: existsSync(resolve(aiddRoot, 'memory')) || existsSync(resolve(root, 'ai', 'memory')),
+    memory: existsSync(resolve(root, '.aidd', 'memory')),
   };
 
-  const detected = markers.agentsMd || markers.rules || markers.skills;
+  const detected = markers.agents || markers.rules || markers.skills;
 
   const stack = detectStack(root);
 

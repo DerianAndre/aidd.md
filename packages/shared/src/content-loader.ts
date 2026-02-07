@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { readFileOrNull, listFiles } from './fs.js';
 import { aiddPaths } from './paths.js';
 import { parseFrontmatter } from './utils.js';
@@ -13,7 +12,7 @@ export interface ContentEntry {
 }
 
 export interface ContentIndex {
-  agents?: ContentEntry;
+  agents: ContentEntry[];
   rules: ContentEntry[];
   skills: ContentEntry[];
   workflows: ContentEntry[];
@@ -63,30 +62,13 @@ export class ContentLoader {
     const paths = aiddPaths(root, this.pathOverrides);
 
     return {
-      agents: this.scanFile(paths.agentsMd),
+      agents: this.scanDir(paths.agents),
       rules: this.scanDir(paths.rules),
       skills: this.scanDir(paths.skills),
       workflows: this.scanDir(paths.workflows),
       specs: this.scanDir(paths.specs),
       knowledge: this.scanDir(paths.knowledge),
       templates: this.scanDir(paths.templates),
-    };
-  }
-
-  private scanFile(filePath: string): ContentEntry | undefined {
-    if (!existsSync(filePath)) return undefined;
-
-    const content = readFileOrNull(filePath);
-    if (!content) return undefined;
-
-    const { frontmatter } = parseFrontmatter(content);
-    const name = filePath.split(/[/\\]/).pop() ?? filePath;
-
-    return {
-      path: filePath,
-      name,
-      frontmatter,
-      getContent: () => readFileOrNull(filePath) ?? '',
     };
   }
 
@@ -116,7 +98,7 @@ export class ContentLoader {
 
     // Default: merge — project overrides bundled by filename
     return {
-      agents: project.agents ?? bundled.agents,
+      agents: mergeEntries(bundled.agents, project.agents),
       rules: mergeEntries(bundled.rules, project.rules),
       skills: mergeEntries(bundled.skills, project.skills),
       workflows: mergeEntries(bundled.workflows, project.workflows),
@@ -129,6 +111,7 @@ export class ContentLoader {
 
 function emptyIndex(): ContentIndex {
   return {
+    agents: [],
     rules: [],
     skills: [],
     workflows: [],

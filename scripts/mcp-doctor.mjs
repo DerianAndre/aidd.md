@@ -645,11 +645,12 @@ endSection();
 // =========================================================================
 beginSection('aidd.md Framework', 'Content and structure');
 
-const agentsPath = resolve(root, 'AGENTS.md');
-if (existsSync(agentsPath)) {
-  pass('AGENTS.md found');
+const agentsDir = resolve(root, '.aidd', 'content', 'agents');
+if (existsSync(agentsDir)) {
+  const count = countFiles(agentsDir, '.md');
+  pass(`.aidd/content/agents/ (${count} files)`);
 } else {
-  fail('AGENTS.md missing');
+  warn('.aidd/content/agents/ not found (project-level agents)');
 }
 
 const rulesDir = resolve(root, 'content/rules');
@@ -781,17 +782,21 @@ endSection();
 // =========================================================================
 beginSection('Cross-References', 'AGENTS.md ↔ skills/');
 
-if (existsSync(agentsPath) && skillDirs.length > 0) {
+if (existsSync(agentsDir) && skillDirs.length > 0) {
   try {
-    const agentsContent = readFileSync(agentsPath, 'utf-8');
+    // Read all agent definition files from .aidd/content/agents/
+    const agentFiles = readdirSync(agentsDir).filter((f) => f.endsWith('.md'));
+    const agentsContent = agentFiles
+      .map((f) => readFileSync(resolve(agentsDir, f), 'utf-8'))
+      .join('\n');
     const refs = [...agentsContent.matchAll(/skills\/([a-z0-9-]+)\/?/g)].map((m) => m[1]);
     const uniqueRefs = [...new Set(refs)];
     const missing = uniqueRefs.filter((ref) => !skillDirs.includes(ref));
 
     if (missing.length === 0) {
-      pass(`AGENTS.md → skills/ (${uniqueRefs.length} refs, all valid)`);
+      pass(`agents/ → skills/ (${uniqueRefs.length} refs, all valid)`);
     } else {
-      warn(`AGENTS.md references ${missing.length} missing skill(s):`);
+      warn(`agents/ references ${missing.length} missing skill(s):`);
       for (const m of missing) {
         detail(`skills/${m}/ not found`);
       }
@@ -800,7 +805,7 @@ if (existsSync(agentsPath) && skillDirs.length > 0) {
     warn('Could not check cross-references');
   }
 } else {
-  info('Skipping cross-reference check (missing AGENTS.md or skills/)');
+  info('Skipping cross-reference check (missing .aidd/content/agents/ or skills/)');
 }
 
 endSection();
@@ -901,7 +906,7 @@ if (existsSync(aiddDir)) {
     warn('config.json not found (using defaults)', 'Run: pnpm mcp:doctor --fix to create');
   }
 
-  const requiredDirs = ['sessions', 'evolution', 'branches', 'drafts'];
+  const requiredDirs = ['memory', 'sessions', 'evolution', 'branches', 'drafts'];
   for (const sub of requiredDirs) {
     const subDir = resolve(aiddDir, sub);
     if (existsSync(subDir)) {
@@ -1068,7 +1073,10 @@ if (needsAiddSetup) {
   })();
 
   if (shouldCreate) {
-    const dirs = ['', 'sessions', 'evolution', 'branches', 'drafts'];
+    const dirs = [
+      '', 'content/agents', 'content/rules', 'memory',
+      'sessions', 'evolution', 'branches', 'drafts',
+    ];
     for (const sub of dirs) {
       const dir = resolve(aiddDir, sub);
       if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
@@ -1115,7 +1123,7 @@ if (needsAiddSetup) {
       }
     }
 
-    if (!flags.json) console.log(`  ${GREEN}✅ .aidd/ created with sessions/, evolution/, branches/, drafts/${RESET}\n`);
+    if (!flags.json) console.log(`  ${GREEN}✅ .aidd/ created with content/, memory/, sessions/, evolution/, branches/, drafts/${RESET}\n`);
   } else if (!flags.json) {
     console.log(`  ${DIM}→ Skipped. Run pnpm mcp:setup later to initialize.${RESET}\n`);
   }

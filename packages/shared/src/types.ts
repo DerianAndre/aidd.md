@@ -64,11 +64,11 @@ export interface ProjectInfo {
   detected: boolean;
   /** Absolute path to the project root. */
   root: string;
-  /** Where AIDD files live (root or ai/ subfolder). */
+  /** Where AIDD files live (.aidd/ directory). */
   aiddRoot: string;
   /** Detected framework files. */
   markers: {
-    agentsMd: boolean;
+    agents: boolean;
     rules: boolean;
     skills: boolean;
     workflows: boolean;

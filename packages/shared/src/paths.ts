@@ -4,15 +4,16 @@ import type { ContentPaths } from './types.js';
 
 /**
  * Finds the project root by walking up from a start directory.
- * Looks for AIDD markers: AGENTS.md, rules/, or package.json.
+ * Looks for AIDD markers: .aidd/content/agents/, .aidd/content/rules/, or package.json.
  */
 export function findProjectRoot(startDir?: string): string {
   let dir = startDir ?? process.env['AIDD_PROJECT_PATH'] ?? process.cwd();
   const root = resolve(dir, '/');
 
   while (dir !== root) {
-    // AIDD marker: AGENTS.md is the strongest signal
-    if (existsSync(resolve(dir, 'AGENTS.md'))) return dir;
+    // AIDD marker: .aidd/content/ is the standard
+    if (existsSync(resolve(dir, '.aidd', 'content', 'agents'))) return dir;
+    if (existsSync(resolve(dir, '.aidd', 'content', 'rules'))) return dir;
     // Fallback: package.json (generic project root)
     if (existsSync(resolve(dir, 'package.json'))) return dir;
     dir = resolve(dir, '..');
@@ -29,16 +30,14 @@ export function fromRoot(projectRoot: string, ...segments: string[]): string {
 
 /**
  * Detect where AIDD framework files live.
- * Some projects use root-level files, others use an `ai/` subfolder.
- * Framework content lives under `content/` (rules, skills, workflows, etc.).
+ * Standard: .aidd/ directory. Content under .aidd/content/.
  */
 export function detectAiddRoot(projectRoot: string): string {
-  // Check ai/ subfolder first (e.g., ai/AGENTS.md, ai/content/rules/)
-  const aiDir = resolve(projectRoot, 'ai');
-  if (existsSync(resolve(aiDir, 'AGENTS.md'))) return aiDir;
-  if (existsSync(resolve(aiDir, 'content', 'rules'))) return aiDir;
+  const aiddDir = resolve(projectRoot, '.aidd');
+  if (existsSync(resolve(aiddDir, 'content', 'agents'))) return aiddDir;
+  if (existsSync(resolve(aiddDir, 'content', 'rules'))) return aiddDir;
 
-  // Default: root level
+  // Fallback: root level (source repo)
   return projectRoot;
 }
 
@@ -52,9 +51,9 @@ export function aiddPaths(aiddRoot: string, overrides?: ContentPaths) {
     ? resolve(aiddRoot, overrides.content)
     : resolve(aiddRoot, 'content');
   return {
-    agentsMd: overrides?.agents
+    agents: overrides?.agents
       ? resolve(aiddRoot, overrides.agents)
-      : resolve(aiddRoot, 'AGENTS.md'),
+      : resolve(contentDir, 'agents'),
     rules: overrides?.rules ? resolve(aiddRoot, overrides.rules) : resolve(contentDir, 'rules'),
     skills: overrides?.skills
       ? resolve(aiddRoot, overrides.skills)
@@ -78,6 +77,7 @@ export function statePaths(projectRoot: string) {
   return {
     root: aiddDir,
     config: resolve(aiddDir, 'config.json'),
+    memory: resolve(aiddDir, 'memory'),
     sessionsActive: resolve(aiddDir, 'sessions', 'active'),
     sessionsCompleted: resolve(aiddDir, 'sessions', 'completed'),
     branches: resolve(aiddDir, 'branches'),
