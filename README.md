@@ -235,7 +235,7 @@ aidd.md/
 
 | IDE | Detection | Config Files | How It Works |
 |-----|-----------|-------------|--------------|
-| Claude Code | `~/.claude/` exists | `~/.claude/mcp.json` + `.mcp.json` | MCP engine via global + project-scoped config |
+| Claude Code | `~/.claude/` exists | `~/.claude.json` + `.mcp.json` | MCP engine via user scope + project scope |
 | Cursor | Always available | `.cursor/mcp.json` + `.cursor/rules/aidd.mdc` | MCP engine + rules pointer |
 | VS Code | `.vscode/` or `code` CLI | `.vscode/mcp.json` + `.github/copilot-instructions.md` | MCP engine via Copilot |
 | Gemini | `AGENTS.md` exists | `.gemini/settings.json` | Reads AGENTS.md directly (no MCP needed) |

@@ -150,13 +150,14 @@ async function detectAndConfigureIDEs(projectRoot) {
 
   const detected = [];
 
-  // 1. Claude Code — check if ~/.claude/ exists
+  // 1. Claude Code — check if ~/.claude/ or ~/.claude.json exists
   const claudeDir = join(homedir(), '.claude');
-  if (existsSync(claudeDir)) {
+  const claudeJson = join(homedir(), '.claude.json');
+  if (existsSync(claudeDir) || existsSync(claudeJson)) {
     detected.push({
       name: 'Claude Code',
       key: 'claude',
-      path: join(claudeDir, 'mcp.json'),
+      path: claudeJson,
     });
   }
 

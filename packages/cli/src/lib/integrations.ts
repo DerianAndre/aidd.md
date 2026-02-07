@@ -106,11 +106,27 @@ function ensureAgentsRedirect(projectPath: string, result: IntegrationResult): v
   ensureFile(join(projectPath, 'AGENTS.md'), AGENTS_REDIRECT, result);
 }
 
-const MCP_ENTRY = (projectPath: string) => ({
-  command: 'npx',
-  args: ['-y', '@aidd.md/mcp-engine'],
-  env: { AIDD_PROJECT_PATH: projectPath },
-});
+function mcpEntry(projectPath: string, devMode: boolean) {
+  if (devMode) {
+    // Dev/contributor: point to local build (fast cold-start, works offline)
+    return {
+      command: 'node',
+      args: [join(projectPath, 'mcps', 'mcp-aidd-engine', 'dist', 'index.js')],
+      env: { AIDD_PROJECT_PATH: projectPath },
+    };
+  }
+  // Adopter: use npx (portable, always resolves from registry)
+  return {
+    command: 'npx',
+    args: ['-y', '@aidd.md/mcp-engine'],
+    env: { AIDD_PROJECT_PATH: projectPath },
+  };
+}
+
+/** Detect dev mode: true if the local engine build exists */
+export function detectDevMode(projectPath: string): boolean {
+  return existsSync(join(resolve(projectPath), 'mcps', 'mcp-aidd-engine', 'dist', 'index.js'));
+}
 
 // ── Public API ──────────────────────────────────────────────────────────────
 
@@ -118,64 +134,67 @@ export function listTools(): IntegrationTool[] {
   return [...TOOLS];
 }
 
-export function integrate(projectPath: string, tool: IntegrationTool): IntegrationResult {
+export function integrate(projectPath: string, tool: IntegrationTool, devMode?: boolean): IntegrationResult {
   const absPath = resolve(projectPath);
+  const dev = devMode ?? detectDevMode(absPath);
   switch (tool) {
     case 'claude':
-      return integrateClaude(absPath);
+      return integrateClaude(absPath, dev);
     case 'cursor':
-      return integrateCursor(absPath);
+      return integrateCursor(absPath, dev);
     case 'vscode':
-      return integrateVscode(absPath);
+      return integrateVscode(absPath, dev);
     case 'gemini':
       return integrateGemini(absPath);
     case 'windsurf':
-      return integrateWindsurf(absPath);
+      return integrateWindsurf(absPath, dev);
   }
 }
 
-export function integrateAll(projectPath: string): IntegrationResult[] {
-  return TOOLS.map((tool) => integrate(projectPath, tool));
+export function integrateAll(projectPath: string, devMode?: boolean): IntegrationResult[] {
+  return TOOLS.map((tool) => integrate(projectPath, tool, devMode));
 }
 
 // ── Claude Code ────────────────────────────────────────────────────────────
 
-function integrateClaude(projectPath: string): IntegrationResult {
+function integrateClaude(projectPath: string, devMode: boolean): IntegrationResult {
   const result: IntegrationResult = { tool: 'claude', files_created: [], files_modified: [], messages: [] };
+  const entry = mcpEntry(projectPath, devMode);
 
-  // 1. Global: ~/.claude/mcp.json
-  const mcpJsonPath = join(homedir(), '.claude', 'mcp.json');
-  upsertMcpConfig(mcpJsonPath, projectPath, 'mcpServers', MCP_ENTRY(projectPath), result);
+  // 1. User scope: ~/.claude.json
+  const mcpJsonPath = join(homedir(), '.claude.json');
+  upsertMcpConfig(mcpJsonPath, projectPath, 'mcpServers', entry, result);
 
   // 2. Project-scoped: .mcp.json (team-shareable via git)
   const projectMcp = join(projectPath, '.mcp.json');
   if (!existsSync(projectMcp)) {
-    upsertMcpConfig(projectMcp, projectPath, 'mcpServers', MCP_ENTRY(projectPath), result);
+    upsertMcpConfig(projectMcp, projectPath, 'mcpServers', entry, result);
   }
 
   // 3. Project: CLAUDE.md
   const name = projectName(projectPath);
   ensureFile(
     join(projectPath, 'CLAUDE.md'),
-    projectInstructions(name, 'Claude Code', 'The aidd.md MCP server is configured globally at `~/.claude/mcp.json` and per-project at `.mcp.json`.'),
+    projectInstructions(name, 'Claude Code', 'The aidd.md MCP server is configured at `~/.claude.json` (user scope) and `.mcp.json` (project scope).'),
     result,
   );
 
   // 4. AGENTS.md redirect
   ensureAgentsRedirect(projectPath, result);
 
-  result.messages.push('Claude Code: MCP server configured (global + project)');
+  const mode = devMode ? 'dev' : 'npx';
+  result.messages.push(`Claude Code: MCP server configured (${mode}, user + project scope)`);
   return result;
 }
 
 // ── Cursor ─────────────────────────────────────────────────────────────────
 
-function integrateCursor(projectPath: string): IntegrationResult {
+function integrateCursor(projectPath: string, devMode: boolean): IntegrationResult {
   const result: IntegrationResult = { tool: 'cursor', files_created: [], files_modified: [], messages: [] };
 
   // 1. Project: .cursor/mcp.json
   const mcpJsonPath = join(projectPath, '.cursor', 'mcp.json');
-  upsertMcpConfig(mcpJsonPath, projectPath, 'mcpServers', MCP_ENTRY(projectPath), result);
+  upsertMcpConfig(mcpJsonPath, projectPath, 'mcpServers', mcpEntry(projectPath, devMode), result);
 
   // 2. Project: .cursor/rules/aidd.mdc (thin pointer with frontmatter)
   const mdcContent = `---
@@ -198,12 +217,12 @@ ${RULES_POINTER}`;
 
 // ── VS Code / Copilot ──────────────────────────────────────────────────────
 
-function integrateVscode(projectPath: string): IntegrationResult {
+function integrateVscode(projectPath: string, devMode: boolean): IntegrationResult {
   const result: IntegrationResult = { tool: 'vscode', files_created: [], files_modified: [], messages: [] };
 
   // 1. Project: .vscode/mcp.json (VS Code native MCP format)
   const vscodeMcpPath = join(projectPath, '.vscode', 'mcp.json');
-  const vscodeEntry = { type: 'stdio', ...MCP_ENTRY(projectPath) };
+  const vscodeEntry = { type: 'stdio', ...mcpEntry(projectPath, devMode) };
   upsertMcpConfig(vscodeMcpPath, projectPath, 'servers', vscodeEntry, result);
 
   // 2. Project: .github/copilot-instructions.md
@@ -248,12 +267,12 @@ function integrateGemini(projectPath: string): IntegrationResult {
 
 // ── Windsurf / Antigravity ─────────────────────────────────────────────────
 
-function integrateWindsurf(projectPath: string): IntegrationResult {
+function integrateWindsurf(projectPath: string, devMode: boolean): IntegrationResult {
   const result: IntegrationResult = { tool: 'windsurf', files_created: [], files_modified: [], messages: [] };
 
   // 1. Global: ~/.codeium/windsurf/mcp_config.json
   const mcpConfigPath = join(homedir(), '.codeium', 'windsurf', 'mcp_config.json');
-  upsertMcpConfig(mcpConfigPath, projectPath, 'mcpServers', MCP_ENTRY(projectPath), result);
+  upsertMcpConfig(mcpConfigPath, projectPath, 'mcpServers', mcpEntry(projectPath, devMode), result);
 
   // 2. Project: .windsurfrules (thin pointer)
   ensureFile(join(projectPath, '.windsurfrules'), RULES_POINTER, result);
