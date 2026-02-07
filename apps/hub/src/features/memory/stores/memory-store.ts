@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { invoke } from '@tauri-apps/api/core';
 import type { SessionSummary, ObservationEntry, EvolutionStatus, PatternStats } from '../types';
 
 interface MemoryStoreState {
@@ -48,30 +49,35 @@ export const useMemoryStore = create<MemoryStoreState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      // TODO: Implement actual MCP client calls
-      // For now, return empty data structure
-      const now = new Date().toISOString();
-
-      set({
-        sessionSummary: {
+      // Call Tauri commands to fetch data from the backend
+      const [sessionSummary, evolutionStatus, patternStats] = await Promise.all([
+        invoke<SessionSummary>('get_sessions').catch(() => ({
           total: 0,
           active: 0,
           completed: 0,
           recent_sessions: [],
-        },
-        observations: [],
-        evolutionStatus: {
+        })),
+        invoke<EvolutionStatus>('get_evolution_status').catch(() => ({
           pending_count: 0,
           approved_count: 0,
           rejected_count: 0,
           auto_applied_count: 0,
-        },
-        patternStats: {
+        })),
+        invoke<PatternStats>('get_pattern_stats').catch(() => ({
           total_patterns: 0,
           active_patterns: 0,
           total_detections: 0,
           false_positives: 0,
-        },
+        })),
+      ]);
+
+      const now = new Date().toISOString();
+
+      set({
+        sessionSummary,
+        observations: [],
+        evolutionStatus,
+        patternStats,
         loading: false,
         stale: false,
         lastFetch: now,

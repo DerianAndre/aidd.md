@@ -10,4 +10,4 @@ pub use framework_port::FrameworkPort;
 pub use integration_port::IntegrationPort;
 pub use mcp_port::McpPort;
 pub use mcp_health_port::McpHealthPort;
-pub use memory_port::{MemoryPort, SessionSummary, ObservationEntry, EvolutionStatus, PatternStats};
+pub use memory_port::{MemoryPort, SessionSummary, SessionInfo, ObservationEntry, EvolutionStatus, PatternStats};

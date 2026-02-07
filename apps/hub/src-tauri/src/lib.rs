@@ -5,9 +5,10 @@ mod presentation;
 
 use std::sync::Arc;
 
-use application::{FrameworkService, IntegrationService, McpService, McpHealthService, OverrideService, ProjectService};
+use application::{FrameworkService, IntegrationService, McpService, McpHealthService, OverrideService, ProjectService, MemoryService};
 use infrastructure::filesystem::FileAdapter;
 use infrastructure::persistence::JsonStore;
+use infrastructure::adapters::McpMemoryAdapter;
 
 
 /// Shared application context — injected as Tauri managed state.
@@ -18,6 +19,7 @@ pub struct AppContext {
     pub mcp_service: Arc<McpService>,
     pub mcp_health_service: Arc<McpHealthService>,
     pub override_service: Arc<OverrideService>,
+    pub memory_service: Arc<MemoryService>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -49,6 +51,10 @@ pub fn run() {
     let config_scanner = infrastructure::integrations::McpConfigScanner::new();
     let mcp_health_service = Arc::new(McpHealthService::new(config_scanner, process_manager));
 
+    // Memory service with MCP adapter
+    let mcp_memory_adapter = Box::new(McpMemoryAdapter::new(None)); // TODO: pass engine PID
+    let memory_service = Arc::new(MemoryService::new(mcp_memory_adapter));
+
     let ctx = AppContext {
         project_service,
         framework_service,
@@ -56,6 +62,7 @@ pub fn run() {
         mcp_service,
         mcp_health_service,
         override_service,
+        memory_service,
     };
 
     tauri::Builder::default()
@@ -114,6 +121,12 @@ pub fn run() {
             // File watcher
             presentation::commands::watcher_commands::start_watching,
             presentation::commands::watcher_commands::stop_watching,
+            // Memory management (DDD + Hexagonal)
+            presentation::commands::memory_commands::get_memory_snapshot,
+            presentation::commands::memory_commands::get_sessions,
+            presentation::commands::memory_commands::get_evolution_status,
+            presentation::commands::memory_commands::get_pattern_stats,
+            presentation::commands::memory_commands::search_observations,
         ])
         .run(tauri::generate_context!())
         .expect("error while running aidd.md Hub");
