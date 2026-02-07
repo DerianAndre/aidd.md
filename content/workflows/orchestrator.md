@@ -47,7 +47,7 @@ Coordinate the full brainstorm → research → plan → execute → complete pi
 | Clear feature, needs research       | → Stage 2 (Research)   |
 | Defined requirements, ready to plan | → Stage 3 (Plan)       |
 | Existing plan, ready to build       | → Stage 5 (Execute)    |
-| Bug report or issue                 | → Stage 3B (Issue)     |
+| Bug report or issue                 | → Stage 3 (Issue)      |
 
 **Default:** Enter at Stage 1 unless the user demonstrates clarity.
 
@@ -95,9 +95,10 @@ Tier 1 orchestrator synthesizes findings into a trade-off matrix.
 - **Task:** Produce an atomic, idempotent, executable plan document.
 - **Input:** Brainstorm Summary + Research Summary (or just clear requirements).
 - **Output:** 
-  - Plan document at `docs/plans/active/<YYYY-MM-DD>-<feature>-plan.md`.
-  - ADR document at `docs/plans/active/<YYYY-MM-DD>-<feature>-adr.md`.
-  - Diagram (mermaid) document at `docs/plans/active/<YYYY-MM-DD>-<feature>-diagram.md`.
+  1. ADR document at `docs/plans/active/<YYYY.MM.DD>-<feature>-adr.md`.
+  2. Plan document at `docs/plans/active/<YYYY.MM.DD>-<feature>-plan.md`.
+  3. Diagram (mermaid) document at `docs/plans/active/<YYYY.MM.DD>-<feature>-diagram.md`.
+  4. Issue for github at `docs/plans/active/<YYYY.MM.DD>-<feature>-issue.md`.
 - **Reference:** `specs/aidd-lifecycle.md` → Phases 1-2 (UNDERSTAND, PLAN)
 
 The plan document includes:
@@ -109,13 +110,6 @@ The plan document includes:
 - Risks
 
 **Gate:** User reviews plan → `[Approve]` | `[Revise]` | `[Reject & Re-brainstorm]`
-
-### Stage 3B: Issue (Tier 1 — inline, when applicable)
-
-- **Task:** Create structured issue document for bug reports or tracked problems.
-- **Input:** Bug report or problem description.
-- **Output:** Issue at `docs/issues/<YYYY-MM-DD>-<feature>.md`.
-- **Reference:** `specs/aidd-lifecycle.md` → PLAN phase (issue tracking)
 
 ---
 
@@ -180,15 +174,17 @@ Checklist:
 
 ## Artifacts Produced
 
-| Artifact              | Stage | Location                                      |
-| --------------------- | ----- | --------------------------------------------- |
-| Brainstorm Summary    | 1     | Inline (conversation) or `docs/plans/active/` |
-| Research Summary      | 2     | Inline (conversation) or `docs/plans/active/` |
-| Plan Document         | 3     | `docs/plans/active/<YYYY-MM-DD>-<feature>.md` |
-| Issue Document        | 3B    | `docs/issues/<YYYY-MM-DD>-<feature>.md`       |
-| Spec Commit           | 4     | Git history                                   |
-| Implementation        | 5     | Source files per plan                         |
-| Implementation Commit | 6     | Git history                                   |
+| Artifact              | Stage | Location                                                 |
+| --------------------- | ----- | -------------------------------------------------------- |
+| Brainstorm Summary    | 1     | `docs/plans/active/<YYYY.MM.DD>-<feature>-brainstorm.md` |
+| Research Summary      | 2     | `docs/plans/active/<YYYY.MM.DD>-<feature>-research.md`   |
+| ADR Document          | 3     | `docs/plans/active/<YYYY.MM.DD>-<feature>-adr.md`        |
+| Plan Document         | 3     | `docs/plans/active/<YYYY.MM.DD>-<feature>-plan.md`       |
+| Diagram Document      | 3     | `docs/plans/active/<YYYY.MM.DD>-<feature>-diagram.md`    |
+| Issue Document        | 3     | `docs/plans/active/<YYYY.MM.DD>-<feature>-issue.md`      |
+| Spec Commit           | 4     | Git history                                              |
+| Implementation        | 5     | Source files per plan                                    |
+| Implementation Commit | 6     | Git history                                              |
 
 ---
 
@@ -196,7 +192,7 @@ Checklist:
 
 - [ ] User's original intent is fully addressed
 - [ ] Each phase gate was respected (no skipped approvals)
-- [ ] Plan document exists and matches final implementation
+- [ ] ADR, Plan, Diagram, Issue documents exists and matches final implementation and user intent
 - [ ] All acceptance criteria from the plan are met
 - [ ] TypeScript clean, lint clean, tests passing
 - [ ] Model usage is cost-efficient (minimum tier per task)
@@ -224,13 +220,13 @@ Costs assume typical feature complexity. Actual costs vary based on research dep
 ```
 Stage 0 (Intake) → determines entry point
   ↓
-Stage 1 (Brainstorm) → can skip to Stage 3 if clear
+Stage 1 (Brainstorm) → NEVER skip
   ↓
-Stage 2 (Research) → can skip if no research needed
+Stage 2 (Research) → can skip *ONLY* if user *EXPLICITLY PROVIDES* a resarch document 
   ↓
-Stage 3 (Plan) → required before execution
+Stage 3 (Plan) → REQUIRED before execution
   ↓
-Stage 4 (Commit Plan) → required before execution
+Stage 4 (Commit Plan) → REQUIRED before execution
   ↓
 Stage 5 (Execute) → parallel dispatch within stage
   ↓

@@ -76,17 +76,18 @@ Each implementation step MUST include a model assignment column:
 
 #### File Convention
 
-| Scope              | Path                                                                  |
-| ------------------ | --------------------------------------------------------------------- |
-| Single feature     | `docs/plans/active/<YYYY-MM-DD>-<feature>.md`                         |
-| Multi-part feature | `docs/plans/active/<YYYY-MM-DD>-01-<feature-part-a>.md`, `...-02-...` |
-| Related issue      | `docs/issues/<YYYY-MM-DD>-<feature>.md`                               |
+| Scope              | Path                                                                       |
+| ------------------ | -------------------------------------------------------------------------- |
+| ADR                | `docs/plans/active/<YYYY.MM.DD>-<feature>-adr.md`                          |
+| Single feature     | `docs/plans/active/<YYYY.MM.DD>-<feature>-plan.md`                         |
+| Multi-part feature | `docs/plans/active/<YYYY.MM.DD>-01-<feature-part-a>-plan.md`, `...-02-...` |
+| Related issue      | `docs/plans/active/<YYYY.MM.DD>-<feature>-issue.md`                        |
 
 #### Issue Tracking (when applicable)
 
 When the task involves a bug report or tracked problem, create a structured issue document as part of the plan:
 
-- Create `docs/issues/<YYYY-MM-DD>-<feature>.md` with:
+- Create `docs/issues/<YYYY.MM.DD>-<feature>.md` with:
   - Problem description and reproduction steps (if bug)
   - Linked plan document (if one exists)
   - GitHub issue body (ready to push via `gh`)
@@ -212,14 +213,14 @@ Execution:
 
 The lifecycle maps to intelligence tiers to optimize effort allocation:
 
-| Phase           | Tier                 | Effort                           | Rationale                                       |
-| --------------- | -------------------- | -------------------------------- | ----------------------------------------------- |
-| UNDERSTAND      | Tier 1 (HIGH)        | Analysis, comprehension          | Errors here cascade. Maximum rigor required.    |
-| PLAN            | Tier 1 (HIGH)        | Architecture, decomposition      | Structural decisions define implementation.     |
-| SPEC            | Tier 3 (LOW)         | Mechanical commit                | Formatting and committing — low ambiguity.      |
-| BUILD           | Tier 2 (STANDARD)    | Implementation, integration      | Follow the plan. Creativity within constraints. |
-| VERIFY          | Tier 3 → 2 (ADAPTIVE)| Tests, validation, review        | Starts mechanical; escalates on failures.       |
-| SHIP            | Tier 3 (LOW)         | Commit, archival, PR creation    | Mechanical finalization. Low ambiguity.         |
+| Phase      | Tier                  | Effort                        | Rationale                                       |
+| ---------- | --------------------- | ----------------------------- | ----------------------------------------------- |
+| UNDERSTAND | Tier 1 (HIGH)         | Analysis, comprehension       | Errors here cascade. Maximum rigor required.    |
+| PLAN       | Tier 1 (HIGH)         | Architecture, decomposition   | Structural decisions define implementation.     |
+| SPEC       | Tier 3 (LOW)          | Mechanical commit             | Formatting and committing — low ambiguity.      |
+| BUILD      | Tier 2 (STANDARD)     | Implementation, integration   | Follow the plan. Creativity within constraints. |
+| VERIFY     | Tier 3 → 2 (ADAPTIVE) | Tests, validation, review     | Starts mechanical; escalates on failures.       |
+| SHIP       | Tier 3 (LOW)          | Commit, archival, PR creation | Mechanical finalization. Low ambiguity.         |
 
 Tier transitions are not rigid. If BUILD reveals architectural issues, escalate back to Tier 1 for re-planning. If VERIFY uncovers complex test failures, escalate from Tier 3 to Tier 2 or Tier 1.
 
