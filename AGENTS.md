@@ -2,7 +2,7 @@
 
 > The open standard for AI-Driven Development. Multi-IDE, AI-agnostic agent coordination.
 
-**Last Updated**: 2026-02-04
+**Last Updated**: 2026-02-05
 **Version**: 1.0.0
 **Maintainer**: DerianAndre
 **License**: MIT
@@ -308,7 +308,7 @@ graph TD
 
 ## System Trade-offs Matrix
 
-| Factor                        | ✅ Advantage                                     | ⚠️ Disadvantage                  | 🎯 Mitigation            |
+| Factor                        | ✅ Advantage                                      | ⚠️ Disadvantage                   | 🎯 Mitigation             |
 | ----------------------------- | ------------------------------------------------ | -------------------------------- | ------------------------ |
 | **Modularity**                | Token savings, selective loading                 | Multiple MD files to maintain    | Auto-sync scripts        |
 | **Multi-IDE Symbolism**       | Compatible with Cursor, Claude Code, Antigravity | Initial confusion for human devs | Clear README             |

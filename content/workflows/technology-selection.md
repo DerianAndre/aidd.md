@@ -8,10 +8,10 @@ description: 🔍 Technology selection workflow using the Technology Knowledge B
 
 ## Invocation
 
-| Type | Items |
-|------|-------|
-| **Skills** | brainstorming |
-| **MCPs** | WebSearch, Context7 |
+| Type       | Items               |
+| ---------- | ------------------- |
+| **Skills** | brainstorming       |
+| **MCPs**   | WebSearch, Context7 |
 
 ---
 

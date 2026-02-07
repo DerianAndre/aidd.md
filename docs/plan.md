@@ -38,8 +38,8 @@ Two-PR implementation:
 | Step | File | Action |
 |------|------|--------|
 | 1.1 | `packages/shared/src/types.ts` | Add `TokenUsage`, `ModelFingerprint`, extend `SessionState`, `SessionOutcome`, expand `StorageBackend` (~30 methods) |
-| 1.2 | `mcps/mcp-aidd-memory/src/storage/migrations.ts` | Rewrite as single `SCHEMA` with 15 tables |
-| 1.3 | `mcps/mcp-aidd-memory/src/storage/sqlite-backend.ts` | Implement all new methods |
+| 1.2 | `mcps/mcp-aidd-memory/src/storage/migrations.ts` | Rewrite as single `SCHEMA` with 16 tables (incl. `meta`) |
+| 1.3 | `mcps/mcp-aidd-memory/src/storage/sqlite-backend.ts` | Implement all new methods + checkpoint() + pruneStaleData() + schema checksum |
 | 1.4 | `mcps/mcp-aidd-memory/src/storage/storage-provider.ts` | Direct SqliteBackend (no factory) |
 | 1.5 | `mcps/mcp-aidd-memory/src/storage/json-backend.ts` | DELETE |
 | 1.5 | `mcps/mcp-aidd-memory/src/storage/factory.ts` | DELETE |
@@ -76,7 +76,7 @@ Steps 2.5-2.9 run sequentially (dependencies).
 
 | Step | File | Action |
 |------|------|--------|
-| 4.1 | `modules/hooks.ts` | Create HookBus (~30 lines) |
+| 4.1 | `modules/hooks.ts` | Create HookBus with circuit breaker (named subscribers, 3-strike disable) |
 | 4.2 | `session/index.ts` | Emit session_ended, compute fingerprint |
 | 4.3 | `observation/index.ts` | Emit observation_saved |
 
@@ -86,7 +86,7 @@ Steps 2.5-2.9 run sequentially (dependencies).
 |------|------|--------|
 | 5.1 | `pattern-killer/types.ts` | BannedPattern, PatternDetection, AuditScore, ModelPatternProfile |
 | 5.2 | `pattern-killer/detector.ts` | AI_PATTERN_SIGNATURES + computeFingerprint + detectPatterns |
-| 5.3 | `pattern-killer/index.ts` | 5 tools: audit, list, add, stats, score |
+| 5.3 | `pattern-killer/index.ts` | 6 tools: audit, list, add, stats, score, false_positive |
 
 ### Phase 6: Auto-Learning Hooks
 
@@ -96,9 +96,11 @@ Steps 2.5-2.9 run sequentially (dependencies).
 | 6.2 | Auto evolution analysis (debounced) | evolution hook |
 | 6.3 | Feedback loop on session end | evolution hook |
 | 6.4 | Auto model profile update | pattern-killer hook |
-| 6.5 | Auto-generate insights.md | evolution hook |
-| 6.6 | 3 new evolution detectors | analyzer.ts |
-| 6.7 | Extended ModelMetrics | analytics module |
+| 6.5 | Auto-generate insights.md (atomic write) | evolution hook |
+| 6.6 | Auto-generate state-dump.sql (atomic write) | evolution hook |
+| 6.7 | Auto-prune stale data (every 10th session) | evolution hook |
+| 6.8 | 3 new evolution detectors | analyzer.ts |
+| 6.9 | Extended ModelMetrics | analytics module |
 
 ### Phase 7: Cleanup + Verify
 
@@ -139,8 +141,9 @@ Steps 2.5-2.9 run sequentially (dependencies).
 - `mcps/mcp-aidd-memory/src/modules/index.ts`
 
 ### Auto-generated at runtime
-- `.aidd/data.db` — SQLite database
-- `ai/memory/insights.md` — Auto-learning dashboard
+- `.aidd/data.db` — SQLite database (16 tables incl. `meta`)
+- `ai/memory/insights.md` — Auto-learning dashboard (atomic write)
+- `ai/memory/state-dump.sql` — Internal state dump for git visibility
 
 ---
 
@@ -148,13 +151,13 @@ Steps 2.5-2.9 run sequentially (dependencies).
 
 | Batch | Phase | Tasks | Parallelizable |
 |-------|-------|-------|---------------|
-| 1 | 1 | Types, schema, backend | No (sequential) |
+| 1 | 1 | Types, schema, backend (incl. checkpoint, pruning, schema checksum) | No (sequential) |
 | 2 | 2.1-2.4 | Branch, evolution, drafts, lifecycle | Yes (parallel agents) |
 | 3 | 2.5-2.9 | Memory, diagnostics, session, wiring | No (sequential) |
 | 4 | 3 | Cleanup + verify PR 1 | No |
-| 5 | 4 | HookBus + fingerprinting | No |
-| 6 | 5 | Pattern-killer module | No |
-| 7 | 6 | Auto-learning hooks + detectors | No |
+| 5 | 4 | HookBus (circuit breaker) + fingerprinting | No |
+| 6 | 5 | Pattern-killer module (6 tools) | No |
+| 7 | 6 | Auto-learning hooks + detectors + pruning + atomic writes | No |
 | 8 | 7 | Cleanup + verify PR 2 | No |
 
 ---
@@ -166,15 +169,22 @@ Steps 2.5-2.9 run sequentially (dependencies).
 - [ ] `pnpm mcp:build` — 5/5 pass
 - [ ] `pnpm mcp:check` — Engine ON
 - [ ] No readJsonFile/writeJsonFile in module code
-- [ ] `.aidd/data.db` contains all 15 tables
+- [ ] `.aidd/data.db` contains all 16 tables (incl. `meta`)
+- [ ] Schema checksum stored in `meta` table
+- [ ] WAL checkpoint called on session end
 - [ ] All 16 memory tools functional
 
 ### PR 2 Checks
-- [ ] 5 pattern-killer tools registered
+- [ ] 6 pattern-killer tools registered (audit, list, add, stats, score, false_positive)
 - [ ] HookBus fires on session end + observation save
+- [ ] HookBus circuit breaker disables after 3 consecutive failures
 - [ ] Pattern detections saved with modelId
 - [ ] Fingerprint computed at session end
 - [ ] Evolution runs every 5th session
 - [ ] Feedback adjusts confidence
-- [ ] `ai/memory/insights.md` auto-generated
+- [ ] False positive reduces pattern confidence by 15%
+- [ ] Patterns auto-deactivate below 50% confidence
+- [ ] DB pruning runs every 10th session
+- [ ] `ai/memory/insights.md` auto-generated (atomic write)
+- [ ] `ai/memory/state-dump.sql` auto-generated
 - [ ] `pnpm mcp:typecheck && pnpm mcp:build` — clean

@@ -17,11 +17,11 @@ model_strategy: sequential
 
 ## Invocation
 
-| Type | Items |
-|------|-------|
-| **Skills** | verification-before-completion |
-| **Specialized** | frontend-design |
-| **MCPs** | Context7, WebSearch |
+| Type            | Items                          |
+| --------------- | ------------------------------ |
+| **Skills**      | verification-before-completion |
+| **Specialized** | frontend-design                |
+| **MCPs**        | Context7, WebSearch            |
 
 ---
 

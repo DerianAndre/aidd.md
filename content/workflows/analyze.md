@@ -22,11 +22,11 @@ model_strategy: hybrid
 
 ## Invocation
 
-| Type | Items |
-|------|-------|
-| **Skills** | systematic-debugging, verification |
-| **Specialized** | clean-ddd-hexagonal |
-| **MCPs** | WebSearch |
+| Type            | Items                              |
+| --------------- | ---------------------------------- |
+| **Skills**      | systematic-debugging, verification |
+| **Specialized** | clean-ddd-hexagonal                |
+| **MCPs**        | WebSearch                          |
 
 **Use when:**
 
@@ -194,9 +194,7 @@ if (criticalCount > 0) {
 ### Node C: Test Coverage
 
 **Skill:** `quality-engineer` | **Tier:** 3
-
 **Task:** Identify untested code paths, especially security-critical functions.
-
 **Action:**
 
 ```bash

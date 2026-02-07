@@ -16,10 +16,10 @@ model_strategy: parallel
 
 ## Invocation
 
-| Type | Items |
-|------|-------|
+| Type       | Items                          |
+| ---------- | ------------------------------ |
 | **Skills** | verification-before-completion |
-| **MCPs** | Context7 |
+| **MCPs**   | Context7                       |
 
 **Use when:**
 
@@ -153,9 +153,9 @@ Use this standard format for endpoint documentation:
 **Authentication:** Required/Optional
 
 **Parameters:**
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | User ID |
+| Name | Type   | Required | Description |
+| ---- | ------ | -------- | ----------- |
+| id   | string | Yes      | User ID     |
 
 **Request Example:**
 \`\`\`http
@@ -543,14 +543,14 @@ export async function getUserById(id: string): Promise<User | null> {
 
 ## Documentation Types
 
-| Type | Purpose | Update When |
-|------|---------|-------------|
-| **README.md** | Quick start, overview | Project setup changes, new features |
-| **API Reference** | Complete function/class reference | Code changes (automated) |
-| **Guides (Tutorials)** | Step-by-step learning | Workflow changes, new APIs |
-| **Runbooks (Operations)** | Deployment, incident response | Process changes |
-| **ADRs (Decisions)** | Why we chose X over Y | Major architectural decision |
-| **CHANGELOG** | Version history | Every release (automated) |
+| Type                      | Purpose                           | Update When                         |
+| ------------------------- | --------------------------------- | ----------------------------------- |
+| **README.md**             | Quick start, overview             | Project setup changes, new features |
+| **API Reference**         | Complete function/class reference | Code changes (automated)            |
+| **Guides (Tutorials)**    | Step-by-step learning             | Workflow changes, new APIs          |
+| **Runbooks (Operations)** | Deployment, incident response     | Process changes                     |
+| **ADRs (Decisions)**      | Why we chose X over Y             | Major architectural decision        |
+| **CHANGELOG**             | Version history                   | Every release (automated)           |
 
 ---
 
@@ -659,11 +659,11 @@ jobs:
 
 ## Cost Estimation
 
-| Tier | Stages | Est. Tokens | Cost | Total |
-| --------- | ---------------------------------------------- | ------------------ | --------------------- | ---------- |
-| **Tier 1** | 2 (API Docs, Architecture) | ~12,000 | See model-matrix.md | ~$0.10 |
-| **Tier 3** | 6 (Code Scan, User Guide, Dev Docs, Codify Knowledge, Changelog, Validation) | ~18,000 | See model-matrix.md | ~$0.03 |
-| **Total** | **8 stages** | **~30,000 tokens** | **Mixed** | **~$0.13** |
+| Tier       | Stages                                                                       | Est. Tokens        | Cost                | Total      |
+| ---------- | ---------------------------------------------------------------------------- | ------------------ | ------------------- | ---------- |
+| **Tier 1** | 2 (API Docs, Architecture)                                                   | ~12,000            | See model-matrix.md | ~$0.10     |
+| **Tier 3** | 6 (Code Scan, User Guide, Dev Docs, Codify Knowledge, Changelog, Validation) | ~18,000            | See model-matrix.md | ~$0.03     |
+| **Total**  | **8 stages**                                                                 | **~30,000 tokens** | **Mixed**           | **~$0.13** |
 
 ---
 

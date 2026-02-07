@@ -16,10 +16,10 @@ model_strategy: sequential
 
 ## Invocation
 
-| Type | Items |
-|------|-------|
+| Type       | Items                                 |
+| ---------- | ------------------------------------- |
 | **Skills** | test-driven-development, verification |
-| **MCPs** | Context7 |
+| **MCPs**   | Context7                              |
 
 ---
 

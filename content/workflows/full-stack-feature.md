@@ -25,11 +25,11 @@ Coordinate end-to-end development of a complete feature from initial architectur
 
 ## Invocation
 
-| Type | Items |
-|------|-------|
-| **Skills** | writing-plans, executing-plans, verification |
-| **Specialized** | clean-ddd-hexagonal, frontend-design |
-| **MCPs** | Context7, WebSearch |
+| Type            | Items                                        |
+| --------------- | -------------------------------------------- |
+| **Skills**      | writing-plans, executing-plans, verification |
+| **Specialized** | clean-ddd-hexagonal, frontend-design         |
+| **MCPs**        | Context7, WebSearch                          |
 
 **Use when:**
 
@@ -266,12 +266,12 @@ Coordinate end-to-end development of a complete feature from initial architectur
 
 ## Cost Estimation
 
-| Tier | Stages | Est. Tokens | Cost | Total |
-| ---------- | -------------------------------------- | ------------------ | --------------------- | ---------- |
-| **Tier 1** | 3 (Architecture, Contract, Security) | ~25,000 | See model-matrix.md | ~$0.20 |
-| **Tier 2** | 4 (Data, Design, Experience, Platform) | ~30,000 | See model-matrix.md | ~$0.10 |
-| **Tier 3** | 3 (Interface, Quality, Knowledge) | ~20,000 | See model-matrix.md | ~$0.02 |
-| **Total** | **10 stages** | **~75,000 tokens** | **Mixed** | **~$0.32** |
+| Tier       | Stages                                 | Est. Tokens        | Cost                | Total      |
+| ---------- | -------------------------------------- | ------------------ | ------------------- | ---------- |
+| **Tier 1** | 3 (Architecture, Contract, Security)   | ~25,000            | See model-matrix.md | ~$0.20     |
+| **Tier 2** | 4 (Data, Design, Experience, Platform) | ~30,000            | See model-matrix.md | ~$0.10     |
+| **Tier 3** | 3 (Interface, Quality, Knowledge)      | ~20,000            | See model-matrix.md | ~$0.02     |
+| **Total**  | **10 stages**                          | **~75,000 tokens** | **Mixed**           | **~$0.32** |
 
 **Notes:**
 

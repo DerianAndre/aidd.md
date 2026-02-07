@@ -15,8 +15,8 @@ model_strategy: sequential
 
 ## Invocation
 
-| Type | Items |
-|------|-------|
+| Type       | Items                                                  |
+| ---------- | ------------------------------------------------------ |
 | **Skills** | finishing-a-development-branch, requesting-code-review |
 
 ---

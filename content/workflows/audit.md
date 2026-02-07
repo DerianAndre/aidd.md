@@ -16,11 +16,11 @@ model_strategy: sequential
 
 ## Invocation
 
-| Type | Items |
-|------|-------|
-| **Skills** | verification-before-completion |
-| **Specialized** | clean-ddd-hexagonal |
-| **MCPs** | Context7 |
+| Type            | Items                          |
+| --------------- | ------------------------------ |
+| **Skills**      | verification-before-completion |
+| **Specialized** | clean-ddd-hexagonal            |
+| **MCPs**        | Context7                       |
 
 ---
 

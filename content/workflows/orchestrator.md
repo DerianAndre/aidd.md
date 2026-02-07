@@ -35,11 +35,11 @@ Coordinate the full brainstorm → research → plan → execute → complete pi
 
 ### Stage 0: Intake (Tier 1 — inline)
 
-**Indicator**: `[aidd.md] Workflows: Orchestrator - Architect Mode → <entry point>`
-**Task:** Classify the user's request to determine the optimal entry point.
-**Input:** User's initial request.
-**Output:** Entry point classification.
-**Reference:** `rules/orchestrator.md` → Section 4 (Intake Classification)
+- **Indicator**: `[aidd.md] Workflows: Orchestrator - Architect Mode → <entry point>`
+- **Task:** Classify the user's request to determine the optimal entry point.
+- **Input:** User's initial request.
+- **Output:** Entry point classification.
+- **Reference:** `rules/orchestrator.md` → Section 4 (Intake Classification)
 
 | Signal                              | Entry Point            |
 | ----------------------------------- | ---------------------- |
@@ -55,12 +55,12 @@ Coordinate the full brainstorm → research → plan → execute → complete pi
 
 ### Stage 1: Brainstorm (Tier 1 — inline)
 
-**Indicator**: `[aidd.md] Workflow - orchestrator (Brainstorm)`
-**Task:** Extract what the user actually needs through structured questioning.
-**Input:** User's initial request + intake classification.
-**Output:** Brainstorm Summary artifact.
-**Reference:** `templates/brainstorming.md`
-**Model:** Orchestrator (Tier 1) inline. Do NOT delegate to subagents — requires conversational continuity.
+- **Indicator**: `[aidd.md] Workflow - orchestrator (Brainstorm)`
+- **Task:** Extract what the user actually needs through structured questioning.
+- **Input:** User's initial request + intake classification.
+- **Output:** Brainstorm Summary artifact.
+- **Reference:** `templates/brainstorming.md`
+- **Model:** Orchestrator (Tier 1) inline. Do NOT delegate to subagents — requires conversational continuity.
 
 Protocol:
 1. Listen → Probe → Mirror → Challenge → Converge (Step 0 from brainstorming template)
@@ -72,12 +72,12 @@ Protocol:
 
 ### Stage 2: Research (Tier 2 subagents + Tier 1 synthesis)
 
-**Indicator**: `[aidd.md] Workflow - orchestrator (Research)`
-**Task:** Ground decisions in evidence through parallel multi-source investigation.
-**Input:** Brainstorm Summary or clear feature description.
-**Output:** Research Summary with trade-off matrix.
-**Reference:** `templates/research.md`
-**Model:** Dispatch Tier 2 subagents in parallel for:
+- **Indicator**: `[aidd.md] Workflow - orchestrator (Research)`
+- **Task:** Ground decisions in evidence through parallel multi-source investigation.
+- **Input:** Brainstorm Summary or clear feature description.
+- **Output:** Research Summary with trade-off matrix.
+- **Reference:** `templates/research.md`
+- **Model:** Dispatch Tier 2 subagents in parallel for:
   - Technology scan (competing implementations, OSS projects)
   - Framework best practices (verified against detected versions)
   - Trend validation (ecosystem direction, deprecation timelines)
@@ -91,11 +91,14 @@ Tier 1 orchestrator synthesizes findings into a trade-off matrix.
 
 ### Stage 3: Plan (Tier 1 — inline)
 
-**Indicator**: `[aidd.md] Workflow - orchestrator (Plan)`
-**Task:** Produce an atomic, idempotent, executable plan document.
-**Input:** Brainstorm Summary + Research Summary (or just clear requirements).
-**Output:** Plan document at `docs/plans/active/<YYYY-MM-DD>-<feature>.md`.
-**Reference:** `specs/aidd-lifecycle.md` → Phases 1-2 (UNDERSTAND, PLAN)
+- **Indicator**: `[aidd.md] Workflow - orchestrator (Plan)`
+- **Task:** Produce an atomic, idempotent, executable plan document.
+- **Input:** Brainstorm Summary + Research Summary (or just clear requirements).
+- **Output:** 
+  - Plan document at `docs/plans/active/<YYYY-MM-DD>-<feature>-plan.md`.
+  - ADR document at `docs/plans/active/<YYYY-MM-DD>-<feature>-adr.md`.
+  - Diagram (mermaid) document at `docs/plans/active/<YYYY-MM-DD>-<feature>-diagram.md`.
+- **Reference:** `specs/aidd-lifecycle.md` → Phases 1-2 (UNDERSTAND, PLAN)
 
 The plan document includes:
 - Context (problem statement, research reference)
@@ -109,19 +112,19 @@ The plan document includes:
 
 ### Stage 3B: Issue (Tier 1 — inline, when applicable)
 
-**Task:** Create structured issue document for bug reports or tracked problems.
-**Input:** Bug report or problem description.
-**Output:** Issue at `docs/issues/<YYYY-MM-DD>-<feature>.md`.
-**Reference:** `specs/aidd-lifecycle.md` → PLAN phase (issue tracking)
+- **Task:** Create structured issue document for bug reports or tracked problems.
+- **Input:** Bug report or problem description.
+- **Output:** Issue at `docs/issues/<YYYY-MM-DD>-<feature>.md`.
+- **Reference:** `specs/aidd-lifecycle.md` → PLAN phase (issue tracking)
 
 ---
 
 ### Stage 4: Commit Plan (Tier 3 subagent)
 
-**Task:** Version-control the plan before any implementation.
-**Input:** Approved plan document.
-**Output:** Git commit (`docs(scope): add plan for <feature>`).
-**Reference:** `specs/aidd-lifecycle.md` → Phase 3 (SPEC)
+- **Task:** Version-control the plan before any implementation.
+- **Input:** Approved plan document.
+- **Output:** Git commit (`docs(scope): add plan for <feature>`).
+- **Reference:** `specs/aidd-lifecycle.md` → Phase 3 (SPEC)
 
 Steps:
 1. Check current branch — suggest `feature/<name>` or `fix/<name>` if on `main`
@@ -132,10 +135,10 @@ Steps:
 
 ### Stage 5: Execute (Adaptive — per-task model assignment)
 
-**Task:** Implement the plan with verification at each step.
-**Input:** Committed plan document.
-**Output:** Working implementation.
-**Reference:** `specs/aidd-lifecycle.md` → Phase 4 (BUILD)
+- **Task:** Implement the plan with verification at each step.
+- **Input:** Committed plan document.
+- **Output:** Working implementation.
+- **Reference:** `specs/aidd-lifecycle.md` → Phase 4 (BUILD)
 
 Dispatch strategy:
 - Assign model per the plan's Tier column
@@ -151,10 +154,10 @@ See `specs/model-matrix.md` → Parallel Dispatch Pattern for execution examples
 
 ### Stage 6: Completion (Adaptive — per-task model assignment)
 
-**Task:** Verify, clean up, and archive.
-**Input:** Completed implementation.
-**Output:** Clean commit, passing checks, archived plan.
-**Reference:** `specs/aidd-lifecycle.md` → Phases 5-6 (VERIFY, SHIP)
+- **Task:** Verify, clean up, and archive.
+- **Input:** Completed implementation.
+- **Output:** Clean commit, passing checks, archived plan.
+- **Reference:** `specs/aidd-lifecycle.md` → Phases 5-6 (VERIFY, SHIP)
 
 Task-to-tier assignment:
 - Run typecheck/lint/tests → Tier 3

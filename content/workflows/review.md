@@ -17,11 +17,11 @@ model_strategy: sequential
 
 ## Invocation
 
-| Type | Items |
-|------|-------|
-| **Skills** | code-review, receiving-code-review |
-| **Specialized** | clean-ddd-hexagonal |
-| **MCPs** | WebSearch |
+| Type            | Items                              |
+| --------------- | ---------------------------------- |
+| **Skills**      | code-review, receiving-code-review |
+| **Specialized** | clean-ddd-hexagonal                |
+| **MCPs**        | WebSearch                          |
 
 ---
 

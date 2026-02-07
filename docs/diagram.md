@@ -514,7 +514,7 @@ graph TB
 
     subgraph "AFTER (New)"
         direction TB
-        A_ALL[All Modules] -->|StorageBackend| A_DB[(SQLite<br/>data.db<br/>15 tables<br/>FTS5 search)]
+        A_ALL[All Modules] -->|StorageBackend| A_DB[(SQLite<br/>data.db<br/>16 tables<br/>FTS5 search)]
         A_MEM[Memory Module] -->|Export on demand| A_JSON[ai/memory/*.json<br/>git-friendly]
         A_EVO[Evolution Hooks] -->|Auto-generate| A_INS[ai/memory/insights.md<br/>~150 tokens]
     end

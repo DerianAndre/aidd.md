@@ -19,11 +19,11 @@ model_strategy: sequential
 
 ## Invocation
 
-| Type | Items |
-|------|-------|
-| **Skills** | brainstorming, writing-plans |
-| **Specialized** | clean-ddd-hexagonal |
-| **MCPs** | Context7, WebSearch |
+| Type            | Items                        |
+| --------------- | ---------------------------- |
+| **Skills**      | brainstorming, writing-plans |
+| **Specialized** | clean-ddd-hexagonal          |
+| **MCPs**        | Context7, WebSearch          |
 
 ---
 
