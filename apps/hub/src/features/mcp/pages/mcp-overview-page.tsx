@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
@@ -49,6 +50,7 @@ const DIR_TO_SERVER_ID: Record<string, string> = {
 // -- Component ------------------------------------------------------------
 
 export function McpOverviewPage() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
 
   // Health store -- discovered MCPs
@@ -127,7 +129,7 @@ export function McpOverviewPage() {
   if (healthLoading && !report) {
     return (
       <div>
-        <PageHeader title="MCP Overview" description="Unified view of all MCP servers across AI tools" />
+        <PageHeader title={t('page.mcp.title')} description={t('page.mcp.description')} />
         <div className="mb-6 grid gap-3 grid-cols-2 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-20 rounded-xl" />
@@ -147,8 +149,8 @@ export function McpOverviewPage() {
   return (
     <div>
       <PageHeader
-        title="MCP Overview"
-        description="Unified view of all MCP servers across AI tools"
+        title={t('page.mcp.title')}
+        description={t('page.mcp.description')}
         actions={
           <Button
             size="sm"
@@ -157,7 +159,7 @@ export function McpOverviewPage() {
             disabled={loading}
           >
             {loading ? <Spinner size="sm" /> : <RefreshCw size={14} />}
-            Refresh
+            {t('common.refresh')}
           </Button>
         }
       />
@@ -165,18 +167,18 @@ export function McpOverviewPage() {
       {/* -- Stat cards ---------------------------------------------------- */}
       <div className="mb-6 grid gap-3 grid-cols-2 sm:grid-cols-4">
         <StatCard
-          label="Total Discovered"
+          label={t('page.mcp.totalDiscovered')}
           value={summary?.total_discovered ?? 0}
           icon={Server}
         />
         <StatCard
-          label="AIDD MCPs"
+          label={t('page.mcp.aiddMcps')}
           value={summary?.aidd_count ?? 0}
           icon={Shield}
           color={summary && summary.aidd_count > 0 ? 'success' : 'default'}
         />
         <StatCard
-          label="Hub Status"
+          label={t('page.mcp.hubStatus')}
           value={
             summary
               ? summary.hub_error > 0
@@ -194,7 +196,7 @@ export function McpOverviewPage() {
           }
         />
         <StatCard
-          label="Packages Built"
+          label={t('page.mcp.packagesBuilt')}
           value={`${builtCount}/${packages.length}`}
           icon={Package}
           color={packages.length > 0 && builtCount === packages.length ? 'success' : 'default'}
@@ -204,7 +206,7 @@ export function McpOverviewPage() {
       {/* -- Discovered MCPs ----------------------------------------------- */}
       <div className="mb-8">
         <div className="mb-3 flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-foreground">Discovered MCPs</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t('page.mcp.discoveredMcps')}</h2>
           {summary && (
             <Chip size="sm" color="default">{summary.total_discovered}</Chip>
           )}
@@ -213,12 +215,12 @@ export function McpOverviewPage() {
         {report && report.discovered.length === 0 && (
           <div className="rounded-xl border border-border bg-muted/50 p-8 text-center">
             <Server size={32} className="mx-auto mb-3 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No MCP configurations found.</p>
+            <p className="text-sm text-muted-foreground">{t('page.mcp.noMcps')}</p>
             <Link
               to={ROUTES.INTEGRATIONS}
               className="mt-2 inline-block text-xs text-primary hover:underline"
             >
-              Set up integrations to get started
+              {t('page.mcp.noMcpsHint')}
             </Link>
           </div>
         )}
@@ -262,13 +264,13 @@ export function McpOverviewPage() {
       <div>
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-foreground">AIDD Packages</h2>
+            <h2 className="text-sm font-semibold text-foreground">{t('page.mcp.aiddPackages')}</h2>
             <Chip size="sm" color="default">{MCP_PACKAGES.length}</Chip>
           </div>
           {runningCount > 0 && (
             <Button size="sm" variant="destructive" onClick={() => void stopAll()}>
               <StopCircle size={14} />
-              Stop All ({runningCount})
+              {t('page.mcp.stopAll', { count: runningCount })}
             </Button>
           )}
         </div>
@@ -293,10 +295,9 @@ export function McpOverviewPage() {
 
         {/* Integration snippet */}
         <div className="mt-6 rounded-xl border border-border bg-muted/50 p-4">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">Integration</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.mcp.integration')}</h3>
           <p className="mb-3 text-xs text-muted-foreground">
-            Add AIDD MCP servers to your AI client configuration. Each server runs as a separate stdio process,
-            or use the engine server for all tools in one process.
+            {t('page.mcp.integrationHint')}
           </p>
           <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs text-foreground">
 {`{

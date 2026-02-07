@@ -31,8 +31,10 @@ import {
   PanelLeftClose,
   PanelLeft,
   Store,
+  HelpCircle,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useNavigationStore } from "../../stores/navigation-store";
 import { useProjectStore } from "../../stores/project-store";
 import { ROUTES } from "../../lib/constants";
@@ -41,63 +43,65 @@ import { Logo } from "../ui/logo";
 
 const NAV_GROUPS = [
   {
-    label: "Overview",
+    labelKey: "nav.overview",
     items: [
-      { label: "Dashboard", path: ROUTES.DASHBOARD, icon: LayoutDashboard },
-      { label: "Projects", path: ROUTES.PROJECTS, icon: FolderKanban },
+      { labelKey: "nav.dashboard", path: ROUTES.DASHBOARD, icon: LayoutDashboard },
+      { labelKey: "nav.projects", path: ROUTES.PROJECTS, icon: FolderKanban },
     ],
   },
   {
-    label: "Explore",
-    items: [{ label: "Marketplace", path: ROUTES.MARKETPLACE, icon: Store }],
+    labelKey: "nav.explore",
+    items: [{ labelKey: "nav.marketplace", path: ROUTES.MARKETPLACE, icon: Store }],
   },
   {
-    label: "MCP",
+    labelKey: "nav.mcp",
     items: [
-      { label: "MCP Overview", path: ROUTES.MCP, icon: Server },
-      { label: "MCP Playground", path: ROUTES.MCP_PLAYGROUND, icon: Terminal },
+      { labelKey: "nav.mcpOverview", path: ROUTES.MCP, icon: Server },
+      { labelKey: "nav.mcpPlayground", path: ROUTES.MCP_PLAYGROUND, icon: Terminal },
     ],
   },
   {
-    label: "Framework",
+    labelKey: "nav.framework",
     items: [
-      { label: "Agents", path: ROUTES.AGENTS, icon: Users },
-      { label: "Rules", path: ROUTES.FRAMEWORK_RULES, icon: ShieldCheck },
-      { label: "Skills", path: ROUTES.FRAMEWORK_SKILLS, icon: Zap },
-      { label: "Knowledge", path: ROUTES.FRAMEWORK_KNOWLEDGE, icon: BookOpen },
-      { label: "Workflows", path: ROUTES.FRAMEWORK_WORKFLOWS, icon: GitBranch },
-      { label: "Templates", path: ROUTES.FRAMEWORK_TEMPLATES, icon: FileText },
-      { label: "Spec", path: ROUTES.FRAMEWORK_SPEC, icon: ScrollText },
+      { labelKey: "nav.agents", path: ROUTES.AGENTS, icon: Users },
+      { labelKey: "nav.rules", path: ROUTES.FRAMEWORK_RULES, icon: ShieldCheck },
+      { labelKey: "nav.skills", path: ROUTES.FRAMEWORK_SKILLS, icon: Zap },
+      { labelKey: "nav.knowledge", path: ROUTES.FRAMEWORK_KNOWLEDGE, icon: BookOpen },
+      { labelKey: "nav.workflows", path: ROUTES.FRAMEWORK_WORKFLOWS, icon: GitBranch },
+      { labelKey: "nav.templates", path: ROUTES.FRAMEWORK_TEMPLATES, icon: FileText },
+      { labelKey: "nav.spec", path: ROUTES.FRAMEWORK_SPEC, icon: ScrollText },
     ],
   },
   {
-    label: "Project Data",
+    labelKey: "nav.projectData",
     items: [
-      { label: "Sessions", path: ROUTES.SESSIONS, icon: History },
-      { label: "Observations", path: ROUTES.OBSERVATIONS, icon: Eye },
-      { label: "Permanent Memory", path: ROUTES.MEMORY, icon: Brain },
-      { label: "Overrides", path: ROUTES.OVERRIDES, icon: Layers },
+      { labelKey: "nav.sessions", path: ROUTES.SESSIONS, icon: History },
+      { labelKey: "nav.observations", path: ROUTES.OBSERVATIONS, icon: Eye },
+      { labelKey: "nav.permanentMemory", path: ROUTES.MEMORY, icon: Brain },
+      { labelKey: "nav.overrides", path: ROUTES.OVERRIDES, icon: Layers },
     ],
   },
   {
-    label: "Intelligence",
+    labelKey: "nav.intelligence",
     items: [
-      { label: "Analytics", path: ROUTES.ANALYTICS, icon: BarChart3 },
-      { label: "Evolution", path: ROUTES.EVOLUTION, icon: Dna },
-      { label: "Drafts", path: ROUTES.DRAFTS, icon: FileStack },
-      { label: "Diagnostics", path: ROUTES.DIAGNOSTICS, icon: Activity },
+      { labelKey: "nav.analytics", path: ROUTES.ANALYTICS, icon: BarChart3 },
+      { labelKey: "nav.evolution", path: ROUTES.EVOLUTION, icon: Dna },
+      { labelKey: "nav.drafts", path: ROUTES.DRAFTS, icon: FileStack },
+      { labelKey: "nav.diagnostics", path: ROUTES.DIAGNOSTICS, icon: Activity },
     ],
   },
   {
-    label: "System",
+    labelKey: "nav.system",
     items: [
-      { label: "Config", path: ROUTES.CONFIG, icon: Settings },
-      { label: "Integrations", path: ROUTES.INTEGRATIONS, icon: Plug },
+      { labelKey: "nav.config", path: ROUTES.CONFIG, icon: Settings },
+      { labelKey: "nav.integrations", path: ROUTES.INTEGRATIONS, icon: Plug },
+      { labelKey: "nav.help", path: ROUTES.HELP, icon: HelpCircle },
     ],
   },
 ] as const;
 
 export function AppSidebar() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const collapsed = useNavigationStore((s) => s.sidebarCollapsed);
@@ -119,7 +123,7 @@ export function AppSidebar() {
         <button
           onClick={toggleSidebar}
           className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? t('common.expandSidebar') : t('common.collapseSidebar')}
         >
           {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
         </button>
@@ -128,7 +132,7 @@ export function AppSidebar() {
       {/* Project Switcher */}
       {!collapsed && projects.length > 0 && (
         <div className="border-b border-border p-3">
-          <Label className="mb-1.5 text-xs">Project</Label>
+          <Label className="mb-1.5 text-xs">{t('common.project')}</Label>
           <Select
             value={activeProject?.path ?? ""}
             onValueChange={(value) => switchProject(value)}
@@ -150,10 +154,10 @@ export function AppSidebar() {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2" aria-label="Navigation">
         {NAV_GROUPS.map((group) => (
-          <div key={group.label} className="mb-2">
+          <div key={group.labelKey} className="mb-2">
             {!collapsed && (
               <span className="px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {group.label}
+                {t(group.labelKey)}
               </span>
             )}
             <ul className="mt-0.5 space-y-0.5">
@@ -172,7 +176,7 @@ export function AppSidebar() {
                       )}
                     >
                       <item.icon size={18} className="shrink-0" />
-                      {!collapsed && <span>{item.label}</span>}
+                      {!collapsed && <span>{t(item.labelKey)}</span>}
                     </button>
                   </li>
                 );

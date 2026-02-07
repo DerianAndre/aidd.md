@@ -11,6 +11,7 @@ import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '@/components/ui/select';
 import { Save, RotateCcw, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../../../components/layout/page-header';
 import { useConfigStore } from '../stores/config-store';
 import { useProjectStore } from '../../../stores/project-store';
@@ -18,6 +19,7 @@ import type { AiddConfig } from '../../../lib/types';
 import { DEFAULT_CONFIG } from '../../../lib/types';
 
 export function ConfigPage() {
+  const { t, i18n } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { config, loading, stale, saving, fetch, save, reset } = useConfigStore();
   const [local, setLocal] = useState<AiddConfig>(config);
@@ -58,7 +60,7 @@ export function ConfigPage() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Configuration" description="AIDD framework configuration" />
+        <PageHeader title={t('page.config.title')} description={t('page.config.description')} />
         <div className="space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-32 rounded-xl" />
@@ -70,7 +72,7 @@ export function ConfigPage() {
 
   return (
     <div>
-      <PageHeader title="Configuration" description="AIDD framework configuration" />
+      <PageHeader title={t('page.config.title')} description={t('page.config.description')} />
 
       {/* Action bar */}
       <div className="mb-6 flex items-center gap-2">
@@ -80,7 +82,7 @@ export function ConfigPage() {
           disabled={!isDirty || saving}
           onClick={handleSave}
         >
-          <Save size={14} /> {saving ? 'Saving...' : 'Save'}
+          <Save size={14} /> {saving ? t('common.saving') : t('common.save')}
         </Button>
         <Button
           variant="outline"
@@ -88,19 +90,43 @@ export function ConfigPage() {
           disabled={isDefault}
           onClick={handleReset}
         >
-          <RotateCcw size={14} /> Reset to defaults
+          <RotateCcw size={14} /> {t('common.resetToDefaults')}
         </Button>
         {isDirty && (
-          <Chip size="sm" color="warning">Unsaved changes</Chip>
+          <Chip size="sm" color="warning">{t('common.unsavedChanges')}</Chip>
         )}
       </div>
 
       <div className="space-y-4">
+        {/* Language */}
+        <Card className="border border-border bg-muted/50">
+          <CardHeader>
+            <CardTitle>{t('page.config.language.title')}</CardTitle>
+            <CardDescription>{t('page.config.language.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <Select
+                value={i18n.language}
+                onValueChange={(lng) => i18n.changeLanguage(lng)}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="es">Español</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Evolution */}
         <Card className="border border-border bg-muted/50">
           <CardHeader>
-            <CardTitle>Evolution</CardTitle>
-            <CardDescription>Auto-framework mutation settings</CardDescription>
+            <CardTitle>{t('page.config.evolution.title')}</CardTitle>
+            <CardDescription>{t('page.config.evolution.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
@@ -110,7 +136,7 @@ export function ConfigPage() {
                 onChange={(e) => update('evolution', 'enabled', e.target.checked)}
                 className="h-4 w-4 rounded border-border"
               />
-              <Label className="text-sm">Enabled</Label>
+              <Label className="text-sm">{t('common.enabled')}</Label>
             </div>
             <div className="flex items-center gap-3">
               <input
@@ -119,11 +145,11 @@ export function ConfigPage() {
                 onChange={(e) => update('evolution', 'killSwitch', e.target.checked)}
                 className="h-4 w-4 rounded border-border"
               />
-              <Label className="text-sm">Kill switch (disable all mutations)</Label>
+              <Label className="text-sm">{t('page.config.evolution.killSwitch')}</Label>
             </div>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
               <div>
-                <Label>Auto-apply threshold</Label>
+                <Label>{t('page.config.evolution.autoApplyThreshold')}</Label>
                 <Input
                   type="number"
                   value={local.evolution.autoApplyThreshold}
@@ -134,7 +160,7 @@ export function ConfigPage() {
                 />
               </div>
               <div>
-                <Label>Draft threshold</Label>
+                <Label>{t('page.config.evolution.draftThreshold')}</Label>
                 <Input
                   type="number"
                   value={local.evolution.draftThreshold}
@@ -145,7 +171,7 @@ export function ConfigPage() {
                 />
               </div>
               <div>
-                <Label>Learning period (sessions)</Label>
+                <Label>{t('page.config.evolution.learningPeriod')}</Label>
                 <Input
                   type="number"
                   value={local.evolution.learningPeriodSessions}
@@ -162,8 +188,8 @@ export function ConfigPage() {
         {/* Memory */}
         <Card className="border border-border bg-muted/50">
           <CardHeader>
-            <CardTitle>Memory</CardTitle>
-            <CardDescription>Session history and pruning settings</CardDescription>
+            <CardTitle>{t('page.config.memory.title')}</CardTitle>
+            <CardDescription>{t('page.config.memory.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
@@ -173,11 +199,11 @@ export function ConfigPage() {
                 onChange={(e) => update('memory', 'autoPromoteBranchDecisions', e.target.checked)}
                 className="h-4 w-4 rounded border-border"
               />
-              <Label className="text-sm">Auto-promote branch decisions</Label>
+              <Label className="text-sm">{t('page.config.memory.autoPromote')}</Label>
             </div>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
               <div>
-                <Label>Max session history</Label>
+                <Label>{t('page.config.memory.maxSessionHistory')}</Label>
                 <Input
                   type="number"
                   value={local.memory.maxSessionHistory}
@@ -189,7 +215,7 @@ export function ConfigPage() {
                 />
               </div>
               <div>
-                <Label>Prune after (days)</Label>
+                <Label>{t('page.config.memory.pruneAfterDays')}</Label>
                 <Input
                   type="number"
                   value={local.memory.pruneAfterDays}
@@ -206,8 +232,8 @@ export function ConfigPage() {
         {/* Model Tracking */}
         <Card className="border border-border bg-muted/50">
           <CardHeader>
-            <CardTitle>Model Tracking</CardTitle>
-            <CardDescription>AI model performance tracking</CardDescription>
+            <CardTitle>{t('page.config.modelTracking.title')}</CardTitle>
+            <CardDescription>{t('page.config.modelTracking.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-3">
@@ -217,7 +243,7 @@ export function ConfigPage() {
                 onChange={(e) => update('modelTracking', 'enabled', e.target.checked)}
                 className="h-4 w-4 rounded border-border"
               />
-              <Label className="text-sm">Enabled</Label>
+              <Label className="text-sm">{t('common.enabled')}</Label>
             </div>
             <div className="flex items-center gap-3">
               <input
@@ -226,7 +252,7 @@ export function ConfigPage() {
                 onChange={(e) => update('modelTracking', 'crossProject', e.target.checked)}
                 className="h-4 w-4 rounded border-border"
               />
-              <Label className="text-sm">Cross-project tracking</Label>
+              <Label className="text-sm">{t('page.config.modelTracking.crossProject')}</Label>
             </div>
           </CardContent>
         </Card>
@@ -234,22 +260,22 @@ export function ConfigPage() {
         {/* CI */}
         <Card className="border border-border bg-muted/50">
           <CardHeader>
-            <CardTitle>CI Rules</CardTitle>
-            <CardDescription>Rule categories for CI/CD enforcement</CardDescription>
+            <CardTitle>{t('page.config.ci.title')}</CardTitle>
+            <CardDescription>{t('page.config.ci.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <TagField
-              label="Block on"
+              label={t('page.config.ci.blockOn')}
               tags={local.ci.blockOn}
               onChange={(tags) => update('ci', 'blockOn', tags)}
             />
             <TagField
-              label="Warn on"
+              label={t('page.config.ci.warnOn')}
               tags={local.ci.warnOn}
               onChange={(tags) => update('ci', 'warnOn', tags)}
             />
             <TagField
-              label="Ignore"
+              label={t('page.config.ci.ignore')}
               tags={local.ci.ignore}
               onChange={(tags) => update('ci', 'ignore', tags)}
             />
@@ -259,12 +285,12 @@ export function ConfigPage() {
         {/* Content */}
         <Card className="border border-border bg-muted/50">
           <CardHeader>
-            <CardTitle>Content</CardTitle>
-            <CardDescription>How bundled and project content are merged</CardDescription>
+            <CardTitle>{t('page.config.content.title')}</CardTitle>
+            <CardDescription>{t('page.config.content.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div>
-              <Label>Override mode</Label>
+              <Label>{t('page.config.content.overrideMode')}</Label>
               <Select
                 value={local.content.overrideMode}
                 onValueChange={(value) => {
@@ -276,13 +302,13 @@ export function ConfigPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="merge">
-                    Merge — combine bundled + project content
+                    {t('page.config.content.merge')}
                   </SelectItem>
                   <SelectItem value="project_only">
-                    Project only — ignore bundled content
+                    {t('page.config.content.projectOnly')}
                   </SelectItem>
                   <SelectItem value="bundled_only">
-                    Bundled only — ignore project overrides
+                    {t('page.config.content.bundledOnly')}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -304,6 +330,7 @@ function TagField({
   tags: string[];
   onChange: (tags: string[]) => void;
 }) {
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
 
   const addTag = () => {
@@ -330,7 +357,7 @@ function TagField({
                 type="button"
                 className="ml-0.5 rounded hover:bg-accent"
                 onClick={() => removeTag(tag)}
-                aria-label={`Remove ${tag}`}
+                aria-label={`${t('common.remove')} ${tag}`}
               >
                 <X size={12} />
               </button>
@@ -341,8 +368,8 @@ function TagField({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           className="max-w-[160px] text-xs"
-          placeholder="Add tag..."
-          aria-label={`Add ${label}`}
+          placeholder={t('common.addTag')}
+          aria-label={`${t('common.addTag')} ${label}`}
           onKeyDown={(e: React.KeyboardEvent) => {
             if (e.key === 'Enter') {
               e.preventDefault();

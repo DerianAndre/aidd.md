@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
@@ -10,6 +11,7 @@ import { buildTree } from '../lib/build-tree';
 import type { TreeNode } from '../lib/types';
 
 export function KnowledgePage() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { items, loading, stale, fetchAll } = useKnowledgeStore();
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
@@ -36,8 +38,8 @@ export function KnowledgePage() {
   return (
     <div>
       <PageHeader
-        title="Knowledge Base"
-        description={`Technology Knowledge Base — ${items.length} entries`}
+        title={t('page.knowledge.title')}
+        description={t('page.knowledge.description', { count: items.length })}
       />
 
       {loading && (
@@ -48,7 +50,7 @@ export function KnowledgePage() {
       )}
 
       {!loading && items.length === 0 && (
-        <EmptyState message="No knowledge entries found in this project." />
+        <EmptyState message={t('page.knowledge.noEntries')} />
       )}
 
       {!loading && items.length > 0 && (
@@ -68,7 +70,7 @@ export function KnowledgePage() {
               <KnowledgeContent entity={selectedEntity} />
             ) : (
               <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-                Select an entry from the tree to view its content.
+                {t('page.knowledge.selectEntry')}
               </div>
             )}
           </div>

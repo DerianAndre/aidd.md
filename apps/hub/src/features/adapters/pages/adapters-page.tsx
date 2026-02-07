@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -7,13 +8,14 @@ import { readFile, fileExists } from '../../../lib/tauri';
 import { useProjectStore } from '../../../stores/project-store';
 
 const ADAPTERS = [
-  { id: 'claude', label: 'Claude Code', file: 'README.md' },
-  { id: 'cursor', label: 'Cursor', file: 'README.md' },
-  { id: 'gemini', label: 'Gemini', file: 'README.md' },
-  { id: 'warp', label: 'Warp', file: 'README.md' },
+  { id: 'claude', labelKey: 'page.adapters.claudeCode' as const, file: 'README.md' },
+  { id: 'cursor', labelKey: 'page.adapters.cursor' as const, file: 'README.md' },
+  { id: 'gemini', labelKey: 'page.adapters.gemini' as const, file: 'README.md' },
+  { id: 'warp', labelKey: 'page.adapters.warp' as const, file: 'README.md' },
 ] as const;
 
 export function AdaptersPage() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const [contents, setContents] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -41,7 +43,7 @@ export function AdaptersPage() {
 
   return (
     <div>
-      <PageHeader title="Adapters" description="IDE integration guides (read-only)" />
+      <PageHeader title={t('page.adapters.title')} description={t('page.adapters.description')} />
 
       {loading && (
         <div className="space-y-3">
@@ -55,7 +57,7 @@ export function AdaptersPage() {
           <TabsList>
             {ADAPTERS.map((adapter) => (
               <TabsTrigger key={adapter.id} value={adapter.id}>
-                {adapter.label}
+                {t(adapter.labelKey)}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -71,7 +73,7 @@ export function AdaptersPage() {
                 </div>
               ) : (
                 <p className="py-8 text-center text-sm text-muted-foreground">
-                  No README.md found for {adapter.label} adapter.
+                  {t('page.adapters.noReadme', { adapter: t(adapter.labelKey) })}
                 </p>
               )}
             </TabsContent>

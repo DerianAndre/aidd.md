@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { ArrowLeft } from 'lucide-react';
@@ -12,6 +13,7 @@ import { formatDuration, formatDate, scoreColor } from '../../../lib/utils';
 import type { SessionState, SessionObservation } from '../../../lib/types';
 
 export function SessionDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
@@ -51,10 +53,10 @@ export function SessionDetailPage() {
     return (
       <div>
         <PageHeader
-          title="Session Not Found"
+          title={t('page.sessionDetail.notFound')}
           actions={
             <Button variant="ghost" size="sm" onClick={() => navigate('/sessions')}>
-              <ArrowLeft size={16} /> Back
+              <ArrowLeft size={16} /> {t('common.back')}
             </Button>
           }
         />
@@ -72,40 +74,40 @@ export function SessionDetailPage() {
   return (
     <div>
       <PageHeader
-        title={`Session: ${session.branch}`}
+        title={t('page.sessionDetail.title', { branch: session.branch })}
         description={`${modelLabel} · ${formatDate(session.startedAt)}`}
         actions={
           <Button variant="ghost" size="sm" onClick={() => navigate('/sessions')}>
-            <ArrowLeft size={16} /> Back
+            <ArrowLeft size={16} /> {t('common.back')}
           </Button>
         }
       />
 
       {/* Metadata Grid */}
       <div className="mb-6 grid gap-3 grid-cols-2 sm:grid-cols-4">
-        <MetaItem label="Provider" value={`${session.aiProvider.provider} / ${modelLabel}`} />
-        <MetaItem label="Duration" value={duration} />
-        <MetaItem label="Branch" value={session.branch} />
-        <MetaItem label="Classification" value={`${session.taskClassification?.domain ?? '—'} / ${session.taskClassification?.nature ?? '—'}`} />
+        <MetaItem label={t('page.sessionDetail.provider')} value={`${session.aiProvider.provider} / ${modelLabel}`} />
+        <MetaItem label={t('page.sessionDetail.duration')} value={duration} />
+        <MetaItem label={t('page.sessionDetail.branch')} value={session.branch} />
+        <MetaItem label={t('page.sessionDetail.classification')} value={`${session.taskClassification?.domain ?? '—'} / ${session.taskClassification?.nature ?? '—'}`} />
       </div>
 
       {/* Outcome */}
       {session.outcome && (
         <div className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">Outcome</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.sessionDetail.outcome')}</h3>
           <div className="flex flex-wrap gap-2">
             <Chip size="sm" color={session.outcome.testsPassing ? 'success' : 'danger'}>
-              Tests: {session.outcome.testsPassing ? 'Passing' : 'Failing'}
+              {session.outcome.testsPassing ? t('page.sessionDetail.testsPassing') : t('page.sessionDetail.testsFailing')}
             </Chip>
             <Chip size="sm" color={scoreColor(session.outcome.complianceScore)}>
-              Compliance: {session.outcome.complianceScore}%
+              {t('page.sessionDetail.compliance', { score: session.outcome.complianceScore })}
             </Chip>
             {session.outcome.reverts > 0 && (
-              <Chip size="sm" color="warning">Reverts: {session.outcome.reverts}</Chip>
+              <Chip size="sm" color="warning">{t('page.sessionDetail.reverts', { count: session.outcome.reverts })}</Chip>
             )}
             {session.outcome.userFeedback && (
               <Chip size="sm" color={session.outcome.userFeedback === 'positive' ? 'success' : session.outcome.userFeedback === 'negative' ? 'danger' : 'default'}>
-                Feedback: {session.outcome.userFeedback}
+                {t('page.sessionDetail.feedback', { value: session.outcome.userFeedback })}
               </Chip>
             )}
           </div>
@@ -116,15 +118,15 @@ export function SessionDetailPage() {
       <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2">
         {session.tasksCompleted.length > 0 && (
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-foreground">Completed Tasks ({session.tasksCompleted.length})</h3>
+            <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.sessionDetail.completedTasks', { count: session.tasksCompleted.length })}</h3>
             <ul className="list-inside list-disc text-xs text-muted-foreground">
-              {session.tasksCompleted.map((t, i) => <li key={i}>{t}</li>)}
+              {session.tasksCompleted.map((task, i) => <li key={i}>{task}</li>)}
             </ul>
           </div>
         )}
         {session.decisions.length > 0 && (
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-foreground">Decisions ({session.decisions.length})</h3>
+            <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.sessionDetail.decisions', { count: session.decisions.length })}</h3>
             <ul className="space-y-1">
               {session.decisions.map((d, i) => (
                 <li key={i} className="text-xs text-muted-foreground">
@@ -141,13 +143,13 @@ export function SessionDetailPage() {
       {/* Errors Resolved */}
       {session.errorsResolved.length > 0 && (
         <div className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">Errors Resolved ({session.errorsResolved.length})</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.sessionDetail.errorsResolved', { count: session.errorsResolved.length })}</h3>
           <ul className="space-y-1">
             {session.errorsResolved.map((e, i) => (
               <li key={i} className="text-xs text-muted-foreground">
                 <span className="font-medium text-danger">{e.error}</span>
                 <br />
-                <span className="text-muted-foreground">Fix: {e.fix}</span>
+                <span className="text-muted-foreground">{t('page.sessionDetail.fix')} {e.fix}</span>
               </li>
             ))}
           </ul>
@@ -156,9 +158,9 @@ export function SessionDetailPage() {
 
       {/* Observations Timeline */}
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-foreground">Observations ({observations.length})</h3>
+        <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.sessionDetail.observations', { count: observations.length })}</h3>
         {observations.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No observations recorded for this session.</p>
+          <p className="text-xs text-muted-foreground">{t('page.sessionDetail.noObservations')}</p>
         ) : (
           <div className="space-y-2">
             {observations.map((obs) => (

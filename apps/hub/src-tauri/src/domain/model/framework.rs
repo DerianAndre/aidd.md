@@ -22,5 +22,5 @@ pub struct FrameworkEntity {
 
 /// Valid framework categories.
 pub const FRAMEWORK_CATEGORIES: &[&str] = &[
-    "rules", "skills", "knowledge", "workflows", "templates", "spec",
+    "rules", "skills", "knowledge", "workflows", "templates", "specs",
 ];

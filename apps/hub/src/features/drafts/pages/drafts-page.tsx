@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Chip } from '@/components/ui/chip';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -9,6 +10,7 @@ import { useProjectStore } from '../../../stores/project-store';
 import type { DraftEntry } from '../../../lib/types';
 
 export function DraftsPage() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const {
     drafts, selectedDraftId, draftContent,
@@ -41,7 +43,7 @@ export function DraftsPage() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Drafts" description="Pending artifact drafts" />
+        <PageHeader title={t('page.drafts.title')} description={t('page.drafts.description')} />
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-24 rounded-xl" />
@@ -54,15 +56,15 @@ export function DraftsPage() {
   if (drafts.length === 0) {
     return (
       <div>
-        <PageHeader title="Drafts" description="Pending artifact drafts" />
-        <EmptyState message="No drafts yet. The evolution engine will create drafts when candidates reach the draft threshold." />
+        <PageHeader title={t('page.drafts.title')} description={t('page.drafts.description')} />
+        <EmptyState message={t('page.drafts.noDrafts')} />
       </div>
     );
   }
 
   return (
     <div>
-      <PageHeader title="Drafts" description="Pending artifact drafts" />
+      <PageHeader title={t('page.drafts.title')} description={t('page.drafts.description')} />
 
       {/* Filter chips */}
       <div className="mb-4 flex items-center gap-2">
@@ -72,7 +74,7 @@ export function DraftsPage() {
           className="cursor-pointer"
           onClick={() => setShowAll(false)}
         >
-          Pending ({pendingCount})
+          {t('page.drafts.pendingFilter', { count: pendingCount })}
         </Chip>
         <Chip
           size="sm"
@@ -80,12 +82,12 @@ export function DraftsPage() {
           className="cursor-pointer"
           onClick={() => setShowAll(true)}
         >
-          All ({drafts.length})
+          {t('page.drafts.allFilter', { count: drafts.length })}
         </Chip>
       </div>
 
       {filtered.length === 0 && (
-        <EmptyState message="No drafts match the current filter." />
+        <EmptyState message={t('page.drafts.noMatch')} />
       )}
 
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
@@ -104,7 +106,7 @@ export function DraftsPage() {
         {/* Preview panel */}
         {selectedDraftId && (
           <div className="rounded-xl border border-border bg-muted/50 p-4">
-            <h3 className="mb-3 text-sm font-semibold text-foreground">Draft Preview</h3>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">{t('page.drafts.preview')}</h3>
             {draftContent === null ? (
               <Skeleton className="h-40 rounded-lg" />
             ) : (

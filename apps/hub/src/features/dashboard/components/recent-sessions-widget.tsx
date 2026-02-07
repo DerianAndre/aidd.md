@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Chip } from '@/components/ui/chip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +9,7 @@ import { formatRelativeTime } from '../../../lib/utils';
 import { ROUTES } from '../../../lib/constants';
 
 export function RecentSessionsWidget() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { activeSessions, completedSessions, loading, stale, fetchAll } = useSessionsStore();
   const navigate = useNavigate();
@@ -33,7 +35,7 @@ export function RecentSessionsWidget() {
   }
 
   if (recent.length === 0) {
-    return <p className="text-xs text-muted-foreground">No sessions recorded yet.</p>;
+    return <p className="text-xs text-muted-foreground">{t('page.dashboard.noSessionsRecorded')}</p>;
   }
 
   return (
@@ -57,7 +59,7 @@ export function RecentSessionsWidget() {
                 size="sm"
                 color={isActive ? 'accent' : passed ? 'success' : 'danger'}
               >
-                {isActive ? 'active' : passed ? 'passed' : 'failed'}
+                {isActive ? t('page.dashboard.sessionActive') : passed ? t('page.dashboard.sessionPassed') : t('page.dashboard.sessionFailed')}
               </Chip>
               <span className="text-xs text-foreground">{s.aiProvider.model}</span>
             </div>

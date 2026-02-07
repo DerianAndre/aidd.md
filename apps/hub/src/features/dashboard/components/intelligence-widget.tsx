@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Chip } from '@/components/ui/chip';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,6 +17,7 @@ const FEEDBACK_COLORS: Record<string, 'success' | 'danger' | 'default'> = {
 };
 
 export function IntelligenceWidget() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
 
@@ -44,31 +46,31 @@ export function IntelligenceWidget() {
   ].slice(0, 4);
 
   const stats = [
-    { icon: BarChart3, value: totalSessions, label: 'Sessions' },
-    { icon: Cpu, value: uniqueModels, label: 'Models' },
-    { icon: Target, value: avgCompliance > 0 ? `${avgCompliance}%` : '\u2014', label: 'Compliance' },
-    { icon: CheckCircle, value: testPassRate > 0 ? `${testPassRate}%` : '\u2014', label: 'Test Pass' },
+    { icon: BarChart3, value: totalSessions, labelKey: 'page.dashboard.statSessions' as const },
+    { icon: Cpu, value: uniqueModels, labelKey: 'page.dashboard.statModels' as const },
+    { icon: Target, value: avgCompliance > 0 ? `${avgCompliance}%` : '\u2014', labelKey: 'page.dashboard.statCompliance' as const },
+    { icon: CheckCircle, value: testPassRate > 0 ? `${testPassRate}%` : '\u2014', labelKey: 'page.dashboard.statTestPass' as const },
   ];
 
   return (
     <div className="rounded-xl border border-border bg-muted/50 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">Intelligence</h3>
+        <h3 className="text-sm font-semibold text-foreground">{t('page.dashboard.intelligence')}</h3>
         <Link
           to={ROUTES.ANALYTICS}
           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
         >
-          Analytics <ArrowRight size={12} />
+          {t('nav.analytics')} <ArrowRight size={12} />
         </Link>
       </div>
 
       {/* Compact stats row */}
       <div className="flex flex-wrap gap-4">
-        {stats.map(({ icon: Icon, value, label }) => (
-          <div key={label} className="flex items-center gap-1.5">
+        {stats.map(({ icon: Icon, value, labelKey }) => (
+          <div key={labelKey} className="flex items-center gap-1.5">
             <Icon size={14} className="text-muted-foreground" />
             <span className="text-sm font-bold text-foreground">{value}</span>
-            <span className="text-[10px] text-muted-foreground">{label}</span>
+            <span className="text-[10px] text-muted-foreground">{t(labelKey)}</span>
           </div>
         ))}
       </div>
@@ -80,7 +82,7 @@ export function IntelligenceWidget() {
       {sessionsLoading ? (
         <Skeleton className="h-16 rounded-lg" />
       ) : recentSessions.length === 0 ? (
-        <p className="py-2 text-center text-xs text-muted-foreground">No sessions yet</p>
+        <p className="py-2 text-center text-xs text-muted-foreground">{t('page.dashboard.noSessionsYet')}</p>
       ) : (
         <div className="space-y-1.5">
           {recentSessions.map((session) => {
@@ -97,7 +99,7 @@ export function IntelligenceWidget() {
                   size="sm"
                   color={isActive ? 'accent' : FEEDBACK_COLORS[feedback ?? ''] ?? 'default'}
                 >
-                  {isActive ? 'active' : feedback ?? 'done'}
+                  {isActive ? t('page.dashboard.sessionActive') : feedback ?? t('page.dashboard.sessionDone')}
                 </Chip>
                 <span className="min-w-0 flex-1 truncate text-xs text-foreground">
                   {session.aiProvider?.model ?? 'unknown'}

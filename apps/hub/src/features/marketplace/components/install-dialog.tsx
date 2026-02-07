@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Download, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -20,6 +21,7 @@ export function InstallDialog({
   configSnippet,
   entryName,
 }: InstallDialogProps) {
+  const { t } = useTranslation();
   const [selectedTargetId, setSelectedTargetId] = useState<string>(INSTALL_TARGETS[0].id);
   const [installed, setInstalled] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export function InstallDialog({
         }, 300);
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Installation failed');
+      setError(err instanceof Error ? err.message : t('page.marketplace.installationFailed'));
     } finally {
       setInstalling(false);
     }
@@ -69,7 +71,7 @@ export function InstallDialog({
           <DialogTitle>
             <div className="flex items-center gap-2">
               <Download size={18} />
-              <span>Install {entryName}</span>
+              <span>{t('page.marketplace.installEntry', { name: entryName })}</span>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -77,7 +79,7 @@ export function InstallDialog({
         <div className="flex flex-col gap-4">
           {/* Target Selector */}
           <div className="flex flex-col gap-2">
-            <Label>Target</Label>
+            <Label>{t('page.marketplace.target')}</Label>
             <Select
               value={selectedTargetId}
               onValueChange={(value) => setSelectedTargetId(value)}
@@ -96,12 +98,12 @@ export function InstallDialog({
           </div>
 
           <p className="text-sm text-muted-foreground">
-            This will merge the configuration into <code className="rounded bg-muted px-1 text-xs">{selectedTarget.configPath}</code>
+            {t('page.marketplace.mergeHint')} <code className="rounded bg-muted px-1 text-xs">{selectedTarget.configPath}</code>
           </p>
 
           {/* Preview */}
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium">Configuration Preview</span>
+            <span className="text-sm font-medium">{t('page.marketplace.configPreview')}</span>
             <pre className="max-h-[300px] overflow-auto rounded-lg bg-muted p-3 text-xs text-foreground">
               {configPreview}
             </pre>
@@ -111,7 +113,7 @@ export function InstallDialog({
           {installed && (
             <div className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-success">
               <Check size={18} />
-              <span className="font-medium">Installed!</span>
+              <span className="font-medium">{t('page.marketplace.installedSuccess')}</span>
             </div>
           )}
 
@@ -126,14 +128,14 @@ export function InstallDialog({
 
         <DialogFooter>
           <Button variant="ghost" onClick={handleClose} disabled={installing || installed}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={() => void handleInstall()}
             disabled={installing || installed}
           >
             {installing ? <Spinner size="sm" /> : null}
-            {installed ? 'Installed' : 'Install'}
+            {installed ? t('page.marketplace.installedBtn') : t('common.install')}
           </Button>
         </DialogFooter>
       </DialogContent>

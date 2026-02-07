@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb, AlertTriangle, BookMarked, ArrowRight } from 'lucide-react';
@@ -7,6 +8,7 @@ import { useProjectStore } from '../../../stores/project-store';
 import { ROUTES } from '../../../lib/constants';
 
 export function MemoryWidget() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { decisions, mistakes, conventions, loading, stale, fetch } = usePermanentMemoryStore();
 
@@ -21,9 +23,9 @@ export function MemoryWidget() {
   }
 
   const items = [
-    { label: 'Decisions', count: decisions.length, icon: Lightbulb, color: 'text-accent' },
-    { label: 'Mistakes', count: mistakes.length, icon: AlertTriangle, color: 'text-warning' },
-    { label: 'Conventions', count: conventions.length, icon: BookMarked, color: 'text-success' },
+    { labelKey: 'page.dashboard.decisions' as const, count: decisions.length, icon: Lightbulb, color: 'text-accent' },
+    { labelKey: 'page.dashboard.mistakes' as const, count: mistakes.length, icon: AlertTriangle, color: 'text-warning' },
+    { labelKey: 'page.dashboard.conventions' as const, count: conventions.length, icon: BookMarked, color: 'text-success' },
   ];
 
   return (
@@ -32,10 +34,10 @@ export function MemoryWidget() {
         {items.map((item) => {
           const Icon = item.icon;
           return (
-            <div key={item.label} className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
+            <div key={item.labelKey} className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
               <Icon size={14} className={item.color} />
               <span className="text-lg font-bold text-foreground">{item.count}</span>
-              <span className="text-[10px] text-muted-foreground">{item.label}</span>
+              <span className="text-[10px] text-muted-foreground">{t(item.labelKey)}</span>
             </div>
           );
         })}
@@ -44,7 +46,7 @@ export function MemoryWidget() {
         to={ROUTES.MEMORY}
         className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline"
       >
-        View Memory <ArrowRight size={12} />
+        {t('page.dashboard.viewMemory')} <ArrowRight size={12} />
       </Link>
     </div>
   );

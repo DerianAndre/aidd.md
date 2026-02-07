@@ -27,25 +27,28 @@ impl ProjectPort for ProjectService {
 
         let p = Path::new(path);
 
-        // Check ai/ subfolder first
+        // Check ai/ subfolder first (ai/AGENTS.md or ai/content/rules/)
         let ai_agents = p.join("ai").join("AGENTS.md");
-        let ai_rules = p.join("ai").join("rules");
+        let ai_content_rules = p.join("ai").join("content").join("rules");
         let aidd_root = if self.fs.exists(&ai_agents.to_string_lossy())
-            || self.fs.is_dir(&ai_rules.to_string_lossy())
+            || self.fs.is_dir(&ai_content_rules.to_string_lossy())
         {
             p.join("ai")
         } else {
             p.to_path_buf()
         };
 
+        // Content lives under {aidd_root}/content/{category}/
+        let content_dir = aidd_root.join("content");
+
         let markers = AiddMarkers {
             agents_md: self.fs.exists(&aidd_root.join("AGENTS.md").to_string_lossy()),
-            rules: self.fs.is_dir(&aidd_root.join("rules").to_string_lossy()),
-            skills: self.fs.is_dir(&aidd_root.join("skills").to_string_lossy()),
-            workflows: self.fs.is_dir(&aidd_root.join("workflows").to_string_lossy()),
-            spec: self.fs.is_dir(&aidd_root.join("spec").to_string_lossy()),
-            knowledge: self.fs.is_dir(&aidd_root.join("knowledge").to_string_lossy()),
-            templates: self.fs.is_dir(&aidd_root.join("templates").to_string_lossy()),
+            rules: self.fs.is_dir(&content_dir.join("rules").to_string_lossy()),
+            skills: self.fs.is_dir(&content_dir.join("skills").to_string_lossy()),
+            workflows: self.fs.is_dir(&content_dir.join("workflows").to_string_lossy()),
+            specs: self.fs.is_dir(&content_dir.join("specs").to_string_lossy()),
+            knowledge: self.fs.is_dir(&content_dir.join("knowledge").to_string_lossy()),
+            templates: self.fs.is_dir(&content_dir.join("templates").to_string_lossy()),
             aidd_dir: self.fs.is_dir(&p.join(".aidd").to_string_lossy()),
             memory: self.fs.is_dir(&p.join("ai").join("memory").to_string_lossy())
                 || self.fs.is_dir(&p.join("memory").to_string_lossy()),

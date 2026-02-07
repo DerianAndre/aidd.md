@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
@@ -7,13 +8,13 @@ import { useProjectStore } from '../../../stores/project-store';
 import { scoreColor } from '../../../lib/utils';
 import { ROUTES } from '../../../lib/constants';
 
-const SUB_CATEGORIES: { key: keyof NonNullable<ReturnType<typeof useDiagnosticsStore.getState>['healthScore']>['categories']; label: string }[] = [
-  { key: 'sessionSuccess', label: 'Sessions' },
-  { key: 'complianceAvg', label: 'Compliance' },
-  { key: 'errorRecurrence', label: 'Error Mgmt' },
-  { key: 'modelConsistency', label: 'Model' },
-  { key: 'memoryUtilization', label: 'Memory' },
-];
+const SUB_CATEGORIES = [
+  { key: 'sessionSuccess' as const, labelKey: 'page.dashboard.catSessions' as const },
+  { key: 'complianceAvg' as const, labelKey: 'page.dashboard.catCompliance' as const },
+  { key: 'errorRecurrence' as const, labelKey: 'page.dashboard.catErrorMgmt' as const },
+  { key: 'modelConsistency' as const, labelKey: 'page.dashboard.catModel' as const },
+  { key: 'memoryUtilization' as const, labelKey: 'page.dashboard.catMemory' as const },
+] satisfies { key: keyof NonNullable<ReturnType<typeof useDiagnosticsStore.getState>['healthScore']>['categories']; labelKey: string }[];
 
 function barColor(value: number): string {
   if (value >= 70) return 'bg-success';
@@ -22,6 +23,7 @@ function barColor(value: number): string {
 }
 
 export function HealthDiagnosticsWidget() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const healthScore = useDiagnosticsStore((s) => s.healthScore);
   const loading = useDiagnosticsStore((s) => s.loading);
@@ -35,12 +37,12 @@ export function HealthDiagnosticsWidget() {
   return (
     <div className="rounded-xl border border-border bg-muted/50 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">Health & Diagnostics</h3>
+        <h3 className="text-sm font-semibold text-foreground">{t('page.dashboard.healthDiagnostics')}</h3>
         <Link
           to={ROUTES.DIAGNOSTICS}
           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
         >
-          Details <ArrowRight size={12} />
+          {t('common.details')} <ArrowRight size={12} />
         </Link>
       </div>
 
@@ -48,7 +50,7 @@ export function HealthDiagnosticsWidget() {
         <Skeleton className="h-32 rounded-lg" />
       ) : !healthScore ? (
         <p className="py-6 text-center text-xs text-muted-foreground">
-          No health data. Complete sessions to generate scores.
+          {t('page.dashboard.noHealthScores')}
         </p>
       ) : (
         <>
@@ -62,11 +64,11 @@ export function HealthDiagnosticsWidget() {
 
           {/* Sub-score bars */}
           <div className="space-y-2">
-            {SUB_CATEGORIES.map(({ key, label }) => {
+            {SUB_CATEGORIES.map(({ key, labelKey }) => {
               const value = healthScore.categories[key];
               return (
                 <div key={key} className="flex items-center gap-2">
-                  <span className="w-20 shrink-0 text-xs text-muted-foreground">{label}</span>
+                  <span className="w-20 shrink-0 text-xs text-muted-foreground">{t(labelKey)}</span>
                   <div className="h-1.5 flex-1 rounded-full bg-border">
                     <div
                       className={`h-full rounded-full ${barColor(value)}`}

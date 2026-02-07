@@ -10,7 +10,7 @@ export const ROUTES = {
   FRAMEWORK_KNOWLEDGE: '/framework/knowledge',
   FRAMEWORK_WORKFLOWS: '/framework/workflows',
   FRAMEWORK_TEMPLATES: '/framework/templates',
-  FRAMEWORK_SPEC: '/framework/spec',
+  FRAMEWORK_SPEC: '/framework/specs',
   // Legacy detail routes (kept for deep linking)
   RULES: '/rules',
   RULE_EDITOR: '/rules/:name',
@@ -42,6 +42,7 @@ export const ROUTES = {
   INTEGRATIONS: '/integrations',
   OVERRIDES: '/overrides',
   ADAPTERS: '/adapters',
+  HELP: '/help',
 } as const;
 
 export const POLLING_INTERVALS = {

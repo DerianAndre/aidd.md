@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Plug } from 'lucide-react';
@@ -9,6 +10,7 @@ import { useProjectStore } from '../../../stores/project-store';
 import type { IntegrationTool, IntegrationResult } from '../../../lib/tauri';
 
 export function IntegrationsPage() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const integrations = useIntegrationsStore((s) => s.integrations);
   const loading = useIntegrationsStore((s) => s.loading);
@@ -49,10 +51,10 @@ export function IntegrationsPage() {
   if (!activeProject) {
     return (
       <div>
-        <PageHeader title="Integrations" description="1-click AI tool integration" />
+        <PageHeader title={t('page.integrations.title')} description={t('page.integrations.descriptionGeneric')} />
         <div className="flex flex-col items-center py-16 text-muted-foreground">
           <Plug size={40} className="mb-3" />
-          <p className="text-sm">Select a project first to manage integrations</p>
+          <p className="text-sm">{t('page.integrations.noProject')}</p>
         </div>
       </div>
     );
@@ -61,13 +63,13 @@ export function IntegrationsPage() {
   return (
     <div>
       <PageHeader
-        title="Integrations"
-        description={`AI tool integrations for ${activeProject.name}`}
+        title={t('page.integrations.title')}
+        description={t('page.integrations.description', { project: activeProject.name })}
       />
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="text-sm text-muted-foreground">Loading integration status...</div>
+          <div className="text-sm text-muted-foreground">{t('page.integrations.loading')}</div>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -90,6 +92,7 @@ export function IntegrationsPage() {
 }
 
 function ResultDialog({ result, onClose }: { result: IntegrationResult | null; onClose: () => void }) {
+  const { t } = useTranslation();
   const hasCreated = result ? result.files_created.length > 0 : false;
   const hasModified = result ? result.files_modified.length > 0 : false;
   const hasMessages = result ? result.messages.length > 0 : false;
@@ -98,13 +101,13 @@ function ResultDialog({ result, onClose }: { result: IntegrationResult | null; o
     <Dialog open={!!result} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Integration Result</DialogTitle>
+          <DialogTitle>{t('page.integrations.result')}</DialogTitle>
         </DialogHeader>
         {result && (
           <div>
             {hasCreated && (
               <div className="mb-3">
-                <p className="text-xs font-medium text-emerald-600">Files created:</p>
+                <p className="text-xs font-medium text-emerald-600">{t('page.integrations.filesCreated')}</p>
                 {result.files_created.map((f) => (
                   <p key={f} className="truncate text-xs text-muted-foreground" title={f}>{f}</p>
                 ))}
@@ -112,7 +115,7 @@ function ResultDialog({ result, onClose }: { result: IntegrationResult | null; o
             )}
             {hasModified && (
               <div className="mb-3">
-                <p className="text-xs font-medium text-amber-600">Files modified:</p>
+                <p className="text-xs font-medium text-amber-600">{t('page.integrations.filesModified')}</p>
                 {result.files_modified.map((f) => (
                   <p key={f} className="truncate text-xs text-muted-foreground" title={f}>{f}</p>
                 ))}
@@ -120,20 +123,20 @@ function ResultDialog({ result, onClose }: { result: IntegrationResult | null; o
             )}
             {hasMessages && (
               <div>
-                <p className="text-xs font-medium text-foreground">Messages:</p>
+                <p className="text-xs font-medium text-foreground">{t('page.integrations.messages')}</p>
                 {result.messages.map((m, i) => (
                   <p key={i} className="whitespace-pre-wrap text-xs text-muted-foreground">{m}</p>
                 ))}
               </div>
             )}
             {!hasCreated && !hasModified && !hasMessages && (
-              <p className="text-xs text-muted-foreground">No changes were made.</p>
+              <p className="text-xs text-muted-foreground">{t('page.integrations.noChanges')}</p>
             )}
           </div>
         )}
         <DialogFooter>
           <Button variant="default" size="sm" onClick={onClose}>
-            Done
+            {t('common.done')}
           </Button>
         </DialogFooter>
       </DialogContent>

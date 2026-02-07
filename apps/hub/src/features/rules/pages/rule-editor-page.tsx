@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -9,6 +10,7 @@ import { useProjectStore } from '../../../stores/project-store';
 import { useRulesStore } from '../stores/rules-store';
 
 export function RuleEditorPage() {
+  const { t } = useTranslation();
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
@@ -61,11 +63,11 @@ export function RuleEditorPage() {
     <div>
       <PageHeader
         title={decodeURIComponent(name ?? '')}
-        description="Edit rule"
+        description={t('page.rules.editDescription')}
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={() => navigate('/rules')}>
-              <ArrowLeft size={16} /> Back
+              <ArrowLeft size={16} /> {t('common.back')}
             </Button>
             <Button
               variant="default"
@@ -73,7 +75,7 @@ export function RuleEditorPage() {
               disabled={!hasChanges || saving}
               onClick={() => void handleSave()}
             >
-              <Save size={16} /> {saving ? 'Saving...' : 'Save'}
+              <Save size={16} /> {saving ? t('common.saving') : t('common.save')}
             </Button>
           </div>
         }

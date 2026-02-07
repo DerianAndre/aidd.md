@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   RefreshCw,
   Server,
@@ -27,20 +28,21 @@ import { useMarketplaceStore } from '../stores/marketplace-store';
 import { TAB_CONTENT_TYPE_MAP } from '../lib/constants';
 import type { MarketplaceEntry, MarketplaceTab } from '../lib/types';
 
-const TAB_META: Record<MarketplaceTab, { label: string; icon: LucideIcon }> = {
-  'mcp-servers': { label: 'MCP Servers', icon: Server },
-  'agents': { label: 'Agents', icon: Bot },
-  'rules': { label: 'Rules', icon: ShieldCheck },
-  'skills': { label: 'Skills', icon: Zap },
-  'knowledge': { label: 'Knowledge', icon: BookOpen },
-  'workflows': { label: 'Workflows', icon: GitBranch },
-  'templates': { label: 'Templates', icon: FileText },
-  'spec': { label: 'Spec', icon: FileCode },
-};
+const TAB_META = {
+  'mcp-servers': { labelKey: 'page.marketplace.mcpServers' as const, icon: Server },
+  'agents': { labelKey: 'page.marketplace.agents' as const, icon: Bot },
+  'rules': { labelKey: 'page.marketplace.rules' as const, icon: ShieldCheck },
+  'skills': { labelKey: 'page.marketplace.skills' as const, icon: Zap },
+  'knowledge': { labelKey: 'page.marketplace.knowledge' as const, icon: BookOpen },
+  'workflows': { labelKey: 'page.marketplace.workflows' as const, icon: GitBranch },
+  'templates': { labelKey: 'page.marketplace.templates' as const, icon: FileText },
+  'spec': { labelKey: 'page.marketplace.spec' as const, icon: FileCode },
+} satisfies Record<MarketplaceTab, { labelKey: string; icon: LucideIcon }>;
 
 const SKELETON_COUNT = 6;
 
 export function MarketplacePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // Store selectors
@@ -81,12 +83,12 @@ export function MarketplacePage() {
   return (
     <div>
       <PageHeader
-        title="Marketplace"
-        description="Discover and install MCP servers, skills, and AIDD content"
+        title={t('page.marketplace.title')}
+        description={t('page.marketplace.description')}
         actions={
           <div className="flex items-center gap-2">
             {usingFallback && (
-              <Chip size="sm" color="warning">Offline</Chip>
+              <Chip size="sm" color="warning">{t('common.offline')}</Chip>
             )}
             <Button
               size="sm"
@@ -120,7 +122,7 @@ export function MarketplacePage() {
               <TabsTrigger key={tab} value={tab}>
                 <span className="flex items-center gap-1.5">
                   <Icon size={14} />
-                  {meta.label}
+                  {t(meta.labelKey)}
                   {count > 0 && (
                     <Chip size="sm">{count}</Chip>
                   )}
@@ -180,7 +182,7 @@ export function MarketplacePage() {
               {/* Empty */}
               {!loading && filteredEntries.length === 0 && (
                 <EmptyState
-                  message={filters.search ? 'No results match your search.' : 'No entries found.'}
+                  message={filters.search ? t('page.marketplace.noResults') : t('page.marketplace.noEntries')}
                 />
               )}
             </div>

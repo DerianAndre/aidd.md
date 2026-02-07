@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { FolderPlus } from 'lucide-react';
@@ -9,6 +10,7 @@ import { useProjectStore } from '../../../stores/project-store';
 import { detectProject, type ProjectInfo } from '../../../lib/tauri';
 
 export function ProjectsPage() {
+  const { t } = useTranslation();
   const projects = useProjectStore((s) => s.projects);
   const activeProject = useProjectStore((s) => s.activeProject);
   const addAndDetect = useProjectStore((s) => s.addAndDetect);
@@ -40,7 +42,7 @@ export function ProjectsPage() {
   });
 
   const handleAddProject = async () => {
-    const selected = await open({ directory: true, title: 'Select Project Folder' });
+    const selected = await open({ directory: true, title: t('page.projects.selectFolder') });
     if (!selected) return;
 
     setLoading(true);
@@ -68,8 +70,8 @@ export function ProjectsPage() {
   return (
     <div>
       <PageHeader
-        title="Projects"
-        description="Manage your AIDD projects"
+        title={t('page.projects.title')}
+        description={t('page.projects.description')}
         actions={
           <Button
             variant="default"
@@ -78,7 +80,7 @@ export function ProjectsPage() {
             disabled={loading}
           >
             {loading ? <Spinner size="sm" /> : <FolderPlus size={16} />}
-            Add Project
+            {t('page.projects.addProject')}
           </Button>
         }
       />
@@ -87,14 +89,14 @@ export function ProjectsPage() {
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-16">
           <FolderPlus size={48} className="mb-4 text-muted-foreground/50" />
           <h2 className="mb-2 text-lg font-semibold text-foreground">
-            No projects yet
+            {t('page.projects.noProjects')}
           </h2>
           <p className="mb-4 text-sm text-muted-foreground">
-            Add your first project to get started with aidd.md Hub
+            {t('page.projects.noProjectsHint')}
           </p>
           <Button variant="default" onClick={handleAddProject}>
             <FolderPlus size={16} />
-            Add Project
+            {t('page.projects.addProject')}
           </Button>
         </div>
       ) : (

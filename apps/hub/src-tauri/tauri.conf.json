@@ -4,7 +4,7 @@
   "identifier": "md.aidd.hub",
   "version": "1.0.0",
   "build": {
-    "beforeDevCommand": "pnpm dev",
+    "beforeDevCommand": "pnpm vite",
     "beforeBuildCommand": "pnpm build",
     "devUrl": "http://localhost:1420",
     "frontendDist": "../dist"

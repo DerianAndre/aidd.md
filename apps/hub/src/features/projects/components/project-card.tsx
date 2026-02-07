@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
@@ -29,6 +30,7 @@ export function ProjectCard({
   onSetActive,
   onRemove,
 }: ProjectCardProps) {
+  const { t } = useTranslation();
   return (
     <Card className={isActive ? 'border-2 border-primary' : ''}>
       <CardHeader>
@@ -44,7 +46,7 @@ export function ProjectCard({
           </div>
           {isActive && (
             <Chip size="sm" color="success">
-              Active
+              {t('page.projects.active')}
             </Chip>
           )}
         </div>
@@ -68,10 +70,10 @@ export function ProjectCard({
       <CardFooter className="flex justify-between">
         {!isActive ? (
           <Button size="sm" variant="default" onClick={onSetActive}>
-            Set Active
+            {t('page.projects.setActive')}
           </Button>
         ) : (
-          <span className="text-xs text-success">Currently active</span>
+          <span className="text-xs text-success">{t('page.projects.currentlyActive')}</span>
         )}
         <Button
           size="sm"
@@ -80,7 +82,7 @@ export function ProjectCard({
           className="text-danger"
         >
           <Trash2 size={14} />
-          Remove
+          {t('common.remove')}
         </Button>
       </CardFooter>
     </Card>

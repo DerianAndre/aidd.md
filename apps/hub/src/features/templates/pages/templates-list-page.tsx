@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EntityList, EntityCard } from '../../../components/entity';
 import { useTemplatesStore } from '../stores/templates-store';
@@ -7,6 +8,7 @@ import { useProjectStore } from '../../../stores/project-store';
 import { filenameFromPath } from '../../../lib/utils';
 
 export function TemplatesListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { items, loading, stale, fetchAll } = useTemplatesStore();
@@ -19,14 +21,14 @@ export function TemplatesListPage() {
 
   return (
     <div>
-      <PageHeader title="Templates" description="Task-specific development guides" />
+      <PageHeader title={t('page.templates.title')} description={t('page.templates.description')} />
       <EntityList
         items={items}
         loading={loading}
-        getKey={(t) => t.id}
-        getSearchText={(t) => `${t.name} ${t.description}`}
-        searchPlaceholder="Search templates..."
-        emptyMessage="No templates found in this project."
+        getKey={(tmpl) => tmpl.id}
+        getSearchText={(tmpl) => `${tmpl.name} ${tmpl.description}`}
+        searchPlaceholder={t('page.templates.searchPlaceholder')}
+        emptyMessage={t('page.templates.noTemplates')}
         renderItem={(template) => (
           <EntityCard
             title={template.name}

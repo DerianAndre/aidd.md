@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Chip } from '@/components/ui/chip';
@@ -17,24 +18,25 @@ import {
   ChevronDown,
   Package,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EntityList, EntityCard } from '../../../components/entity';
 import { useFrameworkStore, CATEGORIES } from '../stores/framework-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { KnowledgeTreeView } from '../components/knowledge-tree-view';
 import type { FrameworkCategory } from '../../../lib/tauri';
-import type { LucideIcon } from 'lucide-react';
 
-const TAB_META: Record<FrameworkCategory, { label: string; icon: LucideIcon; description: string }> = {
-  rules: { label: 'Rules', icon: ShieldCheck, description: 'Immutable framework constraints' },
-  skills: { label: 'Skills', icon: Zap, description: 'Specialized agent capabilities' },
-  knowledge: { label: 'Knowledge', icon: BookOpen, description: 'Technology Knowledge Base entries' },
-  workflows: { label: 'Workflows', icon: GitBranch, description: 'Multi-step procedure guides' },
-  templates: { label: 'Templates', icon: FileText, description: 'Task routing and decision templates' },
-  spec: { label: 'Spec', icon: FileCode, description: 'AIDD standard specifications' },
+const TAB_ICONS: Record<FrameworkCategory, LucideIcon> = {
+  rules: ShieldCheck,
+  skills: Zap,
+  knowledge: BookOpen,
+  workflows: GitBranch,
+  templates: FileText,
+  specs: FileCode,
 };
 
 export function FrameworkPage() {
+  const { t } = useTranslation();
   const { category } = useParams<{ category: string }>();
   const navigate = useNavigate();
   const tab = (CATEGORIES.includes(category as FrameworkCategory) ? category : 'rules') as FrameworkCategory;
@@ -115,8 +117,8 @@ export function FrameworkPage() {
   return (
     <div>
       <PageHeader
-        title="Framework"
-        description={activeProject ? `Global + ${activeProject.name} project content` : 'Global AIDD framework content'}
+        title={t('page.framework.title')}
+        description={activeProject ? t('page.framework.descriptionProject', { project: activeProject.name }) : t('page.framework.descriptionGlobal')}
         actions={
           <div className="flex items-center gap-2">
             {/* Compact version badge */}
@@ -131,7 +133,7 @@ export function FrameworkPage() {
                 onClick={() => void doSync()}
               >
                 {syncing ? <Spinner size="sm" /> : <Download size={14} />}
-                {syncing ? 'Syncing...' : 'Update'}
+                {syncing ? t('common.syncing') : t('common.update')}
               </Button>
             )}
             <Button
@@ -139,6 +141,7 @@ export function FrameworkPage() {
               variant="ghost"
               disabled={checking || syncing}
               onClick={() => void checkUpdates()}
+              title={t('common.refresh')}
             >
               {checking ? <Spinner size="sm" /> : <RefreshCw size={14} />}
             </Button>
@@ -162,7 +165,7 @@ export function FrameworkPage() {
           )}
           {syncInfo && !syncInfo.update_available && syncInfo.current_version && (
             <span className="flex items-center gap-1 text-success">
-              <Check size={12} /> Up to date
+              <Check size={12} /> {t('common.upToDate')}
             </span>
           )}
           {syncInfo?.last_check && (
@@ -180,7 +183,7 @@ export function FrameworkPage() {
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{totalEntities}</p>
-            <p className="text-[10px] text-muted-foreground">Total Entities</p>
+            <p className="text-[10px] text-muted-foreground">{t('page.framework.totalEntities')}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
@@ -189,7 +192,7 @@ export function FrameworkPage() {
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{globalCount}</p>
-            <p className="text-[10px] text-muted-foreground">Global</p>
+            <p className="text-[10px] text-muted-foreground">{t('page.framework.global')}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
@@ -198,7 +201,7 @@ export function FrameworkPage() {
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{projectCount}</p>
-            <p className="text-[10px] text-muted-foreground">Project</p>
+            <p className="text-[10px] text-muted-foreground">{t('page.framework.project')}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
@@ -207,7 +210,7 @@ export function FrameworkPage() {
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{CATEGORIES.filter((c) => entities[c].length > 0).length}</p>
-            <p className="text-[10px] text-muted-foreground">Categories</p>
+            <p className="text-[10px] text-muted-foreground">{t('page.framework.categories')}</p>
           </div>
         </div>
       </div>
@@ -219,14 +222,13 @@ export function FrameworkPage() {
       >
         <TabsList>
           {CATEGORIES.map((cat) => {
-            const meta = TAB_META[cat];
-            const Icon = meta.icon;
+            const Icon = TAB_ICONS[cat];
             const count = entities[cat].length;
             return (
               <TabsTrigger key={cat} value={cat}>
                 <span className="flex items-center gap-1.5">
                   <Icon size={14} />
-                  {meta.label}
+                  {t(`page.framework.${cat}`)}
                   {count > 0 && (
                     <Chip size="sm">{count}</Chip>
                   )}
@@ -236,9 +238,7 @@ export function FrameworkPage() {
           })}
         </TabsList>
 
-        {CATEGORIES.map((cat) => {
-          const meta = TAB_META[cat];
-          return (
+        {CATEGORIES.map((cat) => (
             <TabsContent key={cat} value={cat}>
               <div className="pt-4">
                 {cat === 'knowledge' ? (
@@ -249,10 +249,7 @@ export function FrameworkPage() {
                   ) : entities[cat].length === 0 ? (
                     <div className="flex flex-col items-center py-12 text-muted-foreground">
                       <BookOpen size={40} className="mb-3" />
-                      <p className="text-sm">No knowledge entries found</p>
-                      <p className="mt-1 text-xs">
-                        Add .md files to the project&apos;s knowledge/ directory or sync the global framework
-                      </p>
+                      <p className="text-sm">{t('page.framework.noEntries', { category: t(`page.framework.${cat}`) })}</p>
                     </div>
                   ) : (
                     <KnowledgeTreeView
@@ -266,8 +263,8 @@ export function FrameworkPage() {
                     loading={loading[cat]}
                     getKey={(e) => `${e.source}-${e.name}`}
                     getSearchText={(e) => `${e.name} ${e.content ?? ''} ${e.source}`}
-                    searchPlaceholder={`Search ${meta.label.toLowerCase()}...`}
-                    emptyMessage={`No ${meta.label.toLowerCase()} found. Add .md files to the project's ${cat}/ directory or sync the global framework.`}
+                    searchPlaceholder={`Search ${t(`page.framework.${cat}`).toLowerCase()}...`}
+                    emptyMessage={t('page.framework.noEntries', { category: t(`page.framework.${cat}`) })}
                     columns={2}
                     renderItem={(entity) => (
                       <EntityCard
@@ -286,8 +283,7 @@ export function FrameworkPage() {
                 )}
               </div>
             </TabsContent>
-          );
-        })}
+          ))}
       </Tabs>
     </div>
   );

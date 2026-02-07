@@ -161,9 +161,9 @@ impl FrameworkPort for FrameworkService {
             &mut seen_names,
         );
 
-        // 2. Scan project directory ({project_root}/{category}/)
+        // 2. Scan project directory ({project_root}/content/{category}/)
         if let Some(proj) = project_path {
-            let project_dir = Path::new(proj).join(category);
+            let project_dir = Path::new(proj).join("content").join(category);
             scan_directory(
                 &project_dir,
                 category,

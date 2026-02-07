@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -9,28 +10,29 @@ import { useProjectStore } from '../../../stores/project-store';
 import { useSkillsStore } from '../stores/skills-store';
 import { parseFrontmatter, serializeFrontmatter } from '../../../lib/markdown';
 
-const SKILL_FIELDS: FieldDefinition[] = [
-  { type: 'text', key: 'name', label: 'Name', placeholder: 'skill-name' },
-  { type: 'text', key: 'description', label: 'Description', placeholder: 'What this skill does' },
-  {
-    type: 'select',
-    key: 'tier',
-    label: 'Tier',
-    options: [
-      { label: 'Tier 1 (HIGH)', value: '1' },
-      { label: 'Tier 2 (STANDARD)', value: '2' },
-      { label: 'Tier 3 (LOW)', value: '3' },
-    ],
-  },
-  { type: 'text', key: 'version', label: 'Version', placeholder: '1.0.0' },
-  { type: 'text', key: 'license', label: 'License', placeholder: 'MIT' },
-];
-
 export function SkillEditorPage() {
+  const { t } = useTranslation();
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
   const invalidate = useSkillsStore((s) => s.invalidate);
+
+  const skillFields: FieldDefinition[] = useMemo(() => [
+    { type: 'text', key: 'name', label: t('page.skills.name'), placeholder: 'skill-name' },
+    { type: 'text', key: 'description', label: t('page.skills.skillDescription'), placeholder: 'What this skill does' },
+    {
+      type: 'select',
+      key: 'tier',
+      label: t('page.skills.tier'),
+      options: [
+        { label: t('page.skills.tierHigh'), value: '1' },
+        { label: t('page.skills.tierStandard'), value: '2' },
+        { label: t('page.skills.tierLow'), value: '3' },
+      ],
+    },
+    { type: 'text', key: 'version', label: t('page.skills.version'), placeholder: '1.0.0' },
+    { type: 'text', key: 'license', label: t('page.skills.license'), placeholder: 'MIT' },
+  ], [t]);
 
   const [frontmatterValues, setFrontmatterValues] = useState<Record<string, string>>({});
   const [body, setBody] = useState('');
@@ -91,12 +93,12 @@ export function SkillEditorPage() {
   return (
     <div>
       <PageHeader
-        title={`Edit: ${decodeURIComponent(name ?? '')}`}
-        description="Edit skill definition"
+        title={t('page.skills.editTitle', { name: decodeURIComponent(name ?? '') })}
+        description={t('page.skills.editDescription')}
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={() => navigate(`/skills/${name}`)}>
-              <ArrowLeft size={16} /> Back
+              <ArrowLeft size={16} /> {t('common.back')}
             </Button>
             <Button
               variant="default"
@@ -104,7 +106,7 @@ export function SkillEditorPage() {
               disabled={!hasChanges || saving}
               onClick={() => void handleSave()}
             >
-              <Save size={16} /> {saving ? 'Saving...' : 'Save'}
+              <Save size={16} /> {saving ? t('common.saving') : t('common.save')}
             </Button>
           </div>
         }
@@ -112,7 +114,7 @@ export function SkillEditorPage() {
 
       <div className="mb-4">
         <FrontmatterForm
-          fields={SKILL_FIELDS}
+          fields={skillFields}
           values={frontmatterValues}
           onChange={handleFieldChange}
         />

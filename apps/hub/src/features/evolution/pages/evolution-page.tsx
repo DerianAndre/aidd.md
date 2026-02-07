@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Chip } from '@/components/ui/chip';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -8,7 +9,6 @@ import { useEvolutionStore } from '../stores/evolution-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { formatDate } from '../../../lib/utils';
 import type { EvolutionAction } from '../../../lib/types';
-
 const ACTION_COLORS: Record<EvolutionAction, 'success' | 'accent' | 'warning' | 'danger' | 'default'> = {
   auto_applied: 'success',
   drafted: 'accent',
@@ -17,7 +17,16 @@ const ACTION_COLORS: Record<EvolutionAction, 'success' | 'accent' | 'warning' | 
   rejected: 'danger',
 };
 
+const ACTION_KEYS = {
+  auto_applied: 'page.evolution.autoApplied' as const,
+  drafted: 'page.evolution.drafted' as const,
+  pending: 'page.evolution.pending' as const,
+  reverted: 'page.evolution.reverted' as const,
+  rejected: 'page.evolution.rejected' as const,
+} satisfies Record<EvolutionAction, string>;
+
 export function EvolutionPage() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { candidates, logEntries, loading, stale, fetch } = useEvolutionStore();
 
@@ -30,7 +39,7 @@ export function EvolutionPage() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Evolution" description="Auto-framework mutation candidates" />
+        <PageHeader title={t('page.evolution.title')} description={t('page.evolution.description')} />
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-28 rounded-xl" />
@@ -46,21 +55,21 @@ export function EvolutionPage() {
   if (!hasCandidates && !hasLog) {
     return (
       <div>
-        <PageHeader title="Evolution" description="Auto-framework mutation candidates" />
-        <EmptyState message="No evolution candidates yet. The system will propose mutations after analyzing enough sessions." />
+        <PageHeader title={t('page.evolution.title')} description={t('page.evolution.description')} />
+        <EmptyState message={t('page.evolution.noEvolution')} />
       </div>
     );
   }
 
   return (
     <div>
-      <PageHeader title="Evolution" description="Auto-framework mutation candidates" />
+      <PageHeader title={t('page.evolution.title')} description={t('page.evolution.description')} />
 
       {/* Pending candidates */}
       {hasCandidates && (
         <section className="mb-6">
           <h3 className="mb-3 text-sm font-semibold text-foreground">
-            Pending Candidates ({candidates.length})
+            {t('page.evolution.pendingCandidates', { count: candidates.length })}
           </h3>
           <div className="space-y-2">
             {candidates.map((c) => (
@@ -74,16 +83,16 @@ export function EvolutionPage() {
       {hasLog && (
         <section>
           <h3 className="mb-3 text-sm font-semibold text-foreground">
-            Evolution Log ({logEntries.length})
+            {t('page.evolution.evolutionLog', { count: logEntries.length })}
           </h3>
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted text-left text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">Action</th>
-                  <th className="px-3 py-2 font-medium">Title</th>
-                  <th className="px-3 py-2 font-medium">Confidence</th>
-                  <th className="px-3 py-2 font-medium">Date</th>
+                  <th className="px-3 py-2 font-medium">{t('page.evolution.action')}</th>
+                  <th className="px-3 py-2 font-medium">{t('page.evolution.entryTitle')}</th>
+                  <th className="px-3 py-2 font-medium">{t('page.evolution.confidence')}</th>
+                  <th className="px-3 py-2 font-medium">{t('page.evolution.date')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -91,7 +100,7 @@ export function EvolutionPage() {
                   <tr key={entry.id} className="border-b border-muted last:border-0">
                     <td className="px-3 py-2">
                       <Chip size="sm" color={ACTION_COLORS[entry.action]}>
-                        {entry.action.replace(/_/g, ' ')}
+                        {t(ACTION_KEYS[entry.action])}
                       </Chip>
                     </td>
                     <td className="px-3 py-2 text-foreground">{entry.title}</td>

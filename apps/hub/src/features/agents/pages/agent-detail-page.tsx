@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
@@ -10,6 +11,7 @@ import { useProjectStore } from '../../../stores/project-store';
 import { parseAgents, agentSlug, type AgentEntry } from '../lib/parse-agents';
 
 export function AgentDetailPage() {
+  const { t } = useTranslation();
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
@@ -44,7 +46,7 @@ export function AgentDetailPage() {
       <div>
         <PageHeader title="Agent Not Found" />
         <Button variant="ghost" size="sm" onClick={() => navigate('/agents')}>
-          <ArrowLeft size={16} /> Back to Agents
+          <ArrowLeft size={16} /> {t('common.back')}
         </Button>
       </div>
     );
@@ -60,7 +62,7 @@ export function AgentDetailPage() {
         description={agent.purpose}
         actions={
           <Button variant="ghost" size="sm" onClick={() => navigate('/agents')}>
-            <ArrowLeft size={16} /> Back
+            <ArrowLeft size={16} /> {t('common.back')}
           </Button>
         }
       />
@@ -68,7 +70,7 @@ export function AgentDetailPage() {
       {/* Metadata chips */}
       <div className="mb-4 flex flex-wrap gap-2">
         <Chip size="sm" color={agent.type === 'orchestrator' ? 'accent' : 'default'}>
-          {agent.type === 'orchestrator' ? 'Orchestrator' : 'Agent'}
+          {agent.type === 'orchestrator' ? t('page.agents.orchestrator') : t('page.agents.agent')}
         </Chip>
         {agent.skills && (
           <Chip size="sm" color="default">{agent.skills}</Chip>
@@ -90,7 +92,7 @@ export function AgentDetailPage() {
       {/* Workflow steps for orchestrators */}
       {agent.workflow && agent.workflow.length > 0 && (
         <div className="mb-4 rounded-xl border border-border bg-muted/50 p-4">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">Workflow Steps</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.agents.workflowSteps')}</h3>
           <ol className="list-inside list-decimal space-y-1 text-xs text-muted-foreground">
             {agent.workflow.map((step, i) => (
               <li key={i}>{step}</li>

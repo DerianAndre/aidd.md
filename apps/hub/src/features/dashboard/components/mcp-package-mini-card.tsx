@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { McpPackageInfo } from '../../mcp/lib/mcp-catalog';
 import type { McpPackageStatus } from '../../mcp/stores/mcp-servers-store';
@@ -27,6 +28,7 @@ interface McpPackageMiniCardProps {
 }
 
 export function McpPackageMiniCard({ info, status, server }: McpPackageMiniCardProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isRunning = server?.status === 'running';
   const isBuilt = status?.built ?? false;
@@ -57,7 +59,7 @@ export function McpPackageMiniCard({ info, status, server }: McpPackageMiniCardP
           {SHORT_ROLES[info.role] ?? info.role}
         </p>
         <p className="text-[10px] text-muted-foreground">
-          {toolCount > 0 ? `${toolCount} tools` : info.role === 'Foundation' ? 'types' : 'aggregate'}
+          {toolCount > 0 ? t('page.dashboard.mcpTools', { count: toolCount }) : info.role === 'Foundation' ? t('page.dashboard.mcpTypes') : t('page.dashboard.mcpAggregate')}
         </p>
       </div>
     </button>

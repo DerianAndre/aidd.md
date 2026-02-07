@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Chip } from '@/components/ui/chip';
 import { Cpu, ArrowRight } from 'lucide-react';
@@ -17,6 +18,7 @@ const DIR_TO_SERVER_ID: Record<string, string> = {
 };
 
 export function McpStatusPanel() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const packages = useMcpServersStore((s) => s.packages);
   const servers = useMcpServersStore((s) => s.servers);
@@ -50,13 +52,13 @@ export function McpStatusPanel() {
           <div className="rounded-lg bg-primary/10 p-1.5 text-primary">
             <Cpu size={18} />
           </div>
-          <span className="text-sm font-semibold text-foreground">MCP Engine</span>
+          <span className="text-sm font-semibold text-foreground">{t('page.dashboard.mcpEngine')}</span>
           <Chip size="sm" color={builtCount === MCP_SERVERS.length ? 'success' : 'warning'}>
-            {builtCount} built
+            {t('page.dashboard.mcpBuilt', { count: builtCount })}
           </Chip>
           {runningCount > 0 && (
             <Chip size="sm" color="success">
-              {runningCount} running
+              {t('page.dashboard.mcpRunning', { count: runningCount })}
             </Chip>
           )}
         </div>
@@ -64,7 +66,7 @@ export function McpStatusPanel() {
           to={ROUTES.MCP}
           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
         >
-          View <ArrowRight size={12} />
+          {t('common.view')} <ArrowRight size={12} />
         </Link>
       </div>
 
@@ -88,11 +90,9 @@ export function McpStatusPanel() {
       {/* Discovery row */}
       {totalDiscovered > 0 && (
         <p className="mt-3 text-xs text-muted-foreground">
-          Discovered: <span className="font-medium text-muted-foreground">{totalDiscovered}</span> MCPs
-          {toolsWithConfig.length > 0 && (
-            <> across {toolsWithConfig.join(', ')}</>
-          )}
-          {' '}({aiddCount} AIDD, {thirdPartyCount} third-party)
+          {t('page.dashboard.mcpDiscovery', { total: totalDiscovered })}
+          {toolsWithConfig.length > 0 && ` ${t('page.dashboard.mcpDiscoveryAcross', { tools: toolsWithConfig.join(', ') })}`}
+          {' '}{t('page.dashboard.mcpDiscoveryBreakdown', { aidd: aiddCount, thirdParty: thirdPartyCount })}
         </p>
       )}
     </div>

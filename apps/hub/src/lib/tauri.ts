@@ -95,7 +95,7 @@ export const setActiveProject = (path: string) =>
   invoke<void>('set_active_project', { path });
 
 // Framework management
-export type FrameworkCategory = 'rules' | 'skills' | 'knowledge' | 'workflows' | 'templates' | 'spec';
+export type FrameworkCategory = 'rules' | 'skills' | 'knowledge' | 'workflows' | 'templates' | 'specs';
 
 export interface FrameworkEntity {
   name: string;

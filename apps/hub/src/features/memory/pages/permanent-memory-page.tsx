@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
@@ -12,6 +13,7 @@ import { useProjectStore } from '../../../stores/project-store';
 import { formatDate } from '../../../lib/utils';
 
 export function PermanentMemoryPage() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { decisions, mistakes, conventions, loading, stale, fetch } = usePermanentMemoryStore();
 
@@ -23,7 +25,7 @@ export function PermanentMemoryPage() {
 
   return (
     <div>
-      <PageHeader title="Permanent Memory" description="Decisions, mistakes, and conventions" />
+      <PageHeader title={t('page.memory.title')} description={t('page.memory.description')} />
 
       {loading && (
         <div className="space-y-3">
@@ -35,9 +37,9 @@ export function PermanentMemoryPage() {
       {!loading && (
         <Tabs defaultValue="decisions">
           <TabsList aria-label="Memory categories">
-            <TabsTrigger value="decisions">Decisions ({decisions.length})</TabsTrigger>
-            <TabsTrigger value="mistakes">Mistakes ({mistakes.length})</TabsTrigger>
-            <TabsTrigger value="conventions">Conventions ({conventions.length})</TabsTrigger>
+            <TabsTrigger value="decisions">{t('page.memory.decisions', { count: decisions.length })}</TabsTrigger>
+            <TabsTrigger value="mistakes">{t('page.memory.mistakes', { count: mistakes.length })}</TabsTrigger>
+            <TabsTrigger value="conventions">{t('page.memory.conventions', { count: conventions.length })}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="decisions">
@@ -56,6 +58,7 @@ export function PermanentMemoryPage() {
 }
 
 function DecisionsTab() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { decisions, removeDecision } = usePermanentMemoryStore();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -69,7 +72,7 @@ function DecisionsTab() {
     });
   };
 
-  if (decisions.length === 0) return <EmptyState message="No decisions recorded yet." />;
+  if (decisions.length === 0) return <EmptyState message={t('page.memory.noDecisions')} />;
 
   return (
     <div className="mt-3 space-y-2">
@@ -86,7 +89,7 @@ function DecisionsTab() {
               <p className="mb-2 text-xs text-muted-foreground">{d.reasoning}</p>
               {d.alternatives && d.alternatives.length > 0 && (
                 <div className="mb-2">
-                  <span className="text-[10px] font-medium uppercase text-muted-foreground">Alternatives:</span>
+                  <span className="text-[10px] font-medium uppercase text-muted-foreground">{t('page.memory.alternatives')}</span>
                   <ul className="ml-3 list-inside list-disc text-xs text-muted-foreground">
                     {d.alternatives.map((a, i) => <li key={i}>{a}</li>)}
                   </ul>
@@ -99,7 +102,7 @@ function DecisionsTab() {
                   className="text-danger"
                   onClick={() => activeProject?.path && void removeDecision(activeProject.path, d.id)}
                 >
-                  <Trash2 size={14} /> Remove
+                  <Trash2 size={14} /> {t('common.remove')}
                 </Button>
               </div>
             </CardContent>
@@ -111,6 +114,7 @@ function DecisionsTab() {
 }
 
 function MistakesTab() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { mistakes, removeMistake } = usePermanentMemoryStore();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -124,7 +128,7 @@ function MistakesTab() {
     });
   };
 
-  if (mistakes.length === 0) return <EmptyState message="No mistakes recorded yet." />;
+  if (mistakes.length === 0) return <EmptyState message={t('page.memory.noMistakes')} />;
 
   return (
     <div className="mt-3 space-y-2">
@@ -143,9 +147,9 @@ function MistakesTab() {
           </CardHeader>
           {expanded.has(m.id) && (
             <CardContent className="pt-0 text-xs text-muted-foreground">
-              <p className="mb-1"><span className="font-medium text-foreground">Root cause:</span> {m.rootCause}</p>
-              <p className="mb-1"><span className="font-medium text-foreground">Fix:</span> {m.fix}</p>
-              <p className="mb-2"><span className="font-medium text-foreground">Prevention:</span> {m.prevention}</p>
+              <p className="mb-1"><span className="font-medium text-foreground">{t('page.memory.rootCause')}</span> {m.rootCause}</p>
+              <p className="mb-1"><span className="font-medium text-foreground">{t('page.memory.fix')}</span> {m.fix}</p>
+              <p className="mb-2"><span className="font-medium text-foreground">{t('page.memory.prevention')}</span> {m.prevention}</p>
               <div className="flex justify-end">
                 <Button
                   size="sm"
@@ -153,7 +157,7 @@ function MistakesTab() {
                   className="text-danger"
                   onClick={() => activeProject?.path && void removeMistake(activeProject.path, m.id)}
                 >
-                  <Trash2 size={14} /> Remove
+                  <Trash2 size={14} /> {t('common.remove')}
                 </Button>
               </div>
             </CardContent>
@@ -165,6 +169,7 @@ function MistakesTab() {
 }
 
 function ConventionsTab() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { conventions, removeConvention } = usePermanentMemoryStore();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -178,7 +183,7 @@ function ConventionsTab() {
     });
   };
 
-  if (conventions.length === 0) return <EmptyState message="No conventions recorded yet." />;
+  if (conventions.length === 0) return <EmptyState message={t('page.memory.noConventions')} />;
 
   return (
     <div className="mt-3 space-y-2">
@@ -192,9 +197,9 @@ function ConventionsTab() {
           </CardHeader>
           {expanded.has(c.id) && (
             <CardContent className="pt-0 text-xs text-muted-foreground">
-              <p className="mb-1"><span className="font-medium text-foreground">Example:</span> {c.example}</p>
+              <p className="mb-1"><span className="font-medium text-foreground">{t('page.memory.example')}</span> {c.example}</p>
               {c.rationale && (
-                <p className="mb-2"><span className="font-medium text-foreground">Rationale:</span> {c.rationale}</p>
+                <p className="mb-2"><span className="font-medium text-foreground">{t('page.memory.rationale')}</span> {c.rationale}</p>
               )}
               <div className="flex justify-end">
                 <Button
@@ -203,7 +208,7 @@ function ConventionsTab() {
                   className="text-danger"
                   onClick={() => activeProject?.path && void removeConvention(activeProject.path, c.id)}
                 >
-                  <Trash2 size={14} /> Remove
+                  <Trash2 size={14} /> {t('common.remove')}
                 </Button>
               </div>
             </CardContent>

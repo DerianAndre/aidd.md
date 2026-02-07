@@ -7,7 +7,7 @@ pub struct AiddMarkers {
     pub rules: bool,
     pub skills: bool,
     pub workflows: bool,
-    pub spec: bool,
+    pub specs: bool,
     pub knowledge: bool,
     pub templates: bool,
     pub aidd_dir: bool,

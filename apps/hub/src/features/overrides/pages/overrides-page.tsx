@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Chip } from '@/components/ui/chip';
 import { Spinner } from '@/components/ui/spinner';
@@ -16,6 +17,7 @@ import { parseAgents, type AgentEntry } from '../../agents/lib/parse-agents';
 import { useFrameworkStore, CATEGORIES } from '../../framework/stores/framework-store';
 
 export function OverridesPage() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const frameworkPath = useFrameworkStore((s) => s.frameworkPath);
   const initFramework = useFrameworkStore((s) => s.initialize);
@@ -109,8 +111,8 @@ export function OverridesPage() {
   if (!activeProject) {
     return (
       <div>
-        <PageHeader title="Overrides" description="Per-project framework customizations" />
-        <EmptyState message="Select a project to manage overrides." />
+        <PageHeader title={t('page.overrides.title')} description={t('page.overrides.noProject')} />
+        <EmptyState message={t('page.overrides.noProject')} />
       </div>
     );
   }
@@ -118,8 +120,8 @@ export function OverridesPage() {
   return (
     <div>
       <PageHeader
-        title="Overrides"
-        description={`Per-project customizations for ${activeProject.name}`}
+        title={t('page.overrides.title')}
+        description={t('page.overrides.description', { project: activeProject.name })}
       />
 
       {loading ? (
@@ -135,10 +137,10 @@ export function OverridesPage() {
             <TabsTrigger value="agents">
               <span className="flex items-center gap-1.5">
                 <Layers size={14} />
-                Agents
+                {t('page.overrides.agentsTab')}
                 {overrides && overrides.agents.disabled.length > 0 && (
                   <Chip size="sm" color="warning">
-                    {overrides.agents.disabled.length} disabled
+                    {overrides.agents.disabled.length} {t('page.overrides.disabled')}
                   </Chip>
                 )}
               </span>
@@ -146,7 +148,7 @@ export function OverridesPage() {
             <TabsTrigger value="rules">
               <span className="flex items-center gap-1.5">
                 <ShieldCheck size={14} />
-                Project Rules
+                {t('page.overrides.projectRulesTab')}
                 {overrides && overrides.rule_count > 0 && (
                   <Chip size="sm">{overrides.rule_count}</Chip>
                 )}
@@ -155,7 +157,7 @@ export function OverridesPage() {
             <TabsTrigger value="effective">
               <span className="flex items-center gap-1.5">
                 <Eye size={14} />
-                Effective Preview
+                {t('page.overrides.effectivePreviewTab')}
               </span>
             </TabsTrigger>
           </TabsList>
@@ -164,8 +166,7 @@ export function OverridesPage() {
           <TabsContent value="agents">
             <div className="pt-4">
               <p className="mb-4 text-sm text-muted-foreground">
-                Toggle agents on/off for this project. Disabled agents are excluded
-                from integration-generated files.
+                {t('page.overrides.agentsHint')}
               </p>
 
               {agentsLoading ? (
@@ -173,7 +174,7 @@ export function OverridesPage() {
                   <Spinner />
                 </div>
               ) : agents.length === 0 ? (
-                <EmptyState message="No agents found. Ensure AGENTS.md exists in the global framework." />
+                <EmptyState message={t('page.overrides.noAgents')} />
               ) : (
                 <div className="grid gap-2">
                   {agents.filter((a) => a.type === 'agent').map((agent, i) => (
@@ -212,8 +213,7 @@ export function OverridesPage() {
             <div className="pt-4">
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Project-specific rules stored in .aidd/overrides/rules/.
-                  These are merged with global rules.
+                  {t('page.overrides.projectRulesHint')}
                 </p>
                 <Button
                   size="sm"
@@ -221,7 +221,7 @@ export function OverridesPage() {
                   onClick={() => setShowAddRule(!showAddRule)}
                 >
                   <Plus size={14} />
-                  Add Rule
+                  {t('page.overrides.addRule')}
                 </Button>
               </div>
 
@@ -233,7 +233,7 @@ export function OverridesPage() {
                       <Input
                         value={newRuleName}
                         onChange={(e) => setNewRuleName(e.target.value)}
-                        placeholder="e.g. project-conventions"
+                        placeholder={t('page.overrides.ruleNamePlaceholder')}
                       />
                     </div>
                     <Button
@@ -242,14 +242,14 @@ export function OverridesPage() {
                       disabled={!newRuleName.trim()}
                       onClick={() => void handleAddRule()}
                     >
-                      Create
+                      {t('common.create')}
                     </Button>
                   </CardContent>
                 </Card>
               )}
 
               {projectRules.length === 0 ? (
-                <EmptyState message="No project-specific rules yet." />
+                <EmptyState message={t('page.overrides.noRules')} />
               ) : (
                 <div className="grid gap-2">
                   {projectRules.map((rule) => (
@@ -268,7 +268,7 @@ export function OverridesPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Chip size="sm" color="accent">override</Chip>
+                        <Chip size="sm" color="accent">{t('page.overrides.override')}</Chip>
                         <Button
                           size="sm"
                           variant="destructive"
@@ -289,7 +289,7 @@ export function OverridesPage() {
             <div className="pt-4">
               <div className="mb-4 flex items-center gap-3">
                 <p className="text-sm text-muted-foreground">
-                  Preview the merged result of global framework + project overrides.
+                  {t('page.overrides.effectivePreviewHint')}
                 </p>
                 <div className="flex gap-1">
                   {CATEGORIES.map((cat) => (
@@ -306,7 +306,7 @@ export function OverridesPage() {
               </div>
 
               {effectiveEntities.length === 0 ? (
-                <EmptyState message="Select a category above to preview effective content." />
+                <EmptyState message={t('page.overrides.selectCategory')} />
               ) : (
                 <div className="grid gap-2">
                   {effectiveEntities.map((entity) => (
@@ -329,11 +329,11 @@ export function OverridesPage() {
                           size="sm"
                           color={entity.source === 'override' ? 'accent' : 'default'}
                         >
-                          {entity.source}
+                          {entity.source === 'override' ? t('page.overrides.override') : t('page.overrides.global')}
                         </Chip>
                         {!entity.enabled && (
                           <Chip size="sm" color="danger">
-                            disabled
+                            {t('page.overrides.disabled')}
                           </Chip>
                         )}
                       </div>

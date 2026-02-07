@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Chip } from '@/components/ui/chip';
 import { FolderKanban, ArrowRight } from 'lucide-react';
@@ -17,6 +18,7 @@ const MARKERS: { key: keyof NonNullable<ReturnType<typeof useProjectStore.getSta
 ];
 
 export function ProjectContextBanner() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
 
   if (!activeProject) {
@@ -24,13 +26,13 @@ export function ProjectContextBanner() {
       <div className="mb-4 flex items-center justify-between rounded-xl border border-border bg-muted/50 p-4">
         <div className="flex items-center gap-3 text-muted-foreground">
           <FolderKanban size={20} />
-          <span className="text-sm">No project selected</span>
+          <span className="text-sm">{t('page.dashboard.noProjectSelected')}</span>
         </div>
         <Link
           to={ROUTES.PROJECTS}
           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
         >
-          Select project <ArrowRight size={12} />
+          {t('page.dashboard.selectProject')} <ArrowRight size={12} />
         </Link>
       </div>
     );

@@ -164,6 +164,10 @@ export const router = createBrowserRouter([
         element: lazyPage(() => import('./features/overrides/pages/overrides-page'), 'OverridesPage'),
       },
       {
+        path: 'help',
+        element: lazyPage(() => import('./features/help/pages/help-page'), 'HelpPage'),
+      },
+      {
         path: 'adapters',
         element: <Navigate to="/integrations" replace />,
       },

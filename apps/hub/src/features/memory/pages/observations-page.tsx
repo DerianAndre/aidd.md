@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SearchInput } from '@/components/ui/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Chip } from '@/components/ui/chip';
@@ -17,6 +18,7 @@ const ALL_TYPES: ObservationType[] = [
 ];
 
 export function ObservationsPage() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { stale, fetchAll } = useSessionsStore();
   const [observations, setObservations] = useState<SessionObservation[]>([]);
@@ -79,16 +81,16 @@ export function ObservationsPage() {
 
   return (
     <div>
-      <PageHeader title="Observations" description="Typed observations from sessions" />
+      <PageHeader title={t('page.observations.title')} description={t('page.observations.description')} />
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search observations..."
+          placeholder={t('page.observations.searchPlaceholder')}
           className="max-w-xs"
         />
-        <span className="text-xs text-muted-foreground">{filtered.length} observations</span>
+        <span className="text-xs text-muted-foreground">{t('page.observations.count', { count: filtered.length })}</span>
       </div>
 
       {/* Type filter chips */}
@@ -115,7 +117,7 @@ export function ObservationsPage() {
       )}
 
       {!loading && filtered.length === 0 && (
-        <EmptyState message={search || activeTypes.size > 0 ? 'No observations match your filters.' : 'No observations recorded yet.'} />
+        <EmptyState message={search || activeTypes.size > 0 ? t('page.observations.noMatch') : t('page.observations.noObservations')} />
       )}
 
       {!loading && filtered.length > 0 && (

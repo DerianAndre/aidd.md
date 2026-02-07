@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EntityList, EntityCard } from '../../../components/entity';
 import { useSkillsStore } from '../stores/skills-store';
 import { useProjectStore } from '../../../stores/project-store';
 
 export function SkillsListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { items, loading, stale, fetchAll } = useSkillsStore();
@@ -18,14 +20,14 @@ export function SkillsListPage() {
 
   return (
     <div>
-      <PageHeader title="Skills" description="Specialized agent capabilities" />
+      <PageHeader title={t('page.skills.title')} description={t('page.skills.description')} />
       <EntityList
         items={items}
         loading={loading}
         getKey={(s) => s.id}
         getSearchText={(s) => `${s.name} ${s.description} tier ${s.tier}`}
-        searchPlaceholder="Search skills..."
-        emptyMessage="No skills found in this project."
+        searchPlaceholder={t('page.skills.searchPlaceholder')}
+        emptyMessage={t('page.skills.noSkills')}
         renderItem={(skill) => (
           <EntityCard
             title={skill.name}

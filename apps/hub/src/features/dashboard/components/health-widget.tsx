@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDiagnosticsStore } from '../../diagnostics/stores/diagnostics-store';
 import { useProjectStore } from '../../../stores/project-store';
@@ -11,6 +12,7 @@ const COLOR_MAP = {
 } as const;
 
 export function HealthWidget() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { healthScore, loading, stale, fetch } = useDiagnosticsStore();
 
@@ -25,7 +27,7 @@ export function HealthWidget() {
   }
 
   if (!healthScore || healthScore.sessionsAnalyzed === 0) {
-    return <p className="text-xs text-muted-foreground">No health data yet.</p>;
+    return <p className="text-xs text-muted-foreground">{t('page.dashboard.noHealthData')}</p>;
   }
 
   const color = COLOR_MAP[scoreColor(healthScore.overall)];

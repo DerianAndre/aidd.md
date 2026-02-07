@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { SearchInput } from '@/components/ui/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -9,6 +10,7 @@ import { useSessionsStore } from '../stores/sessions-store';
 import { useProjectStore } from '../../../stores/project-store';
 
 export function SessionsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { activeSessions, completedSessions, loading, stale, fetchAll } = useSessionsStore();
@@ -40,13 +42,13 @@ export function SessionsPage() {
 
   return (
     <div>
-      <PageHeader title="Sessions" description="Active and completed AI sessions" />
+      <PageHeader title={t('page.sessions.title')} description={t('page.sessions.description')} />
 
       <div className="mb-4 flex items-center gap-3">
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search by branch or model..."
+          placeholder={t('page.sessions.searchPlaceholder')}
           className="max-w-xs"
         />
         <span className="text-xs text-muted-foreground">
@@ -63,12 +65,12 @@ export function SessionsPage() {
       )}
 
       {!loading && total === 0 && (
-        <EmptyState message={search ? 'No sessions match your search.' : 'No sessions found. Start a development session to see data here.'} />
+        <EmptyState message={search ? t('page.sessions.noMatch') : t('page.sessions.noSessions')} />
       )}
 
       {!loading && filteredActive.length > 0 && (
         <div className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">Active ({filteredActive.length})</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.sessions.active', { count: filteredActive.length })}</h3>
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filteredActive.map((session) => (
               <SessionCard
@@ -83,7 +85,7 @@ export function SessionsPage() {
 
       {!loading && filteredCompleted.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-foreground">Completed ({filteredCompleted.length})</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.sessions.completed', { count: filteredCompleted.length })}</h3>
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCompleted.map((session) => (
               <SessionCard

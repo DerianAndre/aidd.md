@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Chip } from '@/components/ui/chip';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,6 +12,7 @@ import { ROUTES } from '../../../lib/constants';
 import { truncate } from '../../../lib/utils';
 
 export function EvolutionDraftsWidget() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
 
   const candidates = useEvolutionStore((s) => s.candidates);
@@ -37,14 +39,14 @@ export function EvolutionDraftsWidget() {
   return (
     <div className="rounded-xl border border-border bg-muted/50 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">Evolution & Drafts</h3>
+        <h3 className="text-sm font-semibold text-foreground">{t('page.dashboard.evolutionDrafts')}</h3>
       </div>
 
       {loading ? (
         <Skeleton className="h-24 rounded-lg" />
       ) : candidates.length === 0 && pendingDrafts.length === 0 ? (
         <p className="py-6 text-center text-xs text-muted-foreground">
-          No pending items. Patterns emerge as sessions complete.
+          {t('page.dashboard.noPendingItems')}
         </p>
       ) : (
         <>
@@ -52,7 +54,7 @@ export function EvolutionDraftsWidget() {
           {candidates.length > 0 && (
             <div className="mb-2">
               <p className="text-xs text-muted-foreground">
-                <span className="font-semibold text-foreground">{candidates.length}</span> evolution candidate{candidates.length !== 1 ? 's' : ''}
+                {candidates.length === 1 ? t('page.dashboard.evolutionCandidates', { count: candidates.length }) : t('page.dashboard.evolutionCandidatesPlural', { count: candidates.length })}
               </p>
               {topCandidate && (
                 <div className="mt-1.5 flex items-center gap-2">
@@ -74,7 +76,7 @@ export function EvolutionDraftsWidget() {
           {pendingDrafts.length > 0 && (
             <div>
               <p className="text-xs text-muted-foreground">
-                <span className="font-semibold text-foreground">{pendingDrafts.length}</span> pending draft{pendingDrafts.length !== 1 ? 's' : ''}
+                {pendingDrafts.length === 1 ? t('page.dashboard.pendingDrafts', { count: pendingDrafts.length }) : t('page.dashboard.pendingDraftsPlural', { count: pendingDrafts.length })}
               </p>
               {topDraft && (
                 <div className="mt-1.5 flex items-center gap-2">
@@ -93,13 +95,13 @@ export function EvolutionDraftsWidget() {
               to={ROUTES.EVOLUTION}
               className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
             >
-              Evolution <ArrowRight size={12} />
+              {t('nav.evolution')} <ArrowRight size={12} />
             </Link>
             <Link
               to={ROUTES.DRAFTS}
               className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
             >
-              Drafts <ArrowRight size={12} />
+              {t('nav.drafts')} <ArrowRight size={12} />
             </Link>
           </div>
         </>

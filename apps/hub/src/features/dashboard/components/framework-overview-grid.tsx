@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { Chip } from '@/components/ui/chip';
 import {
@@ -16,16 +17,17 @@ import { ROUTES } from '../../../lib/constants';
 import type { FrameworkCategory } from '../../../lib/tauri';
 import type { LucideIcon } from 'lucide-react';
 
-const CATEGORY_META: Record<FrameworkCategory, { label: string; icon: LucideIcon; color: string }> = {
-  rules: { label: 'Rules', icon: ShieldCheck, color: 'text-danger' },
-  skills: { label: 'Skills', icon: Zap, color: 'text-warning' },
-  knowledge: { label: 'Knowledge', icon: BookOpen, color: 'text-accent' },
-  workflows: { label: 'Workflows', icon: GitBranch, color: 'text-success' },
-  templates: { label: 'Templates', icon: FileText, color: 'text-primary' },
-  spec: { label: 'Spec', icon: FileCode, color: 'text-muted-foreground' },
-};
+const CATEGORY_META = {
+  rules: { labelKey: 'page.dashboard.catRules' as const, icon: ShieldCheck, color: 'text-danger' },
+  skills: { labelKey: 'page.dashboard.catSkills' as const, icon: Zap, color: 'text-warning' },
+  knowledge: { labelKey: 'page.dashboard.catKnowledge' as const, icon: BookOpen, color: 'text-accent' },
+  workflows: { labelKey: 'page.dashboard.catWorkflows' as const, icon: GitBranch, color: 'text-success' },
+  templates: { labelKey: 'page.dashboard.catTemplates' as const, icon: FileText, color: 'text-primary' },
+  specs: { labelKey: 'page.dashboard.catSpec' as const, icon: FileCode, color: 'text-muted-foreground' },
+} satisfies Record<FrameworkCategory, { labelKey: string; icon: LucideIcon; color: string }>;
 
 export function FrameworkOverviewGrid() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
   const entities = useFrameworkStore((s) => s.entities);
@@ -52,7 +54,7 @@ export function FrameworkOverviewGrid() {
       {/* Section header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-foreground">Framework</span>
+          <span className="text-sm font-semibold text-foreground">{t('page.dashboard.framework')}</span>
           {syncInfo?.current_version && (
             <Chip size="sm" color="default">
               v{syncInfo.current_version}
@@ -63,7 +65,7 @@ export function FrameworkOverviewGrid() {
           to={ROUTES.FRAMEWORK}
           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
         >
-          Manage <ArrowRight size={12} />
+          {t('common.manage')} <ArrowRight size={12} />
         </Link>
       </div>
 
@@ -85,11 +87,11 @@ export function FrameworkOverviewGrid() {
               className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-muted/50 p-3 transition-colors hover:border-primary hover:bg-accent/50"
             >
               <Icon size={20} className={meta.color} />
-              <span className="text-xs font-medium text-foreground">{meta.label}</span>
+              <span className="text-xs font-medium text-foreground">{t(meta.labelKey)}</span>
               <span className="text-xl font-bold text-foreground">{count}</span>
               {count > 0 && (
                 <span className="text-[10px] text-muted-foreground">
-                  {globalCount}g + {projectCount}p
+                  {t('page.dashboard.sourceBreakdown', { global: globalCount, project: projectCount })}
                 </span>
               )}
             </button>

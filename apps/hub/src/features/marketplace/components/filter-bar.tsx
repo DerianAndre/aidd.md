@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { LayoutGrid, List, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
@@ -36,6 +37,7 @@ export function FilterBar({
   onTrendingToggle,
   onClearFilters,
 }: FilterBarProps) {
+  const { t } = useTranslation();
   const hasActiveFilters =
     filters.mcpCategories.length > 0 ||
     filters.onlyOfficial ||
@@ -50,12 +52,12 @@ export function FilterBar({
         <SearchInput
           value={filters.search}
           onChange={onSearchChange}
-          placeholder="Search..."
+          placeholder={t('page.marketplace.searchPlaceholder')}
           className="max-w-xs"
         />
 
         <div>
-          <Label className="sr-only">Sort by</Label>
+          <Label className="sr-only">{t('page.marketplace.sortBy')}</Label>
           <Select value={filters.sort} onValueChange={(value) => onSortChange(value as SortOption)}>
             <SelectTrigger className="w-40">
               <SelectValue />
@@ -79,7 +81,7 @@ export function FilterBar({
                 ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground'
             )}
-            aria-label="Grid view"
+            aria-label={t('page.marketplace.gridView')}
           >
             <LayoutGrid size={16} />
           </button>
@@ -91,14 +93,14 @@ export function FilterBar({
                 ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground'
             )}
-            aria-label="List view"
+            aria-label={t('page.marketplace.listView')}
           >
             <List size={16} />
           </button>
         </div>
 
         <span className="text-xs text-muted-foreground">
-          {resultCount} result{resultCount !== 1 ? 's' : ''}
+          {resultCount === 1 ? t('page.marketplace.resultCount', { count: resultCount }) : t('page.marketplace.resultCountPlural', { count: resultCount })}
         </span>
       </div>
 
@@ -122,7 +124,7 @@ export function FilterBar({
           onClick={onOfficialToggle}
           className="cursor-pointer transition-colors hover:opacity-80"
         >
-          Official
+          {t('common.official')}
         </Chip>
 
         <Chip
@@ -131,7 +133,7 @@ export function FilterBar({
           onClick={onTrendingToggle}
           className="cursor-pointer transition-colors hover:opacity-80"
         >
-          Trending
+          {t('common.trending')}
         </Chip>
 
         {hasActiveFilters && (
@@ -141,7 +143,7 @@ export function FilterBar({
             onClick={onClearFilters}
             className="ml-2"
           >
-            <X size={14} /> Clear filters
+            <X size={14} /> {t('page.marketplace.clearFilters')}
           </Button>
         )}
       </div>

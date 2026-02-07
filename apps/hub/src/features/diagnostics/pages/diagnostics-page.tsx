@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
@@ -10,6 +11,7 @@ import { useDiagnosticsStore } from '../stores/diagnostics-store';
 import { useProjectStore } from '../../../stores/project-store';
 
 export function DiagnosticsPage() {
+  const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
   const { healthScore, topMistakes, loading, stale, fetch } = useDiagnosticsStore();
 
@@ -22,7 +24,7 @@ export function DiagnosticsPage() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Diagnostics" description="Project health and error similarity" />
+        <PageHeader title={t('page.diagnostics.title')} description={t('page.diagnostics.description')} />
         <div className="flex flex-col items-center gap-4">
           <Skeleton className="h-44 w-44 rounded-full" />
           <Skeleton className="h-20 w-full rounded-xl" />
@@ -34,15 +36,15 @@ export function DiagnosticsPage() {
   if (!healthScore || healthScore.sessionsAnalyzed === 0) {
     return (
       <div>
-        <PageHeader title="Diagnostics" description="Project health and error similarity" />
-        <EmptyState message="No completed sessions yet. Health diagnostics will appear after your first session ends." />
+        <PageHeader title={t('page.diagnostics.title')} description={t('page.diagnostics.description')} />
+        <EmptyState message={t('page.diagnostics.noSessions')} />
       </div>
     );
   }
 
   return (
     <div>
-      <PageHeader title="Diagnostics" description="Project health and error similarity" />
+      <PageHeader title={t('page.diagnostics.title')} description={t('page.diagnostics.description')} />
 
       {/* Health gauge -- centered */}
       <div className="mb-6 flex justify-center">
@@ -51,14 +53,14 @@ export function DiagnosticsPage() {
 
       {/* Category breakdown */}
       <div className="mb-6">
-        <h3 className="mb-3 text-sm font-semibold text-foreground">Category Breakdown</h3>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">{t('page.diagnostics.categoryBreakdown')}</h3>
         <CategoryBreakdown categories={healthScore.categories} />
       </div>
 
       {/* Recommendations */}
       {healthScore.recommendations.length > 0 && (
         <div className="mb-6 rounded-xl border border-border bg-muted/50 p-4">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">Recommendations</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.diagnostics.recommendations')}</h3>
           <ul className="space-y-1">
             {healthScore.recommendations.map((rec, i) => (
               <li key={i} className="text-xs text-muted-foreground">
@@ -73,7 +75,7 @@ export function DiagnosticsPage() {
       {topMistakes.length > 0 && (
         <div>
           <h3 className="mb-3 text-sm font-semibold text-foreground">
-            Top Recurring Mistakes
+            {t('page.diagnostics.topRecurringMistakes')}
           </h3>
           <div className="space-y-2">
             {topMistakes.map((m) => (
@@ -90,9 +92,9 @@ export function DiagnosticsPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0 text-xs text-muted-foreground">
-                  <p><span className="font-medium text-foreground">Fix:</span> {m.fix}</p>
+                  <p><span className="font-medium text-foreground">{t('page.diagnostics.fix')}</span> {m.fix}</p>
                   <p className="mt-1">
-                    <span className="font-medium text-foreground">Prevention:</span> {m.prevention}
+                    <span className="font-medium text-foreground">{t('page.diagnostics.prevention')}</span> {m.prevention}
                   </p>
                 </CardContent>
               </Card>
@@ -102,7 +104,7 @@ export function DiagnosticsPage() {
       )}
 
       <p className="mt-4 text-[10px] text-muted-foreground">
-        Based on {healthScore.sessionsAnalyzed} completed session{healthScore.sessionsAnalyzed !== 1 ? 's' : ''}.
+        {t('page.diagnostics.basedOn', { count: healthScore.sessionsAnalyzed })}
       </p>
     </div>
   );

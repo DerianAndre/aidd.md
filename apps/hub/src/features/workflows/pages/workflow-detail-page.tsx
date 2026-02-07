@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -9,6 +10,7 @@ import { useProjectStore } from '../../../stores/project-store';
 import { extractTitle, extractDescription } from '../../../lib/markdown';
 
 export function WorkflowDetailPage() {
+  const { t } = useTranslation();
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
@@ -56,7 +58,7 @@ export function WorkflowDetailPage() {
         description={description}
         actions={
           <Button variant="ghost" size="sm" onClick={() => navigate('/workflows')}>
-            <ArrowLeft size={16} /> Back
+            <ArrowLeft size={16} /> {t('common.back')}
           </Button>
         }
       />
@@ -66,7 +68,7 @@ export function WorkflowDetailPage() {
           <BlockEditor initialMarkdown={content} editable={false} />
         </div>
       ) : (
-        <p className="py-8 text-center text-sm text-muted-foreground">Workflow not found.</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{t('page.workflows.notFound')}</p>
       )}
     </div>
   );

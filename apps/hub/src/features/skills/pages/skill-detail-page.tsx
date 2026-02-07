@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -11,6 +12,7 @@ import { parseSkillContent } from '../lib/parse-skill';
 import type { SkillEntity } from '../lib/types';
 
 export function SkillDetailPage() {
+  const { t } = useTranslation();
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
@@ -57,10 +59,10 @@ export function SkillDetailPage() {
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={() => navigate('/skills')}>
-              <ArrowLeft size={16} /> Back
+              <ArrowLeft size={16} /> {t('common.back')}
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate(`/skills/${name}/edit`)}>
-              <Pencil size={16} /> Edit
+              <Pencil size={16} /> {t('common.edit')}
             </Button>
           </div>
         }
