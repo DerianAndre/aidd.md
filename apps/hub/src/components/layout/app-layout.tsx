@@ -30,6 +30,9 @@ export function AppLayout() {
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
+          <div className="text-xs text-muted-foreground mt-2">
+            <span>DerianAndre 🧔🏻‍♂️ & 🤖 AI </span>
+          </div>
         </main>
       </div>
     </div>
