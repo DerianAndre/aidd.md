@@ -45,30 +45,56 @@ const NAV_GROUPS = [
   {
     labelKey: "nav.overview",
     items: [
-      { labelKey: "nav.dashboard", path: ROUTES.DASHBOARD, icon: LayoutDashboard },
+      {
+        labelKey: "nav.dashboard",
+        path: ROUTES.DASHBOARD,
+        icon: LayoutDashboard,
+      },
       { labelKey: "nav.projects", path: ROUTES.PROJECTS, icon: FolderKanban },
     ],
   },
   {
     labelKey: "nav.explore",
-    items: [{ labelKey: "nav.marketplace", path: ROUTES.MARKETPLACE, icon: Store }],
+    items: [
+      { labelKey: "nav.marketplace", path: ROUTES.MARKETPLACE, icon: Store },
+    ],
   },
   {
     labelKey: "nav.mcp",
     items: [
       { labelKey: "nav.mcpOverview", path: ROUTES.MCP, icon: Server },
-      { labelKey: "nav.mcpPlayground", path: ROUTES.MCP_PLAYGROUND, icon: Terminal },
+      {
+        labelKey: "nav.mcpPlayground",
+        path: ROUTES.MCP_PLAYGROUND,
+        icon: Terminal,
+      },
     ],
   },
   {
     labelKey: "nav.framework",
     items: [
       { labelKey: "nav.agents", path: ROUTES.AGENTS, icon: Users },
-      { labelKey: "nav.rules", path: ROUTES.FRAMEWORK_RULES, icon: ShieldCheck },
+      {
+        labelKey: "nav.rules",
+        path: ROUTES.FRAMEWORK_RULES,
+        icon: ShieldCheck,
+      },
       { labelKey: "nav.skills", path: ROUTES.FRAMEWORK_SKILLS, icon: Zap },
-      { labelKey: "nav.knowledge", path: ROUTES.FRAMEWORK_KNOWLEDGE, icon: BookOpen },
-      { labelKey: "nav.workflows", path: ROUTES.FRAMEWORK_WORKFLOWS, icon: GitBranch },
-      { labelKey: "nav.templates", path: ROUTES.FRAMEWORK_TEMPLATES, icon: FileText },
+      {
+        labelKey: "nav.knowledge",
+        path: ROUTES.FRAMEWORK_KNOWLEDGE,
+        icon: BookOpen,
+      },
+      {
+        labelKey: "nav.workflows",
+        path: ROUTES.FRAMEWORK_WORKFLOWS,
+        icon: GitBranch,
+      },
+      {
+        labelKey: "nav.templates",
+        path: ROUTES.FRAMEWORK_TEMPLATES,
+        icon: FileText,
+      },
       { labelKey: "nav.spec", path: ROUTES.FRAMEWORK_SPEC, icon: ScrollText },
     ],
   },
@@ -119,11 +145,13 @@ export function AppSidebar() {
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border p-3">
-        {!collapsed && <Logo className="h-10 opacity-75" />}
+        {!collapsed && <Logo className="h-10 opacity-90" />}
         <button
           onClick={toggleSidebar}
           className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-          aria-label={collapsed ? t('common.expandSidebar') : t('common.collapseSidebar')}
+          aria-label={
+            collapsed ? t("common.expandSidebar") : t("common.collapseSidebar")
+          }
         >
           {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
         </button>
@@ -132,7 +160,7 @@ export function AppSidebar() {
       {/* Project Switcher */}
       {!collapsed && projects.length > 0 && (
         <div className="border-b border-border p-3">
-          <Label className="mb-1.5 text-xs">{t('common.project')}</Label>
+          <Label className="mb-1.5 text-xs">{t("common.project")}</Label>
           <Select
             value={activeProject?.path ?? ""}
             onValueChange={(value) => switchProject(value)}

@@ -22,7 +22,15 @@ impl McpConfigScanner {
 
         // ── Claude Code ──────────────────────────────────────────────
 
-        // Global: walk ~/.claude/plugins/ for .mcp.json files
+        // User/local scope: ~/.claude.json
+        self.scan_standard_config(
+            &self.home_dir.join(".claude.json"),
+            McpToolSource::ClaudeCode,
+            McpConfigScope::Global,
+            &mut discovered,
+        );
+
+        // Plugins: walk ~/.claude/plugins/ for .mcp.json files
         let plugins_dir = self.home_dir.join(".claude").join("plugins");
         if plugins_dir.exists() {
             self.walk_mcp_json_files(
@@ -33,7 +41,7 @@ impl McpConfigScanner {
             );
         }
 
-        // Project: {project}/.mcp.json (Claude Code project-level MCP config)
+        // Project scope: {project}/.mcp.json (team-shareable via git)
         if let Some(project) = project_path {
             self.scan_mcp_json_file(
                 &Path::new(project).join(".mcp.json"),

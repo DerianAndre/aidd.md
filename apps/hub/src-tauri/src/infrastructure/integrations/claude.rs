@@ -12,8 +12,8 @@ use super::adapter_trait::{
 /// Claude Code integration adapter.
 ///
 /// Files managed:
-/// - Global: `~/.claude/mcp.json` — MCP server entry
-/// - Project: `.mcp.json` — project-scoped MCP config (team-shareable)
+/// - User scope: `~/.claude.json` — MCP server entry (user/local scope)
+/// - Project scope: `.mcp.json` — project-scoped MCP config (team-shareable)
 /// - Project: `CLAUDE.md` — project instructions
 /// - Project: agents routing.md (config-resolved path)
 /// - Project: `AGENTS.md` — thin redirect (cross-tool compat)
@@ -28,8 +28,9 @@ impl ClaudeAdapter {
         }
     }
 
+    /// User/local scope MCP config: ~/.claude.json
     fn mcp_json_path(&self) -> std::path::PathBuf {
-        self.home_dir.join(".claude").join("mcp.json")
+        self.home_dir.join(".claude.json")
     }
 }
 
@@ -61,7 +62,7 @@ impl ToolAdapter for ClaudeAdapter {
         let content = project_instructions(
             &name,
             "Claude Code",
-            "The aidd.md MCP server is configured globally at `~/.claude/mcp.json` and per-project at `.mcp.json`.",
+            "The aidd.md MCP server is configured at `~/.claude.json` (user scope) and `.mcp.json` (project scope).",
         );
         if let Some(path) = ensure_file(&claude_md, &content)? {
             result.files_created.push(path);
