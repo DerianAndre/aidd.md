@@ -652,68 +652,68 @@ if (existsSync(agentsPath)) {
   fail('AGENTS.md missing');
 }
 
-const rulesDir = resolve(root, 'rules');
+const rulesDir = resolve(root, 'content/rules');
 if (existsSync(rulesDir)) {
   const count = countFiles(rulesDir, '.md');
-  pass(`rules/ (${count} files)`);
+  pass(`content/rules/ (${count} files)`);
 } else {
-  fail('rules/ missing');
+  fail('content/rules/ missing');
 }
 
-const skillsDir = resolve(root, 'skills');
+const skillsDir = resolve(root, 'content/skills');
 let skillDirs = [];
 if (existsSync(skillsDir)) {
   try {
     skillDirs = readdirSync(skillsDir).filter((f) =>
       existsSync(resolve(skillsDir, f, 'SKILL.md'))
     );
-    pass(`skills/ (${skillDirs.length} agents)`);
+    pass(`content/skills/ (${skillDirs.length} agents)`);
   } catch {
-    warn('skills/ exists but could not read');
+    warn('content/skills/ exists but could not read');
   }
 } else {
-  fail('skills/ missing');
+  fail('content/skills/ missing');
 }
 
-const knowledgeDir = resolve(root, 'knowledge');
+const knowledgeDir = resolve(root, 'content/knowledge');
 if (existsSync(knowledgeDir)) {
   try {
     const domains = readdirSync(knowledgeDir).filter((f) =>
       statSync(resolve(knowledgeDir, f)).isDirectory()
     );
     const totalEntries = countFilesRecursive(knowledgeDir, '.md');
-    pass(`knowledge/ (${domains.length} domains, ${totalEntries} entries)`);
+    pass(`content/knowledge/ (${domains.length} domains, ${totalEntries} entries)`);
   } catch {
-    warn('knowledge/ exists but could not count entries');
+    warn('content/knowledge/ exists but could not count entries');
   }
 } else {
-  warn('knowledge/ missing');
+  warn('content/knowledge/ missing');
 }
 
-const workflowsDir = resolve(root, 'workflows');
+const workflowsDir = resolve(root, 'content/workflows');
 if (existsSync(workflowsDir)) {
   const mdCount = countFiles(workflowsDir, '.md');
   const orchDir = resolve(workflowsDir, 'orchestrators');
   const orchCount = existsSync(orchDir) ? countFiles(orchDir, '.md') : 0;
-  pass(`workflows/ (${mdCount} files + ${orchCount} orchestrators)`);
+  pass(`content/workflows/ (${mdCount} files + ${orchCount} orchestrators)`);
 } else {
-  warn('workflows/ missing');
+  warn('content/workflows/ missing');
 }
 
-const specDir = resolve(root, 'spec');
+const specDir = resolve(root, 'content/specs');
 if (existsSync(specDir)) {
   const count = countFiles(specDir, '.md');
-  pass(`specs/ (${count} files)`);
+  pass(`content/specs/ (${count} files)`);
 } else {
-  warn('specs/ missing');
+  warn('content/specs/ missing');
 }
 
-const templatesDir = resolve(root, 'templates');
+const templatesDir = resolve(root, 'content/templates');
 if (existsSync(templatesDir)) {
   const count = countFilesRecursive(templatesDir, '.md');
-  pass(`templates/ (${count} files)`);
+  pass(`content/templates/ (${count} files)`);
 } else {
-  warn('templates/ missing');
+  warn('content/templates/ missing');
 }
 
 const claudeMdPath = resolve(root, 'CLAUDE.md');
@@ -810,7 +810,7 @@ endSection();
 // =========================================================================
 beginSection('Model Matrix', 'SSOT sync and freshness');
 
-const modelMatrixMd = resolve(root, 'templates/model-matrix.md');
+const modelMatrixMd = resolve(root, 'content/specs/model-matrix.md');
 const modelMatrixTs = resolve(root, 'mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts');
 
 if (existsSync(modelMatrixMd) && existsSync(modelMatrixTs)) {
@@ -849,7 +849,7 @@ if (existsSync(modelMatrixMd) && existsSync(modelMatrixTs)) {
     }
   }
 } else {
-  if (!existsSync(modelMatrixMd)) warn('templates/model-matrix.md not found');
+  if (!existsSync(modelMatrixMd)) warn('content/specs/model-matrix.md not found');
   if (!existsSync(modelMatrixTs)) warn('model-matrix.ts not found (core package)');
 }
 

@@ -136,7 +136,7 @@ function parseDeprecations(content) {
 // Main
 // ---------------------------------------------------------------------------
 
-const mdPath = resolve(root, 'templates/model-matrix.md');
+const mdPath = resolve(root, 'content/specs/model-matrix.md');
 const tsPath = resolve(root, 'mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts');
 
 let issues = 0;
@@ -149,7 +149,7 @@ function warn(msg) { console.log(`  ${YELLOW}!${RESET} ${msg}`); warnings++; }
 console.log(`\n${BOLD}${PREFIX} Model Matrix Sync Check${RESET}\n`);
 
 // Show file paths relative to root
-const mdRelPath = 'templates/model-matrix.md';
+const mdRelPath = 'content/specs/model-matrix.md';
 const tsRelPath = 'mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts';
 console.log(`  ${DIM}SSOT:    ${mdRelPath}${RESET}`);
 console.log(`  ${DIM}Runtime: ${tsRelPath}${RESET}\n`);

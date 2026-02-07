@@ -35,7 +35,7 @@ const RESET = '\x1b[0m';
 const PREFIX = '[aidd.md]';
 
 // File paths
-const MD_PATH = resolve(root, 'templates/model-matrix.md');
+const MD_PATH = resolve(root, 'content/content/specs/model-matrix.md');
 const TS_PATH = resolve(root, 'mcps/mcp-aidd-core/src/modules/routing/model-matrix.ts');
 
 // ---------------------------------------------------------------------------
@@ -778,7 +778,7 @@ function displayReport(results, newModels, mdContent) {
         }
       }
     }
-    console.log(`\n  ${DIM}Review ranges and pick the correct value in templates/model-matrix.md${RESET}`);
+    console.log(`\n  ${DIM}Review ranges and pick the correct value in content/specs/model-matrix.md${RESET}`);
   }
 
   // Unverified (single source only)
@@ -842,7 +842,7 @@ function displayReport(results, newModels, mdContent) {
     }
 
     console.log(`\n  ${DIM}Tier suggestions are cost-based (output $/1M): >$10 \u2192 T1, $2\u2013$10 \u2192 T2, <$2 \u2192 T3${RESET}`);
-    console.log(`  ${DIM}Review and add to templates/model-matrix.md, then mirror to model-matrix.ts${RESET}`);
+    console.log(`  ${DIM}Review and add to content/specs/model-matrix.md, then mirror to model-matrix.ts${RESET}`);
   }
 
   // -------------------------------------------------------------------------
@@ -1062,7 +1062,7 @@ try {
     console.log(`${PREFIX} ${YELLOW}${parts.join(', ')} \u2014 review above${RESET}`);
   } else if (newModels.length > 0) {
     console.log(`${PREFIX} ${YELLOW}New models available \u2014 review above and add to matrix if needed${RESET}`);
-    console.log(`${DIM}Edit templates/model-matrix.md (SSOT), then update model-matrix.ts to match.${RESET}`);
+    console.log(`${DIM}Edit content/specs/model-matrix.md (SSOT), then update model-matrix.ts to match.${RESET}`);
   } else {
     console.log(`${PREFIX} ${GREEN}Matrix is current \u2014 both sources confirm${RESET}`);
   }
