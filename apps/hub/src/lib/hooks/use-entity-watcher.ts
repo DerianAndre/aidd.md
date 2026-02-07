@@ -1,5 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { startWatching, onFileChanged } from '../tauri';
+import {
+  AIDD_DIR, CONTENT_PATHS, STATE_PATHS, WATCHER_PREFIXES,
+} from '../constants';
 import { useProjectStore } from '../../stores/project-store';
 import { useRulesStore } from '../../features/rules/stores/rules-store';
 import { useTemplatesStore } from '../../features/templates/stores/templates-store';
@@ -15,6 +18,18 @@ import { useDiagnosticsStore } from '../../features/diagnostics/stores/diagnosti
 import { useConfigStore } from '../../features/config/stores/config-store';
 
 const DEBOUNCE_MS = 100;
+
+// Derive flush-time prefix constants from SSOT
+const P_RULES = `/${AIDD_DIR}/${CONTENT_PATHS.rules}/`;
+const P_TEMPLATES = `/${AIDD_DIR}/${CONTENT_PATHS.templates}/`;
+const P_SKILLS = `/${AIDD_DIR}/${CONTENT_PATHS.skills}/`;
+const P_WORKFLOWS = `/${AIDD_DIR}/${CONTENT_PATHS.workflows}/`;
+const P_KNOWLEDGE = `/${AIDD_DIR}/${CONTENT_PATHS.knowledge}/`;
+const P_SESSIONS = `/${AIDD_DIR}/${STATE_PATHS.SESSIONS}/`;
+const P_EVOLUTION = `/${AIDD_DIR}/${STATE_PATHS.EVOLUTION}/`;
+const P_DRAFTS = `/${AIDD_DIR}/${STATE_PATHS.DRAFTS}/`;
+const P_MEMORY = `/${AIDD_DIR}/${STATE_PATHS.MEMORY}/`;
+const P_CONFIG = `/${AIDD_DIR}/${STATE_PATHS.CONFIG}`;
 
 /**
  * Maps path prefixes to store invalidation functions.
@@ -48,33 +63,33 @@ export function useEntityWatcher() {
     const prefixes = pendingRef.current;
 
     // Framework entities
-    if (prefixes.has('/.aidd/content/rules/')) rulesInvalidate();
-    if (prefixes.has('/.aidd/content/templates/')) templatesInvalidate();
-    if (prefixes.has('/.aidd/content/skills/')) skillsInvalidate();
-    if (prefixes.has('/.aidd/content/workflows/')) workflowsInvalidate();
-    if (prefixes.has('/.aidd/content/knowledge/')) knowledgeInvalidate();
+    if (prefixes.has(P_RULES)) rulesInvalidate();
+    if (prefixes.has(P_TEMPLATES)) templatesInvalidate();
+    if (prefixes.has(P_SKILLS)) skillsInvalidate();
+    if (prefixes.has(P_WORKFLOWS)) workflowsInvalidate();
+    if (prefixes.has(P_KNOWLEDGE)) knowledgeInvalidate();
 
     // Memory layer — sessions + analytics + diagnostics
-    if (prefixes.has('/.aidd/sessions/')) {
+    if (prefixes.has(P_SESSIONS)) {
       sessionsInvalidate();
       analyticsInvalidate();
       diagnosticsInvalidate();
     }
 
     // Evolution candidates
-    if (prefixes.has('/.aidd/evolution/')) evolutionInvalidate();
+    if (prefixes.has(P_EVOLUTION)) evolutionInvalidate();
 
     // Draft artifacts
-    if (prefixes.has('/.aidd/drafts/')) draftsInvalidate();
+    if (prefixes.has(P_DRAFTS)) draftsInvalidate();
 
     // Permanent memory — decisions, mistakes, conventions
-    if (prefixes.has('/.aidd/memory/')) {
+    if (prefixes.has(P_MEMORY)) {
       permanentMemoryInvalidate();
       diagnosticsInvalidate(); // mistakes feed into health score
     }
 
     // Config file
-    if (prefixes.has('/.aidd/config.json')) configInvalidate();
+    if (prefixes.has(P_CONFIG)) configInvalidate();
 
     prefixes.clear();
   }, [
@@ -97,12 +112,7 @@ export function useEntityWatcher() {
       for (const filePath of event.paths) {
         const normalized = filePath.replace(/\\/g, '/');
 
-        const prefixes = [
-          '/.aidd/content/rules/', '/.aidd/content/templates/', '/.aidd/content/skills/', '/.aidd/content/workflows/', '/.aidd/content/knowledge/',
-          '/.aidd/sessions/', '/.aidd/evolution/', '/.aidd/drafts/',
-          '/.aidd/memory/', '/.aidd/config.json',
-        ] as const;
-        for (const prefix of prefixes) {
+        for (const prefix of WATCHER_PREFIXES) {
           if (normalized.includes(prefix)) {
             pendingRef.current.add(prefix);
             break;

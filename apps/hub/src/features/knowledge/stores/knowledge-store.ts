@@ -1,12 +1,12 @@
 import { createEntityStore, defaultTransform } from '../../../stores/create-entity-store';
 import { normalizePath } from '../../../lib/utils';
-import { contentDir } from '../../../lib/constants';
+import { CONTENT_PATHS, contentDir } from '../../../lib/constants';
 import { parseFrontmatter } from '../../../lib/markdown';
 import { readFile, listMarkdownEntities } from '../../../lib/tauri';
 import type { KnowledgeEntity } from '../lib/types';
 
 export const useKnowledgeStore = createEntityStore<KnowledgeEntity>({
-  basePath: 'content/knowledge',
+  basePath: CONTENT_PATHS.knowledge,
   recursive: true,
   transform: () => null, // Not used — customFetch overrides
   customFetch: async (projectRoot: string) => {

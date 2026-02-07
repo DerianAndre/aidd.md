@@ -15,6 +15,8 @@ export function AppHeader() {
   const { t } = useTranslation();
   const breadcrumbs = useNavigationStore((s) => s.breadcrumbs);
 
+  if (breadcrumbs.length === 0) return <></>;
+
   return (
     <header className="group/app-header flex items-center justify-between px-6">
       <Breadcrumb>
@@ -34,7 +36,7 @@ export function AppHeader() {
       <Link
         to={ROUTES.HELP}
         className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        aria-label={t('nav.help')}
+        aria-label={t("nav.help")}
       >
         <HelpCircle size={18} />
       </Link>

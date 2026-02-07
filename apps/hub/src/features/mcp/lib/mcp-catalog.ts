@@ -82,7 +82,7 @@ export const MCP_PACKAGES: McpPackageInfo[] = [
       { name: 'aidd_scaffold', description: 'Initialize AIDD framework in a project' },
     ],
     resources: [
-      { uri: 'aidd://agents', description: 'AGENTS.md — Single Source of Truth for agent roles' },
+      { uri: 'aidd://agents', description: 'Agent definitions — Single Source of Truth for agent roles' },
       { uri: 'aidd://knowledge/{name}', description: 'Technology Knowledge Base entries' },
       { uri: 'aidd://skills/{name}', description: 'Agent skill definitions (SKILL.md)' },
       { uri: 'aidd://specs/heuristics', description: 'AIDD operating heuristics (10 decision principles)' },

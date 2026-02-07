@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Check, X, Trash2, FolderOpen, RefreshCw } from 'lucide-react';
 import type { ProjectInfo } from '../../../lib/tauri';
+import { MARKER_KEYS } from '../../../lib/constants';
 
 interface ProjectCardProps {
   project: ProjectInfo;
@@ -13,18 +14,6 @@ interface ProjectCardProps {
   onRefresh: () => void;
   refreshing?: boolean;
 }
-
-const MARKER_LABELS: { key: keyof ProjectInfo['markers']; label: string }[] = [
-  { key: 'agents', label: 'Agents' },
-  { key: 'rules', label: 'Rules' },
-  { key: 'skills', label: 'Skills' },
-  { key: 'workflows', label: 'Workflows' },
-  { key: 'templates', label: 'Templates' },
-  { key: 'knowledge', label: 'Knowledge' },
-  { key: 'specs', label: 'Specs' },
-  { key: 'aidd_dir', label: '.aidd/' },
-  { key: 'memory', label: 'Memory' },
-];
 
 export function ProjectCard({
   project,
@@ -57,18 +46,21 @@ export function ProjectCard({
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-1">
-          {MARKER_LABELS.map(({ key, label }) => (
-            <Chip
-              key={key}
-              size="sm"
-              color={project.markers[key] ? 'success' : 'default'}
-            >
-              <span className="flex items-center gap-0.5">
-                {project.markers[key] ? <Check size={12} /> : <X size={12} />}
-                {label}
-              </span>
-            </Chip>
-          ))}
+          {MARKER_KEYS.map(({ key, label }) => {
+            const active = project.markers[key as keyof ProjectInfo['markers']];
+            return (
+              <Chip
+                key={key}
+                size="sm"
+                color={active ? 'success' : 'default'}
+              >
+                <span className="flex items-center gap-0.5">
+                  {active ? <Check size={12} /> : <X size={12} />}
+                  {label}
+                </span>
+              </Chip>
+            );
+          })}
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">

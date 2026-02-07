@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { BlockEditor } from '../../../components/editor';
 import { readFile, fileExists } from '../../../lib/tauri';
+import { contentDir } from '../../../lib/constants';
 import { useProjectStore } from '../../../stores/project-store';
 import { extractTitle, extractDescription } from '../../../lib/markdown';
 
@@ -26,7 +27,7 @@ export function WorkflowDetailPage() {
       const decodedName = decodeURIComponent(name);
       // All workflows are now at top-level
       const paths = [
-        `${activeProject.path}/content/workflows/${decodedName}.md`,
+        `${contentDir(activeProject.path, 'workflows')}/${decodedName}.md`,
       ];
 
       for (const path of paths) {

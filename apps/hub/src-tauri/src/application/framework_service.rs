@@ -4,6 +4,7 @@ use std::sync::Arc;
 use crate::domain::model::{FrameworkEntity, SyncInfo, FRAMEWORK_CATEGORIES};
 use crate::domain::ports::inbound::FrameworkPort;
 use crate::domain::ports::outbound::{FileSystemPort, ProjectRepository};
+use crate::infrastructure::integrations::adapter_trait::resolve_content_dir;
 use crate::infrastructure::sync::GitHubAdapter;
 
 // FileSystemPort is used both as Arc<dyn ...> in the struct and as &dyn ... in free functions.
@@ -161,9 +162,9 @@ impl FrameworkPort for FrameworkService {
             &mut seen_names,
         );
 
-        // 2. Scan project directory ({project_root}/.aidd/content/{category}/)
+        // 2. Scan project directory (config-aware — respects .aidd/config.json path overrides)
         if let Some(proj) = project_path {
-            let project_dir = Path::new(proj).join(".aidd").join("content").join(category);
+            let project_dir = resolve_content_dir(Path::new(proj), category);
             scan_directory(
                 &project_dir,
                 category,

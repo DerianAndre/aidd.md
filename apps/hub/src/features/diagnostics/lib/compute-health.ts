@@ -52,7 +52,7 @@ export function computeHealthScore(
     : 0;
   const errorRecurrence = Math.max(0, Math.round(100 - (avgOccurrences - 1) * 20));
   if (errorRecurrence < 60) {
-    recommendations.push('Several mistakes are recurring. Address root causes in .aidd/memory/mistakes.json.');
+    recommendations.push('Several mistakes are recurring. Address root causes in the memory/mistakes.json file.');
   }
 
   // 4. Model consistency — 1 - std-dev of compliance across models (normalized)

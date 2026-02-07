@@ -5,19 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { FolderKanban, ArrowRight, RefreshCw } from 'lucide-react';
 import { useProjectStore } from '../../../stores/project-store';
-import { ROUTES } from '../../../lib/constants';
-
-const MARKERS: { key: keyof NonNullable<ReturnType<typeof useProjectStore.getState>['activeProject']>['markers']; label: string }[] = [
-  { key: 'agents', label: 'Agents' },
-  { key: 'rules', label: 'Rules' },
-  { key: 'skills', label: 'Skills' },
-  { key: 'workflows', label: 'Workflows' },
-  { key: 'knowledge', label: 'Knowledge' },
-  { key: 'templates', label: 'Templates' },
-  { key: 'specs', label: 'Spec' },
-  { key: 'aidd_dir', label: '.aidd' },
-  { key: 'memory', label: 'Memory' },
-];
+import { ROUTES, MARKER_KEYS } from '../../../lib/constants';
 
 export function ProjectContextBanner() {
   const { t } = useTranslation();
@@ -65,16 +53,19 @@ export function ProjectContextBanner() {
       </div>
       <div className="flex items-center gap-2">
         <div className="flex flex-wrap gap-1.5">
-          {MARKERS.map((m) => (
-            <Chip
-              key={m.key}
-              size="sm"
-              color={activeProject.markers[m.key] ? 'success' : 'default'}
-              className={activeProject.markers[m.key] ? '' : 'opacity-40'}
-            >
-              {m.label}
-            </Chip>
-          ))}
+          {MARKER_KEYS.map((m) => {
+            const active = activeProject.markers[m.key as keyof typeof activeProject.markers];
+            return (
+              <Chip
+                key={m.key}
+                size="sm"
+                color={active ? 'success' : 'default'}
+                className={active ? '' : 'opacity-40'}
+              >
+                {m.label}
+              </Chip>
+            );
+          })}
         </div>
         <Button
           size="sm"

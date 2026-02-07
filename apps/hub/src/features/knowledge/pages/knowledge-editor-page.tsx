@@ -6,6 +6,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { BlockEditor, FrontmatterForm, type FieldDefinition } from '../../../components/editor';
 import { readFile, writeFile } from '../../../lib/tauri';
+import { contentDir } from '../../../lib/constants';
 import { useProjectStore } from '../../../stores/project-store';
 import { useKnowledgeStore } from '../stores/knowledge-store';
 import { parseFrontmatter, serializeFrontmatter } from '../../../lib/markdown';
@@ -45,7 +46,7 @@ export function KnowledgeEditorPage() {
     if (!activeProject?.path || !pathParam) return;
     void (async () => {
       setLoading(true);
-      const path = `${activeProject.path}/content/knowledge/${pathParam}.md`;
+      const path = `${contentDir(activeProject.path, 'knowledge')}/${pathParam}.md`;
       setFilePath(path);
       try {
         const raw = await readFile(path);
