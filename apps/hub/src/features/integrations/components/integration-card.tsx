@@ -27,6 +27,11 @@ const TOOL_META = {
     descriptionKey: 'page.integrations.tool.geminiDesc',
     hasMcp: false,
   },
+  windsurf: {
+    nameKey: 'page.integrations.tool.windsurf',
+    descriptionKey: 'page.integrations.tool.windsurfDesc',
+    hasMcp: true,
+  },
 } as const satisfies Record<IntegrationTool, { nameKey: string; descriptionKey: string; hasMcp: boolean }>;
 
 interface IntegrationCardProps {

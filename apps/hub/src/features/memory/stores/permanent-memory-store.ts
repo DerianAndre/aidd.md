@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { readJsonFile, writeJsonFile, fileExists } from '../../../lib/tauri';
-import { normalizePath } from '../../../lib/utils';
+import { statePath, STATE_PATHS, MEMORY_FILES } from '../../../lib/constants';
 import type { DecisionEntry, MistakeEntry, ConventionEntry } from '../../../lib/types';
 
 interface PermanentMemoryStoreState {
@@ -23,7 +23,7 @@ interface PermanentMemoryStoreState {
 }
 
 function memoryDir(root: string) {
-  return `${normalizePath(root)}/.aidd/memory`;
+  return statePath(root, STATE_PATHS.MEMORY);
 }
 
 function generateId() {
@@ -54,9 +54,9 @@ export const usePermanentMemoryStore = create<PermanentMemoryStoreState>((set, g
     try {
       const dir = memoryDir(projectRoot);
       const [decisions, mistakes, conventions] = await Promise.all([
-        readJsonArray<DecisionEntry>(`${dir}/decisions.json`),
-        readJsonArray<MistakeEntry>(`${dir}/mistakes.json`),
-        readJsonArray<ConventionEntry>(`${dir}/conventions.json`),
+        readJsonArray<DecisionEntry>(`${dir}/${MEMORY_FILES.DECISIONS}`),
+        readJsonArray<MistakeEntry>(`${dir}/${MEMORY_FILES.MISTAKES}`),
+        readJsonArray<ConventionEntry>(`${dir}/${MEMORY_FILES.CONVENTIONS}`),
       ]);
       set({ decisions, mistakes, conventions, loading: false, stale: false });
     } catch {
@@ -70,7 +70,7 @@ export const usePermanentMemoryStore = create<PermanentMemoryStoreState>((set, g
 
   addDecision: async (projectRoot, entry) => {
     const dir = memoryDir(projectRoot);
-    const path = `${dir}/decisions.json`;
+    const path = `${dir}/${MEMORY_FILES.DECISIONS}`;
     set({ writing: true });
     try {
       const current = await readJsonArray<DecisionEntry>(path);
@@ -86,7 +86,7 @@ export const usePermanentMemoryStore = create<PermanentMemoryStoreState>((set, g
 
   removeDecision: async (projectRoot, id) => {
     const dir = memoryDir(projectRoot);
-    const path = `${dir}/decisions.json`;
+    const path = `${dir}/${MEMORY_FILES.DECISIONS}`;
     set({ writing: true });
     try {
       const current = get().decisions.filter((d) => d.id !== id);
@@ -99,7 +99,7 @@ export const usePermanentMemoryStore = create<PermanentMemoryStoreState>((set, g
 
   addMistake: async (projectRoot, entry) => {
     const dir = memoryDir(projectRoot);
-    const path = `${dir}/mistakes.json`;
+    const path = `${dir}/${MEMORY_FILES.MISTAKES}`;
     set({ writing: true });
     try {
       const current = await readJsonArray<MistakeEntry>(path);
@@ -115,7 +115,7 @@ export const usePermanentMemoryStore = create<PermanentMemoryStoreState>((set, g
 
   removeMistake: async (projectRoot, id) => {
     const dir = memoryDir(projectRoot);
-    const path = `${dir}/mistakes.json`;
+    const path = `${dir}/${MEMORY_FILES.MISTAKES}`;
     set({ writing: true });
     try {
       const current = get().mistakes.filter((m) => m.id !== id);
@@ -128,7 +128,7 @@ export const usePermanentMemoryStore = create<PermanentMemoryStoreState>((set, g
 
   addConvention: async (projectRoot, entry) => {
     const dir = memoryDir(projectRoot);
-    const path = `${dir}/conventions.json`;
+    const path = `${dir}/${MEMORY_FILES.CONVENTIONS}`;
     set({ writing: true });
     try {
       const current = await readJsonArray<ConventionEntry>(path);
@@ -144,7 +144,7 @@ export const usePermanentMemoryStore = create<PermanentMemoryStoreState>((set, g
 
   removeConvention: async (projectRoot, id) => {
     const dir = memoryDir(projectRoot);
-    const path = `${dir}/conventions.json`;
+    const path = `${dir}/${MEMORY_FILES.CONVENTIONS}`;
     set({ writing: true });
     try {
       const current = get().conventions.filter((c) => c.id !== id);

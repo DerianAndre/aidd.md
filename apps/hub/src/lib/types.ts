@@ -21,8 +21,8 @@ export type {
   ToolUsageEntry,
 } from '@aidd.md/mcp-shared';
 
-// Inlined to avoid pulling Node.js `fs` from @aidd.md/mcp-shared into Vite browser bundle.
-// Must stay in sync with packages/shared/src/types.ts → DEFAULT_CONFIG.
+// SYNC: Inlined to avoid pulling Node.js `fs` from @aidd.md/mcp-shared into Vite browser bundle.
+// SYNC: Must stay in sync with packages/shared/src/types.ts → DEFAULT_CONFIG.
 export const DEFAULT_CONFIG: _AiddConfig = {
   evolution: {
     enabled: true,
@@ -53,12 +53,8 @@ export const DEFAULT_CONFIG: _AiddConfig = {
 // Hub-specific types
 export type { ProjectInfo, ProjectEntry, MarkdownEntity, FileEntry, FileChangeEvent } from './tauri';
 
-export type EntityCategory =
-  | 'rules'
-  | 'skills'
-  | 'workflows'
-  | 'templates'
-  | 'knowledge';
+// EntityCategory is now exported from '@/lib/constants' (SSOT).
+export type { EntityCategory } from './constants';
 
 export interface NavItem {
   label: string;

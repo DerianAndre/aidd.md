@@ -1,6 +1,6 @@
 import { createEntityStore, defaultTransform } from '../../../stores/create-entity-store';
 import { listMarkdownEntities } from '../../../lib/tauri';
-import { normalizePath } from '../../../lib/utils';
+import { contentDir } from '../../../lib/constants';
 import type { WorkflowEntity } from '../lib/types';
 
 /** Workflows that coordinate multiple skills (formerly in orchestrators/) */
@@ -11,7 +11,7 @@ export const useWorkflowsStore = createEntityStore<WorkflowEntity>({
   recursive: true,
   transform: () => null, // Not used — customFetch overrides
   customFetch: async (projectRoot: string) => {
-    const basePath = `${normalizePath(projectRoot)}/content/workflows`;
+    const basePath = contentDir(projectRoot, 'workflows');
 
     // All workflows are now at top-level (orchestrators flattened)
     const entries = await listMarkdownEntities(basePath, false);

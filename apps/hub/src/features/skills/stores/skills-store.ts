@@ -1,5 +1,6 @@
 import { createEntityStore } from '../../../stores/create-entity-store';
 import { listDirectory, readFile } from '../../../lib/tauri';
+import { contentDir } from '../../../lib/constants';
 import { normalizePath } from '../../../lib/utils';
 import { parseSkillContent } from '../lib/parse-skill';
 import type { SkillEntity } from '../lib/types';
@@ -9,7 +10,7 @@ export const useSkillsStore = createEntityStore<SkillEntity>({
   recursive: false,
   transform: () => null, // Not used — customFetch overrides
   customFetch: async (projectRoot: string) => {
-    const basePath = `${normalizePath(projectRoot)}/content/skills`;
+    const basePath = contentDir(projectRoot, 'skills');
     const entries = await listDirectory(basePath);
     const skills: SkillEntity[] = [];
 

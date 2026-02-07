@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { listDirectory, readJsonFile } from '../../../lib/tauri';
-import { normalizePath } from '../../../lib/utils';
+import { statePath, STATE_PATHS, MEMORY_FILES } from '../../../lib/constants';
 import type { SessionState, MistakeEntry, HealthScore } from '../../../lib/types';
 import { computeHealthScore } from '../lib/compute-health';
 
@@ -24,12 +24,10 @@ export const useDiagnosticsStore = create<DiagnosticsStoreState>((set, get) => (
     if (!get().stale) return;
     set({ loading: true });
     try {
-      const root = normalizePath(projectRoot);
-
       // Load completed sessions
       let sessions: SessionState[] = [];
       try {
-        const dir = `${root}/.aidd/sessions/completed`;
+        const dir = statePath(projectRoot, STATE_PATHS.SESSIONS_COMPLETED);
         const files = await listDirectory(dir, ['json']);
         const sessionFiles = files.filter((f) => !f.name.includes('-observations'));
         sessions = await Promise.all(
@@ -42,7 +40,8 @@ export const useDiagnosticsStore = create<DiagnosticsStoreState>((set, get) => (
       // Load mistakes
       let mistakes: MistakeEntry[] = [];
       try {
-        const raw = await readJsonFile(`${root}/.aidd/memory/mistakes.json`);
+        const mistakesPath = `${statePath(projectRoot, STATE_PATHS.MEMORY)}/${MEMORY_FILES.MISTAKES}`;
+        const raw = await readJsonFile(mistakesPath);
         if (Array.isArray(raw)) mistakes = raw as MistakeEntry[];
       } catch {
         // No mistakes file

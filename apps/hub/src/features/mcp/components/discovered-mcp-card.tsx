@@ -1,5 +1,5 @@
 import { Chip } from '@/components/ui/chip';
-import { Bot, MousePointer2, Code, Sparkles } from 'lucide-react';
+import { Bot, MousePointer2, Code, Sparkles, Wind } from 'lucide-react';
 import type { DiscoveredMcp, McpToolSource, McpServer } from '../../../lib/tauri';
 import { truncate } from '../../../lib/utils';
 
@@ -8,6 +8,7 @@ const TOOL_CONFIG: Record<McpToolSource, { label: string; icon: typeof Bot }> = 
   cursor: { label: 'Cursor', icon: MousePointer2 },
   vscode: { label: 'VS Code', icon: Code },
   gemini: { label: 'Gemini', icon: Sparkles },
+  windsurf: { label: 'Windsurf', icon: Wind },
 };
 
 const STATUS_COLOR = {

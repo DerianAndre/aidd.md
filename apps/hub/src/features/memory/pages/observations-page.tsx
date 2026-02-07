@@ -9,7 +9,7 @@ import { ObservationCard } from '../components/observation-card';
 import { useSessionsStore } from '../stores/sessions-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { listDirectory, readJsonFile } from '../../../lib/tauri';
-import { normalizePath } from '../../../lib/utils';
+import { statePath, STATE_PATHS } from '../../../lib/constants';
 import type { SessionObservation, ObservationType } from '../../../lib/types';
 
 const ALL_TYPES: ObservationType[] = [
@@ -32,12 +32,12 @@ export function ObservationsPage() {
       setLoading(true);
       if (stale) await fetchAll(activeProject.path);
 
-      const base = `${normalizePath(activeProject.path)}/.aidd/sessions`;
       const allObs: SessionObservation[] = [];
 
       for (const status of ['active', 'completed'] as const) {
         try {
-          const files = await listDirectory(`${base}/${status}`, ['json']);
+          const dir = statePath(activeProject.path, `${STATE_PATHS.SESSIONS}/${status}`);
+          const files = await listDirectory(dir, ['json']);
           const obsFiles = files.filter((f) => f.name.includes('-observations'));
           const results = await Promise.all(
             obsFiles.map((f) => readJsonFile(f.path) as Promise<SessionObservation[]>),

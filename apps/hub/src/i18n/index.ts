@@ -1,14 +1,14 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import en from './locales/en.json';
-import es from './locales/es.json';
+import enUS from './locales/enUS';
+import esMX from './locales/esMX';
 
 const STORAGE_KEY = 'aidd-hub-locale';
 
 i18n.use(initReactI18next).init({
   resources: {
-    en: { translation: en },
-    es: { translation: es },
+    en: { translation: enUS },
+    es: { translation: esMX },
   },
   lng: localStorage.getItem(STORAGE_KEY) || 'en',
   fallbackLng: 'en',

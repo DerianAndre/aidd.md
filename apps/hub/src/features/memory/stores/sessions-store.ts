@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { listDirectory, readJsonFile } from '../../../lib/tauri';
-import { normalizePath } from '../../../lib/utils';
+import { statePath, STATE_PATHS } from '../../../lib/constants';
 import type { SessionState, SessionObservation } from '../../../lib/types';
 
 interface SessionsStoreState {
@@ -39,10 +39,9 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
     if (!get().stale && (get().activeSessions.length + get().completedSessions.length > 0)) return;
     set({ loading: true });
     try {
-      const base = `${normalizePath(projectRoot)}/.aidd/sessions`;
       const [active, completed] = await Promise.all([
-        loadSessions(`${base}/active`),
-        loadSessions(`${base}/completed`),
+        loadSessions(statePath(projectRoot, STATE_PATHS.SESSIONS_ACTIVE)),
+        loadSessions(statePath(projectRoot, STATE_PATHS.SESSIONS_COMPLETED)),
       ]);
       set({ activeSessions: active, completedSessions: completed, loading: false, stale: false });
     } catch {
@@ -52,8 +51,8 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
 
   fetchObservations: async (projectRoot, sessionId, status) => {
     try {
-      const base = `${normalizePath(projectRoot)}/.aidd/sessions/${status}`;
-      const data = await readJsonFile(`${base}/${sessionId}-observations.json`);
+      const dir = statePath(projectRoot, `${STATE_PATHS.SESSIONS}/${status}`);
+      const data = await readJsonFile(`${dir}/${sessionId}-observations.json`);
       return (data as SessionObservation[]) ?? [];
     } catch {
       return [];

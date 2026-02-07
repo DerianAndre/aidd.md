@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { readJsonFile, writeJsonFile, fileExists } from '../../../lib/tauri';
-import { normalizePath } from '../../../lib/utils';
+import { statePath, STATE_PATHS } from '../../../lib/constants';
 import type { AiddConfig } from '../../../lib/types';
 import { DEFAULT_CONFIG } from '../../../lib/types';
 
@@ -37,7 +37,7 @@ export const useConfigStore = create<ConfigStoreState>((set, get) => ({
     if (!get().stale || get().saving) return;
     set({ loading: true });
     try {
-      const path = `${normalizePath(projectRoot)}/.aidd/config.json`;
+      const path = statePath(projectRoot, STATE_PATHS.CONFIG);
       if (await fileExists(path)) {
         const raw = await readJsonFile(path);
         const config = mergeConfig(raw as Record<string, unknown>);
@@ -53,7 +53,7 @@ export const useConfigStore = create<ConfigStoreState>((set, get) => ({
   save: async (projectRoot, config) => {
     set({ saving: true });
     try {
-      const path = `${normalizePath(projectRoot)}/.aidd/config.json`;
+      const path = statePath(projectRoot, STATE_PATHS.CONFIG);
       await writeJsonFile(path, config);
       set({ config, saving: false });
     } catch {

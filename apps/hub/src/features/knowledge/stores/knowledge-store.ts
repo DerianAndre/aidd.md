@@ -1,5 +1,6 @@
 import { createEntityStore, defaultTransform } from '../../../stores/create-entity-store';
 import { normalizePath } from '../../../lib/utils';
+import { contentDir } from '../../../lib/constants';
 import { parseFrontmatter } from '../../../lib/markdown';
 import { readFile, listMarkdownEntities } from '../../../lib/tauri';
 import type { KnowledgeEntity } from '../lib/types';
@@ -9,7 +10,7 @@ export const useKnowledgeStore = createEntityStore<KnowledgeEntity>({
   recursive: true,
   transform: () => null, // Not used — customFetch overrides
   customFetch: async (projectRoot: string) => {
-    const basePath = `${normalizePath(projectRoot)}/content/knowledge`;
+    const basePath = contentDir(projectRoot, 'knowledge');
     const raws = await listMarkdownEntities(basePath, true);
     const entities: KnowledgeEntity[] = [];
 

@@ -15,6 +15,7 @@ import {
   MousePointer2,
   Code,
   Sparkles,
+  Wind,
   StopCircle,
 } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
@@ -35,9 +36,10 @@ const TOOL_META: Record<McpToolSource, { label: string; icon: typeof Bot }> = {
   cursor: { label: 'Cursor', icon: MousePointer2 },
   vscode: { label: 'VS Code', icon: Code },
   gemini: { label: 'Gemini', icon: Sparkles },
+  windsurf: { label: 'Windsurf', icon: Wind },
 };
 
-const TOOL_ORDER: McpToolSource[] = ['claude_code', 'cursor', 'vscode', 'gemini'];
+const TOOL_ORDER: McpToolSource[] = ['claude_code', 'cursor', 'vscode', 'gemini', 'windsurf'];
 
 /** Maps package dir to the server id used by the Rust backend. */
 const DIR_TO_SERVER_ID: Record<string, string> = {

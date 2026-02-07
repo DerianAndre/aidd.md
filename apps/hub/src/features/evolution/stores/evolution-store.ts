@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { readJsonFile } from '../../../lib/tauri';
-import { normalizePath } from '../../../lib/utils';
+import { statePath, STATE_PATHS } from '../../../lib/constants';
 import type { EvolutionCandidate, EvolutionLogEntry } from '../../../lib/types';
 
 interface EvolutionStoreState {
@@ -23,7 +23,7 @@ export const useEvolutionStore = create<EvolutionStoreState>((set, get) => ({
     if (!get().stale) return;
     set({ loading: true });
     try {
-      const base = `${normalizePath(projectRoot)}/.aidd/evolution`;
+      const base = statePath(projectRoot, STATE_PATHS.EVOLUTION);
 
       let candidates: EvolutionCandidate[] = [];
       let logEntries: EvolutionLogEntry[] = [];

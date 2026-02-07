@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { listDirectory, readJsonFile } from '../../../lib/tauri';
-import { normalizePath } from '../../../lib/utils';
+import { statePath, STATE_PATHS } from '../../../lib/constants';
 import type { SessionState, ModelMetrics } from '../../../lib/types';
 import {
   computeModelMetrics,
@@ -40,7 +40,7 @@ export const useAnalyticsStore = create<AnalyticsStoreState>((set, get) => ({
     if (!get().stale) return;
     set({ loading: true });
     try {
-      const dir = `${normalizePath(projectRoot)}/.aidd/sessions/completed`;
+      const dir = statePath(projectRoot, STATE_PATHS.SESSIONS_COMPLETED);
       const files = await listDirectory(dir, ['json']);
       const sessionFiles = files.filter((f) => !f.name.includes('-observations'));
       const sessions = await Promise.all(

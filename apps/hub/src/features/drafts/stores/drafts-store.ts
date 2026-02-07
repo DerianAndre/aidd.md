@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { readJsonFile, readFile } from '../../../lib/tauri';
-import { normalizePath } from '../../../lib/utils';
+import { statePath, STATE_PATHS } from '../../../lib/constants';
 import type { DraftEntry } from '../../../lib/types';
 
 interface DraftsStoreState {
@@ -27,7 +27,7 @@ export const useDraftsStore = create<DraftsStoreState>((set, get) => ({
     if (!get().stale) return;
     set({ loading: true });
     try {
-      const base = `${normalizePath(projectRoot)}/.aidd/drafts`;
+      const base = statePath(projectRoot, STATE_PATHS.DRAFTS);
       const manifest = (await readJsonFile(`${base}/manifest.json`)) as {
         drafts?: DraftEntry[];
       };
@@ -43,7 +43,7 @@ export const useDraftsStore = create<DraftsStoreState>((set, get) => ({
   selectDraft: async (projectRoot, draft) => {
     set({ selectedDraftId: draft.id, draftContent: null });
     try {
-      const base = `${normalizePath(projectRoot)}/.aidd/drafts`;
+      const base = statePath(projectRoot, STATE_PATHS.DRAFTS);
       const content = await readFile(`${base}/${draft.category}/${draft.id}.md`);
       set({ draftContent: content });
     } catch {
