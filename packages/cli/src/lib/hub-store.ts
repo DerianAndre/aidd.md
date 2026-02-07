@@ -54,7 +54,7 @@ export function ensureAiddHome(): void {
 /** Ensure ~/.aidd/framework/ and category subdirs exist. */
 export function ensureFrameworkDirs(): void {
   const fw = frameworkDir();
-  const categories = ['rules', 'skills', 'knowledge', 'workflows', 'templates', 'spec'];
+  const categories = ['content/rules', 'content/skills', 'content/knowledge', 'content/workflows', 'content/templates', 'content/specs'];
   for (const cat of categories) {
     const dir = join(fw, cat);
     if (!existsSync(dir)) {

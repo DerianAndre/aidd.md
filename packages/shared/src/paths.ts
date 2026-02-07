@@ -29,12 +29,13 @@ export function fromRoot(projectRoot: string, ...segments: string[]): string {
 /**
  * Detect where AIDD framework files live.
  * Some projects use root-level files, others use an `ai/` subfolder.
+ * Framework content lives under `content/` (rules, skills, workflows, etc.).
  */
 export function detectAiddRoot(projectRoot: string): string {
-  // Check ai/ subfolder first (e.g., ai/AGENTS.md, ai/rules/)
+  // Check ai/ subfolder first (e.g., ai/AGENTS.md, ai/content/rules/)
   const aiDir = resolve(projectRoot, 'ai');
   if (existsSync(resolve(aiDir, 'AGENTS.md'))) return aiDir;
-  if (existsSync(resolve(aiDir, 'rules'))) return aiDir;
+  if (existsSync(resolve(aiDir, 'content', 'rules'))) return aiDir;
 
   // Default: root level
   return projectRoot;
@@ -42,14 +43,15 @@ export function detectAiddRoot(projectRoot: string): string {
 
 /** Standard AIDD paths relative to an AIDD root. */
 export function aiddPaths(aiddRoot: string) {
+  const content = resolve(aiddRoot, 'content');
   return {
     agentsMd: resolve(aiddRoot, 'AGENTS.md'),
-    rules: resolve(aiddRoot, 'rules'),
-    skills: resolve(aiddRoot, 'skills'),
-    workflows: resolve(aiddRoot, 'workflows'),
-    spec: resolve(aiddRoot, 'spec'),
-    knowledge: resolve(aiddRoot, 'knowledge'),
-    templates: resolve(aiddRoot, 'templates'),
+    rules: resolve(content, 'rules'),
+    skills: resolve(content, 'skills'),
+    workflows: resolve(content, 'workflows'),
+    specs: resolve(content, 'specs'),
+    knowledge: resolve(content, 'knowledge'),
+    templates: resolve(content, 'templates'),
   } as const;
 }
 

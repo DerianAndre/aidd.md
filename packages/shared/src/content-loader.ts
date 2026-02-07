@@ -17,7 +17,7 @@ export interface ContentIndex {
   rules: ContentEntry[];
   skills: ContentEntry[];
   workflows: ContentEntry[];
-  spec: ContentEntry[];
+  specs: ContentEntry[];
   knowledge: ContentEntry[];
   templates: ContentEntry[];
 }
@@ -66,7 +66,7 @@ export class ContentLoader {
       rules: this.scanDir(paths.rules),
       skills: this.scanDir(paths.skills),
       workflows: this.scanDir(paths.workflows),
-      spec: this.scanDir(paths.spec),
+      specs: this.scanDir(paths.specs),
       knowledge: this.scanDir(paths.knowledge),
       templates: this.scanDir(paths.templates),
     };
@@ -119,7 +119,7 @@ export class ContentLoader {
       rules: mergeEntries(bundled.rules, project.rules),
       skills: mergeEntries(bundled.skills, project.skills),
       workflows: mergeEntries(bundled.workflows, project.workflows),
-      spec: bundled.spec, // Specs always come from bundled
+      specs: bundled.specs, // Specs always come from bundled
       knowledge: mergeEntries(bundled.knowledge, project.knowledge),
       templates: mergeEntries(bundled.templates, project.templates),
     };
@@ -131,7 +131,7 @@ function emptyIndex(): ContentIndex {
     rules: [],
     skills: [],
     workflows: [],
-    spec: [],
+    specs: [],
     knowledge: [],
     templates: [],
   };

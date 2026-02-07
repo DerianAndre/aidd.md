@@ -72,7 +72,7 @@ export interface ProjectInfo {
     rules: boolean;
     skills: boolean;
     workflows: boolean;
-    spec: boolean;
+    specs: boolean;
     knowledge: boolean;
     templates: boolean;
     aiddDir: boolean;

@@ -100,7 +100,7 @@ function hasAiddMarkers(dir: string): boolean {
   return (
     existsSync(resolve(dir, 'AGENTS.md')) ||
     existsSync(resolve(dir, 'ai', 'AGENTS.md')) ||
-    existsSync(resolve(dir, 'rules')) ||
-    existsSync(resolve(dir, 'ai', 'rules'))
+    existsSync(resolve(dir, 'content', 'rules')) ||
+    existsSync(resolve(dir, 'ai', 'content', 'rules'))
   );
 }

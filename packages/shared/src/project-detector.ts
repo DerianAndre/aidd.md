@@ -11,12 +11,12 @@ export function detectProject(projectPath?: string): ProjectInfo {
 
   const markers = {
     agentsMd: existsSync(resolve(aiddRoot, 'AGENTS.md')),
-    rules: existsSync(resolve(aiddRoot, 'rules')),
-    skills: existsSync(resolve(aiddRoot, 'skills')),
-    workflows: existsSync(resolve(aiddRoot, 'workflows')),
-    spec: existsSync(resolve(aiddRoot, 'spec')),
-    knowledge: existsSync(resolve(aiddRoot, 'knowledge')),
-    templates: existsSync(resolve(aiddRoot, 'templates')),
+    rules: existsSync(resolve(aiddRoot, 'content', 'rules')),
+    skills: existsSync(resolve(aiddRoot, 'content', 'skills')),
+    workflows: existsSync(resolve(aiddRoot, 'content', 'workflows')),
+    specs: existsSync(resolve(aiddRoot, 'content', 'specs')),
+    knowledge: existsSync(resolve(aiddRoot, 'content', 'knowledge')),
+    templates: existsSync(resolve(aiddRoot, 'content', 'templates')),
     aiddDir: existsSync(resolve(root, '.aidd')),
     memory: existsSync(resolve(aiddRoot, 'memory')) || existsSync(resolve(root, 'ai', 'memory')),
   };

@@ -25,7 +25,7 @@ export function runInit(): void {
   // 4. Check if framework has content
   const fwDir = frameworkDir();
   const hasAgents = existsSync(`${fwDir}/AGENTS.md`);
-  const hasRules = existsSync(`${fwDir}/rules`) && (existsSync(`${fwDir}/rules/global.md`) || existsSync(`${fwDir}/rules/orchestrator.md`));
+  const hasRules = existsSync(`${fwDir}/content/rules`) && (existsSync(`${fwDir}/content/rules/global.md`) || existsSync(`${fwDir}/content/rules/orchestrator.md`));
 
   console.log('');
   if (hasAgents && hasRules) {

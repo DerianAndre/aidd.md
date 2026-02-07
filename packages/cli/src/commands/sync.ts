@@ -113,7 +113,7 @@ async function extractFramework(zipBuffer: Buffer): Promise<void> {
   const fwDir = frameworkDir();
   ensureFrameworkDirs();
 
-  const categories = ['rules/', 'skills/', 'knowledge/', 'workflows/', 'templates/', 'specs/'];
+  const categories = ['content/rules/', 'content/skills/', 'content/knowledge/', 'content/workflows/', 'content/templates/', 'content/specs/'];
   const topFiles = ['AGENTS.md', 'CONTRIBUTING.md', 'README.md'];
 
   const entries = parseZipEntries(zipBuffer);
