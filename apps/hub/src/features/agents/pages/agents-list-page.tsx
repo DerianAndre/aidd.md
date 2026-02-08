@@ -9,12 +9,14 @@ import { EntityList } from '../../../components/entity';
 import { AgentCard } from '../components/agent-card';
 import { readFile } from '../../../lib/tauri';
 import { useProjectStore } from '../../../stores/project-store';
-import { parseAgents, agentSlug, type AgentEntry } from '../lib/parse-agents';
+import { useFrameworkStore } from '../../framework/stores/framework-store';
+import { parseAgentsFromFrameworkEntities, parseAgentsFromRouting, agentSlug, type AgentEntry } from '../lib/parse-agents';
 
 export function AgentsListPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
+  const frameworkStore = useFrameworkStore();
   const [agents, setAgents] = useState<AgentEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,15 +25,35 @@ export function AgentsListPage() {
     void (async () => {
       setLoading(true);
       try {
-        const content = await readFile(`${activeProject.path}/AGENTS.md`);
-        setAgents(parseAgents(content));
+        // Try to fetch from framework service
+        await frameworkStore.fetchCategory('agents', activeProject.path);
+        const entities = frameworkStore.entities.agents;
+
+        if (entities.length > 0) {
+          setAgents(parseAgentsFromFrameworkEntities(entities));
+        } else {
+          // Fallback: try reading routing.md or AGENTS.md directly
+          try {
+            const routingPath = `${activeProject.path}/.aidd/content/agents/routing.md`;
+            const content = await readFile(routingPath);
+            setAgents(parseAgentsFromRouting(content));
+          } catch {
+            // Final fallback: try old AGENTS.md location
+            try {
+              const content = await readFile(`${activeProject.path}/AGENTS.md`);
+              setAgents(parseAgentsFromRouting(content));
+            } catch {
+              setAgents([]);
+            }
+          }
+        }
       } catch {
         setAgents([]);
       } finally {
         setLoading(false);
       }
     })();
-  }, [activeProject?.path]);
+  }, [activeProject?.path, frameworkStore]);
 
   const individualAgents = agents.filter((a) => a.type === 'agent');
   const orchestrators = agents.filter((a) => a.type === 'orchestrator');

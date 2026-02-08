@@ -2,7 +2,6 @@ import { Card, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import type { ArtifactEntry } from '@/lib/types';
 import { TYPE_COLORS } from '../lib/parse-artifact';
-import { formatRelativeTime } from '@/lib/utils';
 
 interface ArtifactCardProps {
   artifact: ArtifactEntry;
@@ -40,10 +39,10 @@ export function ArtifactCard({ artifact, onClick }: ArtifactCardProps) {
         )}
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <span>{artifact.date}</span>
-          {artifact.lastModified && (
+          {artifact.createdAt && (
             <>
               <span>&middot;</span>
-              <span>{formatRelativeTime(artifact.lastModified)}</span>
+              <span>{artifact.feature}</span>
             </>
           )}
         </div>

@@ -8,11 +8,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { ArtifactCard } from '../components/artifact-card';
-import { useProjectStore } from '../../../stores/project-store';
-import { listMarkdownEntities } from '../../../lib/tauri';
-import { ARTIFACT_DIRS, ROUTES } from '../../../lib/constants';
-import { normalizePath } from '../../../lib/utils';
-import { toArtifactEntry, groupByFeature, TYPE_COLORS } from '../lib/parse-artifact';
+import { listArtifacts } from '../../../lib/tauri';
+import { ROUTES } from '../../../lib/constants';
+import { groupByFeature, TYPE_COLORS } from '../lib/parse-artifact';
 import { ARTIFACT_TYPES } from '../../../lib/types';
 import type { ArtifactEntry, ArtifactType, ArtifactStatus } from '../../../lib/types';
 
@@ -21,7 +19,6 @@ const STALE_TTL = 30_000;
 export function ArtifactsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const activeProject = useProjectStore((s) => s.activeProject);
   const [artifacts, setArtifacts] = useState<ArtifactEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -30,30 +27,22 @@ export function ArtifactsPage() {
   const [lastFetchedAt, setLastFetchedAt] = useState(0);
 
   const fetchArtifacts = useCallback(async () => {
-    if (!activeProject?.path) return;
     const isExpired = Date.now() - lastFetchedAt > STALE_TTL;
     if (!isExpired && artifacts.length > 0) return;
 
     setLoading(true);
     try {
-      const root = normalizePath(activeProject.path);
-      const [activeEntities, doneEntities] = await Promise.all([
-        listMarkdownEntities(`${root}/${ARTIFACT_DIRS.ACTIVE}`).catch(() => []),
-        listMarkdownEntities(`${root}/${ARTIFACT_DIRS.DONE}`).catch(() => []),
-      ]);
-
-      const all = [...activeEntities, ...doneEntities]
-        .map(toArtifactEntry)
-        .filter((e): e is ArtifactEntry => e !== null)
-        .sort((a, b) => b.date.localeCompare(a.date));
-
-      setArtifacts(all);
+      const rows = await listArtifacts();
+      const entries = (rows as ArtifactEntry[]).sort((a, b) =>
+        b.date.localeCompare(a.date),
+      );
+      setArtifacts(entries);
       setLastFetchedAt(Date.now());
     } catch {
       setArtifacts([]);
     }
     setLoading(false);
-  }, [activeProject?.path, lastFetchedAt, artifacts.length]);
+  }, [lastFetchedAt, artifacts.length]);
 
   useEffect(() => {
     void fetchArtifacts();
@@ -107,10 +96,7 @@ export function ArtifactsPage() {
   const grouped = useMemo(() => groupByFeature(filtered), [filtered]);
 
   const navigateToDetail = (artifact: ArtifactEntry) => {
-    // Build relative path from project root
-    const root = normalizePath(activeProject?.path ?? '');
-    const rel = normalizePath(artifact.path).replace(root + '/', '');
-    navigate(`${ROUTES.ARTIFACTS}/${encodeURIComponent(rel)}`);
+    navigate(`${ROUTES.ARTIFACTS}/${artifact.id}`);
   };
 
   return (
@@ -190,7 +176,7 @@ export function ArtifactsPage() {
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {items.map((artifact) => (
                       <ArtifactCard
-                        key={artifact.path}
+                        key={artifact.id}
                         artifact={artifact}
                         onClick={() => navigateToDetail(artifact)}
                       />

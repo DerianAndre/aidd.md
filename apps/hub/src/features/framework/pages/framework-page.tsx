@@ -12,6 +12,7 @@ import {
   GitBranch,
   FileText,
   FileCode,
+  Users,
   RefreshCw,
   Download,
   Check,
@@ -27,6 +28,7 @@ import { KnowledgeTreeView } from "../components/knowledge-tree-view";
 import type { FrameworkCategory } from "../../../lib/tauri";
 
 const TAB_ICONS: Record<FrameworkCategory, LucideIcon> = {
+  agents: Users,
   rules: ShieldCheck,
   skills: Zap,
   knowledge: BookOpen,

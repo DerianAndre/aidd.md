@@ -12,8 +12,7 @@ import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { useOverridesStore } from '../stores/overrides-store';
 import { useProjectStore } from '../../../stores/project-store';
-import { readFile } from '../../../lib/tauri';
-import { parseAgents, type AgentEntry } from '../../agents/lib/parse-agents';
+import { parseAgentsFromFrameworkEntities, type AgentEntry } from '../../agents/lib/parse-agents';
 import { useFrameworkStore, CATEGORIES } from '../../framework/stores/framework-store';
 
 export function OverridesPage() {
@@ -33,9 +32,11 @@ export function OverridesPage() {
   const removeRule = useOverridesStore((s) => s.removeRule);
   const fetchEffective = useOverridesStore((s) => s.fetchEffective);
 
-  // Local state for agents from AGENTS.md
+  // Local state for agents
   const [agents, setAgents] = useState<AgentEntry[]>([]);
-  const [agentsLoading, setAgentsLoading] = useState(false);
+  const agentsLoading = useFrameworkStore((s) => s.loading.agents);
+  const agentEntities = useFrameworkStore((s) => s.entities.agents);
+  const fetchAgents = useFrameworkStore((s) => s.fetchCategory);
 
   // New rule form
   const [newRuleName, setNewRuleName] = useState('');
@@ -53,31 +54,19 @@ export function OverridesPage() {
     }
   }, [activeProject?.path, load]);
 
-  // Load agents from global AGENTS.md
+  // Load agents from framework service
   useEffect(() => {
     if (!frameworkPath) return;
     void (async () => {
-      setAgentsLoading(true);
       try {
-        const content = await readFile(`${frameworkPath}/AGENTS.md`);
-        setAgents(parseAgents(content));
+        // Fetch from framework service (global + project)
+        await fetchAgents('agents', activeProject?.path);
+        setAgents(parseAgentsFromFrameworkEntities(agentEntities));
       } catch {
-        // Try project-level AGENTS.md as fallback
-        if (activeProject?.path) {
-          try {
-            const content = await readFile(`${activeProject.path}/AGENTS.md`);
-            setAgents(parseAgents(content));
-          } catch {
-            setAgents([]);
-          }
-        } else {
-          setAgents([]);
-        }
-      } finally {
-        setAgentsLoading(false);
+        setAgents([]);
       }
     })();
-  }, [frameworkPath, activeProject?.path]);
+  }, [frameworkPath, activeProject?.path, fetchAgents, agentEntities]);
 
   const isDisabled = useCallback(
     (agentName: string) =>

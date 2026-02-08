@@ -134,6 +134,7 @@ pub fn run() {
             presentation::commands::memory_commands::list_permanent_memory,
             presentation::commands::memory_commands::delete_permanent_memory,
             presentation::commands::memory_commands::list_drafts,
+            presentation::commands::memory_commands::list_artifacts,
         ])
         .run(tauri::generate_context!())
         .expect("error while running aidd.md Hub");

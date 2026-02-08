@@ -115,3 +115,19 @@ pub fn list_drafts(
     let drafts = ctx.memory_service.list_drafts()?;
     Ok(serde_json::Value::Array(drafts))
 }
+
+/// List artifacts with optional filters
+#[tauri::command]
+pub fn list_artifacts(
+    ctx: State<'_, AppContext>,
+    artifact_type: Option<String>,
+    status: Option<String>,
+    limit: Option<usize>,
+) -> Result<serde_json::Value, String> {
+    let artifacts = ctx.memory_service.list_artifacts(
+        artifact_type.as_deref(),
+        status.as_deref(),
+        limit,
+    )?;
+    Ok(serde_json::Value::Array(artifacts))
+}

@@ -95,7 +95,7 @@ export const setActiveProject = (path: string) =>
   invoke<void>('set_active_project', { path });
 
 // Framework management
-export type FrameworkCategory = 'rules' | 'skills' | 'knowledge' | 'workflows' | 'templates' | 'specs';
+export type FrameworkCategory = 'agents' | 'rules' | 'skills' | 'knowledge' | 'workflows' | 'templates' | 'specs';
 
 export interface FrameworkEntity {
   name: string;
@@ -298,6 +298,13 @@ export const listAllObservations = (limit?: number) =>
 
 export const listDrafts = () =>
   invoke<unknown[]>('list_drafts');
+
+export const listArtifacts = (artifactType?: string, status?: string, limit?: number) =>
+  invoke<unknown[]>('list_artifacts', {
+    artifactType: artifactType ?? null,
+    status: status ?? null,
+    limit: limit ?? null,
+  });
 
 // File watcher
 export interface FileChangeEvent {

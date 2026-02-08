@@ -210,6 +210,15 @@ impl MemoryPort for McpMemoryAdapter {
         Ok(vec![])
     }
 
+    fn list_artifacts(
+        &self,
+        _artifact_type: Option<&str>,
+        _status: Option<&str>,
+        _limit: Option<usize>,
+    ) -> Result<Vec<serde_json::Value>, String> {
+        Ok(vec![])
+    }
+
     fn get_pattern_stats(&self) -> Result<PatternStats, String> {
         let result = self
             .client

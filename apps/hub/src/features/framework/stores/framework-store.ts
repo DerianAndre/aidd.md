@@ -43,16 +43,16 @@ interface FrameworkStoreState {
   toggleAutoSync: (enabled: boolean) => Promise<void>;
 }
 
-const CATEGORIES: FrameworkCategory[] = ['rules', 'skills', 'knowledge', 'workflows', 'templates', 'specs'];
+const CATEGORIES: FrameworkCategory[] = ['agents', 'rules', 'skills', 'knowledge', 'workflows', 'templates', 'specs'];
 
 const emptyEntities = (): Record<FrameworkCategory, FrameworkEntity[]> =>
-  ({ rules: [], skills: [], knowledge: [], workflows: [], templates: [], specs: [] });
+  ({ agents: [], rules: [], skills: [], knowledge: [], workflows: [], templates: [], specs: [] });
 
 const emptyFlags = (): Record<FrameworkCategory, boolean> =>
-  ({ rules: false, skills: false, knowledge: false, workflows: false, templates: false, specs: false });
+  ({ agents: false, rules: false, skills: false, knowledge: false, workflows: false, templates: false, specs: false });
 
 const staleFlags = (): Record<FrameworkCategory, boolean> =>
-  ({ rules: true, skills: true, knowledge: true, workflows: true, templates: true, specs: true });
+  ({ agents: true, rules: true, skills: true, knowledge: true, workflows: true, templates: true, specs: true });
 
 export const useFrameworkStore = create<FrameworkStoreState>((set, get) => ({
   frameworkPath: null,

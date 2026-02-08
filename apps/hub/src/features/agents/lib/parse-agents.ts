@@ -202,3 +202,198 @@ export function agentSlug(name: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 }
+
+/**
+ * Parse agents from content/agents/routing.md structure.
+ * This handles the new architecture where routing.md defines the agent hierarchy.
+ */
+export function parseAgentsFromRouting(markdown: string): AgentEntry[] {
+  const entries: AgentEntry[] = [];
+  const lines = markdown.split('\n');
+
+  let section: 'none' | 'agents' | 'orchestrators' = 'none';
+  let currentEntry: Partial<AgentEntry> | null = null;
+
+  function flush() {
+    if (currentEntry?.name) {
+      entries.push(currentEntry as AgentEntry);
+    }
+    currentEntry = null;
+  }
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Section separators
+    if (trimmed === '---') {
+      flush();
+      section = 'none';
+      continue;
+    }
+
+    // Detect sections
+    if (trimmed.startsWith('## Agent System:')) {
+      flush();
+      section = 'agents';
+      continue;
+    }
+    if (trimmed.startsWith('## Workflow Orchestrators')) {
+      flush();
+      section = 'orchestrators';
+      continue;
+    }
+
+    if (section === 'none') continue;
+
+    // H3 headings in agents section
+    if (section === 'agents' && trimmed.startsWith('### ')) {
+      flush();
+      const content = trimmed.slice(4).trim();
+      const emojiMatch = content.match(EMOJI_START_RE);
+      if (emojiMatch) {
+        const emoji = emojiMatch[1]!.trim();
+        const name = emojiMatch[2]!.trim().replace(/\s*—.*/, '');
+        currentEntry = { name, emoji, purpose: '', type: 'agent' };
+      } else {
+        // No emoji, just use text as name
+        const name = content.replace(/\s*—.*/, '').replace(/\*\*/g, '');
+        currentEntry = { name, emoji: '👤', purpose: '', type: 'agent' };
+      }
+      continue;
+    }
+
+    // H4 headings in orchestrators section
+    if (section === 'orchestrators' && trimmed.startsWith('#### ')) {
+      flush();
+      const content = trimmed.slice(5).trim();
+      const emojiMatch = content.match(EMOJI_START_RE);
+      if (emojiMatch) {
+        const emoji = emojiMatch[1]!.trim();
+        const name = emojiMatch[2]!.trim();
+        currentEntry = { name, emoji, purpose: '', type: 'orchestrator' };
+      } else {
+        const name = content.replace(/\*\*/g, '');
+        currentEntry = { name, emoji: '🎭', purpose: '', type: 'orchestrator' };
+      }
+      continue;
+    }
+
+    if (!currentEntry) continue;
+
+    // Parse field lines
+    const fieldMatch = trimmed.match(FIELD_RE);
+    if (fieldMatch) {
+      const key = fieldMatch[1]!.trim().toLowerCase();
+      const value = fieldMatch[2]!.trim();
+
+      if (key === 'purpose' || key === 'capability') {
+        currentEntry.purpose = value;
+      } else if (key === 'skills') {
+        currentEntry.skills = value.replace(/`/g, '');
+      } else if (key === 'activation') {
+        currentEntry.activation = value.replace(/`/g, '');
+      } else if (key === 'file') {
+        currentEntry.file = value.replace(/`/g, '');
+      } else if (key === 'complexity') {
+        currentEntry.complexity = value;
+      } else if (key === 'duration') {
+        currentEntry.duration = value;
+      } else if (key === 'cost') {
+        currentEntry.cost = value;
+      }
+      continue;
+    }
+
+    // Inline purpose (lines starting with "- **Capability:**")
+    if (trimmed.startsWith('- **Capability:**')) {
+      currentEntry.purpose = trimmed.replace('- **Capability:**', '').trim();
+      continue;
+    }
+  }
+
+  flush();
+  return entries;
+}
+
+/**
+ * Parse agents from FrameworkEntity[] (backend results).
+ * Each entity represents an agent file from content/agents/.
+ */
+export function parseAgentsFromFrameworkEntities(entities: {
+  name: string;
+  category: string;
+  path: string;
+  frontmatter: Record<string, string | unknown>;
+  content: string;
+}[]): AgentEntry[] {
+  const entries: AgentEntry[] = [];
+
+  for (const entity of entities) {
+    // Special case: routing.md contains multiple agents
+    if (entity.name === 'routing' || entity.name === 'routing.md') {
+      const routingAgents = parseAgentsFromRouting(entity.content);
+      entries.push(...routingAgents);
+      continue;
+    }
+
+    // Individual agent files
+    const emoji = (entity.frontmatter.emoji as string) || '👤';
+    const type = (entity.frontmatter.type as 'agent' | 'orchestrator') || 'agent';
+    const purpose = (entity.frontmatter.purpose as string) || extractPurpose(entity.content);
+    const skills = entity.frontmatter.skills as string | undefined;
+    const activation = entity.frontmatter.activation as string | undefined;
+    const file = entity.frontmatter.file as string | undefined;
+    const complexity = entity.frontmatter.complexity as string | undefined;
+    const duration = entity.frontmatter.duration as string | undefined;
+    const cost = entity.frontmatter.cost as string | undefined;
+
+    entries.push({
+      name: entity.name,
+      emoji,
+      purpose,
+      skills,
+      activation,
+      type,
+      file,
+      complexity,
+      duration,
+      cost,
+    });
+  }
+
+  return entries;
+}
+
+/**
+ * Extract purpose from markdown content (first paragraph after frontmatter).
+ */
+function extractPurpose(content: string): string {
+  const lines = content.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('-')) {
+      return trimmed;
+    }
+  }
+  return '';
+}
+
+/**
+ * Auto-detect format and parse accordingly.
+ * Supports both string content and FrameworkEntity arrays.
+ */
+export function parseAgentsAuto(
+  input: string | { name: string; category: string; path: string; frontmatter: Record<string, string | unknown>; content: string }[]
+): AgentEntry[] {
+  if (Array.isArray(input)) {
+    return parseAgentsFromFrameworkEntities(input);
+  }
+
+  // Detect format from string content
+  if (input.includes('## Agent System: Hierarchy and Roles')) {
+    return parseAgentsFromRouting(input);
+  }
+
+  // Fallback to old parser
+  return parseAgents(input);
+}

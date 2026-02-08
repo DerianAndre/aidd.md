@@ -17,7 +17,6 @@ const REQUIRED_TABLES: &[&str] = &[
     "banned_patterns",
     "pattern_detections",
     "permanent_memory",
-    "artifacts",
 ];
 
 /// SQLite Adapter for Memory Port.

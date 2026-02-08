@@ -189,7 +189,7 @@ export interface ModelMetrics {
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// Artifact types (docs/plans/ documents produced by workflows)
+// Artifact types (SQLite-stored workflow-produced documents)
 // ---------------------------------------------------------------------------
 
 export const ARTIFACT_TYPES = [
@@ -200,16 +200,17 @@ export type ArtifactType = (typeof ARTIFACT_TYPES)[number];
 export type ArtifactStatus = 'active' | 'done';
 
 export interface ArtifactEntry {
-  path: string;
-  filename: string;
-  date: string;
-  feature: string;
+  id: string;
+  sessionId?: string;
   type: ArtifactType;
+  feature: string;
   status: ArtifactStatus;
   title: string;
   description: string;
-  frontmatter: Record<string, unknown>;
-  lastModified: string;
+  content: string;
+  date: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---------------------------------------------------------------------------

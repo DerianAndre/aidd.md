@@ -9,6 +9,7 @@ import {
   GitBranch,
   FileText,
   FileCode,
+  Users,
   ArrowRight,
 } from 'lucide-react';
 import { useFrameworkStore, CATEGORIES } from '../../framework/stores/framework-store';
@@ -18,6 +19,7 @@ import type { FrameworkCategory } from '../../../lib/tauri';
 import type { LucideIcon } from 'lucide-react';
 
 const CATEGORY_META = {
+  agents: { labelKey: 'page.dashboard.catAgents' as const, icon: Users, color: 'text-accent' },
   rules: { labelKey: 'page.dashboard.catRules' as const, icon: ShieldCheck, color: 'text-danger' },
   skills: { labelKey: 'page.dashboard.catSkills' as const, icon: Zap, color: 'text-warning' },
   knowledge: { labelKey: 'page.dashboard.catKnowledge' as const, icon: BookOpen, color: 'text-accent' },

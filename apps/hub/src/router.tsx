@@ -168,7 +168,7 @@ export const router = createBrowserRouter([
         element: lazyPage(() => import('./features/artifacts/pages/artifacts-page'), 'ArtifactsPage'),
       },
       {
-        path: 'artifacts/*',
+        path: 'artifacts/:id',
         element: lazyPage(() => import('./features/artifacts/pages/artifact-detail-page'), 'ArtifactDetailPage'),
       },
       {

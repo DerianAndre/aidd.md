@@ -7,58 +7,61 @@ import { Chip } from '@/components/ui/chip';
 import { ArrowLeft } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { BlockEditor } from '../../../components/editor';
-import { readFile } from '../../../lib/tauri';
+import { listArtifacts } from '../../../lib/tauri';
 import { ROUTES } from '../../../lib/constants';
-import { useProjectStore } from '../../../stores/project-store';
-import { extractTitle, extractDescription } from '../../../lib/markdown';
-import { normalizePath } from '../../../lib/utils';
-import { parseArtifactFilename, TYPE_COLORS } from '../lib/parse-artifact';
+import { TYPE_COLORS } from '../lib/parse-artifact';
+import type { ArtifactEntry } from '../../../lib/types';
 
 export function ArtifactDetailPage() {
   const { t } = useTranslation();
-  const { '*': wildcard } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const activeProject = useProjectStore((s) => s.activeProject);
-  const [content, setContent] = useState('');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [parsed, setParsed] = useState<ReturnType<typeof parseArtifactFilename>>(null);
+  const [artifact, setArtifact] = useState<ArtifactEntry | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!activeProject?.path || !wildcard) return;
+    if (!id) return;
     void (async () => {
       setLoading(true);
       try {
-        const decodedPath = decodeURIComponent(wildcard);
-        const fullPath = `${normalizePath(activeProject.path)}/${decodedPath}`;
-        const raw = await readFile(fullPath);
-        setContent(raw);
-        setTitle(extractTitle(raw) ?? decodedPath.split('/').pop()?.replace('.md', '') ?? '');
-        setDescription(extractDescription(raw) ?? '');
-
-        const filename = decodedPath.split('/').pop() ?? '';
-        setParsed(parseArtifactFilename(filename));
+        // Fetch all artifacts and find by ID (no dedicated get-by-id Tauri command)
+        const rows = await listArtifacts();
+        const found = (rows as ArtifactEntry[]).find((a) => a.id === id) ?? null;
+        setArtifact(found);
       } catch {
-        setContent('');
+        setArtifact(null);
       }
       setLoading(false);
     })();
-  }, [activeProject?.path, wildcard]);
+  }, [id]);
 
   if (loading) {
     return <div className="p-4 text-muted-foreground">{t('common.loading')}</div>;
   }
 
-  const typeColor = parsed
-    ? (TYPE_COLORS[parsed.type] as 'default' | 'primary' | 'accent' | 'success' | 'warning' | 'danger' | 'info')
-    : 'default';
+  if (!artifact) {
+    return (
+      <div>
+        <PageHeader
+          title={t('page.artifacts.notFound')}
+          actions={
+            <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.ARTIFACTS)}>
+              <ArrowLeft size={16} /> {t('common.back')}
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
+  const typeColor = TYPE_COLORS[artifact.type] as
+    | 'default' | 'primary' | 'accent' | 'success' | 'warning' | 'danger' | 'info';
 
   return (
     <div>
       <PageHeader
-        title={title || decodeURIComponent(wildcard ?? '')}
-        description={description}
+        title={artifact.title}
+        description={artifact.description}
         actions={
           <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.ARTIFACTS)}>
             <ArrowLeft size={16} /> {t('common.back')}
@@ -66,21 +69,22 @@ export function ArtifactDetailPage() {
         }
       />
 
-      {parsed && (
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <Chip size="sm" color={typeColor}>
-            {parsed.type}
-          </Chip>
-          <Chip size="sm" color="default">
-            {parsed.feature}
-          </Chip>
-          <span className="text-xs text-muted-foreground">{parsed.date}</span>
-        </div>
-      )}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Chip size="sm" color={typeColor}>
+          {artifact.type}
+        </Chip>
+        <Chip size="sm" color="default">
+          {artifact.feature}
+        </Chip>
+        <Chip size="sm" color={artifact.status === 'active' ? 'success' : 'default'}>
+          {artifact.status}
+        </Chip>
+        <span className="text-xs text-muted-foreground">{artifact.date}</span>
+      </div>
 
-      {content ? (
+      {artifact.content ? (
         <Card className="gap-0 py-0 overflow-hidden">
-          <BlockEditor initialMarkdown={content} editable={false} />
+          <BlockEditor initialMarkdown={artifact.content} editable={false} />
         </Card>
       ) : (
         <p className="py-8 text-center text-sm text-muted-foreground">
