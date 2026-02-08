@@ -15,7 +15,7 @@
 | 9 | `\bin order to\b` | verbosity |
 | 10 | `\bit is important to note\b` | verbosity |
 | 11 | `\blet's dive into\b` | verbosity |
-| 12 | `Firstly.*Secondly.*(?:Finally\|Thirdly)` | structure |
+| 12 | `\bFirstly\b.*?\bSecondly\b.*?\b(?:Finally|Thirdly)\b` | structure |
 
 All `/gi`. DB `banned_patterns` extends at runtime.
 
@@ -27,7 +27,7 @@ avgSentenceLength, sentenceLengthVariance, typeTokenRatio, avgParagraphLength, p
 | Dim | Calc |
 |-----|------|
 | lexicalDiversity | min(20, TTR*40) |
-| structuralVariation | max(0, 20-\|variance-30\|*0.3) |
+| structuralVariation | max(0, 20-|variance-30|*0.3) |
 | voiceAuthenticity | 20-passivePen-fillerPen |
 | patternAbsence | 20-min(20, matches*3) |
 | semanticPreservation | 15 (default) |

@@ -1,35 +1,24 @@
-# AIDD MCP — Context Vector
+# AIDD MCP — Context Hydration Vector
+
+archChecksum: 15ed84483a442339050618587efa7cd64fe062d9f8fc705f1b93b237679a953d
+toolCount: 71
+lastMutation: 2026-02-08
 
 ## Architecture
-Engine=aidd-engine (single process) composing 3 packages:
-- mcp-aidd-core: 6 modules, 17 tools (bootstrap, knowledge, routing, guidance, context, scaffold)
-- mcp-aidd-memory: 10 modules, 34 tools (session, branch, memory, observation, lifecycle, analytics, evolution, drafts, diagnostics, pattern-killer)
-- mcp-aidd-tools: 4 modules, 19 tools (validation, enforcement, execution, ci)
-
-**Total: 70 tools, 20 modules, 1 engine**
+Engine (single process) ← Core(17) + Memory(35) + Tools(19) = 71 tools, 21 modules
 
 ## Storage
-SQLite (better-sqlite3), WAL mode, busy_timeout=5000ms, FTS5 (porter unicode61), 16 tables, 22 indexes, 6 triggers
-File: .aidd/data.db | Schema: mcp-aidd-memory/src/storage/migrations.ts
+SQLite WAL | 15 tables + 2 FTS5 | FK=ON | busy_timeout=5000
 
 ## Memory Layers
-Session→Observation→Branch→Permanent→Evolution
-
-## Critical Path
-aidd_start→aidd_session(start)→aidd_observation→aidd_memory_search
+L1 Session → L2 Observation(FTS5) → L3 Branch → L4 Permanent → L5 Evolution
 
 ## Constants
+autoApply: >=90 | draft: 70-89 | pending: <70
+circuitBreaker: 3 failures | analysis: every 5th session | prune: every 10th
 
-| Key | Value |
-|-----|-------|
-| autoApplyThreshold | 90 |
-| draftThreshold | 70 |
-| analysisInterval | 5 sessions |
-| pruneInterval | 10 sessions |
-| pruneDetections | 30d |
-| maxObs | 1K |
-| maxSessionsIndexed | 50 |
-| hookCircuitBreaker | 3 strikes |
-
-## Cross-refs
-→mcp-map.md →sql-schema.md →pattern-signatures.md →memory-handover.md
+## Files
+- [mcp-map.md](mcp-map.md) — 71 tools across 21 modules
+- [sql-schema.md](sql-schema.md) — 15 tables + 2 FTS5
+- [pattern-signatures.md](pattern-signatures.md) — pattern detection system
+- [memory-handover.md](memory-handover.md) — 5 hooks, memory lifecycle

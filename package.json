@@ -23,7 +23,7 @@
   "type": "module",
   "scripts": {
     "setup": "node scripts/mcp-setup.mjs",
-    "mcp:setup": "node scripts/mcp-setup.mjs",
+    "mcp:setup": "node scripts/mcp-setup.mjs && pnpm mcp:docs",
     "mcp:build": "pnpm --filter \"./packages/shared\" --filter \"./mcps/**\" build",
     "mcp:dev": "pnpm --filter \"./packages/shared\" --filter \"./mcps/**\" dev",
     "mcp:test": "pnpm --filter \"./packages/shared\" --filter \"./mcps/**\" test",
@@ -32,6 +32,8 @@
     "mcp:status": "node scripts/mcp-status.mjs",
     "mcp:doctor": "node scripts/mcp-doctor.mjs",
     "mcp:check": "node scripts/mcp-check.mjs",
+    "mcp:docs": "tsx scripts/generate-mcp-docs.ts",
+    "mcp:docs:check": "tsx scripts/generate-mcp-docs.ts --check",
     "mcp:models:sync": "node scripts/model-matrix-sync.mjs",
     "mcp:models:update": "node scripts/model-matrix-update.mjs",
     "validate:mermaid": "tsx skills/system-architect/scripts/validate-mermaid.ts",

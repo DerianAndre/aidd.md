@@ -21,14 +21,14 @@ Circuit breaker: 3 consecutive failures → subscriber disabled
 
 | Hook | Trigger | Action |
 |------|---------|--------|
-| pattern-auto-detect | observation_saved | detect patterns in narrative (>50 chars), record to pattern_detections |
-| pattern-model-profile | session_ended | topPatterns(count>=5, sessions>=3) → model_pattern_ban candidate |
-| evolution-auto-analyze | session_ended (every 5th) | run 7 detectors, save candidates, write insights.md + state-dump.sql |
-| evolution-feedback-loop | session_ended | adjust confidence +-5/10/15 based on userFeedback |
-| evolution-auto-prune | session_ended (every 10th) | pruneStaleData(30d, 1K, 50) + WAL checkpoint |
+| pattern-auto-detect | observation_saved | Auto-detect patterns in observation narratives |
+| pattern-model-profile | session_ended | Auto-generate evolution candidates for model-specific pattern bans |
+| evolution-auto-analyze | session_ended | Debounced auto-evolution analysis (every 5th session) |
+| evolution-feedback-loop | session_ended | Feedback loop — adjust candidate confidence on session end |
+| evolution-auto-prune | session_ended | Auto-prune stale data (every 10th session) |
 
 ## Confidence Tiers
 >=90: auto-apply | 70-89: draft | <70: pending | <=20: auto-delete
 
-## 7 Evolution Detectors
-model_recommendations, recurring_mistakes, tool_sequences, skill_combos, context_efficiency, model_drift, model_pattern_frequency
+## 6 Evolution Detectors
+model_recommendation, new_convention, compound_workflow, skill_combo, context_efficiency, model_pattern_ban
