@@ -27,7 +27,7 @@ AIDD provides three integration layers. Not all tools support all layers:
 |---------|-------------|--------|--------|------|
 | Context loading | `CLAUDE.md` + `AGENTS.md` | `.cursor/rules/` + `AGENTS.md` | `AGENTS.md` (native) | `AGENTS.md` (manual) |
 | MCP support | Full (71 tools) | Full (71 tools) | Partial (API-level) | No |
-| Hooks/automation | 5 hooks (command + prompt) | Rules auto-apply | Auto-load | Manual |
+| Hooks/automation | 4 hooks (command) | Rules auto-apply | Auto-load | Manual |
 | Session tracking | Full lifecycle | Via MCP | Via MCP | No |
 | Memory persistence | 3-layer (obs → permanent → export) | Via MCP | Via MCP | No |
 | Status line | Custom Node.js script | Built-in | N/A | N/A |

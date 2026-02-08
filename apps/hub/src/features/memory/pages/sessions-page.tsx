@@ -5,16 +5,23 @@ import { SearchInput } from '@/components/ui/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
+import { ConfirmDialog } from '../../../components/confirm-dialog';
 import { SessionCard } from '../components/session-card';
+import { SessionEditDialog } from '../components/session-edit-dialog';
 import { useSessionsStore } from '../stores/sessions-store';
 import { useProjectStore } from '../../../stores/project-store';
+import { showSuccess, showError } from '../../../lib/toast';
+import type { SessionState } from '../../../lib/types';
 
 export function SessionsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
-  const { activeSessions, completedSessions, loading, stale, fetchAll } = useSessionsStore();
+  const { activeSessions, completedSessions, loading, stale, fetchAll, removeSession, editSession } = useSessionsStore();
   const [search, setSearch] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<SessionState | undefined>();
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     if (activeProject?.path && stale) {
@@ -39,6 +46,27 @@ export function SessionsPage() {
   }, [completedSessions, search]);
 
   const total = filteredActive.length + filteredCompleted.length;
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await removeSession(deleteTarget);
+      showSuccess(t('page.sessions.deleteSuccess'));
+    } catch {
+      showError(t('page.sessions.deleteError'));
+    }
+  };
+
+  const handleEdit = async (branch?: string, input?: string, output?: string) => {
+    if (!editTarget) return;
+    try {
+      await editSession(editTarget.id, branch, input, output);
+      showSuccess(t('page.sessions.editSuccess'));
+    } catch {
+      showError(t('page.sessions.editError'));
+      throw new Error('failed');
+    }
+  };
 
   return (
     <div>
@@ -77,6 +105,7 @@ export function SessionsPage() {
                 key={session.id}
                 session={session}
                 onPress={() => navigate(`/sessions/${encodeURIComponent(session.id)}`)}
+                onEdit={(s) => { setEditTarget(s); setEditOpen(true); }}
               />
             ))}
           </div>
@@ -92,11 +121,31 @@ export function SessionsPage() {
                 key={session.id}
                 session={session}
                 onPress={() => navigate(`/sessions/${encodeURIComponent(session.id)}`)}
+                onEdit={(s) => { setEditTarget(s); setEditOpen(true); }}
+                onDelete={(id) => setDeleteTarget(id)}
               />
             ))}
           </div>
         </div>
       )}
+
+      <SessionEditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        session={editTarget}
+        onSubmit={handleEdit}
+      />
+
+      {/* Delete confirmation */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title={t('page.sessions.deleteTitle')}
+        description={t('page.sessions.deleteDescription')}
+        confirmLabel={t('common.delete')}
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

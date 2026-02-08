@@ -135,6 +135,31 @@ pub fn run() {
             presentation::commands::memory_commands::delete_permanent_memory,
             presentation::commands::memory_commands::list_drafts,
             presentation::commands::memory_commands::list_artifacts,
+            // Memory write commands
+            presentation::commands::memory_commands::create_permanent_memory,
+            presentation::commands::memory_commands::update_permanent_memory,
+            presentation::commands::memory_commands::create_artifact,
+            presentation::commands::memory_commands::update_artifact,
+            presentation::commands::memory_commands::archive_artifact,
+            presentation::commands::memory_commands::delete_artifact,
+            presentation::commands::memory_commands::approve_evolution_candidate,
+            presentation::commands::memory_commands::reject_evolution_candidate,
+            presentation::commands::memory_commands::approve_draft,
+            presentation::commands::memory_commands::reject_draft,
+            presentation::commands::memory_commands::delete_session,
+            presentation::commands::memory_commands::update_session,
+            // Observation CRUD
+            presentation::commands::memory_commands::create_observation,
+            presentation::commands::memory_commands::update_observation,
+            presentation::commands::memory_commands::delete_observation,
+            // Evolution candidate CRUD
+            presentation::commands::memory_commands::create_evolution_candidate_entry,
+            presentation::commands::memory_commands::update_evolution_candidate_entry,
+            presentation::commands::memory_commands::delete_evolution_candidate,
+            // Draft CRUD
+            presentation::commands::memory_commands::create_draft,
+            presentation::commands::memory_commands::update_draft,
+            presentation::commands::memory_commands::delete_draft,
         ])
         .run(tauri::generate_context!())
         .expect("error while running aidd.md Hub");

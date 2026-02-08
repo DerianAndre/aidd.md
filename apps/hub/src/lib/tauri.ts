@@ -306,6 +306,113 @@ export const listArtifacts = (artifactType?: string, status?: string, limit?: nu
     limit: limit ?? null,
   });
 
+// Memory write operations
+export const createPermanentMemory = (memoryType: string, title: string, content: string) =>
+  invoke<string>('create_permanent_memory', { memoryType, title, content });
+
+export const updatePermanentMemory = (id: string, title: string, content: string) =>
+  invoke<void>('update_permanent_memory', { id, title, content });
+
+export const createArtifact = (artifactType: string, feature: string, title: string, description: string, content: string) =>
+  invoke<string>('create_artifact', { artifactType, feature, title, description, content });
+
+export const updateArtifact = (id: string, artifactType: string, feature: string, title: string, description: string, content: string, status: string) =>
+  invoke<void>('update_artifact', { id, artifactType, feature, title, description, content, status });
+
+export const archiveArtifact = (id: string) =>
+  invoke<void>('archive_artifact', { id });
+
+export const deleteArtifact = (id: string) =>
+  invoke<void>('delete_artifact', { id });
+
+export const approveEvolutionCandidate = (id: string) =>
+  invoke<void>('approve_evolution_candidate', { id });
+
+export const rejectEvolutionCandidate = (id: string, reason: string) =>
+  invoke<void>('reject_evolution_candidate', { id, reason });
+
+export const approveDraft = (id: string) =>
+  invoke<void>('approve_draft', { id });
+
+export const rejectDraft = (id: string, reason: string) =>
+  invoke<void>('reject_draft', { id, reason });
+
+export const deleteSession = (id: string) =>
+  invoke<void>('delete_session', { id });
+
+export const updateSession = (id: string, branch?: string, input?: string, output?: string) =>
+  invoke<void>('update_session', { id, branch: branch ?? null, input: input ?? null, output: output ?? null });
+
+// Observation CRUD
+export const createObservation = (
+  sessionId: string,
+  obsType: string,
+  title: string,
+  narrative?: string,
+  facts?: string,
+  concepts?: string,
+  filesRead?: string,
+  filesModified?: string,
+  discoveryTokens?: number,
+) =>
+  invoke<string>('create_observation', {
+    sessionId,
+    obsType,
+    title,
+    narrative: narrative ?? null,
+    facts: facts ?? null,
+    concepts: concepts ?? null,
+    filesRead: filesRead ?? null,
+    filesModified: filesModified ?? null,
+    discoveryTokens: discoveryTokens ?? null,
+  });
+
+export const updateObservation = (
+  id: string,
+  obsType: string,
+  title: string,
+  narrative?: string,
+  facts?: string,
+  concepts?: string,
+  filesRead?: string,
+  filesModified?: string,
+  discoveryTokens?: number,
+) =>
+  invoke<void>('update_observation', {
+    id,
+    obsType,
+    title,
+    narrative: narrative ?? null,
+    facts: facts ?? null,
+    concepts: concepts ?? null,
+    filesRead: filesRead ?? null,
+    filesModified: filesModified ?? null,
+    discoveryTokens: discoveryTokens ?? null,
+  });
+
+export const deleteObservation = (id: string) =>
+  invoke<void>('delete_observation', { id });
+
+// Evolution candidate CRUD
+export const createEvolutionCandidateEntry = (evoType: string, title: string, confidence: number, data: string) =>
+  invoke<string>('create_evolution_candidate_entry', { evoType, title, confidence, data });
+
+export const updateEvolutionCandidateEntry = (id: string, evoType: string, title: string, confidence: number, data: string) =>
+  invoke<void>('update_evolution_candidate_entry', { id, evoType, title, confidence, data });
+
+export const deleteEvolutionCandidate = (id: string) =>
+  invoke<void>('delete_evolution_candidate', { id });
+
+// Draft CRUD
+export const createDraft = (category: string, title: string, filename: string, content: string, confidence: number, source: string) =>
+  invoke<string>('create_draft', { category, title, filename, content, confidence, source });
+
+export const updateDraft = (id: string, title: string, content: string, category: string, confidence?: number, filename?: string) =>
+  invoke<void>('update_draft', { id, title, content, category, confidence: confidence ?? null, filename: filename ?? null });
+
+export const deleteDraft = (id: string) =>
+  invoke<void>('delete_draft', { id });
+
 // File watcher
 export interface FileChangeEvent {
   event_type: 'created' | 'modified' | 'deleted';

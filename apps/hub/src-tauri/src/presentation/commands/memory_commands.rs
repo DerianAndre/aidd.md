@@ -131,3 +131,272 @@ pub fn list_artifacts(
     )?;
     Ok(serde_json::Value::Array(artifacts))
 }
+
+// --- Write commands ---
+
+/// Create a permanent memory entry. Returns the new entry ID.
+#[tauri::command]
+pub fn create_permanent_memory(
+    ctx: State<'_, AppContext>,
+    memory_type: String,
+    title: String,
+    content: String,
+) -> Result<String, String> {
+    ctx.memory_service.create_permanent_memory(&memory_type, &title, &content)
+}
+
+/// Update a permanent memory entry by ID.
+#[tauri::command]
+pub fn update_permanent_memory(
+    ctx: State<'_, AppContext>,
+    id: String,
+    title: String,
+    content: String,
+) -> Result<(), String> {
+    ctx.memory_service.update_permanent_memory(&id, &title, &content)
+}
+
+/// Create an artifact. Returns the new artifact ID.
+#[tauri::command]
+pub fn create_artifact(
+    ctx: State<'_, AppContext>,
+    artifact_type: String,
+    feature: String,
+    title: String,
+    description: String,
+    content: String,
+) -> Result<String, String> {
+    ctx.memory_service.create_artifact(&artifact_type, &feature, &title, &description, &content)
+}
+
+/// Update an artifact by ID.
+#[tauri::command]
+pub fn update_artifact(
+    ctx: State<'_, AppContext>,
+    id: String,
+    artifact_type: String,
+    feature: String,
+    title: String,
+    description: String,
+    content: String,
+    status: String,
+) -> Result<(), String> {
+    ctx.memory_service.update_artifact(&id, &artifact_type, &feature, &title, &description, &content, &status)
+}
+
+/// Archive an artifact (set status to 'done').
+#[tauri::command]
+pub fn archive_artifact(
+    ctx: State<'_, AppContext>,
+    id: String,
+) -> Result<(), String> {
+    ctx.memory_service.archive_artifact(&id)
+}
+
+/// Delete an artifact by ID.
+#[tauri::command]
+pub fn delete_artifact(
+    ctx: State<'_, AppContext>,
+    id: String,
+) -> Result<(), String> {
+    ctx.memory_service.delete_artifact(&id)
+}
+
+/// Approve an evolution candidate.
+#[tauri::command]
+pub fn approve_evolution_candidate(
+    ctx: State<'_, AppContext>,
+    id: String,
+) -> Result<(), String> {
+    ctx.memory_service.approve_evolution_candidate(&id)
+}
+
+/// Reject an evolution candidate with a reason.
+#[tauri::command]
+pub fn reject_evolution_candidate(
+    ctx: State<'_, AppContext>,
+    id: String,
+    reason: String,
+) -> Result<(), String> {
+    ctx.memory_service.reject_evolution_candidate(&id, &reason)
+}
+
+/// Approve a draft entry.
+#[tauri::command]
+pub fn approve_draft(
+    ctx: State<'_, AppContext>,
+    id: String,
+) -> Result<(), String> {
+    ctx.memory_service.approve_draft(&id)
+}
+
+/// Reject a draft entry with a reason.
+#[tauri::command]
+pub fn reject_draft(
+    ctx: State<'_, AppContext>,
+    id: String,
+    reason: String,
+) -> Result<(), String> {
+    ctx.memory_service.reject_draft(&id, &reason)
+}
+
+/// Delete a session and its associated observations.
+#[tauri::command]
+pub fn delete_session(
+    ctx: State<'_, AppContext>,
+    id: String,
+) -> Result<(), String> {
+    ctx.memory_service.delete_session(&id)
+}
+
+/// Update a session's editable fields.
+#[tauri::command]
+pub fn update_session(
+    ctx: State<'_, AppContext>,
+    id: String,
+    branch: Option<String>,
+    input: Option<String>,
+    output: Option<String>,
+) -> Result<(), String> {
+    ctx.memory_service.update_session(&id, branch.as_deref(), input.as_deref(), output.as_deref())
+}
+
+// --- Observation CRUD ---
+
+/// Create an observation. Returns the new observation ID.
+#[tauri::command]
+pub fn create_observation(
+    ctx: State<'_, AppContext>,
+    session_id: String,
+    obs_type: String,
+    title: String,
+    narrative: Option<String>,
+    facts: Option<String>,
+    concepts: Option<String>,
+    files_read: Option<String>,
+    files_modified: Option<String>,
+    discovery_tokens: Option<i64>,
+) -> Result<String, String> {
+    ctx.memory_service.create_observation(
+        &session_id,
+        &obs_type,
+        &title,
+        narrative.as_deref(),
+        facts.as_deref(),
+        concepts.as_deref(),
+        files_read.as_deref(),
+        files_modified.as_deref(),
+        discovery_tokens,
+    )
+}
+
+/// Update an observation by ID.
+#[tauri::command]
+pub fn update_observation(
+    ctx: State<'_, AppContext>,
+    id: String,
+    obs_type: String,
+    title: String,
+    narrative: Option<String>,
+    facts: Option<String>,
+    concepts: Option<String>,
+    files_read: Option<String>,
+    files_modified: Option<String>,
+    discovery_tokens: Option<i64>,
+) -> Result<(), String> {
+    ctx.memory_service.update_observation(
+        &id,
+        &obs_type,
+        &title,
+        narrative.as_deref(),
+        facts.as_deref(),
+        concepts.as_deref(),
+        files_read.as_deref(),
+        files_modified.as_deref(),
+        discovery_tokens,
+    )
+}
+
+/// Delete an observation by ID.
+#[tauri::command]
+pub fn delete_observation(
+    ctx: State<'_, AppContext>,
+    id: String,
+) -> Result<(), String> {
+    ctx.memory_service.delete_observation(&id)
+}
+
+// --- Evolution Candidate CRUD ---
+
+/// Create an evolution candidate. Returns the new candidate ID.
+#[tauri::command]
+pub fn create_evolution_candidate_entry(
+    ctx: State<'_, AppContext>,
+    evo_type: String,
+    title: String,
+    confidence: f64,
+    data: String,
+) -> Result<String, String> {
+    ctx.memory_service.create_evolution_candidate_entry(&evo_type, &title, confidence, &data)
+}
+
+/// Update an evolution candidate by ID.
+#[tauri::command]
+pub fn update_evolution_candidate_entry(
+    ctx: State<'_, AppContext>,
+    id: String,
+    evo_type: String,
+    title: String,
+    confidence: f64,
+    data: String,
+) -> Result<(), String> {
+    ctx.memory_service.update_evolution_candidate_entry(&id, &evo_type, &title, confidence, &data)
+}
+
+/// Delete an evolution candidate by ID.
+#[tauri::command]
+pub fn delete_evolution_candidate(
+    ctx: State<'_, AppContext>,
+    id: String,
+) -> Result<(), String> {
+    ctx.memory_service.delete_evolution_candidate(&id)
+}
+
+// --- Draft CRUD ---
+
+/// Create a draft. Returns the new draft ID.
+#[tauri::command]
+pub fn create_draft(
+    ctx: State<'_, AppContext>,
+    category: String,
+    title: String,
+    filename: String,
+    content: String,
+    confidence: f64,
+    source: String,
+) -> Result<String, String> {
+    ctx.memory_service.create_draft(&category, &title, &filename, &content, confidence, &source)
+}
+
+/// Update a draft by ID.
+#[tauri::command]
+pub fn update_draft(
+    ctx: State<'_, AppContext>,
+    id: String,
+    title: String,
+    content: String,
+    category: String,
+    confidence: Option<f64>,
+    filename: Option<String>,
+) -> Result<(), String> {
+    ctx.memory_service.update_draft(&id, &title, &content, &category, confidence, filename.as_deref())
+}
+
+/// Delete a draft by ID.
+#[tauri::command]
+pub fn delete_draft(
+    ctx: State<'_, AppContext>,
+    id: String,
+) -> Result<(), String> {
+    ctx.memory_service.delete_draft(&id)
+}

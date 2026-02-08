@@ -1,6 +1,14 @@
 import { create } from 'zustand';
-import { listEvolutionCandidates, listEvolutionLog } from '../../../lib/tauri';
-import type { EvolutionCandidate, EvolutionLogEntry } from '../../../lib/types';
+import {
+  listEvolutionCandidates,
+  listEvolutionLog,
+  approveEvolutionCandidate,
+  rejectEvolutionCandidate,
+  createEvolutionCandidateEntry,
+  updateEvolutionCandidateEntry,
+  deleteEvolutionCandidate,
+} from '../../../lib/tauri';
+import type { EvolutionCandidate, EvolutionLogEntry, EvolutionType } from '../../../lib/types';
 
 const STALE_TTL = 30_000;
 
@@ -13,6 +21,12 @@ interface EvolutionStoreState {
 
   fetch: (projectRoot?: string) => Promise<void>;
   invalidate: () => void;
+
+  approveCandidate: (id: string) => Promise<void>;
+  rejectCandidate: (id: string, reason: string) => Promise<void>;
+  createCandidate: (evoType: EvolutionType, title: string, confidence: number, data: Record<string, unknown>) => Promise<void>;
+  updateCandidate: (id: string, evoType: EvolutionType, title: string, confidence: number, data: Record<string, unknown>) => Promise<void>;
+  removeCandidate: (id: string) => Promise<void>;
 }
 
 export const useEvolutionStore = create<EvolutionStoreState>((set, get) => ({
@@ -46,7 +60,6 @@ export const useEvolutionStore = create<EvolutionStoreState>((set, get) => ({
         // No log entries
       }
 
-      // Sort candidates by confidence desc, log by timestamp desc
       candidates.sort((a, b) => b.confidence - a.confidence);
       logEntries.sort(
         (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
@@ -59,4 +72,33 @@ export const useEvolutionStore = create<EvolutionStoreState>((set, get) => ({
   },
 
   invalidate: () => set({ stale: true }),
+
+  approveCandidate: async (id) => {
+    await approveEvolutionCandidate(id);
+    set({ candidates: get().candidates.filter((c) => c.id !== id), stale: true });
+    get().fetch();
+  },
+
+  rejectCandidate: async (id, reason) => {
+    await rejectEvolutionCandidate(id, reason);
+    set({ candidates: get().candidates.filter((c) => c.id !== id), stale: true });
+    get().fetch();
+  },
+
+  createCandidate: async (evoType, title, confidence, data) => {
+    await createEvolutionCandidateEntry(evoType, title, confidence, JSON.stringify(data));
+    set({ stale: true });
+    get().fetch();
+  },
+
+  updateCandidate: async (id, evoType, title, confidence, data) => {
+    await updateEvolutionCandidateEntry(id, evoType, title, confidence, JSON.stringify(data));
+    set({ stale: true });
+    get().fetch();
+  },
+
+  removeCandidate: async (id) => {
+    await deleteEvolutionCandidate(id);
+    set({ candidates: get().candidates.filter((c) => c.id !== id) });
+  },
 }));

@@ -1,39 +1,34 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ArrowLeft, Pencil, Archive, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
-import { ArrowLeft } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
+import { ConfirmDialog } from '../../../components/confirm-dialog';
+import { ArtifactFormDialog } from '../components/artifact-form-dialog';
 import { BlockEditor } from '../../../components/editor';
-import { listArtifacts } from '../../../lib/tauri';
+import { useArtifactsStore } from '../stores/artifacts-store';
 import { ROUTES } from '../../../lib/constants';
 import { TYPE_COLORS } from '../lib/parse-artifact';
-import type { ArtifactEntry } from '../../../lib/types';
+import { showSuccess, showError } from '../../../lib/toast';
 
 export function ArtifactDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [artifact, setArtifact] = useState<ArtifactEntry | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { artifacts, loading: storeLoading, fetch, update, archive, remove } = useArtifactsStore();
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'archive' | 'delete' | null>(null);
 
   useEffect(() => {
-    if (!id) return;
-    void (async () => {
-      setLoading(true);
-      try {
-        // Fetch all artifacts and find by ID (no dedicated get-by-id Tauri command)
-        const rows = await listArtifacts();
-        const found = (rows as ArtifactEntry[]).find((a) => a.id === id) ?? null;
-        setArtifact(found);
-      } catch {
-        setArtifact(null);
-      }
-      setLoading(false);
-    })();
-  }, [id]);
+    void fetch();
+  }, [fetch]);
+
+  const artifact = artifacts.find((a) => a.id === id) ?? null;
+  const loading = storeLoading && artifacts.length === 0;
 
   if (loading) {
     return <div className="p-4 text-muted-foreground">{t('common.loading')}</div>;
@@ -57,15 +52,53 @@ export function ArtifactDetailPage() {
   const typeColor = TYPE_COLORS[artifact.type] as
     | 'default' | 'primary' | 'accent' | 'success' | 'warning' | 'danger' | 'info';
 
+  const handleEdit = async (type: string, feature: string, title: string, description: string, content: string, status?: string) => {
+    try {
+      await update(artifact.id, type, feature, title, description, content, status ?? artifact.status);
+      showSuccess(t('page.artifacts.updateSuccess'));
+    } catch {
+      showError(t('page.artifacts.updateError'));
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!confirmAction) return;
+    try {
+      if (confirmAction === 'archive') {
+        await archive(artifact.id);
+        showSuccess(t('page.artifacts.archiveSuccess'));
+      } else {
+        await remove(artifact.id);
+        showSuccess(t('page.artifacts.deleteSuccess'));
+        navigate(ROUTES.ARTIFACTS);
+      }
+    } catch {
+      showError(confirmAction === 'archive' ? t('page.artifacts.archiveError') : t('page.artifacts.deleteError'));
+    }
+  };
+
   return (
     <div>
       <PageHeader
         title={artifact.title}
         description={artifact.description}
         actions={
-          <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.ARTIFACTS)}>
-            <ArrowLeft size={16} /> {t('common.back')}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil size={14} /> {t('common.edit')}
+            </Button>
+            {artifact.status === 'active' && (
+              <Button variant="ghost" size="sm" onClick={() => setConfirmAction('archive')}>
+                <Archive size={14} /> {t('page.artifacts.archive')}
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setConfirmAction('delete')}>
+              <Trash2 size={14} /> {t('common.delete')}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.ARTIFACTS)}>
+              <ArrowLeft size={16} /> {t('common.back')}
+            </Button>
+          </div>
         }
       />
 
@@ -88,9 +121,28 @@ export function ArtifactDetailPage() {
         </Card>
       ) : (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          {t('page.artifacts.notFound')}
+          {t('page.artifacts.noContent')}
         </p>
       )}
+
+      {/* Edit dialog */}
+      <ArtifactFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        initial={artifact}
+        onSubmit={handleEdit}
+      />
+
+      {/* Confirm archive/delete */}
+      <ConfirmDialog
+        open={!!confirmAction}
+        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
+        title={confirmAction === 'archive' ? t('page.artifacts.archiveTitle') : t('page.artifacts.deleteTitle')}
+        description={confirmAction === 'archive' ? t('page.artifacts.archiveDescription') : t('page.artifacts.deleteDescription')}
+        confirmLabel={confirmAction === 'archive' ? t('page.artifacts.archive') : t('common.delete')}
+        variant={confirmAction === 'delete' ? 'destructive' : 'default'}
+        onConfirm={handleConfirm}
+      />
     </div>
   );
 }

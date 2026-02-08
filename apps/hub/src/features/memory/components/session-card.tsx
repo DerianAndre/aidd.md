@@ -1,11 +1,15 @@
+import { Pencil, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import { Button } from '@/components/ui/button';
 import { formatRelativeTime, formatDuration, truncate } from '../../../lib/utils';
 import type { SessionState } from '../../../lib/types';
 
 interface SessionCardProps {
   session: SessionState;
   onPress?: () => void;
+  onEdit?: (session: SessionState) => void;
+  onDelete?: (id: string) => void;
 }
 
 function outcomeChip(session: SessionState) {
@@ -21,12 +25,13 @@ function outcomeChip(session: SessionState) {
   return <Chip size="sm" color="default">Completed</Chip>;
 }
 
-export function SessionCard({ session, onPress }: SessionCardProps) {
+export function SessionCard({ session, onPress, onEdit, onDelete }: SessionCardProps) {
   const duration = session.endedAt
     ? formatDuration(new Date(session.endedAt).getTime() - new Date(session.startedAt).getTime())
     : 'In progress';
 
   const modelLabel = session.aiProvider.model.replace('claude-', '').replace(/-\d{8}$/, '');
+  const isCompleted = !!session.endedAt;
 
   return (
     <Card
@@ -34,14 +39,36 @@ export function SessionCard({ session, onPress }: SessionCardProps) {
       role={onPress ? 'button' : undefined}
       tabIndex={onPress ? 0 : undefined}
       onKeyDown={onPress ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPress(); } } : undefined}
-      className={`border border-border bg-muted/50 transition-colors hover:border-primary ${onPress ? 'cursor-pointer' : ''}`}
+      className={`group border border-border bg-muted/50 transition-colors hover:border-primary ${onPress ? 'cursor-pointer' : ''}`}
     >
       <CardHeader className="flex-col items-start gap-1">
         <div className="flex w-full items-center justify-between gap-2">
           <CardTitle className="text-sm font-semibold">
             {truncate(session.branch, 30)}
           </CardTitle>
-          {outcomeChip(session)}
+          <div className="flex items-center gap-1">
+            {outcomeChip(session)}
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
+                onClick={(e) => { e.stopPropagation(); onEdit(session); }}
+              >
+                <Pencil size={14} />
+              </Button>
+            )}
+            {isCompleted && onDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-destructive opacity-0 transition-opacity group-hover:opacity-100"
+                onClick={(e) => { e.stopPropagation(); onDelete(session.id); }}
+              >
+                <Trash2 size={14} />
+              </Button>
+            )}
+          </div>
         </div>
         <CardDescription className="text-xs text-muted-foreground">
           {modelLabel} · {duration} · {session.tasksCompleted.length} tasks

@@ -1,14 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Plus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Chip } from '@/components/ui/chip';
+import { Button } from '@/components/ui/button';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
+import { ConfirmDialog } from '../../../components/confirm-dialog';
 import { CandidateCard } from '../components/candidate-card';
+import { EvolutionFormDialog } from '../components/evolution-form-dialog';
 import { useEvolutionStore } from '../stores/evolution-store';
 import { useProjectStore } from '../../../stores/project-store';
+import { showSuccess, showError } from '../../../lib/toast';
 import { formatDate } from '../../../lib/utils';
-import type { EvolutionAction } from '../../../lib/types';
+import type { EvolutionAction, EvolutionCandidate, EvolutionType } from '../../../lib/types';
+
 const ACTION_COLORS: Record<EvolutionAction, 'success' | 'accent' | 'warning' | 'danger' | 'default'> = {
   auto_applied: 'success',
   drafted: 'accent',
@@ -28,13 +34,65 @@ const ACTION_KEYS = {
 export function EvolutionPage() {
   const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
-  const { candidates, logEntries, loading, stale, fetch } = useEvolutionStore();
+  const { candidates, logEntries, loading, stale, fetch, approveCandidate, rejectCandidate, createCandidate, updateCandidate, removeCandidate } = useEvolutionStore();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editEntry, setEditEntry] = useState<EvolutionCandidate | undefined>();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeProject?.path && stale) {
       void fetch(activeProject.path);
     }
   }, [activeProject?.path, stale, fetch]);
+
+  const handleApprove = async (id: string) => {
+    try {
+      await approveCandidate(id);
+      showSuccess(t('page.evolution.approveSuccess'));
+    } catch {
+      showError(t('page.evolution.approveError'));
+    }
+  };
+
+  const handleReject = async (id: string, reason: string) => {
+    try {
+      await rejectCandidate(id, reason);
+      showSuccess(t('page.evolution.rejectSuccess'));
+    } catch {
+      showError(t('page.evolution.rejectError'));
+    }
+  };
+
+  const handleCreate = async (evoType: EvolutionType, title: string, confidence: number, description: string, suggestedAction: string, modelScope?: string) => {
+    try {
+      await createCandidate(evoType, title, confidence, { description, suggestedAction, modelScope });
+      showSuccess(t('page.evolution.createSuccess'));
+    } catch {
+      showError(t('page.evolution.createError'));
+      throw new Error('failed');
+    }
+  };
+
+  const handleEdit = async (evoType: EvolutionType, title: string, confidence: number, description: string, suggestedAction: string, modelScope?: string) => {
+    if (!editEntry) return;
+    try {
+      await updateCandidate(editEntry.id, evoType, title, confidence, { description, suggestedAction, modelScope });
+      showSuccess(t('page.evolution.updateSuccess'));
+    } catch {
+      showError(t('page.evolution.updateError'));
+      throw new Error('failed');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await removeCandidate(deleteId);
+      showSuccess(t('page.evolution.deleteSuccess'));
+    } catch {
+      showError(t('page.evolution.deleteError'));
+    }
+  };
 
   if (loading) {
     return (
@@ -56,7 +114,20 @@ export function EvolutionPage() {
     return (
       <div>
         <PageHeader title={t('page.evolution.title')} description={t('page.evolution.description')} />
-        <EmptyState message={t('page.evolution.noEvolution')} />
+        <div className="mb-4 flex justify-end">
+          <Button size="sm" onClick={() => { setEditEntry(undefined); setFormOpen(true); }}>
+            <Plus size={14} /> {t('page.evolution.addCandidate')}
+          </Button>
+        </div>
+        <EmptyState
+          message={t('page.evolution.noEvolution')}
+          action={
+            <Button size="sm" variant="outline" onClick={() => { setEditEntry(undefined); setFormOpen(true); }}>
+              <Plus size={14} /> {t('page.evolution.createFirst')}
+            </Button>
+          }
+        />
+        <EvolutionFormDialog open={formOpen} onOpenChange={setFormOpen} initial={editEntry} onSubmit={handleCreate} />
       </div>
     );
   }
@@ -64,6 +135,12 @@ export function EvolutionPage() {
   return (
     <div>
       <PageHeader title={t('page.evolution.title')} description={t('page.evolution.description')} />
+
+      <div className="mb-4 flex justify-end">
+        <Button size="sm" onClick={() => { setEditEntry(undefined); setFormOpen(true); }}>
+          <Plus size={14} /> {t('page.evolution.addCandidate')}
+        </Button>
+      </div>
 
       {/* Pending candidates */}
       {hasCandidates && (
@@ -73,7 +150,14 @@ export function EvolutionPage() {
           </h3>
           <div className="space-y-2">
             {candidates.map((c) => (
-              <CandidateCard key={c.id} candidate={c} />
+              <CandidateCard
+                key={c.id}
+                candidate={c}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                onEdit={(cand) => { setEditEntry(cand); setFormOpen(true); }}
+                onDelete={(id) => setDeleteId(id)}
+              />
             ))}
           </div>
         </section>
@@ -113,6 +197,23 @@ export function EvolutionPage() {
           </div>
         </section>
       )}
+
+      <EvolutionFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        initial={editEntry}
+        onSubmit={editEntry ? handleEdit : handleCreate}
+      />
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title={t('page.evolution.deleteTitle')}
+        description={t('page.evolution.deleteDescription')}
+        variant="destructive"
+        confirmLabel={t('common.delete')}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

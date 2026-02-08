@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
-import { listAllSessions } from '../../../lib/tauri';
+import { listAllSessions, deleteSession, updateSession } from '../../../lib/tauri';
 import type { SessionState, SessionObservation } from '../../../lib/types';
 
 const STALE_TTL = 30_000; // 30 seconds
@@ -14,6 +14,8 @@ interface SessionsStoreState {
 
   fetchAll: (projectRoot?: string) => Promise<void>;
   fetchObservations: (projectRoot: string, sessionId: string, status: 'active' | 'completed') => Promise<SessionObservation[]>;
+  removeSession: (id: string) => Promise<void>;
+  editSession: (id: string, branch?: string, input?: string, output?: string) => Promise<void>;
   invalidate: () => void;
 }
 
@@ -62,6 +64,26 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
     } catch {
       return [];
     }
+  },
+
+  removeSession: async (id) => {
+    await deleteSession(id);
+    set({
+      activeSessions: get().activeSessions.filter((s) => s.id !== id),
+      completedSessions: get().completedSessions.filter((s) => s.id !== id),
+    });
+  },
+
+  editSession: async (id, branch, input, output) => {
+    await updateSession(id, branch, input, output);
+    const updateFn = (s: SessionState) =>
+      s.id === id
+        ? { ...s, ...(branch !== undefined && { branch }), ...(input !== undefined && { input }), ...(output !== undefined && { output }) }
+        : s;
+    set({
+      activeSessions: get().activeSessions.map(updateFn),
+      completedSessions: get().completedSessions.map(updateFn),
+    });
   },
 
   invalidate: () => set({ stale: true }),

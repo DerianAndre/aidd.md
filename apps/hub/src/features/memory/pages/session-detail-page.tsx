@@ -8,6 +8,7 @@ import { ArrowLeft } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { ObservationCard } from '../components/observation-card';
+import { BlockEditor } from '../../../components/editor';
 import { useSessionsStore } from '../stores/sessions-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { formatDuration, formatDate, scoreColor } from '../../../lib/utils';
@@ -88,18 +89,18 @@ export function SessionDetailPage() {
       {(session.input || session.output) && (
         <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2">
           {session.input && (
-            <Card>
-              <CardContent>
-                <p className="text-[10px] font-medium uppercase text-muted-foreground">{t('page.sessionDetail.input')}</p>
-                <p className="mt-1 text-sm text-foreground whitespace-pre-wrap">{session.input}</p>
+            <Card className="gap-0 py-0 overflow-hidden">
+              <CardContent className="p-0">
+                <p className="px-4 pt-3 text-[10px] font-medium uppercase text-muted-foreground">{t('page.sessionDetail.input')}</p>
+                <BlockEditor initialMarkdown={session.input} editable={false} />
               </CardContent>
             </Card>
           )}
           {session.output && (
-            <Card>
-              <CardContent>
-                <p className="text-[10px] font-medium uppercase text-muted-foreground">{t('page.sessionDetail.output')}</p>
-                <p className="mt-1 text-sm text-foreground whitespace-pre-wrap">{session.output}</p>
+            <Card className="gap-0 py-0 overflow-hidden">
+              <CardContent className="p-0">
+                <p className="px-4 pt-3 text-[10px] font-medium uppercase text-muted-foreground">{t('page.sessionDetail.output')}</p>
+                <BlockEditor initialMarkdown={session.output} editable={false} />
               </CardContent>
             </Card>
           )}

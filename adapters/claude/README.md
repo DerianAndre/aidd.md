@@ -96,7 +96,7 @@ Cross-platform Node.js script for the status line. Receives JSON via stdin, outp
 
 ## 4. Hooks System
 
-AIDD uses 5 hooks across 3 Claude Code events for layered protocol enforcement:
+AIDD uses 4 command hooks across 3 Claude Code events for protocol enforcement:
 
 ### Hook Inventory
 
@@ -106,22 +106,13 @@ AIDD uses 5 hooks across 3 Claude Code events for layered protocol enforcement:
 | 2 | `SessionStart` | command | `resume\|compact\|clear` | Re-inject context after compaction/resume |
 | 3 | `PreCompact` | command | `""` (all) | Remind to save pending state before context loss |
 | 4 | `Stop` | command | `""` (all) | Inject session end reminder |
-| 5 | `Stop` | prompt | `""` (all) | Enforce session closure (Haiku evaluation) |
 
 ### Enforcement Strategy
 
-Three enforcement layers ensure protocol compliance:
+Two enforcement layers ensure protocol compliance:
 
-1. **CLAUDE.md** — Directive instructions make the AI want to follow the protocol
-2. **Command hooks** — Deterministic reminders injected into context (zero token cost)
-3. **Prompt hook** — LLM evaluation on Stop enforces session closure (~$0.001/call via Haiku)
-
-### Stop Hook Loop Prevention
-
-The Stop event uses the `stop_hook_active` pattern:
-
-- **First stop**: Prompt hook evaluates → returns `{ok: false}` → Claude continues and closes session
-- **Second stop**: `stop_hook_active=true` → returns `{ok: true}` → conversation ends
+1. **CLAUDE.md** — Directive instructions (MUST/ALWAYS/NEVER) make the AI follow the protocol
+2. **Command hooks** — Deterministic reminders injected into context at key events (zero token cost)
 
 ### Windows Compatibility
 

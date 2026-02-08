@@ -1,6 +1,7 @@
 use rusqlite::{Connection, OpenFlags};
 use std::path::PathBuf;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::domain::ports::inbound::{
     MemoryPort, ProjectPort, SessionSummary, SessionInfo, ObservationEntry, EvolutionStatus, PatternStats,
@@ -20,7 +21,7 @@ const REQUIRED_TABLES: &[&str] = &[
 ];
 
 /// SQLite Adapter for Memory Port.
-/// Directly queries the project's memory database (read-only).
+/// Queries and writes to the project's memory database.
 /// Dynamically resolves the active project's database path.
 pub struct SqliteMemoryAdapter {
     project_service: Arc<ProjectService>,
@@ -57,6 +58,14 @@ impl SqliteMemoryAdapter {
             .map_err(|e| format!("Failed to open database: {}", e))
     }
 
+    /// Open a read-write connection (never creates DB — no SQLITE_OPEN_CREATE)
+    fn open_rw_connection(&self) -> Result<Connection, String> {
+        let path = self.get_db_path()?;
+
+        Connection::open_with_flags(&path, OpenFlags::SQLITE_OPEN_READ_WRITE)
+            .map_err(|e| format!("Failed to open database for writing: {}", e))
+    }
+
     /// Verify that required tables exist in the database
     fn verify_schema(&self, conn: &Connection) -> Result<(), String> {
         verify_schema(conn)
@@ -70,6 +79,63 @@ impl SqliteMemoryAdapter {
         self.verify_schema(&conn)?;
         f(&conn).map_err(|e| format!("Database query failed: {}", e))
     }
+
+    fn safe_write<T, F>(&self, f: F) -> Result<T, String>
+    where
+        F: Fn(&Connection) -> Result<T, rusqlite::Error>,
+    {
+        let conn = self.open_rw_connection()?;
+        self.verify_schema(&conn)?;
+        f(&conn).map_err(|e| format!("Database write failed: {}", e))
+    }
+
+    /// Generate an ISO 8601 timestamp for the current time
+    fn now_iso() -> String {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default();
+        let secs = now.as_secs();
+        // Simple UTC ISO format — matches JS new Date().toISOString()
+        let days_since_epoch = secs / 86400;
+        let time_of_day = secs % 86400;
+        let hours = time_of_day / 3600;
+        let minutes = (time_of_day % 3600) / 60;
+        let seconds = time_of_day % 60;
+
+        // Compute year/month/day from days since epoch (1970-01-01)
+        let (year, month, day) = days_to_ymd(days_since_epoch);
+
+        format!(
+            "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}.000Z",
+            year, month, day, hours, minutes, seconds
+        )
+    }
+
+    /// Generate a date string in YYYY.MM.DD format
+    fn today_dot() -> String {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default();
+        let days_since_epoch = now.as_secs() / 86400;
+        let (year, month, day) = days_to_ymd(days_since_epoch);
+        format!("{:04}.{:02}.{:02}", year, month, day)
+    }
+}
+
+/// Convert days since Unix epoch to (year, month, day)
+fn days_to_ymd(days: u64) -> (u64, u64, u64) {
+    // Algorithm from http://howardhinnant.github.io/date_algorithms.html
+    let z = days + 719468;
+    let era = z / 146097;
+    let doe = z - era * 146097;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = if m <= 2 { y + 1 } else { y };
+    (y, m, d)
 }
 
 /// Verify that required tables exist in the database.
@@ -429,7 +495,7 @@ impl MemoryPort for SqliteMemoryAdapter {
 
     fn delete_permanent_memory(&self, _memory_type: &str, id: &str) -> Result<(), String> {
         let id = id.to_string();
-        self.safe_query(move |conn| {
+        self.safe_write(move |conn| {
             conn.execute(
                 "DELETE FROM permanent_memory WHERE id = ?1",
                 [&id],
@@ -440,7 +506,7 @@ impl MemoryPort for SqliteMemoryAdapter {
                 [],
             ).ok(); // Ignore FTS errors
             Ok(())
-        }).map(|_| ())
+        })
     }
 
     fn list_drafts(&self) -> Result<Vec<serde_json::Value>, String> {
@@ -540,6 +606,433 @@ impl MemoryPort for SqliteMemoryAdapter {
 
             Ok(artifacts)
         }).or_else(|_| Ok(vec![]))
+    }
+
+    // --- Write operations ---
+
+    fn create_permanent_memory(&self, memory_type: &str, title: &str, content: &str) -> Result<String, String> {
+        let id = Uuid::new_v4().to_string();
+        let memory_type = memory_type.to_string();
+        let title = title.to_string();
+        let content = content.to_string();
+        let now = Self::now_iso();
+        let id_clone = id.clone();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "INSERT INTO permanent_memory (id, type, title, content, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+                rusqlite::params![id_clone, memory_type, title, content, now],
+            )?;
+            Ok(id_clone.clone())
+        })
+    }
+
+    fn update_permanent_memory(&self, id: &str, title: &str, content: &str) -> Result<(), String> {
+        let id = id.to_string();
+        let title = title.to_string();
+        let content = content.to_string();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "UPDATE permanent_memory SET title = ?1, content = ?2 WHERE id = ?3",
+                rusqlite::params![title, content, id],
+            )?;
+            Ok(())
+        })
+    }
+
+    fn create_artifact(&self, artifact_type: &str, feature: &str, title: &str, description: &str, content: &str) -> Result<String, String> {
+        let id = Uuid::new_v4().to_string();
+        let artifact_type = artifact_type.to_string();
+        let feature = feature.to_string();
+        let title = title.to_string();
+        let description = description.to_string();
+        let content = content.to_string();
+        let now = Self::now_iso();
+        let date = Self::today_dot();
+        let id_clone = id.clone();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "INSERT INTO artifacts (id, type, feature, status, title, description, content, date, created_at, updated_at) \
+                 VALUES (?1, ?2, ?3, 'active', ?4, ?5, ?6, ?7, ?8, ?8)",
+                rusqlite::params![id_clone, artifact_type, feature, title, description, content, date, now],
+            )?;
+            Ok(id_clone.clone())
+        })
+    }
+
+    fn update_artifact(&self, id: &str, artifact_type: &str, feature: &str, title: &str, description: &str, content: &str, status: &str) -> Result<(), String> {
+        let id = id.to_string();
+        let artifact_type = artifact_type.to_string();
+        let feature = feature.to_string();
+        let title = title.to_string();
+        let description = description.to_string();
+        let content = content.to_string();
+        let status = status.to_string();
+        let now = Self::now_iso();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "UPDATE artifacts SET type = ?1, feature = ?2, title = ?3, description = ?4, content = ?5, status = ?6, updated_at = ?7 WHERE id = ?8",
+                rusqlite::params![artifact_type, feature, title, description, content, status, now, id],
+            )?;
+            Ok(())
+        })
+    }
+
+    fn archive_artifact(&self, id: &str) -> Result<(), String> {
+        let id = id.to_string();
+        let now = Self::now_iso();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "UPDATE artifacts SET status = 'done', updated_at = ?1 WHERE id = ?2",
+                rusqlite::params![now, id],
+            )?;
+            Ok(())
+        })
+    }
+
+    fn delete_artifact(&self, id: &str) -> Result<(), String> {
+        let id = id.to_string();
+        self.safe_write(move |conn| {
+            conn.execute("DELETE FROM artifacts WHERE id = ?1", rusqlite::params![id])?;
+            Ok(())
+        })
+    }
+
+    fn approve_evolution_candidate(&self, id: &str) -> Result<(), String> {
+        let id = id.to_string();
+        let now = Self::now_iso();
+        let log_id = Uuid::new_v4().to_string();
+        self.safe_write(move |conn| {
+            // Get candidate title and confidence for the log entry
+            let (title, confidence): (String, f64) = conn.query_row(
+                "SELECT title, confidence FROM evolution_candidates WHERE id = ?1",
+                [&id],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )?;
+            conn.execute(
+                "UPDATE evolution_candidates SET status = 'approved', updated_at = ?1 WHERE id = ?2",
+                rusqlite::params![now, id],
+            )?;
+            conn.execute(
+                "INSERT INTO evolution_log (id, candidate_id, action, title, confidence, timestamp) \
+                 VALUES (?1, ?2, 'approved', ?3, ?4, ?5)",
+                rusqlite::params![log_id, id, title, confidence, now],
+            )?;
+            Ok(())
+        })
+    }
+
+    fn reject_evolution_candidate(&self, id: &str, reason: &str) -> Result<(), String> {
+        let id = id.to_string();
+        let reason = reason.to_string();
+        let now = Self::now_iso();
+        let log_id = Uuid::new_v4().to_string();
+        self.safe_write(move |conn| {
+            let (title, confidence): (String, f64) = conn.query_row(
+                "SELECT title, confidence FROM evolution_candidates WHERE id = ?1",
+                [&id],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )?;
+            // Store rejection reason in data JSON
+            conn.execute(
+                "UPDATE evolution_candidates SET status = 'rejected', \
+                 data = json_set(data, '$.rejectionReason', ?1), updated_at = ?2 WHERE id = ?3",
+                rusqlite::params![reason, now, id],
+            )?;
+            conn.execute(
+                "INSERT INTO evolution_log (id, candidate_id, action, title, confidence, timestamp) \
+                 VALUES (?1, ?2, 'rejected', ?3, ?4, ?5)",
+                rusqlite::params![log_id, id, title, confidence, now],
+            )?;
+            Ok(())
+        })
+    }
+
+    fn approve_draft(&self, id: &str) -> Result<(), String> {
+        let id = id.to_string();
+        let now = Self::now_iso();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "UPDATE drafts SET status = 'approved', \
+                 data = json_set(data, '$.approvedAt', ?1), updated_at = ?1 WHERE id = ?2",
+                rusqlite::params![now, id],
+            )?;
+            Ok(())
+        })
+    }
+
+    fn reject_draft(&self, id: &str, reason: &str) -> Result<(), String> {
+        let id = id.to_string();
+        let reason = reason.to_string();
+        let now = Self::now_iso();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "UPDATE drafts SET status = 'rejected', \
+                 data = json_set(data, '$.rejectedReason', ?1), updated_at = ?2 WHERE id = ?3",
+                rusqlite::params![reason, now, id],
+            )?;
+            Ok(())
+        })
+    }
+
+    fn delete_session(&self, id: &str) -> Result<(), String> {
+        let id = id.to_string();
+        self.safe_write(move |conn| {
+            // Cascade: delete observations first, then the session
+            conn.execute("DELETE FROM observations WHERE session_id = ?1", rusqlite::params![id])?;
+            conn.execute("DELETE FROM sessions WHERE id = ?1", rusqlite::params![id])?;
+            Ok(())
+        })
+    }
+
+    fn update_session(&self, id: &str, branch: Option<&str>, input: Option<&str>, output: Option<&str>) -> Result<(), String> {
+        let id = id.to_string();
+        let branch = branch.map(|s| s.to_string());
+        let input = input.map(|s| s.to_string());
+        let output = output.map(|s| s.to_string());
+        self.safe_write(move |conn| {
+            // Read current data blob
+            let current_data: String = conn.query_row(
+                "SELECT data FROM sessions WHERE id = ?1",
+                [&id],
+                |row| row.get(0),
+            )?;
+            let mut data: serde_json::Value = serde_json::from_str(&current_data)
+                .unwrap_or(serde_json::json!({}));
+
+            if let Some(ref branch_val) = branch {
+                data["branch"] = serde_json::json!(branch_val);
+            }
+            if let Some(ref input_val) = input {
+                data["input"] = serde_json::json!(input_val);
+            }
+            if let Some(ref output_val) = output {
+                data["output"] = serde_json::json!(output_val);
+            }
+
+            let updated = serde_json::to_string(&data).unwrap_or_default();
+            // Update both the branch column and the data blob
+            if let Some(ref branch_val) = branch {
+                conn.execute(
+                    "UPDATE sessions SET branch = ?1, data = ?2 WHERE id = ?3",
+                    rusqlite::params![branch_val, updated, id],
+                )?;
+            } else {
+                conn.execute(
+                    "UPDATE sessions SET data = ?1 WHERE id = ?2",
+                    rusqlite::params![updated, id],
+                )?;
+            }
+            Ok(())
+        })
+    }
+
+    // --- Observation CRUD ---
+
+    fn create_observation(
+        &self,
+        session_id: &str,
+        obs_type: &str,
+        title: &str,
+        narrative: Option<&str>,
+        facts: Option<&str>,
+        concepts: Option<&str>,
+        files_read: Option<&str>,
+        files_modified: Option<&str>,
+        discovery_tokens: Option<i64>,
+    ) -> Result<String, String> {
+        let id = Uuid::new_v4().to_string();
+        let session_id = session_id.to_string();
+        let obs_type = obs_type.to_string();
+        let title = title.to_string();
+        let narrative = narrative.map(|s| s.to_string());
+        let facts = facts.map(|s| s.to_string());
+        let concepts = concepts.map(|s| s.to_string());
+        let files_read = files_read.map(|s| s.to_string());
+        let files_modified = files_modified.map(|s| s.to_string());
+        let now = Self::now_iso();
+        let id_clone = id.clone();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "INSERT INTO observations (id, session_id, type, title, content, facts, concepts, files_read, files_modified, discovery_tokens, created_at) \
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+                rusqlite::params![
+                    id_clone,
+                    session_id,
+                    obs_type,
+                    title,
+                    narrative.as_deref().unwrap_or(""),
+                    facts.as_deref().unwrap_or("[]"),
+                    concepts.as_deref().unwrap_or("[]"),
+                    files_read.as_deref().unwrap_or("[]"),
+                    files_modified.as_deref().unwrap_or("[]"),
+                    discovery_tokens.unwrap_or(0),
+                    now,
+                ],
+            )?;
+            Ok(id_clone.clone())
+        })
+    }
+
+    fn update_observation(
+        &self,
+        id: &str,
+        obs_type: &str,
+        title: &str,
+        narrative: Option<&str>,
+        facts: Option<&str>,
+        concepts: Option<&str>,
+        files_read: Option<&str>,
+        files_modified: Option<&str>,
+        discovery_tokens: Option<i64>,
+    ) -> Result<(), String> {
+        let id = id.to_string();
+        let obs_type = obs_type.to_string();
+        let title = title.to_string();
+        let narrative = narrative.unwrap_or("").to_string();
+        let facts = facts.unwrap_or("[]").to_string();
+        let concepts = concepts.unwrap_or("[]").to_string();
+        let files_read = files_read.unwrap_or("[]").to_string();
+        let files_modified = files_modified.unwrap_or("[]").to_string();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "UPDATE observations SET type = ?1, title = ?2, content = ?3, facts = ?4, concepts = ?5, files_read = ?6, files_modified = ?7, discovery_tokens = ?8 WHERE id = ?9",
+                rusqlite::params![obs_type, title, narrative, facts, concepts, files_read, files_modified, discovery_tokens.unwrap_or(0), id],
+            )?;
+            Ok(())
+        })
+    }
+
+    fn delete_observation(&self, id: &str) -> Result<(), String> {
+        let id = id.to_string();
+        self.safe_write(move |conn| {
+            conn.execute("DELETE FROM observations WHERE id = ?1", rusqlite::params![id])?;
+            Ok(())
+        })
+    }
+
+    // --- Evolution Candidate CRUD ---
+
+    fn create_evolution_candidate(
+        &self,
+        evo_type: &str,
+        title: &str,
+        confidence: f64,
+        data: &str,
+    ) -> Result<String, String> {
+        let id = Uuid::new_v4().to_string();
+        let evo_type = evo_type.to_string();
+        let title = title.to_string();
+        let data = data.to_string();
+        let now = Self::now_iso();
+        let id_clone = id.clone();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "INSERT INTO evolution_candidates (id, type, title, confidence, status, data, created_at, updated_at) \
+                 VALUES (?1, ?2, ?3, ?4, 'pending', ?5, ?6, ?6)",
+                rusqlite::params![id_clone, evo_type, title, confidence, data, now],
+            )?;
+            Ok(id_clone.clone())
+        })
+    }
+
+    fn update_evolution_candidate_entry(
+        &self,
+        id: &str,
+        evo_type: &str,
+        title: &str,
+        confidence: f64,
+        data: &str,
+    ) -> Result<(), String> {
+        let id = id.to_string();
+        let evo_type = evo_type.to_string();
+        let title = title.to_string();
+        let data = data.to_string();
+        let now = Self::now_iso();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "UPDATE evolution_candidates SET type = ?1, title = ?2, confidence = ?3, data = ?4, updated_at = ?5 WHERE id = ?6",
+                rusqlite::params![evo_type, title, confidence, data, now, id],
+            )?;
+            Ok(())
+        })
+    }
+
+    fn delete_evolution_candidate(&self, id: &str) -> Result<(), String> {
+        let id = id.to_string();
+        self.safe_write(move |conn| {
+            conn.execute("DELETE FROM evolution_candidates WHERE id = ?1", rusqlite::params![id])?;
+            Ok(())
+        })
+    }
+
+    // --- Draft CRUD ---
+
+    fn create_draft(
+        &self,
+        category: &str,
+        title: &str,
+        filename: &str,
+        content: &str,
+        confidence: f64,
+        source: &str,
+    ) -> Result<String, String> {
+        let id = Uuid::new_v4().to_string();
+        let category = category.to_string();
+        let title = title.to_string();
+        let content = content.to_string();
+        let now = Self::now_iso();
+        let data = serde_json::json!({
+            "filename": filename,
+            "confidence": confidence,
+            "source": source,
+        }).to_string();
+        let id_clone = id.clone();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "INSERT INTO drafts (id, category, title, content, status, data, created_at, updated_at) \
+                 VALUES (?1, ?2, ?3, ?4, 'pending', ?5, ?6, ?6)",
+                rusqlite::params![id_clone, category, title, content, data, now],
+            )?;
+            Ok(id_clone.clone())
+        })
+    }
+
+    fn update_draft(&self, id: &str, title: &str, content: &str, category: &str, confidence: Option<f64>, filename: Option<&str>) -> Result<(), String> {
+        let id = id.to_string();
+        let title = title.to_string();
+        let content = content.to_string();
+        let category = category.to_string();
+        let confidence = confidence;
+        let filename = filename.map(|s| s.to_string());
+        let now = Self::now_iso();
+        self.safe_write(move |conn| {
+            conn.execute(
+                "UPDATE drafts SET title = ?1, content = ?2, category = ?3, updated_at = ?4 WHERE id = ?5",
+                rusqlite::params![title, content, category, now, id],
+            )?;
+            // Update confidence and filename in the data JSON blob
+            if let Some(conf) = confidence {
+                conn.execute(
+                    "UPDATE drafts SET data = json_set(data, '$.confidence', ?1) WHERE id = ?2",
+                    rusqlite::params![conf, id],
+                )?;
+            }
+            if let Some(ref fname) = filename {
+                conn.execute(
+                    "UPDATE drafts SET data = json_set(data, '$.filename', ?1) WHERE id = ?2",
+                    rusqlite::params![fname, id],
+                )?;
+            }
+            Ok(())
+        })
+    }
+
+    fn delete_draft(&self, id: &str) -> Result<(), String> {
+        let id = id.to_string();
+        self.safe_write(move |conn| {
+            conn.execute("DELETE FROM drafts WHERE id = ?1", rusqlite::params![id])?;
+            Ok(())
+        })
     }
 }
 

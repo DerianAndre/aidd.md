@@ -61,10 +61,6 @@
           {
             "type": "command",
             "command": "echo [AIDD Protocol] Before ending: you MUST call aidd_session with action end and provide outcome { testsPassing, complianceScore, reverts, reworks } if you have not already."
-          },
-          {
-            "type": "prompt",
-            "prompt": "You are an AIDD protocol compliance checker. Check the input field stop_hook_active. If stop_hook_active is true, respond exactly: {\"ok\": true}. If stop_hook_active is false or absent: the AIDD protocol REQUIRES calling aidd_session with action 'end' before closing. Respond exactly: {\"ok\": false, \"reason\": \"AIDD protocol: you must call aidd_session { action: 'end', id: SESSION_ID, outcome: { testsPassing: bool, complianceScore: 0-100, reverts: 0, reworks: 0 } } before closing the conversation.\"}."
           }
         ]
       }

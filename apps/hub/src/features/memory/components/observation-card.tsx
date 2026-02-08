@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { formatRelativeTime } from "../../../lib/utils";
 import type { SessionObservation, ObservationType } from "../../../lib/types";
 
@@ -21,16 +22,18 @@ const TYPE_COLORS: Record<
 
 interface ObservationCardProps {
   observation: SessionObservation;
+  onEdit?: (observation: SessionObservation) => void;
+  onDelete?: (id: string) => void;
 }
 
-export function ObservationCard({ observation }: ObservationCardProps) {
+export function ObservationCard({ observation, onEdit, onDelete }: ObservationCardProps) {
   const [expanded, setExpanded] = useState(false);
   const hasDetails =
     observation.narrative ||
     (observation.facts && observation.facts.length > 0);
 
   return (
-    <Card className="border border-border bg-muted/50 gap-2">
+    <Card className="group border border-border bg-muted/50 gap-2">
       <CardHeader
         className="cursor-pointer"
         onClick={() => hasDetails && setExpanded(!expanded)}
@@ -57,6 +60,28 @@ export function ObservationCard({ observation }: ObservationCardProps) {
             <p className="mt-1 text-sm font-medium text-foreground">
               {observation.title}
             </p>
+          </div>
+          <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => { e.stopPropagation(); onEdit(observation); }}
+              >
+                <Pencil size={14} />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-destructive"
+                onClick={(e) => { e.stopPropagation(); onDelete(observation.id); }}
+              >
+                <Trash2 size={14} />
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>

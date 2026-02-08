@@ -130,6 +130,8 @@ export interface EvolutionCandidate {
   evidence: string[];
   discoveryTokensTotal: number;
   suggestedAction: string;
+  modelScope?: string;
+  modelEvidence?: Record<string, number>;
   createdAt: string;
   updatedAt: string;
 }

@@ -219,6 +219,71 @@ impl MemoryPort for McpMemoryAdapter {
         Ok(vec![])
     }
 
+    // Write operations — not supported via MCP adapter (use SQLite adapter)
+    fn create_permanent_memory(&self, _memory_type: &str, _title: &str, _content: &str) -> Result<String, String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn update_permanent_memory(&self, _id: &str, _title: &str, _content: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn create_artifact(&self, _artifact_type: &str, _feature: &str, _title: &str, _description: &str, _content: &str) -> Result<String, String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn update_artifact(&self, _id: &str, _artifact_type: &str, _feature: &str, _title: &str, _description: &str, _content: &str, _status: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn archive_artifact(&self, _id: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn delete_artifact(&self, _id: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn approve_evolution_candidate(&self, _id: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn reject_evolution_candidate(&self, _id: &str, _reason: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn approve_draft(&self, _id: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn reject_draft(&self, _id: &str, _reason: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn delete_session(&self, _id: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn update_session(&self, _id: &str, _branch: Option<&str>, _input: Option<&str>, _output: Option<&str>) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn create_observation(&self, _session_id: &str, _obs_type: &str, _title: &str, _narrative: Option<&str>, _facts: Option<&str>, _concepts: Option<&str>, _files_read: Option<&str>, _files_modified: Option<&str>, _discovery_tokens: Option<i64>) -> Result<String, String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn update_observation(&self, _id: &str, _obs_type: &str, _title: &str, _narrative: Option<&str>, _facts: Option<&str>, _concepts: Option<&str>, _files_read: Option<&str>, _files_modified: Option<&str>, _discovery_tokens: Option<i64>) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn delete_observation(&self, _id: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn create_evolution_candidate(&self, _evo_type: &str, _title: &str, _confidence: f64, _data: &str) -> Result<String, String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn update_evolution_candidate_entry(&self, _id: &str, _evo_type: &str, _title: &str, _confidence: f64, _data: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn delete_evolution_candidate(&self, _id: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn create_draft(&self, _category: &str, _title: &str, _filename: &str, _content: &str, _confidence: f64, _source: &str) -> Result<String, String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn update_draft(&self, _id: &str, _title: &str, _content: &str, _category: &str, _confidence: Option<f64>, _filename: Option<&str>) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+    fn delete_draft(&self, _id: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
+
     fn get_pattern_stats(&self) -> Result<PatternStats, String> {
         let result = self
             .client

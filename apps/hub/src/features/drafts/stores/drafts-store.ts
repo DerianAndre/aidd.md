@@ -1,6 +1,13 @@
 import { create } from 'zustand';
-import { listDrafts } from '../../../lib/tauri';
-import type { DraftEntry } from '../../../lib/types';
+import {
+  listDrafts,
+  approveDraft,
+  rejectDraft,
+  createDraft,
+  updateDraft,
+  deleteDraft,
+} from '../../../lib/tauri';
+import type { DraftEntry, DraftCategory } from '../../../lib/types';
 
 const STALE_TTL = 30_000;
 
@@ -16,6 +23,12 @@ interface DraftsStoreState {
   selectDraft: (draft: DraftEntry) => void;
   clearSelection: () => void;
   invalidate: () => void;
+
+  approveDraft: (id: string) => Promise<void>;
+  rejectDraft: (id: string, reason: string) => Promise<void>;
+  addDraft: (category: DraftCategory, title: string, filename: string, content: string, confidence: number, source: string) => Promise<void>;
+  editDraft: (id: string, title: string, content: string, category: DraftCategory, confidence?: number, filename?: string) => Promise<void>;
+  removeDraft: (id: string) => Promise<void>;
 }
 
 export const useDraftsStore = create<DraftsStoreState>((set, get) => ({
@@ -53,4 +66,39 @@ export const useDraftsStore = create<DraftsStoreState>((set, get) => ({
   clearSelection: () => set({ selectedDraftId: null, draftContent: null }),
 
   invalidate: () => set({ stale: true }),
+
+  approveDraft: async (id) => {
+    await approveDraft(id);
+    set({
+      drafts: get().drafts.map((d) =>
+        d.id === id ? { ...d, status: 'approved' as const } : d,
+      ),
+    });
+  },
+
+  rejectDraft: async (id, reason) => {
+    await rejectDraft(id, reason);
+    set({
+      drafts: get().drafts.map((d) =>
+        d.id === id ? { ...d, status: 'rejected' as const, rejectedReason: reason } : d,
+      ),
+    });
+  },
+
+  addDraft: async (category, title, filename, content, confidence, source) => {
+    await createDraft(category, title, filename, content, confidence, source);
+    set({ stale: true });
+    get().fetch();
+  },
+
+  editDraft: async (id, title, content, category, confidence, filename) => {
+    await updateDraft(id, title, content, category, confidence, filename);
+    set({ stale: true });
+    get().fetch();
+  },
+
+  removeDraft: async (id) => {
+    await deleteDraft(id);
+    set({ drafts: get().drafts.filter((d) => d.id !== id) });
+  },
 }));
