@@ -1,8 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Plus } from 'lucide-react';
+import { Plus, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { SearchInput } from '@/components/ui/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Chip } from '@/components/ui/chip';
@@ -11,7 +21,7 @@ import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { ConfirmDialog } from '../../../components/confirm-dialog';
 import { ArtifactCard } from '../components/artifact-card';
-import { ArtifactFormDialog } from '../components/artifact-form-dialog';
+import { BlockEditor } from '../../../components/editor';
 import { useArtifactsStore } from '../stores/artifacts-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { ROUTES } from '../../../lib/constants';
@@ -19,6 +29,11 @@ import { groupByFeature, TYPE_COLORS } from '../lib/parse-artifact';
 import { showSuccess, showError } from '../../../lib/toast';
 import { ARTIFACT_TYPES } from '../../../lib/types';
 import type { ArtifactType, ArtifactStatus } from '../../../lib/types';
+
+const TYPE_OPTIONS = ARTIFACT_TYPES.map((t) => ({
+  label: t.charAt(0).toUpperCase() + t.slice(1),
+  value: t,
+}));
 
 export function ArtifactsPage() {
   const { t } = useTranslation();
@@ -29,8 +44,14 @@ export function ArtifactsPage() {
   const [activeTypes, setActiveTypes] = useState<Set<ArtifactType>>(new Set());
   const [tab, setTab] = useState<ArtifactStatus | 'all'>('active');
 
-  // Form dialog state
-  const [formOpen, setFormOpen] = useState(false);
+  // Inline create state
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [cType, setCType] = useState<string>('plan');
+  const [cFeature, setCFeature] = useState('');
+  const [cTitle, setCTitle] = useState('');
+  const [cDescription, setCDescription] = useState('');
+  const [cContent, setCContent] = useState('');
 
   // Confirm dialog state
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; action: 'archive' | 'delete' } | null>(null);
@@ -85,14 +106,29 @@ export function ArtifactsPage() {
     navigate(`${ROUTES.ARTIFACTS}/${id}`);
   };
 
-  const handleCreate = async (type: string, feature: string, title: string, description: string, content: string) => {
+  const startCreate = () => {
+    setCType('plan');
+    setCFeature('');
+    setCTitle('');
+    setCDescription('');
+    setCContent('');
+    setCreating(true);
+  };
+
+  const cancelCreate = () => setCreating(false);
+
+  const handleCreate = useCallback(async () => {
+    setSaving(true);
     try {
-      await create(type, feature, title, description, content);
+      await create(cType, cFeature, cTitle, cDescription, cContent);
       showSuccess(t('page.artifacts.createSuccess'));
+      setCreating(false);
     } catch {
       showError(t('page.artifacts.createError'));
+    } finally {
+      setSaving(false);
     }
-  };
+  }, [cType, cFeature, cTitle, cDescription, cContent, create, t]);
 
   const handleConfirmAction = async () => {
     if (!confirmTarget) return;
@@ -109,13 +145,23 @@ export function ArtifactsPage() {
     }
   };
 
+  // Escape key cancels
+  useEffect(() => {
+    if (!creating) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') cancelCreate();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [creating]);
+
   return (
     <div>
       <PageHeader
         title={t('page.artifacts.title')}
         description={t('page.artifacts.description')}
         actions={
-          <Button size="sm" onClick={() => setFormOpen(true)}>
+          <Button size="sm" onClick={startCreate} disabled={creating}>
             <Plus size={16} /> {t('page.artifacts.createArtifact')}
           </Button>
         }
@@ -152,6 +198,57 @@ export function ArtifactsPage() {
         ))}
       </div>
 
+      {/* Create form — inline card */}
+      {creating && (
+        <Card className="mb-4 border border-accent bg-accent/5">
+          <CardContent>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="space-y-1.5">
+                  <Label>{t('page.artifacts.typeLabel')}</Label>
+                  <Select value={cType} onValueChange={setCType}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TYPE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t('page.artifacts.featureLabel')}</Label>
+                  <Input value={cFeature} onChange={(e) => setCFeature(e.target.value)} placeholder="Feature slug..." />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t('page.artifacts.titleLabel')}</Label>
+                  <Input value={cTitle} onChange={(e) => setCTitle(e.target.value)} placeholder="Artifact title..." />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t('page.artifacts.descriptionLabel')}</Label>
+                <Input value={cDescription} onChange={(e) => setCDescription(e.target.value)} placeholder="Short description..." />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t('page.artifacts.contentLabel')}</Label>
+                <div className="rounded-lg border border-border overflow-hidden">
+                  <BlockEditor initialMarkdown={cContent} editable={true} onChange={setCContent} />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button size="sm" disabled={!cTitle.trim() || !cFeature.trim() || saving} onClick={handleCreate}>
+                  <Save size={14} /> {saving ? t('common.saving') : t('common.save')}
+                </Button>
+                <Button size="sm" variant="outline" onClick={cancelCreate} disabled={saving}>
+                  {t('common.cancel')}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Tabs value={tab} onValueChange={(v) => setTab(v as ArtifactStatus | 'all')}>
         <TabsList>
           <TabsTrigger value="active">
@@ -180,7 +277,7 @@ export function ArtifactsPage() {
               }
               action={
                 !search && activeTypes.size === 0 ? (
-                  <Button variant="outline" size="sm" onClick={() => setFormOpen(true)}>
+                  <Button variant="outline" size="sm" onClick={startCreate}>
                     <Plus size={14} /> {t('page.artifacts.createArtifact')}
                   </Button>
                 ) : undefined
@@ -212,13 +309,6 @@ export function ArtifactsPage() {
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Create dialog */}
-      <ArtifactFormDialog
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSubmit={handleCreate}
-      />
 
       {/* Confirm archive/delete dialog */}
       <ConfirmDialog

@@ -83,6 +83,10 @@ pub trait MemoryPort: Send + Sync {
     /// Update a session's editable fields in its JSON data blob.
     fn update_session(&self, id: &str, branch: Option<&str>, input: Option<&str>, output: Option<&str>) -> Result<(), String>;
 
+    /// Update a session's full data via JSON merge. Reads existing data blob,
+    /// deep-merges the provided JSON fields, and writes back.
+    fn update_session_full(&self, id: &str, updates_json: &str) -> Result<(), String>;
+
     // --- Observation CRUD ---
 
     /// Create an observation. Returns the new observation ID.

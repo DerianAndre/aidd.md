@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
-import { listAllSessions, deleteSession, updateSession } from '../../../lib/tauri';
-import type { SessionState, SessionObservation } from '../../../lib/types';
+import { listAllSessions, deleteSession, updateSession, updateSessionFull } from '../../../lib/tauri';
+import type { SessionState, SessionObservation, SessionUpdatePayload } from '../../../lib/types';
 
 const STALE_TTL = 30_000; // 30 seconds
 
@@ -16,6 +16,7 @@ interface SessionsStoreState {
   fetchObservations: (projectRoot: string, sessionId: string, status: 'active' | 'completed') => Promise<SessionObservation[]>;
   removeSession: (id: string) => Promise<void>;
   editSession: (id: string, branch?: string, input?: string, output?: string) => Promise<void>;
+  editSessionFull: (id: string, updates: SessionUpdatePayload) => Promise<void>;
   invalidate: () => void;
 }
 
@@ -83,6 +84,34 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
     set({
       activeSessions: get().activeSessions.map(updateFn),
       completedSessions: get().completedSessions.map(updateFn),
+    });
+  },
+
+  editSessionFull: async (id, updates) => {
+    await updateSessionFull(id, JSON.stringify(updates));
+    // Optimistically merge updates into local state
+    const mergeFn = (s: SessionState) => {
+      if (s.id !== id) return s;
+      const merged = { ...s };
+      if (updates.branch !== undefined) merged.branch = updates.branch;
+      if (updates.input !== undefined) merged.input = updates.input;
+      if (updates.output !== undefined) merged.output = updates.output;
+      if (updates.taskClassification) {
+        merged.taskClassification = { ...merged.taskClassification, ...updates.taskClassification } as SessionState['taskClassification'];
+      }
+      if (updates.outcome) {
+        merged.outcome = { ...merged.outcome, ...updates.outcome } as SessionState['outcome'];
+      }
+      if (updates.tasksCompleted !== undefined) merged.tasksCompleted = updates.tasksCompleted;
+      if (updates.tasksPending !== undefined) merged.tasksPending = updates.tasksPending;
+      if (updates.filesModified !== undefined) merged.filesModified = updates.filesModified;
+      if (updates.decisions !== undefined) merged.decisions = updates.decisions;
+      if (updates.errorsResolved !== undefined) merged.errorsResolved = updates.errorsResolved;
+      return merged;
+    };
+    set({
+      activeSessions: get().activeSessions.map(mergeFn),
+      completedSessions: get().completedSessions.map(mergeFn),
     });
   },
 

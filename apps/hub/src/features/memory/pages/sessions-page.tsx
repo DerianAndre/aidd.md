@@ -7,21 +7,17 @@ import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { ConfirmDialog } from '../../../components/confirm-dialog';
 import { SessionCard } from '../components/session-card';
-import { SessionEditDialog } from '../components/session-edit-dialog';
 import { useSessionsStore } from '../stores/sessions-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { showSuccess, showError } from '../../../lib/toast';
-import type { SessionState } from '../../../lib/types';
 
 export function SessionsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
-  const { activeSessions, completedSessions, loading, stale, fetchAll, removeSession, editSession } = useSessionsStore();
+  const { activeSessions, completedSessions, loading, stale, fetchAll, removeSession } = useSessionsStore();
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [editTarget, setEditTarget] = useState<SessionState | undefined>();
-  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     if (activeProject?.path && stale) {
@@ -57,16 +53,7 @@ export function SessionsPage() {
     }
   };
 
-  const handleEdit = async (branch?: string, input?: string, output?: string) => {
-    if (!editTarget) return;
-    try {
-      await editSession(editTarget.id, branch, input, output);
-      showSuccess(t('page.sessions.editSuccess'));
-    } catch {
-      showError(t('page.sessions.editError'));
-      throw new Error('failed');
-    }
-  };
+  const navigateToDetail = (id: string) => navigate(`/sessions/${encodeURIComponent(id)}`);
 
   return (
     <div>
@@ -104,8 +91,8 @@ export function SessionsPage() {
               <SessionCard
                 key={session.id}
                 session={session}
-                onPress={() => navigate(`/sessions/${encodeURIComponent(session.id)}`)}
-                onEdit={(s) => { setEditTarget(s); setEditOpen(true); }}
+                onPress={() => navigateToDetail(session.id)}
+                onEdit={() => navigateToDetail(session.id)}
               />
             ))}
           </div>
@@ -120,21 +107,14 @@ export function SessionsPage() {
               <SessionCard
                 key={session.id}
                 session={session}
-                onPress={() => navigate(`/sessions/${encodeURIComponent(session.id)}`)}
-                onEdit={(s) => { setEditTarget(s); setEditOpen(true); }}
+                onPress={() => navigateToDetail(session.id)}
+                onEdit={() => navigateToDetail(session.id)}
                 onDelete={(id) => setDeleteTarget(id)}
               />
             ))}
           </div>
         </div>
       )}
-
-      <SessionEditDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        session={editTarget}
-        onSubmit={handleEdit}
-      />
 
       {/* Delete confirmation */}
       <ConfirmDialog

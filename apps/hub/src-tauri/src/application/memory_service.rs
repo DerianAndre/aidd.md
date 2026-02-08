@@ -133,6 +133,10 @@ impl MemoryService {
         self.memory_port.update_session(id, branch, input, output)
     }
 
+    pub fn update_session_full(&self, id: &str, updates_json: &str) -> Result<(), String> {
+        self.memory_port.update_session_full(id, updates_json)
+    }
+
     // --- Observation CRUD ---
 
     pub fn create_observation(

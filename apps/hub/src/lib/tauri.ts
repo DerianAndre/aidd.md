@@ -343,6 +343,9 @@ export const deleteSession = (id: string) =>
 export const updateSession = (id: string, branch?: string, input?: string, output?: string) =>
   invoke<void>('update_session', { id, branch: branch ?? null, input: input ?? null, output: output ?? null });
 
+export const updateSessionFull = (id: string, updatesJson: string) =>
+  invoke<void>('update_session_full', { id, updatesJson });
+
 // Observation CRUD
 export const createObservation = (
   sessionId: string,

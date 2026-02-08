@@ -826,6 +826,61 @@ impl MemoryPort for SqliteMemoryAdapter {
         })
     }
 
+    fn update_session_full(&self, id: &str, updates_json: &str) -> Result<(), String> {
+        let id = id.to_string();
+        let updates_json = updates_json.to_string();
+        self.safe_write(move |conn| {
+            // Read current data blob
+            let current_data: String = conn.query_row(
+                "SELECT data FROM sessions WHERE id = ?1",
+                [&id],
+                |row| row.get(0),
+            )?;
+            let mut data: serde_json::Value = serde_json::from_str(&current_data)
+                .unwrap_or(serde_json::json!({}));
+
+            let updates: serde_json::Value = serde_json::from_str(&updates_json)
+                .unwrap_or(serde_json::json!({}));
+
+            // Deep-merge: overwrite top-level keys, nested-merge for objects
+            if let (Some(data_obj), Some(updates_obj)) = (data.as_object_mut(), updates.as_object()) {
+                for (key, value) in updates_obj {
+                    // Nested objects: merge keys instead of replacing the whole object
+                    if (key == "taskClassification" || key == "outcome") && value.is_object() {
+                        if let Some(nested) = value.as_object() {
+                            let existing = data_obj
+                                .entry(key.clone())
+                                .or_insert(serde_json::json!({}));
+                            if let Some(existing_obj) = existing.as_object_mut() {
+                                for (nk, nv) in nested {
+                                    existing_obj.insert(nk.clone(), nv.clone());
+                                }
+                            }
+                        }
+                    } else {
+                        data_obj.insert(key.clone(), value.clone());
+                    }
+                }
+            }
+
+            let updated = serde_json::to_string(&data).unwrap_or_default();
+
+            // If branch was updated, also update the branch column
+            if let Some(branch_val) = updates.get("branch").and_then(|v| v.as_str()) {
+                conn.execute(
+                    "UPDATE sessions SET branch = ?1, data = ?2 WHERE id = ?3",
+                    rusqlite::params![branch_val, updated, id],
+                )?;
+            } else {
+                conn.execute(
+                    "UPDATE sessions SET data = ?1 WHERE id = ?2",
+                    rusqlite::params![updated, id],
+                )?;
+            }
+            Ok(())
+        })
+    }
+
     // --- Observation CRUD ---
 
     fn create_observation(

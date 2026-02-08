@@ -148,6 +148,7 @@ pub fn run() {
             presentation::commands::memory_commands::reject_draft,
             presentation::commands::memory_commands::delete_session,
             presentation::commands::memory_commands::update_session,
+            presentation::commands::memory_commands::update_session_full,
             // Observation CRUD
             presentation::commands::memory_commands::create_observation,
             presentation::commands::memory_commands::update_observation,

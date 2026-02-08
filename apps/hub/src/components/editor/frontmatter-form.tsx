@@ -8,6 +8,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import type { ReactNode } from 'react';
 
 // ---------------------------------------------------------------------------
@@ -25,12 +26,31 @@ interface TextFieldDef extends BaseField {
   type: 'text';
 }
 
+interface NumberFieldDef extends BaseField {
+  type: 'number';
+  min?: number;
+  max?: number;
+}
+
 interface SelectFieldDef extends BaseField {
   type: 'select';
   options: Array<{ label: string; value: string }>;
 }
 
-export type FieldDefinition = TextFieldDef | SelectFieldDef;
+interface SwitchFieldDef extends BaseField {
+  type: 'switch';
+}
+
+interface ReadonlyFieldDef extends BaseField {
+  type: 'readonly';
+}
+
+export type FieldDefinition =
+  | TextFieldDef
+  | NumberFieldDef
+  | SelectFieldDef
+  | SwitchFieldDef
+  | ReadonlyFieldDef;
 
 // ---------------------------------------------------------------------------
 // Component
@@ -56,14 +76,88 @@ export function FrontmatterForm({
       <CardContent>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {fields.map((field) => {
+            const value = values[field.key] ?? '';
+
+            // Readonly — always renders as plain text
+            if (field.type === 'readonly') {
+              return (
+                <div key={field.key} className="space-y-1.5">
+                  <Label className="text-muted-foreground">{field.label}</Label>
+                  <p className="text-sm font-medium text-foreground">{value || '—'}</p>
+                </div>
+              );
+            }
+
+            // Disabled mode — render all editable fields as static text
+            if (disabled) {
+              if (field.type === 'switch') {
+                return (
+                  <div key={field.key} className="space-y-1.5">
+                    <Label className="text-muted-foreground">{field.label}</Label>
+                    <p className="text-sm font-medium text-foreground">
+                      {value === 'true' ? 'Yes' : 'No'}
+                    </p>
+                  </div>
+                );
+              }
+              if (field.type === 'select') {
+                const opt = field.options.find((o) => o.value === value);
+                return (
+                  <div key={field.key} className="space-y-1.5">
+                    <Label className="text-muted-foreground">{field.label}</Label>
+                    <p className="text-sm font-medium text-foreground">{(opt?.label ?? value) || '—'}</p>
+                  </div>
+                );
+              }
+              return (
+                <div key={field.key} className="space-y-1.5">
+                  <Label className="text-muted-foreground">{field.label}</Label>
+                  <p className="text-sm font-medium text-foreground">{value || '—'}</p>
+                </div>
+              );
+            }
+
+            // Switch
+            if (field.type === 'switch') {
+              return (
+                <div key={field.key} className="flex items-center justify-between gap-2 sm:col-span-1">
+                  <Label htmlFor={field.key}>{field.label}</Label>
+                  <Switch
+                    id={field.key}
+                    checked={value === 'true'}
+                    onCheckedChange={(v) => onChange(field.key, String(v))}
+                  />
+                </div>
+              );
+            }
+
+            // Number
+            if (field.type === 'number') {
+              return (
+                <div key={field.key} className="space-y-1.5">
+                  <Label htmlFor={field.key}>{field.label}</Label>
+                  <Input
+                    id={field.key}
+                    type="number"
+                    value={value}
+                    min={field.min}
+                    max={field.max}
+                    required={field.required}
+                    placeholder={field.placeholder}
+                    onChange={(e) => onChange(field.key, e.target.value)}
+                  />
+                </div>
+              );
+            }
+
+            // Select
             if (field.type === 'select') {
               return (
                 <div key={field.key} className="space-y-1.5">
                   <Label>{field.label}</Label>
                   <Select
-                    disabled={disabled}
-                    value={values[field.key] ?? ''}
-                    onValueChange={(value) => onChange(field.key, value)}
+                    value={value}
+                    onValueChange={(v) => onChange(field.key, v)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue />
@@ -80,12 +174,13 @@ export function FrontmatterForm({
               );
             }
 
+            // Text (default)
             return (
               <div key={field.key} className="space-y-1.5">
-                <Label>{field.label}</Label>
+                <Label htmlFor={field.key}>{field.label}</Label>
                 <Input
-                  value={values[field.key] ?? ''}
-                  disabled={disabled}
+                  id={field.key}
+                  value={value}
                   required={field.required}
                   placeholder={field.placeholder}
                   onChange={(e) => onChange(field.key, e.target.value)}

@@ -261,6 +261,16 @@ pub fn update_session(
     ctx.memory_service.update_session(&id, branch.as_deref(), input.as_deref(), output.as_deref())
 }
 
+/// Update a session's full data via JSON merge.
+#[tauri::command]
+pub fn update_session_full(
+    ctx: State<'_, AppContext>,
+    id: String,
+    updates_json: String,
+) -> Result<(), String> {
+    ctx.memory_service.update_session_full(&id, &updates_json)
+}
+
 // --- Observation CRUD ---
 
 /// Create an observation. Returns the new observation ID.

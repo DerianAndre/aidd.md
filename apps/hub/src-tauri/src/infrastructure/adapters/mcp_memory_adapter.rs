@@ -256,6 +256,9 @@ impl MemoryPort for McpMemoryAdapter {
     fn update_session(&self, _id: &str, _branch: Option<&str>, _input: Option<&str>, _output: Option<&str>) -> Result<(), String> {
         Err("Write operations not supported via MCP adapter".to_string())
     }
+    fn update_session_full(&self, _id: &str, _updates_json: &str) -> Result<(), String> {
+        Err("Write operations not supported via MCP adapter".to_string())
+    }
     fn create_observation(&self, _session_id: &str, _obs_type: &str, _title: &str, _narrative: Option<&str>, _facts: Option<&str>, _concepts: Option<&str>, _files_read: Option<&str>, _files_modified: Option<&str>, _discovery_tokens: Option<i64>) -> Result<String, String> {
         Err("Write operations not supported via MCP adapter".to_string())
     }

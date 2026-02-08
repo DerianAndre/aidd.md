@@ -216,6 +216,33 @@ export interface ArtifactEntry {
 }
 
 // ---------------------------------------------------------------------------
+// Session update payload (for update_session_full JSON merge)
+// ---------------------------------------------------------------------------
+
+export interface SessionUpdatePayload {
+  branch?: string;
+  input?: string;
+  output?: string;
+  taskClassification?: {
+    domain?: string;
+    nature?: string;
+    complexity?: string;
+  };
+  outcome?: {
+    testsPassing?: boolean;
+    complianceScore?: number;
+    reverts?: number;
+    reworks?: number;
+    userFeedback?: 'positive' | 'neutral' | 'negative';
+  };
+  tasksCompleted?: string[];
+  tasksPending?: string[];
+  filesModified?: string[];
+  decisions?: Array<{ decision: string; reasoning: string; timestamp: string }>;
+  errorsResolved?: Array<{ error: string; fix: string; timestamp: string }>;
+}
+
+// ---------------------------------------------------------------------------
 // Diagnostics types (computed client-side)
 // ---------------------------------------------------------------------------
 

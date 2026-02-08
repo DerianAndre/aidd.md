@@ -8,7 +8,7 @@ import type { SessionState } from '../../../lib/types';
 interface SessionCardProps {
   session: SessionState;
   onPress?: () => void;
-  onEdit?: (session: SessionState) => void;
+  onEdit?: () => void;
   onDelete?: (id: string) => void;
 }
 
@@ -53,7 +53,7 @@ export function SessionCard({ session, onPress, onEdit, onDelete }: SessionCardP
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
-                onClick={(e) => { e.stopPropagation(); onEdit(session); }}
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
               >
                 <Pencil size={14} />
               </Button>
