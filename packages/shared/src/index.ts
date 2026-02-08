@@ -22,6 +22,10 @@ export type {
   AiProvider,
   AnalyticsQuery,
   AnalyticsResult,
+  ArtifactEntry,
+  ArtifactFilter,
+  ArtifactStatus,
+  ArtifactType,
   AuditScore,
   BannedPattern,
   BannedPatternFilter,
@@ -70,7 +74,7 @@ export type {
   ToolResult,
   ToolUsageEntry,
 } from './types.js';
-export { DEFAULT_CONFIG, DEFAULT_CONTEXT_BUDGET } from './types.js';
+export { ARTIFACT_TYPES, DEFAULT_CONFIG, DEFAULT_CONTEXT_BUDGET } from './types.js';
 
 // Content loader
 export { ContentLoader } from './content-loader.js';

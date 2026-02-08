@@ -248,6 +248,10 @@ export interface SessionState {
   startedAt: string;
   endedAt?: string;
   aiProvider: AiProvider;
+  /** The user's initial request / prompt that started this session */
+  input?: string;
+  /** Summary of work produced during the session */
+  output?: string;
   decisions: Array<{ decision: string; reasoning: string; timestamp: string }>;
   errorsResolved: Array<{ error: string; fix: string; timestamp: string }>;
   filesModified: string[];
@@ -484,6 +488,40 @@ export interface LifecycleSession {
   phases: LifecyclePhaseRecord[];
   createdAt: string;
   updatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Artifacts
+// ---------------------------------------------------------------------------
+
+export const ARTIFACT_TYPES = [
+  'plan', 'brainstorm', 'research', 'adr', 'diagram',
+  'issue', 'spec', 'checklist', 'retro',
+] as const;
+
+export type ArtifactType = (typeof ARTIFACT_TYPES)[number];
+export type ArtifactStatus = 'active' | 'done';
+
+export interface ArtifactEntry {
+  id: string;
+  sessionId?: string;
+  type: ArtifactType;
+  feature: string;
+  status: ArtifactStatus;
+  title: string;
+  description: string;
+  content: string;
+  date: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ArtifactFilter {
+  type?: string;
+  status?: string;
+  feature?: string;
+  sessionId?: string;
+  limit?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -731,6 +769,12 @@ export interface StorageBackend {
   getPermanentMemory(id: string): Promise<PermanentMemoryEntry | null>;
   listPermanentMemory(filter?: PermanentMemoryFilter): Promise<PermanentMemoryEntry[]>;
   deletePermanentMemory(id: string): Promise<void>;
+
+  // Artifacts
+  saveArtifact(artifact: ArtifactEntry): Promise<void>;
+  getArtifact(id: string): Promise<ArtifactEntry | null>;
+  listArtifacts(filter?: ArtifactFilter): Promise<ArtifactEntry[]>;
+  deleteArtifact(id: string): Promise<boolean>;
 
   // Patterns
   saveBannedPattern(pattern: BannedPattern): Promise<void>;

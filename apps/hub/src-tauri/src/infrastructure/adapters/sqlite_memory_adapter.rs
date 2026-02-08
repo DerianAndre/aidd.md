@@ -480,6 +480,68 @@ impl MemoryPort for SqliteMemoryAdapter {
             Ok(drafts)
         }).or_else(|_| Ok(vec![]))
     }
+
+    fn list_artifacts(
+        &self,
+        artifact_type: Option<&str>,
+        status: Option<&str>,
+        limit: Option<usize>,
+    ) -> Result<Vec<serde_json::Value>, String> {
+        let artifact_type = artifact_type.map(|s| s.to_string());
+        let status = status.map(|s| s.to_string());
+        let limit = limit.unwrap_or(100);
+
+        self.safe_query(move |conn| {
+            let mut sql = String::from(
+                "SELECT id, session_id, type, feature, status, title, description, content, date, created_at, updated_at FROM artifacts"
+            );
+            let mut conditions: Vec<String> = vec![];
+            let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = vec![];
+
+            if let Some(ref t) = artifact_type {
+                conditions.push(format!("type = ?{}", params.len() + 1));
+                params.push(Box::new(t.clone()));
+            }
+            if let Some(ref s) = status {
+                conditions.push(format!("status = ?{}", params.len() + 1));
+                params.push(Box::new(s.clone()));
+            }
+
+            if !conditions.is_empty() {
+                sql.push_str(" WHERE ");
+                sql.push_str(&conditions.join(" AND "));
+            }
+
+            sql.push_str(&format!(" ORDER BY date DESC, created_at DESC LIMIT ?{}", params.len() + 1));
+            params.push(Box::new(limit));
+
+            let mut stmt = conn.prepare(&sql)?;
+            let param_refs: Vec<&dyn rusqlite::types::ToSql> = params.iter().map(|p| p.as_ref()).collect();
+
+            let artifacts = stmt.query_map(param_refs.as_slice(), |row| {
+                let mut entry = serde_json::Map::new();
+                entry.insert("id".into(), serde_json::json!(row.get::<_, String>(0)?));
+                let session_id: Option<String> = row.get(1)?;
+                if let Some(sid) = session_id {
+                    entry.insert("sessionId".into(), serde_json::json!(sid));
+                }
+                entry.insert("type".into(), serde_json::json!(row.get::<_, String>(2)?));
+                entry.insert("feature".into(), serde_json::json!(row.get::<_, String>(3)?));
+                entry.insert("status".into(), serde_json::json!(row.get::<_, String>(4)?));
+                entry.insert("title".into(), serde_json::json!(row.get::<_, String>(5)?));
+                entry.insert("description".into(), serde_json::json!(row.get::<_, String>(6)?));
+                entry.insert("content".into(), serde_json::json!(row.get::<_, String>(7)?));
+                entry.insert("date".into(), serde_json::json!(row.get::<_, String>(8)?));
+                entry.insert("createdAt".into(), serde_json::json!(row.get::<_, String>(9)?));
+                entry.insert("updatedAt".into(), serde_json::json!(row.get::<_, String>(10)?));
+                Ok(serde_json::Value::Object(entry))
+            })?
+                .filter_map(|r| r.ok())
+                .collect();
+
+            Ok(artifacts)
+        }).or_else(|_| Ok(vec![]))
+    }
 }
 
 #[cfg(test)]

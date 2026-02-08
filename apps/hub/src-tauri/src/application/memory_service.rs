@@ -73,6 +73,16 @@ impl MemoryService {
         self.memory_port.list_drafts()
     }
 
+    /// Use case: List artifacts
+    pub fn list_artifacts(
+        &self,
+        artifact_type: Option<&str>,
+        status: Option<&str>,
+        limit: Option<usize>,
+    ) -> Result<Vec<serde_json::Value>, String> {
+        self.memory_port.list_artifacts(artifact_type, status, limit)
+    }
+
     /// Use case: Get complete memory snapshot (all data)
     pub fn get_memory_snapshot(&self) -> Result<MemorySnapshot, String> {
         Ok(MemorySnapshot {
