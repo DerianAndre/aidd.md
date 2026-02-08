@@ -87,7 +87,7 @@ Each implementation step MUST include a model assignment column:
 
 When the task involves a bug report or tracked problem, create a structured issue document as part of the plan:
 
-- Create `docs/issues/<YYYY.MM.DD>-<feature>.md` with:
+- Create `docs/plans/active/<YYYY.MM.DD>-<feature>-issue.md` with:
   - Problem description and reproduction steps (if bug)
   - Linked plan document (if one exists)
   - GitHub issue body (ready to push via `gh`)

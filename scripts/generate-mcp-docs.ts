@@ -556,7 +556,7 @@ function renderMcpMap(tools: ToolInfo[]): string {
 
   lines.push(`## Critical Paths`);
   lines.push(
-    `- Bootstrap: aidd_start → session(start) → hookBus`,
+    `- Start: aidd_start → session(start) → hookBus`,
   );
   lines.push(
     `- Memory: observation → FTS5 → memory_search → memory_context → memory_get`,

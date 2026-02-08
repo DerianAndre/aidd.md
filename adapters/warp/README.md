@@ -2,119 +2,89 @@
 
 > AIDD integration guide for Warp (warp.dev)
 
-**Last Updated**: 2026-02-06
+**Last Updated**: 2026-02-08
 **Status**: Reference
 
 ---
 
 ## Table of Contents
 
-1. [Project Overview](#1-project-overview)
-2. [Commands](#2-commands)
-3. [Architecture](#3-architecture)
-4. [Golden Rules](#4-golden-rules)
-5. [Anti-Bias Protocol](#5-anti-bias-protocol)
-6. [Adding New Components](#6-adding-new-components)
+1. [Overview](#1-overview)
+2. [Setup](#2-setup)
+3. [Context Loading](#3-context-loading)
+4. [Rules and Constraints](#4-rules-and-constraints)
+5. [Limitations](#5-limitations)
+6. [Recommended Workflow](#6-recommended-workflow)
 
 ---
 
-## 1. Project Overview
+## 1. Overview
 
-**AI-Driven Development (AIDD)** - A multi-IDE agent framework compatible with Antigravity, Cursor, and Claude Code. This repository defines AI agent roles, rules, skills, workflows, and a Technology Knowledge Base (TKB) for evidence-based development.
+Warp integrates with AIDD at the **context layer only**:
+
+| Layer | Mechanism | Status |
+|-------|-----------|--------|
+| **Context** | `AGENTS.md` content in Warp AI | Supported |
+| **MCP** | Not available | Not supported |
+| **Hooks** | Not available | Not supported |
+
+Warp's AI features use project context from files. AIDD integration requires manually providing `AGENTS.md` content or configuring Warp's AI context settings.
 
 ---
 
-## 2. Commands
+## 2. Setup
 
-```bash
-# Install dependencies (required for validation scripts)
-npm install
+### Step 1: Configure Warp AI Context
 
-# Validate Mermaid C4 diagrams
-npm run validate:mermaid "C4Container..."
-npx tsx content/skills/system-architect/scripts/validate-mermaid.ts diagram.mmd
+In Warp Settings → AI → Custom Instructions, add the following:
 
-# Validate OpenAPI specs
-npm run validate:openapi spec.yaml
-
-# Validate SQL DDL
-npm run validate:sql schema.sql
-
-# Scan for hardcoded secrets
-npm run scan:secrets src/config.ts
+```
+Follow the AIDD (AI-Driven Development) standard. Read AGENTS.md at the project root for agent roles, rules, and workflows. Follow content/rules/global.md as immutable constraints.
 ```
 
+### Step 2: Verify Context
+
+Start a Warp AI session and ask:
+
+```
+What rules does this project follow?
+```
+
+Warp should reference AIDD rules from the project's `AGENTS.md` and `content/rules/` directory.
+
 ---
 
-## 3. Architecture
+## 3. Context Loading
 
-### Core Philosophy
+Warp reads project files when referenced in AI chat. Point Warp to these AIDD files:
 
-- **Evidence-First**: Decisions must trace to fundamental principles, empirical data, or standards -- never opinions
-- **BLUF Communication**: Bottom Line Up Front -- direct answers first, then context, trade-offs, alternatives
-- **First Principles**: Deconstruct problems to atomic truths before building solutions
-- **Zero Bullshit**: No hedging language, corporate speak, or fluff
+| File | Purpose |
+|------|---------|
+| `AGENTS.md` | Agent hierarchy and system map |
+| `content/rules/global.md` | Immutable constraints |
+| `content/rules/<domain>.md` | Domain-specific rules (frontend, backend, testing) |
+| `content/specs/aidd-lifecycle.md` | 6-phase development lifecycle |
 
 ### System Hierarchy
 
 ```
 AGENTS.md (Single Source of Truth)
-    |-- content/
-    |   |-- rules/ (Immutable constraints)
-    |   |   \-- global.md supersedes all domain rules
-    |   |-- skills/ (Specialized capabilities)
-    |   |   \-- Each has SKILL.md + optional scripts/
-    |   |-- workflows/ (Multi-step procedures)
-    |   \-- knowledge/ (Technology Knowledge Base)
+  └── content/
+      ├── agents/     Agent definitions (routing.md as SSOT)
+      ├── rules/      Immutable constraints (global.md supersedes all)
+      ├── skills/     Specialized capabilities (SKILL.md + scripts/)
+      ├── workflows/  Multi-step procedures
+      ├── specs/      AIDD standard specifications
+      └── knowledge/  Technology Knowledge Base
 ```
 
-### Agent Activation Pattern
-
-The **Master Orchestrator** is the entry point for all tasks:
-
-1. Validates context (>90% confidence required before execution)
-2. Queries TKB (`content/knowledge/`) for technology recommendations
-3. Maps to appropriate Rules, Workflows, and Skills
-4. Delegates to specialized agents (System Architect, Contract Architect, etc.)
-
-### Orchestrator Model Strategy
-
-Orchestrators optimize cost via tiered model usage:
-
-- **Tier 1 (HIGH)**: Critical planning and architecture decisions
-- **Tier 2 (STANDARD)**: Complex implementation patterns
-- **Tier 3 (LOW)**: Fast operations (code generation, tests, docs)
-
-### Skill Structure
-
-Skills are defined in `content/skills/<name>/SKILL.md` with YAML frontmatter:
-
-```yaml
----
-name: skill-name
-description: When to use this skill
-tier: 1|2|3
----
-```
-
-Optional: `scripts/` directory for TypeScript validation tools.
-
-### Technology Knowledge Base (TKB)
-
-`content/knowledge/` contains quantified metrics for 50+ technologies organized by domain:
-
-- `runtimes/` - Bun, Node.js, Deno benchmarks
-- `frontend/` - Next.js, Astro, Remix patterns
-- `data/` - ORMs, databases, caching
-- `security/` - OWASP 2026, authentication
-
-Query TKB before making technology recommendations. Present comparison matrices with trade-offs.
-
 ---
 
-## 4. Golden Rules
+## 4. Rules and Constraints
 
-These immutable constraints apply to all contexts:
+### Golden Rules
+
+These immutable constraints apply to all AIDD contexts:
 
 1. Never break backward compatibility without explicit confirmation
 2. Never commit secrets to version control
@@ -123,25 +93,71 @@ These immutable constraints apply to all contexts:
 5. Never use `SELECT *` in production SQL
 6. Readability > Cleverness
 
+### Model Tier Strategy
+
+AIDD optimizes cost via tiered model usage:
+
+| Tier | Effort | Tasks |
+|------|--------|-------|
+| 1 (HIGH) | Architecture, security, planning | Critical decisions |
+| 2 (STANDARD) | Implementation, integration | Complex patterns |
+| 3 (LOW) | Tests, boilerplate, formatting | Mechanical tasks |
+
+### Technology Knowledge Base
+
+`content/knowledge/` contains quantified metrics for technologies organized by domain. Query the TKB before making technology recommendations.
+
 ---
 
-## 5. Anti-Bias Protocol
+## 5. Limitations
 
-Before finalizing decisions, check for:
+Without MCP support, Warp cannot:
 
-- **Sunk Cost**: Would we choose this if starting fresh?
-- **Survivorship Bias**: Do we have Netflix/Google's constraints?
-- **Confirmation Bias**: Have we searched for counter-evidence?
-- **Recency Bias**: Is this HackerNews trending or genuinely superior?
+- Track sessions across conversations
+- Persist memory (decisions, mistakes, conventions)
+- Run AIDD validation tools
+- Generate commit messages or CI checks
+- Access evolution or analytics features
+
+**Recommendation**: Use Warp as a terminal alongside an MCP-capable editor (Claude Code, Cursor) for full AIDD integration. Warp provides context-aware terminal assistance while the editor handles session lifecycle.
 
 ---
 
-## 6. Adding New Components
+## 6. Recommended Workflow
 
-**New Skill**: Create `content/skills/<name>/SKILL.md` with YAML frontmatter, add validation scripts to `scripts/`, update `AGENTS.md`.
+### Warp as Terminal Companion
 
-**New Rule**: Add `content/rules/<domain>.md`, reference from `AGENTS.md`.
+```
+┌──────────────────────┐    ┌──────────────────────┐
+│ Claude Code / Cursor │    │ Warp Terminal         │
+│                      │    │                       │
+│ - Full MCP (71 tools)│    │ - Context from        │
+│ - Session lifecycle  │◄──►│   AGENTS.md           │
+│ - Memory persistence │    │ - Rule-aware commands │
+│ - Hooks + automation │    │ - Git operations      │
+│                      │    │ - Build/test/deploy   │
+└──────────────────────┘    └──────────────────────┘
+```
 
-**New Workflow**: Create `content/workflows/<name>.md` with numbered steps.
+1. Use your MCP-capable editor for development work (full AIDD lifecycle)
+2. Use Warp for terminal operations with AIDD context awareness
+3. Warp's AI understands project rules when `AGENTS.md` is referenced
 
-**New Workflow**: Follow `content/workflows/SPEC.md` format -- complex workflows require 3+ skills, model tier specs, success criteria, and cost estimation.
+### Standalone Usage
+
+When using Warp without an MCP editor, manually follow the AIDD lifecycle:
+
+1. **UNDERSTAND** — Read requirements, check `content/specs/aidd-lifecycle.md`
+2. **PLAN** — Create plan in `docs/plans/active/`
+3. **BUILD** — Follow the plan, reference `content/rules/` for constraints
+4. **VERIFY** — Run tests, typecheck, lint
+5. **SHIP** — Commit with conventional format, archive plan to `docs/plans/done/`
+
+---
+
+## Cross-References
+
+- **Adapters Overview**: `adapters/README.md`
+- **AIDD Lifecycle**: `content/specs/aidd-lifecycle.md`
+- **Agent Hierarchy**: `content/agents/routing.md`
+- **MCP Architecture**: `mcps/README.md`

@@ -140,18 +140,18 @@ This diagnoses the problem and suggests the solution.
 ### Approach C: Engine Default + Optional Split
 
 ```
-┌─────────────────────────────────────────────────┐
-│              @aidd.md/mcp-engine (ENGINE)              │
-│         Default. One process. All modules.       │
-│                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
-│  │   Core   │  │  Memory  │  │  Tools   │       │
-│  │ modules  │  │ modules  │  │ modules  │       │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘       │
-│       └──────────────┼──────────────┘            │
-│              Direct function calls               │
-│              (same process)                       │
-└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│                    Engine                   │
+│           One process. All modules.         │
+│                                             │
+│  ┌──────────┐   ┌──────────┐  ┌──────────┐  │
+│  │   Core   │   │  Memory  │  │  Tools   │  │
+│  │ modules  │   │ modules  │  │ modules  │  │
+│  └────┬─────┘   └────┬─────┘  └────┬─────┘  │
+│       └──────────────┼─────────────┘        │
+│              Direct function calls          │
+│              (same process)                 │
+└─────────────────────────────────────────────┘
                      OR
 ┌──────────┐  ┌──────────┐  ┌──────────┐
 │@aidd.md/ │  │@aidd.md/ │  │@aidd.md/ │
@@ -161,7 +161,7 @@ This diagnoses the problem and suggests the solution.
   3 separate processes — AI orchestrates
 ```
 
-**Engine** (recommended) — One process, all 69 tools, direct inter-module communication. Simpler setup, lower resource usage.
+**Engine** (recommended) — One process, all tools, direct inter-module communication. Simpler setup, lower resource usage.
 
 **Split** — Three processes, granular control. Use when you need resource isolation or only need specific capabilities.
 
@@ -170,13 +170,13 @@ This diagnoses the problem and suggests the solution.
 ```
 AI Tool (Claude Code, Cursor, Windsurf, etc.)
     │
-    ├── stdio ──► @aidd.md/mcp-engine (all 69 tools)
+    ├── stdio ──► @aidd.md/mcp-engine (all tools)
     │
     OR
     │
-    ├── stdio ──► @aidd.md/mcp-core     (17 tools: guidance, routing, knowledge)
-    ├── stdio ──► @aidd.md/mcp-memory   (33 tools: sessions, search, evolution, analytics, pattern-killer)
-    └── stdio ──► @aidd.md/mcp-tools    (19 tools: validation, enforcement, CI)
+    ├── stdio ──► @aidd.md/mcp-core     (guidance, routing, knowledge)
+    ├── stdio ──► @aidd.md/mcp-memory   (sessions, search, evolution, analytics, pattern-killer)
+    └── stdio ──► @aidd.md/mcp-tools    (validation, enforcement, CI)
 ```
 
 Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using the MCP SDK's stdio transport.
@@ -185,26 +185,26 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 
 ## Inventory
 
-### Core: The Brain (17 tools)
+### Core: The Brain
 
-| Tool                         | Purpose                                                                      |
-| ---------------------------- | ---------------------------------------------------------------------------- |
-| `aidd_detect_project`        | Scan directory for AIDD markers + parse package.json stack                   |
-| `aidd_get_config`            | Return active MCP configuration                                              |
+| Tool                         | Purpose                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------- |
 | `aidd_start`                 | One-call startup: auto-starts session + loads agents, rules, workflows, skills, specs |
-| `aidd_classify_task`         | Task description → agent roles, workflows, templates                         |
-| `aidd_get_routing_table`     | Complete task→agent→workflow routing table                                   |
-| `aidd_query_tkb`             | Filter/search Technology Knowledge Base by category, maturity, keyword       |
-| `aidd_get_tkb_entry`         | Full content of a specific TKB entry                                         |
-| `aidd_get_agent`             | Agent SKILL.md with parsed frontmatter                                       |
-| `aidd_get_competency_matrix` | Cross-agent expertise matrix                                                 |
-| `aidd_apply_heuristics`      | Run a decision through AIDD's 10 heuristics                                  |
-| `aidd_tech_compatibility`    | Stack compatibility analysis with scores                                     |
-| `aidd_suggest_next`          | Context-aware next step suggestions with pre-filled tool args                |
-| `aidd_optimize_context`      | Token-budget-aware context filtering                                         |
-| `aidd_scaffold`              | Initialize AIDD in a project (minimal/standard/full)                         |
+| `aidd_detect_project`        | Scan directory for AIDD markers + parse package.json stack                            |
+| `aidd_get_config`            | Return active MCP configuration                                                       |
+| `aidd_classify_task`         | Task description → agent roles, workflows, templates                                  |
+| `aidd_get_routing_table`     | Complete task→agent→workflow routing table                                            |
+| `aidd_query_tkb`             | Filter/search Technology Knowledge Base by category, maturity, keyword                |
+| `aidd_get_tkb_entry`         | Full content of a specific TKB entry                                                  |
+| `aidd_get_agent`             | Agent SKILL.md with parsed frontmatter                                                |
+| `aidd_get_competency_matrix` | Cross-agent expertise matrix                                                          |
+| `aidd_apply_heuristics`      | Run a decision through AIDD's 10 heuristics                                           |
+| `aidd_tech_compatibility`    | Stack compatibility analysis with scores                                              |
+| `aidd_suggest_next`          | Context-aware next step suggestions with pre-filled tool args                         |
+| `aidd_optimize_context`      | Token-budget-aware context filtering                                                  |
+| `aidd_scaffold`              | Initialize AIDD in a project (minimal/standard/full)                                  |
 
-### Memory: The Memory (33 tools)
+### Memory: The Memory
 
 | Tool                          | Purpose                                                                    |
 | ----------------------------- | -------------------------------------------------------------------------- |
@@ -243,7 +243,7 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 | `aidd_pattern_score`          | Quick 5-dimension text quality evaluation with verdict                     |
 | `aidd_pattern_false_positive` | Report pattern as false positive, reduce confidence                        |
 
-### Tools: The Hands (19 tools)
+### Tools: The Hands
 
 | Tool                           | Purpose                                        |
 | ------------------------------ | ---------------------------------------------- |
@@ -272,27 +272,27 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 ## 5-Layer Memory Model
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  Layer 5: EVOLUTION                                 │
-│  Cross-session patterns → auto-framework mutations   │
-│  Storage: .aidd/data.db (evolution_candidates, evolution_log tables) │
-├─────────────────────────────────────────────────────┤
-│  Layer 4: PERMANENT                                  │
-│  Project-lifetime decisions, mistakes, conventions   │
-│  Storage: .aidd/data.db (permanent_memory table) + .aidd/memory/*.json exports │
-├─────────────────────────────────────────────────────┤
-│  Layer 3: LIFECYCLE                                  │
-│  AIDD 6-phase tracking + quality gates               │
-│  Storage: .aidd/data.db (lifecycle_sessions table)   │
-├─────────────────────────────────────────────────────┤
-│  Layer 2: BRANCH                                     │
-│  Git branch context (survives session restarts)      │
-│  Storage: .aidd/data.db (branches table)             │
-├─────────────────────────────────────────────────────┤
-│  Layer 1: SESSION                                    │
-│  Single conversation state + AI provider tracking    │
-│  Storage: .aidd/data.db (sessions table)             │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────
+│  Layer 5: EVOLUTION                                 
+│  Cross-session patterns → auto-framework mutations   
+│  Storage: .aidd/data.db (evolution_candidates, evolution_log tables)
+├─────────────────────────────────────────────────────
+│  Layer 4: PERMANENT                                 
+│  Project-lifetime decisions, mistakes, conventions  
+│  Storage: .aidd/data.db (permanent_memory table)
+├─────────────────────────────────────────────────────
+│  Layer 3: LIFECYCLE                                 
+│  AIDD 6-phase tracking + quality gates              
+│  Storage: .aidd/data.db (lifecycle_sessions table)  
+├─────────────────────────────────────────────────────
+│  Layer 2: BRANCH                                    
+│  Git branch context (survives session restarts)     
+│  Storage: .aidd/data.db (branches table)            
+├─────────────────────────────────────────────────────
+│  Layer 1: SESSION                                   
+│  Single conversation state + AI provider tracking   
+│  Storage: .aidd/data.db (sessions table)            
+└─────────────────────────────────────────────────────
 ```
 
 **Promotion flow**: Session → Branch → Permanent (via evolution engine or manual).
@@ -306,18 +306,18 @@ Each session records: agents used, skills used, tools called (with quality), AI 
 Single SQLite database for all persistent state:
 
 ```
-┌─────────────────────────────────────────────────┐
-│  SQLite (.aidd/data.db) — gitignored            │
-│  16 tables: sessions, observations, branches,   │
-│  evolution, patterns, memory, lifecycle, etc.    │
-│  FTS5 full-text search + WAL concurrent access   │
-│  Schema checksum in meta table                   │
-├─────────────────────────────────────────────────┤
-│  Auto-generated files — Git-visible              │
-│  .aidd/memory/insights.md (auto-learning dashboard) │
-│  .aidd/memory/state-dump.sql (diffable state)       │
-│  .aidd/memory/*.json (on-demand export)             │
-└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────
+│  SQLite (.aidd/data.db) — gitignored            
+│  16 tables: sessions, observations, branches,   
+│  evolution, patterns, memory, lifecycle, etc.    
+│  FTS5 full-text search + WAL concurrent access   
+│  Schema checksum in meta table                   
+├─────────────────────────────────────────────────────
+│  Auto-generated files — Git-visible              
+│  .aidd/memory/insights.md (auto-learning dashboard) 
+│  .aidd/memory/state-dump.sql (diffable state)       
+│  .aidd/memory/*.json (on-demand export)             
+└─────────────────────────────────────────────────────
 ```
 
 **StorageBackend interface** provides ~30 methods covering all data types. `better-sqlite3` is a required dependency.
@@ -343,8 +343,8 @@ AIDD provides optional hook templates for automatic memory capture:
 ```
 templates/hooks/
   claude-code/
-    hooks.json          # Claude Code hook definitions
     session-start.mjs   # Auto-inject context via aidd_start
+    hooks.json          # Claude Code hook definitions
     post-tool-use.mjs   # Auto-capture observations
     session-end.mjs     # Auto-generate session summary
   cursor/
@@ -677,67 +677,9 @@ pnpm mcp:status
 ```
 
 ### Full diagnostic
-
+Reports the state of each component with section timing and suggests corrective actions
 ```bash
 pnpm mcp:doctor
-```
-
-Reports the state of each component with section timing and suggests corrective actions:
-
-```
-[aidd.md] Doctor
-  Environment → Dependencies → aidd.md MCPs → MCPs installed → aidd.md Framework →
-  Skills Validation → Cross-References → Model Matrix → Project State (.aidd/) → Installed Agents
-
-Environment — Node.js, pnpm
-  ✅ Node.js v22.x
-  ✅ pnpm 10.x
-
-Dependencies — Lockfile and node_modules
-  ✅ node_modules/ exists
-  ✅ pnpm-lock.yaml up to date
-
-aidd.md MCPs — Package build status
-  ✅ @aidd.md/mcp-shared built
-  ✅ @aidd.md/mcp-engine built
-  ✅ @aidd.md/mcp-core built
-  ✅ @aidd.md/mcp-memory built
-  ✅ @aidd.md/mcp-tools built
-  ✅ 5/5 packages built
-  ✅ @modelcontextprotocol/sdk 1.x
-
-MCPs installed — External MCP servers
-  ✅ context7 [cursor] — running
-  ℹ  shadcn [cursor] — not running
-
-aidd.md Framework — Content and structure
-  ✅ AGENTS.md found
-  ✅ rules/ (11 files)
-  ✅ skills/ (11 agents)
-  ✅ knowledge/ (9 domains, 106 entries)
-  ✅ workflows/ (9 files + 5 orchestrators)
-  ✅ specs/ (6 files)
-  ✅ templates/ (23 files)
-
-Skills Validation — Frontmatter integrity
-  ✅ 11/11 skills have valid frontmatter
-
-Cross-References — AGENTS.md ↔ skills/
-  ✅ AGENTS.md → skills/ (11 refs, all valid)
-
-Model Matrix — SSOT sync and freshness
-  ✅ model-matrix.md ↔ model-matrix.ts in sync (16 models)
-
-Project State (.aidd/) — Config, sessions, storage
-  ✅ .aidd/ directory found
-  ✅ config.json valid (all sections present)
-  ✅ sessions/ exists
-
-Installed Agents — Detected AI editors/CLIs
-  ✅ Claude Code (CLI)
-  ✅ Cursor (IDE)
-
-[aidd.md] All checks passed! (952ms)
 ```
 
 #### Doctor flags
@@ -766,7 +708,7 @@ pnpm mcp:check
 ```
 
 ```
-[aidd.md] Engine - ONy
+[aidd.md] Engine - ON
 ```
 
 Use this in CLAUDE.md startup protocol or similar automation.

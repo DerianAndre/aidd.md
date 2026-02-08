@@ -61,9 +61,9 @@ export const MCP_PACKAGES: McpPackageInfo[] = [
     isServer: true,
     tools: [
       // bootstrap
+      { name: 'aidd_start', description: 'One-call conversation starter: auto-starts session, loads agents, rules, workflows, skills, specs' },
       { name: 'aidd_detect_project', description: 'Scan for AIDD framework markers and parse package.json for stack detection' },
       { name: 'aidd_get_config', description: 'Return active AIDD MCP configuration' },
-      { name: 'aidd_start', description: 'One-call conversation starter: auto-starts session, loads agents, rules, workflows, skills, specs' },
       // context
       { name: 'aidd_optimize_context', description: 'Generate optimized context block within token budget' },
       // guidance

@@ -1,0 +1,77 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__aidd-engine",
+      "Bash(pnpm *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git status *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(git checkout *)",
+      "Bash(git switch *)",
+      "Bash(git stash *)",
+      "Bash(git merge *)",
+      "Bash(node *)",
+      "Bash(npx *)"
+    ],
+    "deny": [
+      "Bash(git push --force *)",
+      "Bash(git reset --hard *)",
+      "Bash(rm -rf *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo [AIDD Protocol] You MUST call aidd_start now. Store the returned session ID. Follow the AIDD conversation lifecycle in CLAUDE.md. You MUST call aidd_session with action end before this conversation closes."
+          }
+        ]
+      },
+      {
+        "matcher": "resume|compact|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo [AIDD Protocol] Context was compacted or session resumed. If you lost the session ID, recover it with aidd_session { action: list, status: active }. Continue following AIDD lifecycle protocol from CLAUDE.md."
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo [AIDD Protocol] Context compaction imminent. If you have pending session state (decisions, files modified, tasks completed), call aidd_session { action: update } NOW before context is lost."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo [AIDD Protocol] Before ending: you MUST call aidd_session with action end and provide outcome { testsPassing, complianceScore, reverts, reworks } if you have not already."
+          },
+          {
+            "type": "prompt",
+            "prompt": "You are an AIDD protocol compliance checker. Check the input field stop_hook_active. If stop_hook_active is true, respond exactly: {\"ok\": true}. If stop_hook_active is false or absent: the AIDD protocol REQUIRES calling aidd_session with action 'end' before closing. Respond exactly: {\"ok\": false, \"reason\": \"AIDD protocol: you must call aidd_session { action: 'end', id: SESSION_ID, outcome: { testsPassing: bool, complianceScore: 0-100, reverts: 0, reworks: 0 } } before closing the conversation.\"}."
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node .claude/statusline.js"
+  }
+}
