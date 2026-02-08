@@ -44,14 +44,13 @@ flowchart LR
     G -- Approved --> H[Ship]
     G -- Rejected --> B
 
-    style A fill:#f0f4ff,stroke:#4a6fa5
-    style B fill:#fff3e0,stroke:#e6a23c
-    style C fill:#e8f5e9,stroke:#67c23a
-    style D fill:#fce4ec,stroke:#f56c6c
-    style E fill:#e3f2fd,stroke:#409eff
-    style F fill:#e8eaf6,stroke:#5c6bc0
-    style G fill:#f3e5f5,stroke:#9c27b0
-    style H fill:#e0f2f1,stroke:#26a69a
+    style B fill:#e6a23c,color:#fff,stroke:#e6a23c
+    style C fill:#f56c6c,color:#fff,stroke:#f56c6c
+    style D fill:#67c23a,color:#fff,stroke:#67c23a
+    style E fill:#409eff,color:#fff,stroke:#409eff
+    style F fill:#5c6bc0,color:#fff,stroke:#5c6bc0
+    style G fill:#9c27b0,color:#fff,stroke:#9c27b0
+    style H fill:#26a69a,color:#fff,stroke:#26a69a
 ```
 
 ### Artifact Flow
@@ -90,15 +89,15 @@ flowchart TD
 
 ### Step by Step
 
-| Step | What Happens | What You See |
-|------|-------------|-------------|
-| **1. Startup** | Session initialized, memory loaded | Conversation begins |
-| **2. Brainstorm** | Memory searched, options explored, trade-offs considered | Ideas, options, and trade-offs presented |
-| **3. Plan** | Plan mode entered, detailed task plan created | You review and approve/reject the plan |
-| **4. Execute** | Approved plan implemented | Code changes, file edits |
-| **5. Test** | Typecheck, tests, build run; verification checklist created | Results of automated checks |
-| **6. Review** | Final approval — you confirm the work is complete | You approve to ship or reject to re-brainstorm |
-| **7. Ship** | Learnings recorded, retrospective created, session closed | Summary of work done |
+| Step              | What Happens                                                | What You See                                   |
+| ----------------- | ----------------------------------------------------------- | ---------------------------------------------- |
+| **1. Startup**    | Session initialized, memory loaded                          | Conversation begins                            |
+| **2. Brainstorm** | Memory searched, options explored, trade-offs considered    | Ideas, options, and trade-offs presented       |
+| **3. Plan**       | Plan mode entered, detailed task plan created               | You review and approve/reject the plan         |
+| **4. Execute**    | Approved plan implemented                                   | Code changes, file edits                       |
+| **5. Test**       | Typecheck, tests, build run; verification checklist created | Results of automated checks                    |
+| **6. Review**     | Final approval — you confirm the work is complete           | You approve to ship or reject to re-brainstorm |
+| **7. Ship**       | Learnings recorded, retrospective created, session closed   | Summary of work done                           |
 
 ### Skipping Steps
 
@@ -126,17 +125,17 @@ Each iteration is tracked for compliance scoring.
 
 Artifacts are versioned documents created at each workflow step. They capture thinking, decisions, and results.
 
-| Type | Created During | What It Contains |
-|------|---------------|-----------------|
-| **Brainstorm** | Understanding | Ideas, options, trade-offs explored |
-| **Research** | Understanding | Technical investigation findings |
-| **Plan** | Planning | Task decomposition and approach |
-| **ADR** | Planning | Architecture decision with reasoning |
-| **Diagram** | Planning | System/component/flow diagrams |
-| **Spec** | After plan approval | Formal specification with acceptance criteria |
-| **Issue** | Execution | Bugs, blockers, problems discovered |
-| **Checklist** | Test | Verification steps and automated check results |
-| **Retro** | Ship | What worked, what didn't, lessons learned |
+| Type           | Created During      | What It Contains                               |
+| -------------- | ------------------- | ---------------------------------------------- |
+| **Brainstorm** | Understanding       | Ideas, options, trade-offs explored            |
+| **Research**   | Understanding       | Technical investigation findings               |
+| **Plan**       | Planning            | Task decomposition and approach                |
+| **ADR**        | Planning            | Architecture decision with reasoning           |
+| **Diagram**    | Planning            | System/component/flow diagrams                 |
+| **Spec**       | After plan approval | Formal specification with acceptance criteria  |
+| **Issue**      | Execution           | Bugs, blockers, problems discovered            |
+| **Checklist**  | Test                | Verification steps and automated check results |
+| **Retro**      | Ship                | What worked, what didn't, lessons learned      |
 
 All artifacts are stored in the project's `.aidd/` database and can be viewed in the Hub app.
 
