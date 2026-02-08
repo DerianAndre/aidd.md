@@ -152,18 +152,20 @@ export function FrontmatterForm({
 
             // Select
             if (field.type === 'select') {
+              // Radix Select crashes if SelectItem has value="". Guard against it.
+              const safeOptions = field.options.filter((o) => o.value !== '');
               return (
                 <div key={field.key} className="space-y-1.5">
                   <Label>{field.label}</Label>
                   <Select
-                    value={value}
+                    value={value || undefined}
                     onValueChange={(v) => onChange(field.key, v)}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder="—" />
                     </SelectTrigger>
                     <SelectContent>
-                      {field.options.map((opt) => (
+                      {safeOptions.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </SelectItem>

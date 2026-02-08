@@ -316,8 +316,34 @@ export function parseAgentsFromRouting(markdown: string): AgentEntry[] {
 }
 
 /**
+ * Deduplicate agent entries by name — keep the entry with more data.
+ */
+function deduplicateAgents(entries: AgentEntry[]): AgentEntry[] {
+  const seen = new Map<string, number>();
+  const result = [...entries];
+  for (let i = 0; i < result.length; i++) {
+    const entry = result[i]!;
+    const key = entry.name.toLowerCase();
+    const prev = seen.get(key);
+    if (prev !== undefined) {
+      const prevEntry = result[prev]!;
+      // Keep whichever has more content
+      if ((entry.purpose?.length ?? 0) >= (prevEntry.purpose?.length ?? 0)) {
+        result[prev] = entry;
+      }
+      result.splice(i, 1);
+      i--;
+    } else {
+      seen.set(key, i);
+    }
+  }
+  return result;
+}
+
+/**
  * Parse agents from FrameworkEntity[] (backend results).
  * Each entity represents an agent file from content/agents/.
+ * Deduplicates entries that appear in both routing.md and individual files.
  */
 export function parseAgentsFromFrameworkEntities(entities: {
   name: string;
@@ -361,7 +387,7 @@ export function parseAgentsFromFrameworkEntities(entities: {
     });
   }
 
-  return entries;
+  return deduplicateAgents(entries);
 }
 
 /**

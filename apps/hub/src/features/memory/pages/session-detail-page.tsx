@@ -53,7 +53,7 @@ const FEEDBACK_OPTIONS = [
   { label: 'Positive', value: 'positive' },
   { label: 'Neutral', value: 'neutral' },
   { label: 'Negative', value: 'negative' },
-  { label: 'None', value: '' },
+  { label: 'None', value: 'none' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -107,10 +107,15 @@ export function SessionDetailPage() {
   const populateDraft = useCallback((s: SessionState) => {
     setDraft({
       branch: s.branch ?? '',
-      provider: `${s.aiProvider?.provider ?? '—'} / ${(s.aiProvider?.model ?? '').replace('claude-', '').replace(/-\d{8}$/, '')}`,
+      provider: s.aiProvider?.provider ?? '—',
+      model: s.aiProvider?.model ?? '—',
+      client: s.aiProvider?.client ?? '—',
+      status: s.endedAt ? 'completed' : 'active',
+      startedAt: s.startedAt ? formatDate(s.startedAt) : '—',
+      endedAt: s.endedAt ? formatDate(s.endedAt) : '—',
       duration: s.endedAt
         ? formatDuration(new Date(s.endedAt).getTime() - new Date(s.startedAt).getTime())
-        : 'In progress',
+        : '—',
       taskDomain: s.taskClassification?.domain ?? '',
       taskNature: s.taskClassification?.nature ?? '',
       taskComplexity: s.taskClassification?.complexity ?? '',
@@ -118,7 +123,7 @@ export function SessionDetailPage() {
       complianceScore: String(s.outcome?.complianceScore ?? 0),
       reverts: String(s.outcome?.reverts ?? 0),
       reworks: String(s.outcome?.reworks ?? 0),
-      userFeedback: s.outcome?.userFeedback ?? '',
+      userFeedback: s.outcome?.userFeedback || 'none',
     });
     setDraftInput(s.input ?? '');
     setDraftOutput(s.output ?? '');
@@ -161,7 +166,7 @@ export function SessionDetailPage() {
           complianceScore: Number(draft.complianceScore) || 0,
           reverts: Number(draft.reverts) || 0,
           reworks: Number(draft.reworks) || 0,
-          userFeedback: (draft.userFeedback || undefined) as SessionUpdatePayload['outcome'] extends { userFeedback?: infer U } ? U : never,
+          userFeedback: (draft.userFeedback === 'none' ? undefined : draft.userFeedback || undefined) as SessionUpdatePayload['outcome'] extends { userFeedback?: infer U } ? U : never,
         },
         tasksCompleted: draftTasksCompleted,
         tasksPending: draftTasksPending,
@@ -201,10 +206,15 @@ export function SessionDetailPage() {
   const metadataFields: FieldDefinition[] = useMemo(() => [
     { type: 'text', key: 'branch', label: t('page.sessionDetail.branch') },
     { type: 'readonly', key: 'provider', label: t('page.sessionDetail.provider') },
+    { type: 'readonly', key: 'model', label: t('page.sessionDetail.model') },
+    { type: 'readonly', key: 'client', label: t('page.sessionDetail.client') },
+    { type: 'readonly', key: 'status', label: t('page.sessionDetail.status') },
+    { type: 'readonly', key: 'startedAt', label: t('page.sessionDetail.startedAt') },
+    { type: 'readonly', key: 'endedAt', label: t('page.sessionDetail.endedAt') },
     { type: 'readonly', key: 'duration', label: t('page.sessionDetail.duration') },
-    { type: 'select', key: 'taskDomain', label: t('page.sessionDetail.classification') + ' — Domain', options: DOMAIN_OPTIONS },
-    { type: 'select', key: 'taskNature', label: t('page.sessionDetail.classification') + ' — Nature', options: NATURE_OPTIONS },
-    { type: 'select', key: 'taskComplexity', label: t('page.sessionDetail.classification') + ' — Complexity', options: COMPLEXITY_OPTIONS },
+    { type: 'select', key: 'taskDomain', label: t('page.sessionDetail.domain'), options: DOMAIN_OPTIONS },
+    { type: 'select', key: 'taskNature', label: t('page.sessionDetail.nature'), options: NATURE_OPTIONS },
+    { type: 'select', key: 'taskComplexity', label: t('page.sessionDetail.complexity'), options: COMPLEXITY_OPTIONS },
   ], [t]);
 
   const outcomeFields: FieldDefinition[] = useMemo(() => [
@@ -239,13 +249,14 @@ export function SessionDetailPage() {
     );
   }
 
-  const modelLabel = (session.aiProvider?.model ?? '').replace('claude-', '').replace(/-\d{8}$/, '');
+  const providerLabel = session.aiProvider?.provider ?? '—';
+  const modelLabel = session.aiProvider?.model ?? '—';
 
   return (
     <div>
       <PageHeader
         title={editing ? t('page.sessions.editSession') : t('page.sessionDetail.title', { branch: session.branch })}
-        description={`${modelLabel} · ${formatDate(session.startedAt)}`}
+        description={`${providerLabel} · ${modelLabel} · ${formatDate(session.startedAt)}`}
         actions={
           <div className="flex items-center gap-2">
             {editing ? (
@@ -271,7 +282,7 @@ export function SessionDetailPage() {
 
       <div className="space-y-6">
         {/* Section: Metadata */}
-        <CollapsibleSection label={t('page.sessionDetail.branch')} defaultOpen>
+        <CollapsibleSection label={t('page.sessionDetail.metadata')} defaultOpen>
           <FrontmatterForm
             disabled={!editing}
             fields={metadataFields}
