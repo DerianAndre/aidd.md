@@ -11,7 +11,7 @@
 
 AIDD (AI-Driven Development) is a framework that structures how AI assistants develop software. It provides:
 
-- **Mandatory workflow pipeline** — Every session follows Brainstorm → Plan → Execute → Review → End with artifacts at every step
+- **Mandatory workflow pipeline** — Every session follows Brainstorm → Plan → Execute → Test → Review → Ship with artifacts at every step
 - **Session tracking** — Every conversation is a tracked development session with decisions, errors, and outcomes
 - **Memory persistence** — Learnings from past sessions inform future work (decisions, mistakes, conventions)
 - **Quality enforcement** — Automated validation, pattern detection, and compliance checks
@@ -26,7 +26,7 @@ AIDD works with any AI-powered development tool that supports the MCP protocol (
 Every session follows a structured pipeline. Artifacts (versioned documents) are created at every step and session state is updated throughout.
 
 ```
-Your Request → Brainstorm → Planning → [Iterate] → Approved → Execution → Review → Done
+Your Request → Brainstorm → Plan → [Approved?] → Execute → Test → [Pass?] → Review → [Approved?] → Ship
 ```
 
 ### Pipeline Diagram
@@ -37,17 +37,21 @@ flowchart LR
     B --> C[Plan]
     C --> D{Approved?}
     D -- Yes --> E[Execute]
-    D -- No --> C
-    E --> F[Review]
-    F --> G[Ship]
+    D -- No --> B
+    E --> F[Test]
+    F -- Fail --> E
+    F -- Pass --> G{Review}
+    G -- Approved --> H[Ship]
+    G -- Rejected --> B
 
     style A fill:#f0f4ff,stroke:#4a6fa5
     style B fill:#fff3e0,stroke:#e6a23c
     style C fill:#e8f5e9,stroke:#67c23a
     style D fill:#fce4ec,stroke:#f56c6c
     style E fill:#e3f2fd,stroke:#409eff
-    style F fill:#f3e5f5,stroke:#9c27b0
-    style G fill:#e0f2f1,stroke:#26a69a
+    style F fill:#e8eaf6,stroke:#5c6bc0
+    style G fill:#f3e5f5,stroke:#9c27b0
+    style H fill:#e0f2f1,stroke:#26a69a
 ```
 
 ### Artifact Flow
@@ -67,8 +71,8 @@ flowchart TD
     subgraph BUILD
         E1[issue]
     end
-    subgraph VERIFY
-        V1[checklist]
+    subgraph TEST
+        T1[checklist]
     end
     subgraph SHIP
         S1[retro]
@@ -76,10 +80,12 @@ flowchart TD
 
     B1 --> P1
     B2 --> P1
+    P1 -. if arch decision .-> P2
+    P1 -. if visual needed .-> P3
     P1 -- approved --> P4
     P1 -- approved --> E1
-    E1 --> V1
-    V1 --> S1
+    E1 --> T1
+    T1 --> S1
 ```
 
 ### Step by Step
@@ -89,9 +95,10 @@ flowchart TD
 | **1. Startup** | Session initialized, memory loaded | Conversation begins |
 | **2. Brainstorm** | Memory searched, options explored, trade-offs considered | Ideas, options, and trade-offs presented |
 | **3. Plan** | Plan mode entered, detailed task plan created | You review and approve/reject the plan |
-| **4. Execute** | Approved plan implemented | Code changes, file edits, tests |
-| **5. Review** | Typecheck, tests, build run; verification checklist created | Results of quality checks |
-| **6. Ship** | Learnings recorded, retrospective created, session closed | Summary of work done |
+| **4. Execute** | Approved plan implemented | Code changes, file edits |
+| **5. Test** | Typecheck, tests, build run; verification checklist created | Results of automated checks |
+| **6. Review** | Final approval — you confirm the work is complete | You approve to ship or reject to re-brainstorm |
+| **7. Ship** | Learnings recorded, retrospective created, session closed | Summary of work done |
 
 ### Skipping Steps
 
@@ -103,20 +110,21 @@ The brainstorm and planning steps are mandatory by default. To skip them, say an
 
 Artifacts are still created for the steps that do execute.
 
-### Plan Iterations
+### Iteration Loops
 
-If you reject a plan:
+The pipeline has three feedback loops:
 
-1. Tell the AI what to change
-2. It updates the plan and presents it again
-3. You can iterate as many times as needed
-4. Each iteration is tracked for compliance scoring
+1. **Plan rejected** — You explain what needs to change. The conversation returns to brainstorming to re-explore ideas, then a revised plan is created. You can iterate as many times as needed.
+2. **Tests fail** — The implementation is fixed and tests are re-run until they pass. This loop is automated.
+3. **Review rejected** — After tests pass, you do a final review. If the work doesn't meet your expectations, the conversation returns to brainstorming for a fresh approach.
+
+Each iteration is tracked for compliance scoring.
 
 ---
 
 ## 3. Artifacts
 
-Artifacts are versioned documents the AI creates at each workflow step. They capture thinking, decisions, and results.
+Artifacts are versioned documents created at each workflow step. They capture thinking, decisions, and results.
 
 | Type | Created During | What It Contains |
 |------|---------------|-----------------|
@@ -127,7 +135,7 @@ Artifacts are versioned documents the AI creates at each workflow step. They cap
 | **Diagram** | Planning | System/component/flow diagrams |
 | **Spec** | After plan approval | Formal specification with acceptance criteria |
 | **Issue** | Execution | Bugs, blockers, problems discovered |
-| **Checklist** | Review | Verification steps and results |
+| **Checklist** | Test | Verification steps and automated check results |
 | **Retro** | Ship | What worked, what didn't, lessons learned |
 
 All artifacts are stored in the project's `.aidd/` database and can be viewed in the Hub app.
@@ -168,9 +176,9 @@ flowchart LR
     D -- export --> DJ
     M -- export --> MJ
     C -- export --> CJ
-    DJ -- search --> O
-    MJ -- search --> O
-    CJ -- search --> O
+    D -- searched before planning --> O
+    M -- searched before planning --> O
+    C -- searched before planning --> O
 ```
 
 1. During a session, observations are recorded (learnings, decisions, patterns)
@@ -199,7 +207,7 @@ Sessions provide continuity. If a conversation is compacted or resumed, session 
 
 1. **Be specific** — The more context you provide upfront, the better the brainstorm and plan will be.
 
-2. **Engage with the brainstorm** — Add your own ideas or constraints. The AI explores options, but you know the domain best.
+2. **Engage with the brainstorm** — Add your own ideas or constraints during the exploration phase. You know the domain best.
 
 3. **Review plans carefully** — Approve, reject with feedback, or request changes. First-try approvals indicate good alignment.
 
@@ -211,7 +219,20 @@ Sessions provide continuity. If a conversation is compacted or resumed, session 
 
 ---
 
-## 7. File Structure
+## 7. Evolution
+
+AIDD improves itself based on usage patterns. This happens automatically:
+
+- **Pattern detection** — After every observation, output is scanned for recurring anti-patterns (filler phrases, hedging, verbosity)
+- **Model profiling** — At session end, a fingerprint is computed measuring writing style metrics (sentence length, vocabulary diversity, passive voice ratio)
+- **Evolution candidates** — Every 5th session, the framework analyzes patterns across sessions and proposes improvements (new rules, conventions, workflow tweaks)
+- **Feedback loop** — Your session feedback (positive/neutral/negative) adjusts the confidence of proposed changes
+
+You don't need to do anything for evolution to work. It runs server-side at zero token cost. Over time, the framework adapts to your project's patterns and your preferences.
+
+---
+
+## 8. File Structure
 
 ```
 .aidd/                    Project AIDD state
@@ -228,7 +249,7 @@ Sessions provide continuity. If a conversation is compacted or resumed, session 
 
 ---
 
-## 8. Cross-References
+## 9. Cross-References
 
 - **AIDD Lifecycle Spec**: `content/specs/aidd-lifecycle.md`
 - **Memory Layer Spec**: `content/specs/memory-layer.md`

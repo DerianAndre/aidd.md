@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // AIDD Hook: PostToolUse(mcp__aidd-engine__aidd_session)
-// Fires after aidd_session calls. On "end" action, verifies review artifacts exist.
+// Fires after aidd_session calls. On "end" action, verifies test + retro artifacts exist.
 // Adapter-agnostic — referenced by .claude/settings.json and other adapters.
 let input = '';
 process.stdin.setEncoding('utf8');
@@ -22,7 +22,7 @@ process.stdin.on('end', () => {
     db.close();
 
     const warnings = [];
-    if (!checklist) warnings.push('No checklist artifact — review step may have been skipped');
+    if (!checklist) warnings.push('No checklist artifact — test step may have been skipped');
     if (!retro) warnings.push('No retro artifact — retrospective missing');
     if (activeArts.length > 0) warnings.push(`${activeArts.length} artifact(s) still active — archive them`);
 

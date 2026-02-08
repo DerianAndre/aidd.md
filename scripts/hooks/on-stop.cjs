@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // AIDD Hook: Stop
-// Enforces mandatory workflow completion: review (checklist) + retro + artifact archival + session end.
+// Enforces mandatory workflow completion: test (checklist) + review + retro + artifact archival + session end.
 // Adapter-agnostic — referenced by .claude/settings.json and other adapters.
 const Database = require('better-sqlite3');
 const { resolve } = require('path');
@@ -24,7 +24,7 @@ try {
     const hasPlan = allArts.includes('plan');
 
     const missing = [];
-    if (!hasChecklist) missing.push('checklist (VERIFY — review step)');
+    if (!hasChecklist) missing.push('checklist (TEST — automated checks)');
     if (!hasRetro) missing.push('retro (SHIP — retrospective)');
     const missingStr = missing.length
       ? `\n** Missing workflow artifacts: ${missing.join(', ')} — create them before ending **`
@@ -32,23 +32,23 @@ try {
 
     // Compliance hint
     const workflowSteps = [hasBrainstorm, hasPlan, hasChecklist, hasRetro].filter(Boolean).length;
-    const complianceHint = `\nWorkflow completeness: ${workflowSteps}/4 steps (brainstorm, plan, review, retro)`;
+    const complianceHint = `\nWorkflow completeness: ${workflowSteps}/4 steps (brainstorm, plan, test, retro)`;
 
     const retroReminder = !hasRetro
       ? `\nCreate retro: aidd_artifact { action: "create", type: "retro", feature: "session-${row.id.slice(0, 8)}", title: "Retro: <summary>", sessionId: "${row.id}", content: "## What worked\\n...\\n## What didn't\\n...\\n## Lessons\\n..." }`
       : '';
 
     const checklistReminder = !hasChecklist
-      ? `\nCreate checklist: aidd_artifact { action: "create", type: "checklist", feature: "session-${row.id.slice(0, 8)}", title: "Review: <summary>", sessionId: "${row.id}", content: "- [ ] typecheck\\n- [ ] tests\\n- [ ] lint\\n- [ ] spec alignment" }`
+      ? `\nCreate checklist: aidd_artifact { action: "create", type: "checklist", feature: "session-${row.id.slice(0, 8)}", title: "Test: <summary>", sessionId: "${row.id}", content: "- [ ] typecheck\\n- [ ] tests\\n- [ ] build\\n- [ ] lint" }`
       : '';
 
     console.log(
-      `[AIDD Workflow §2.6] Session ${row.id} STILL ACTIVE (${(s.tasksPending || []).length} pending).${artList}${missingStr}${complianceHint}${checklistReminder}${retroReminder}\n` +
+      `[AIDD Workflow §2.7] Session ${row.id} STILL ACTIVE (${(s.tasksPending || []).length} pending).${artList}${missingStr}${complianceHint}${checklistReminder}${retroReminder}\n` +
       `Complete the Session End Protocol:\n` +
       `1. aidd_session { action: "update", id: "${row.id}", tasksCompleted: [...], filesModified: [...], output: "summary" }\n` +
       `2. aidd_observation for each significant learning\n` +
       `3. aidd_memory_add_decision / _mistake / _convention for cross-session knowledge\n` +
-      `4. Create checklist artifact (if not created) — review step\n` +
+      `4. Create checklist artifact (if not created) — test step\n` +
       `5. Create retro artifact (if not created) — retrospective\n` +
       `6. Archive ALL active artifacts: aidd_artifact { action: "archive", id: "..." } for each\n` +
       `7. aidd_memory_export (if decisions/mistakes were recorded)\n` +

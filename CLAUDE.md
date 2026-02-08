@@ -38,20 +38,8 @@ Expected status:
 ## 2. Mandatory Workflow Pipeline
 
 **Every session follows this pipeline. No step is optional unless the user EXPLICITLY opts out.**
-
-```
-User Input → Brainstorm → Planning → [Iterate] → Approved → Execution → Review → Ending
-    │            │            │           │            │           │          │         │
-    ▼            ▼            ▼           ▼            ▼           ▼          ▼         ▼
- session    brainstorm      plan      plan(v2)     archive     issue/    checklist    retro
- created    artifact      artifact    artifact    +spec/adr   artifact   artifact   artifact
-    │            │            │           │            │           │          │         │
-    ▼            ▼            ▼           ▼            ▼           ▼          ▼         ▼
- session     session      session     session      session    session    session    session
- update      update       update      update       update     update     update      end
-```
-
 **Escape hatch**: User EXPLICITLY says "skip brainstorm", "just implement this", or similar direct opt-out.
+**If MCP tools fail mid-workflow**: Continue the workflow without artifacts. Record what you would have created. Retry tool calls once. If still failing, inform the user.
 
 ### 2.1 UNDERSTAND — Brainstorm
 
@@ -100,23 +88,24 @@ After `aidd_start` and setting raw input, your FIRST action is brainstorming:
 
 #### On Approval (hook provides exact IDs):
 
+**Always:**
 1. Archive plan: `aidd_artifact { action: "archive", id: PLAN_ARTIFACT_ID }`
 2. Archive brainstorm/research artifacts: `aidd_artifact { action: "archive", id: "..." }` for each
-3. Update session with approval decision:
-   `aidd_session { action: "update", id: SESSION_ID, decisions: [{ decision: "Plan approved: <feature>", reasoning: "User confirmed", timestamp: "..." }] }`
+3. Update session: `aidd_session { action: "update", id: SESSION_ID, decisions: [{ decision: "Plan approved: <feature>", reasoning: "User confirmed", timestamp: "..." }] }`
 4. Record observation: `aidd_observation { sessionId: SESSION_ID, type: "decision", title: "Plan approved: <feature>" }`
-5. If spec needed: `aidd_artifact { type: "spec", ... }`
-6. If framework content changes: `aidd_draft_create { category: "rules|knowledge|skills|workflows", title, filename, content, confidence: 70 }`
-7. If arch decision: `aidd_artifact { type: "adr", ... }`
 
-#### On Rejection (iterate):
+**If applicable:**
+- Spec needed → `aidd_artifact { type: "spec", ... }`
+- Framework content changes → `aidd_draft_create { category: "rules|knowledge|skills|workflows", title, filename, content, confidence: 70 }`
+- Arch decision → `aidd_artifact { type: "adr", ... }`
+
+#### On Rejection (return to §2.1 Brainstorm):
 
 1. Update session with rejection decision + reasoning:
    `aidd_session { action: "update", id: SESSION_ID, decisions: [{ decision: "Plan rejected: <reason>", reasoning: "...", timestamp: "..." }] }`
 2. Record observation: `aidd_observation { sessionId: SESSION_ID, type: "decision", title: "Plan rejected: <reason>" }`
-3. Update plan artifact with revisions: `aidd_artifact { action: "update", id: PLAN_ARTIFACT_ID, content: "revised" }`
-4. Return to brainstorming if approach changes fundamentally
-5. Re-enter plan mode for next iteration
+3. **Return to §2.1 UNDERSTAND** — brainstorm the improvements before creating a revised plan
+4. Re-enter plan mode for next iteration after brainstorming
 
 **Compliance**: First-try approval → complianceScore 90+. Each rejection → -15 points.
 
@@ -132,22 +121,44 @@ After `aidd_start` and setting raw input, your FIRST action is brainstorming:
 4. If bugs/blockers found: `aidd_artifact { type: "issue", ... }`
 5. For errors, check known fixes first: `aidd_diagnose_error { error: "..." }`
 
-### 2.5 VERIFY — Review
+### 2.5 TEST — Automated Checks
 
-**MANDATORY. Create a checklist artifact tracking verification steps.**
-**Hook `on-stop.cjs` checks for checklist artifact before allowing session end.**
+**MANDATORY. Run typecheck, tests, and build. If any fail, return to §2.4 BUILD to fix.**
 
 1. Create checklist artifact:
    ```
-   aidd_artifact { action: "create", type: "checklist", feature: "<slug>", title: "Review: <feature>", sessionId: SESSION_ID, content: "- [ ] typecheck\n- [ ] tests\n- [ ] lint\n- [ ] spec alignment\n- [ ] no regressions" }
+   aidd_artifact { action: "create", type: "checklist", feature: "<slug>", title: "Test: <feature>", sessionId: SESSION_ID, content: "- [ ] typecheck\n- [ ] tests\n- [ ] build\n- [ ] lint\n- [ ] no regressions" }
    ```
 2. Run verification (typecheck, tests, build as appropriate)
-3. Update checklist with results: `aidd_artifact { action: "update", id: CHECKLIST_ID, content: "updated results" }`
-4. Archive checklist when complete: `aidd_artifact { action: "archive", id: CHECKLIST_ID }`
+3. **If tests fail**: Return to §2.4 BUILD — fix the issues and re-run tests. Update checklist with failure details.
+4. **If tests pass**: Update checklist with passing results: `aidd_artifact { action: "update", id: CHECKLIST_ID, content: "updated results" }`
+5. Proceed to §2.6 REVIEW
 
-**Compliance**: Checklist artifact existence contributes to workflow completeness score (X/4 steps).
+**Compliance**: Checklist artifact existence contributes to workflow completeness score.
 
-### 2.6 SHIP — Session End
+### 2.6 REVIEW — Final Approval
+
+**MANDATORY. Present results to the user for final approval.**
+**If rejected, return to §2.1 UNDERSTAND (brainstorm) for a fresh approach.**
+
+1. Present a summary of all work done: changes made, test results, checklist status
+2. Wait for user approval
+
+#### On Approval:
+
+1. Archive checklist: `aidd_artifact { action: "archive", id: CHECKLIST_ID }`
+2. Update session: `aidd_session { action: "update", id: SESSION_ID, decisions: [{ decision: "Review approved: <feature>", reasoning: "User confirmed", timestamp: "..." }] }`
+3. Proceed to §2.7 SHIP
+
+#### On Rejection (return to §2.1 Brainstorm):
+
+1. Update session: `aidd_session { action: "update", id: SESSION_ID, decisions: [{ decision: "Review rejected: <reason>", reasoning: "...", timestamp: "..." }] }`
+2. Record observation: `aidd_observation { sessionId: SESSION_ID, type: "decision", title: "Review rejected: <reason>" }`
+3. **Return to §2.1 UNDERSTAND** — brainstorm improvements before re-planning and re-implementing
+
+**Compliance**: Each review rejection → -15 points (same as plan rejection).
+
+### 2.7 SHIP — Session End
 
 **MANDATORY 7-step protocol. Hook `on-stop.cjs` blocks with exact instructions if incomplete.**
 
@@ -183,113 +194,71 @@ aidd_session { action: "end", id: SESSION_ID, output: "summary", outcome: { test
 **Server-side auto-hooks fire after Step 7 (zero token cost):**
 Model fingerprint, pattern profiling, evolution analysis (5th session), data pruning (10th session).
 
+**Compliance scoring formula:**
+- Start at 90
+- Each plan rejection: -15
+- Each review rejection: -15
+- Missing brainstorm artifact: -10
+- Missing checklist artifact: -10
+- Missing retro artifact: -10
+- Example: first-try plan + first-try review + all artifacts = 90. One plan rejection + missing checklist = 90 - 15 - 10 = 65.
+
 ---
 
-## 3. Operations Reference
+## 3. Supporting Operations
 
-**Supporting operations used within the workflow pipeline above.**
+### Session Update Rules
 
-### 3.1 Session Updates
+**MUST update** `aidd_session` after: completing task groups, starting new tasks, making decisions, resolving errors.
+**DO NOT update** after: every file read/write, routine operations, trivial changes.
 
-Call `aidd_session { action: "update", id: SESSION_ID }` at workflow transitions and task boundaries.
+### Observation Types
 
-**MUST update after:**
-- Completing a task group → append `tasksCompleted`, `filesModified`
-- Starting new tasks → set `tasksPending`
-- Making a significant decision → append `decisions`
-- Resolving an error or bug → append `errorsResolved`
-
-**DO NOT update after:**
-- Every individual file read or write
-- Routine operations following existing patterns
-- Trivial mechanical changes
-
-### 3.2 Observations
-
-Call `aidd_observation { sessionId: SESSION_ID, type, title }` when significant learnings occur.
-
-| Event                           | Type               |
-| ------------------------------- | ------------------ |
-| Architectural decision made     | `decision`         |
-| Non-obvious bug found and fixed | `mistake`          |
-| Project convention identified   | `convention`       |
-| Recurring codebase pattern      | `pattern`          |
-| External tool gave key info     | `tool_outcome`     |
-| Multi-step workflow completed   | `workflow_outcome` |
-| User preference expressed       | `preference`       |
-| Cross-concept connection found  | `insight`          |
+| Event | Type |
+| ----- | ---- |
+| Architecture/tech decision | `decision` |
+| Non-obvious bug fixed | `mistake` |
+| Project convention found | `convention` |
+| Recurring pattern | `pattern` |
+| Tool gave key info | `tool_outcome` |
+| Workflow completed | `workflow_outcome` |
+| User preference | `preference` |
+| Cross-concept connection | `insight` |
 
 **DO NOT observe:** routine implementation, trivial fixes, obvious decisions.
 
-### 3.3 Memory Operations
+### Lifecycle Tracking (Optional)
 
-**BEFORE planning (§2.1):** ALWAYS search memory first.
-
-```
-aidd_memory_search { query: "relevant topic" }
-→ aidd_memory_context { anchor: "<id>" }     // if timeline needed
-→ aidd_memory_get { ids: ["<id1>", "<id2>"] } // for full details
-```
-
-**AFTER significant work (§2.6):** Write permanent memory.
-- Decisions: `aidd_memory_add_decision { decision, reasoning }`
-- Mistakes: `aidd_memory_add_mistake { error, rootCause, fix, prevention }`
-- Conventions: `aidd_memory_add_convention { convention, example }`
-
-**Before creating a PR:** Export memory for Git visibility: `aidd_memory_export`
-
-### 3.4 Artifacts
-
-**Artifacts are versioned documents created at specific workflow steps.**
-**Status: `active` = draft/in-progress, `done` = completed/approved (via `archive` action).**
-
-| Workflow Step | Artifact Type | When |
-|---------------|--------------|------|
-| §2.1 UNDERSTAND | `brainstorm` | After exploring ideas, options, trade-offs |
-| §2.1 UNDERSTAND | `research` | After investigating tech, patterns, prior art |
-| §2.2 PLAN | `plan` | When entering plan mode |
-| §2.2 PLAN | `adr` | Architecture decisions with trade-offs |
-| §2.2 PLAN | `diagram` | System/component/flow diagrams |
-| §2.3 PLAN | `spec` | Formal specification with acceptance criteria |
-| §2.4 BUILD | `issue` | Bugs, blockers, problems discovered |
-| §2.5 VERIFY | `checklist` | Verification steps and quality gates |
-| §2.6 SHIP | `retro` | Session retrospective (worked/didn't/lessons) |
-
-**Lifecycle**: `create` → `update` (content evolves) → `archive` (marks as done).
-
-### 3.5 Error Diagnosis
-
-When encountering errors, ALWAYS check for known fixes first:
-
-```
-aidd_diagnose_error { error: "error message or description" }
-```
-
-### 3.6 Lifecycle Tracking (Optional)
-
-For features spanning multiple sessions or AIDD phases:
+For features spanning multiple sessions (4+ tasks):
 
 ```
 aidd_lifecycle_init { feature: "name", sessionId: SESSION_ID }
-aidd_lifecycle_advance { lifecycleId: "..." }  // at each phase transition
-aidd_lifecycle_status { lifecycleId: "..." }    // check progress
+aidd_lifecycle_advance { lifecycleId: "..." }
+aidd_lifecycle_status { lifecycleId: "..." }
 ```
 
-### 3.7 Pre-Commit Checks
+### Branch Context
 
-BEFORE any git commit, run these in order:
+For multi-session features, save/restore branch context:
 
-1. `aidd_generate_commit_message { diff: "staged diff output" }`
-2. `aidd_ci_diff_check { changedFiles: ["file1.ts", "file2.ts"] }`
-3. `aidd_scan_secrets` on any new files
+```
+aidd_branch { action: "save", branch: "feature/x", feature: "description", pendingTasks: [...] }
+aidd_branch { action: "get", branch: "feature/x" }
+```
 
-### 3.8 Guidance Tools
+### Pre-Commit Checks
 
-When uncertain about next steps or task routing:
+BEFORE any git commit:
 
-- `aidd_classify_task { description: "task description" }` — get optimal agent/workflow
-- `aidd_suggest_next { currentTask, phase }` — get context-aware suggestions
-- `aidd_apply_heuristics { decision: "..." }` — analyze a decision through 10 heuristics
+1. `aidd_generate_commit_message { diff: "staged diff" }`
+2. `aidd_ci_diff_check { changedFiles: [...] }`
+3. `aidd_scan_secrets` on new files
+
+### Guidance Tools
+
+- `aidd_classify_task { description }` — optimal agent/workflow
+- `aidd_suggest_next { currentTask, phase }` — context-aware suggestions
+- `aidd_apply_heuristics { decision }` — 10 operating heuristics
 
 ---
 
@@ -303,15 +272,19 @@ When uncertain about next steps or task routing:
 | Research done         | `aidd_artifact` (research)                            | §2.1 UNDERSTAND |
 | Entering plan mode    | `aidd_session` (update) + `aidd_artifact` (plan)      | §2.2 PLAN |
 | Plan approved         | `aidd_artifact` (archive) + observation + spec/adr     | §2.3 PLAN |
-| Plan rejected         | `aidd_session` (update) + observation                  | §2.3 PLAN |
+| Plan rejected         | Return to §2.1 UNDERSTAND                             | §2.3 PLAN |
 | Architecture decision | `aidd_artifact` (adr)                                 | §2.2-§2.3 |
 | Task group done       | `aidd_session` (update)                               | §2.4 BUILD |
 | Bug/blocker found     | `aidd_artifact` (issue) + `aidd_diagnose_error`       | §2.4 BUILD |
 | Error encountered     | `aidd_diagnose_error`                                 | §2.4 BUILD |
-| Verification steps    | `aidd_artifact` (checklist)                           | §2.5 VERIFY |
-| Before git commit     | `aidd_generate_commit_message` + `aidd_ci_diff_check` | §2.5 VERIFY |
+| Run checks            | `aidd_artifact` (checklist) + typecheck/tests/build   | §2.5 TEST |
+| Tests fail            | Return to §2.4 BUILD to fix                           | §2.5 TEST |
+| Tests pass            | Present results for final approval                    | §2.6 REVIEW |
+| Review approved       | Archive checklist, proceed to ship                    | §2.6 REVIEW |
+| Review rejected       | Return to §2.1 UNDERSTAND                             | §2.6 REVIEW |
+| Before git commit     | `aidd_generate_commit_message` + `aidd_ci_diff_check` | §2.5 TEST |
 | Framework content     | `aidd_draft_create`                                   | §2.3 PLAN |
-| Conversation ends     | 7-step Session End Protocol                           | §2.6 SHIP |
+| Conversation ends     | 7-step Session End Protocol                           | §2.7 SHIP |
 
 ---
 
