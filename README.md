@@ -26,7 +26,8 @@
 - Evidence-based (every decision traceable to data or principles)
 - Progressive disclosure (token-efficient context loading)
 
----
+## How to follow the methodology?
+If you want to take 100% advantage of AIDD make sure to read [WORKFLOW.MD](./WORKFLOW.md)
 
 ## Quick Start
 
@@ -233,13 +234,13 @@ aidd.md/
 
 `pnpm setup` auto-detects and configures all supported IDEs:
 
-| IDE | Detection | Config Files | How It Works |
-|-----|-----------|-------------|--------------|
-| Claude Code | `~/.claude/` exists | `~/.claude.json` + `.mcp.json` | MCP engine via user scope + project scope |
-| Cursor | Always available | `.cursor/mcp.json` + `.cursor/rules/aidd.mdc` | MCP engine + rules pointer |
-| VS Code | `.vscode/` or `code` CLI | `.vscode/mcp.json` + `.github/copilot-instructions.md` | MCP engine via Copilot |
-| Gemini | `AGENTS.md` exists | `.gemini/settings.json` | Reads AGENTS.md directly (no MCP needed) |
-| Windsurf | `~/.codeium/windsurf/` exists | `~/.codeium/windsurf/mcp_config.json` + `.windsurfrules` | MCP engine + rules pointer |
+| IDE         | Detection                     | Config Files                                             | How It Works                              |
+| ----------- | ----------------------------- | -------------------------------------------------------- | ----------------------------------------- |
+| Claude Code | `~/.claude/` exists           | `~/.claude.json` + `.mcp.json`                           | MCP engine via user scope + project scope |
+| Cursor      | Always available              | `.cursor/mcp.json` + `.cursor/rules/aidd.mdc`            | MCP engine + rules pointer                |
+| VS Code     | `.vscode/` or `code` CLI      | `.vscode/mcp.json` + `.github/copilot-instructions.md`   | MCP engine via Copilot                    |
+| Gemini      | `AGENTS.md` exists            | `.gemini/settings.json`                                  | Reads AGENTS.md directly (no MCP needed)  |
+| Windsurf    | `~/.codeium/windsurf/` exists | `~/.codeium/windsurf/mcp_config.json` + `.windsurfrules` | MCP engine + rules pointer                |
 
 Run `pnpm mcp:doctor` to verify IDE integration status.
 

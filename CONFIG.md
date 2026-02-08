@@ -163,7 +163,7 @@ All paths in `content.paths` are relative to the `.aidd/` root. Every field is o
 | Field       | Default               | Description                                                                                         |
 | ----------- | --------------------- | --------------------------------------------------------------------------------------------------- |
 | `content`   | `"content"`           | Base content directory. All subdirectories resolve relative to this unless overridden individually. |
-| `agents`    | `"content/agents"`    | Agents directory.                                                                         |
+| `agents`    | `"content/agents"`    | Agents directory.                                                                                   |
 | `rules`     | `"content/rules"`     | Rules directory.                                                                                    |
 | `skills`    | `"content/skills"`    | Skills directory.                                                                                   |
 | `workflows` | `"content/workflows"` | Workflows directory.                                                                                |
@@ -326,8 +326,8 @@ data.db-shm
 
 The MCP engine auto-generates these files for git visibility:
 
-| File                       | Purpose                                  | Update Frequency                      |
-| -------------------------- | ---------------------------------------- | ------------------------------------- |
+| File                          | Purpose                                  | Update Frequency                      |
+| ----------------------------- | ---------------------------------------- | ------------------------------------- |
 | `.aidd/memory/insights.md`    | Auto-learning dashboard (~150 tokens)    | Every 5th session                     |
 | `.aidd/memory/state-dump.sql` | SQL INSERT statements for diffable state | On session end                        |
 | `.aidd/memory/*.json`         | Permanent memory export                  | On explicit `aidd_memory_export` call |

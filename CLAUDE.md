@@ -11,12 +11,12 @@
 
 Call `aidd_start` immediately. Do NOT read files, search code, or begin any work until this completes.
 
-| Parameter | Value |
-|-----------|-------|
-| `aiProvider` | `{ provider, model, modelId, client }` — your model info |
+| Parameter            | Value                                                         |
+| -------------------- | ------------------------------------------------------------- |
+| `aiProvider`         | `{ provider, model, modelId, client }` — your model info      |
 | `taskClassification` | `{ domain, nature, complexity }` — if known from user request |
-| `branch` | Auto-detected or user-specified |
-| `memorySessionId` | For cross-session continuity (if provided) |
+| `branch`             | Auto-detected or user-specified                               |
+| `memorySessionId`    | For cross-session continuity (if provided)                    |
 
 This returns: session context + framework rules + active agents + suggested next steps.
 **Store the session ID returned by `aidd_start`. You need it for ALL subsequent operations.**
@@ -53,16 +53,16 @@ Call `aidd_session { action: "update", id: SESSION_ID }` at task boundaries.
 
 Call `aidd_observation { sessionId: SESSION_ID, type, title }` when significant learnings occur.
 
-| Event | Type |
-|-------|------|
-| Architectural decision made | `decision` |
-| Non-obvious bug found and fixed | `mistake` |
-| Project convention identified | `convention` |
-| Recurring codebase pattern | `pattern` |
-| External tool gave key info | `tool_outcome` |
-| Multi-step workflow completed | `workflow_outcome` |
-| User preference expressed | `preference` |
-| Cross-concept connection found | `insight` |
+| Event                           | Type               |
+| ------------------------------- | ------------------ |
+| Architectural decision made     | `decision`         |
+| Non-obvious bug found and fixed | `mistake`          |
+| Project convention identified   | `convention`       |
+| Recurring codebase pattern      | `pattern`          |
+| External tool gave key info     | `tool_outcome`     |
+| Multi-step workflow completed   | `workflow_outcome` |
+| User preference expressed       | `preference`       |
+| Cross-concept connection found  | `insight`          |
 
 **DO NOT observe:** routine implementation, trivial fixes, obvious decisions.
 
@@ -91,17 +91,17 @@ aidd_memory_export
 
 Call `aidd_artifact { action: "create" }` to persist workflow documents.
 
-| Workflow Stage | Artifact Type |
-|----------------|---------------|
-| After brainstorming | `brainstorm` |
-| After planning | `plan` |
-| After research | `research` |
-| Architecture decision | `adr` |
-| Diagram created | `diagram` |
-| Issue discovered | `issue` |
-| Spec written | `spec` |
-| Verification steps | `checklist` |
-| Post-mortem | `retro` |
+| Workflow Stage        | Artifact Type |
+| --------------------- | ------------- |
+| After brainstorming   | `brainstorm`  |
+| After planning        | `plan`        |
+| After research        | `research`    |
+| Architecture decision | `adr`         |
+| Diagram created       | `diagram`     |
+| Issue discovered      | `issue`       |
+| Spec written          | `spec`        |
+| Verification steps    | `checklist`   |
+| Post-mortem           | `retro`       |
 
 Lifecycle: `create` → `update` (as work progresses) → `archive` (when done).
 
@@ -172,20 +172,20 @@ If significant decisions were made during this session: call `aidd_memory_export
 
 ## 4. Quick Reference
 
-| Trigger | Tool | When |
-|---------|------|------|
-| Conversation starts | `aidd_start` | ALWAYS first call |
-| Before exploring code | `aidd_memory_search` | Check for prior context |
-| Error encountered | `aidd_diagnose_error` | Check for known fixes |
-| Decision made | `aidd_observation` (decision) | During work |
-| Bug found/fixed | `aidd_observation` (mistake) | During work |
-| Task group done | `aidd_session` (update) | At task boundaries |
-| Need guidance | `aidd_classify_task` / `aidd_suggest_next` | When uncertain |
-| Multi-phase feature | `aidd_lifecycle_init` | Optional, for complex features |
-| Phase transition | `aidd_lifecycle_advance` | During lifecycle tracking |
-| Before git commit | `aidd_generate_commit_message` + `aidd_ci_diff_check` | Pre-commit |
-| Before PR | `aidd_memory_export` | Export memory to Git |
-| Conversation ends | `aidd_session` (end) | ALWAYS last call |
+| Trigger               | Tool                                                  | When                           |
+| --------------------- | ----------------------------------------------------- | ------------------------------ |
+| Conversation starts   | `aidd_start`                                          | ALWAYS first call              |
+| Before exploring code | `aidd_memory_search`                                  | Check for prior context        |
+| Error encountered     | `aidd_diagnose_error`                                 | Check for known fixes          |
+| Decision made         | `aidd_observation` (decision)                         | During work                    |
+| Bug found/fixed       | `aidd_observation` (mistake)                          | During work                    |
+| Task group done       | `aidd_session` (update)                               | At task boundaries             |
+| Need guidance         | `aidd_classify_task` / `aidd_suggest_next`            | When uncertain                 |
+| Multi-phase feature   | `aidd_lifecycle_init`                                 | Optional, for complex features |
+| Phase transition      | `aidd_lifecycle_advance`                              | During lifecycle tracking      |
+| Before git commit     | `aidd_generate_commit_message` + `aidd_ci_diff_check` | Pre-commit                     |
+| Before PR             | `aidd_memory_export`                                  | Export memory to Git           |
+| Conversation ends     | `aidd_session` (end)                                  | ALWAYS last call               |
 
 ---
 
@@ -193,13 +193,13 @@ If significant decisions were made during this session: call `aidd_memory_export
 
 These run server-side via HookBus. Do NOT call them manually:
 
-| Auto-Hook | Trigger | Action |
-|-----------|---------|--------|
-| `pattern-auto-detect` | Every observation saved | Detects banned output patterns |
-| `pattern-model-profile` | Session end | Computes model fingerprint |
-| `evolution-auto-analyze` | Every 5th session | Generates improvement candidates |
-| `evolution-feedback-loop` | User feedback received | Adjusts candidate confidence |
-| `evolution-auto-prune` | Every 10th session | Cleans stale data |
+| Auto-Hook                 | Trigger                 | Action                           |
+| ------------------------- | ----------------------- | -------------------------------- |
+| `pattern-auto-detect`     | Every observation saved | Detects banned output patterns   |
+| `pattern-model-profile`   | Session end             | Computes model fingerprint       |
+| `evolution-auto-analyze`  | Every 5th session       | Generates improvement candidates |
+| `evolution-feedback-loop` | User feedback received  | Adjusts candidate confidence     |
+| `evolution-auto-prune`    | Every 10th session      | Cleans stale data                |
 
 ---
 
@@ -207,7 +207,6 @@ These run server-side via HookBus. Do NOT call them manually:
 
 This is the **aidd.md** repository — the open standard for AI-Driven Development. It contains:
 
-- **AGENTS.md** — Thin redirect to content/agents/ (Gemini compatibility)
 - **content/agents/** — Agent definitions (routing.md + per-agent files)
 - **content/rules/** — Domain-specific rules (global, orchestrator, frontend, backend, etc.)
 - **content/skills/** — Specialized agent capabilities with SKILL.md + validation scripts
