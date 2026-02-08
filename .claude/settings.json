@@ -26,41 +26,45 @@
     "SessionStart": [
       {
         "matcher": "startup",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo [AIDD Protocol] You MUST call aidd_start now. Store the returned session ID. Follow the AIDD conversation lifecycle in CLAUDE.md. You MUST call aidd_session with action end before this conversation closes."
-          }
-        ]
+        "hooks": [{ "type": "command", "command": "node scripts/hooks/on-startup.cjs" }]
       },
       {
         "matcher": "resume|compact|clear",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo [AIDD Protocol] Context was compacted or session resumed. If you lost the session ID, recover it with aidd_session { action: list, status: active }. Continue following AIDD lifecycle protocol from CLAUDE.md."
-          }
-        ]
+        "hooks": [{ "type": "command", "command": "node scripts/hooks/on-resume.cjs" }]
       }
     ],
     "PreCompact": [
       {
         "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo [AIDD Protocol] Context compaction imminent. If you have pending session state (decisions, files modified, tasks completed), call aidd_session { action: update } NOW before context is lost."
-          }
-        ]
+        "hooks": [{ "type": "command", "command": "node scripts/hooks/on-pre-compact.cjs" }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__aidd-engine__aidd_start",
+        "hooks": [{ "type": "command", "command": "node scripts/hooks/on-session-init.cjs" }]
+      },
+      {
+        "matcher": "EnterPlanMode",
+        "hooks": [{ "type": "command", "command": "node scripts/hooks/on-plan-enter.cjs" }]
+      },
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [{ "type": "command", "command": "node scripts/hooks/on-plan-exit.cjs" }]
+      },
+      {
+        "matcher": "mcp__aidd-engine__aidd_session",
+        "hooks": [{ "type": "command", "command": "node scripts/hooks/on-session-end.cjs" }]
       }
     ],
     "Stop": [
       {
         "matcher": "",
         "hooks": [
+          { "type": "command", "command": "node scripts/hooks/on-stop.cjs" },
           {
-            "type": "command",
-            "command": "echo [AIDD Protocol] Before ending: you MUST call aidd_session with action end and provide outcome { testsPassing, complianceScore, reverts, reworks } if you have not already."
+            "type": "prompt",
+            "prompt": "Check AIDD protocol compliance. If 'stop_hook_active' is true in the input, respond {\"ok\": true}. Otherwise: check the conversation for a recent aidd_session tool call with action 'end' that includes outcome metrics (testsPassing, complianceScore). If found, respond {\"ok\": true}. If not found, respond {\"ok\": false, \"reason\": \"AIDD protocol: complete the 7-step Session End Protocol (CLAUDE.md §3) before closing.\"}."
           }
         ]
       }
