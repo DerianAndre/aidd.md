@@ -7,6 +7,8 @@ import {
 import type {
   AnalyticsQuery,
   AnalyticsResult,
+  ArtifactEntry,
+  ArtifactFilter,
   AuditScore,
   BannedPattern,
   BannedPatternFilter,
@@ -992,6 +994,55 @@ export class SqliteBackend implements StorageBackend {
     });
   }
 
+  // ---- Artifacts ----
+
+  async saveArtifact(artifact: ArtifactEntry): Promise<void> {
+    this.db.prepare(`
+      INSERT OR REPLACE INTO artifacts (id, session_id, type, feature, status, title, description, content, date, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      artifact.id,
+      artifact.sessionId ?? null,
+      artifact.type,
+      artifact.feature,
+      artifact.status,
+      artifact.title,
+      artifact.description,
+      artifact.content,
+      artifact.date,
+      artifact.createdAt,
+      artifact.updatedAt,
+    );
+  }
+
+  async getArtifact(id: string): Promise<ArtifactEntry | null> {
+    const row = this.db.prepare('SELECT * FROM artifacts WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+    return row ? this.rowToArtifact(row) : null;
+  }
+
+  async listArtifacts(filter?: ArtifactFilter): Promise<ArtifactEntry[]> {
+    const clauses: string[] = [];
+    const params: unknown[] = [];
+
+    if (filter?.type) { clauses.push('type = ?'); params.push(filter.type); }
+    if (filter?.status) { clauses.push('status = ?'); params.push(filter.status); }
+    if (filter?.feature) { clauses.push('feature = ?'); params.push(filter.feature); }
+    if (filter?.sessionId) { clauses.push('session_id = ?'); params.push(filter.sessionId); }
+
+    const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+    const limit = filter?.limit ?? 50;
+    const sql = `SELECT * FROM artifacts ${where} ORDER BY date DESC, created_at DESC LIMIT ?`;
+    params.push(limit);
+
+    const rows = this.db.prepare(sql).all(...params) as Record<string, unknown>[];
+    return rows.map((r) => this.rowToArtifact(r));
+  }
+
+  async deleteArtifact(id: string): Promise<boolean> {
+    const result = this.db.prepare('DELETE FROM artifacts WHERE id = ?').run(id);
+    return result.changes > 0;
+  }
+
   // ---- Row mappers ----
 
   private rowToObservation(row: Record<string, unknown>): SessionObservation {
@@ -1089,6 +1140,22 @@ export class SqliteBackend implements StorageBackend {
       content: String(row['content']),
       createdAt: String(row['created_at']),
       sessionId: row['session_id'] ? String(row['session_id']) : undefined,
+    };
+  }
+
+  private rowToArtifact(row: Record<string, unknown>): ArtifactEntry {
+    return {
+      id: String(row['id']),
+      sessionId: row['session_id'] ? String(row['session_id']) : undefined,
+      type: String(row['type']) as ArtifactEntry['type'],
+      feature: String(row['feature']),
+      status: String(row['status']) as ArtifactEntry['status'],
+      title: String(row['title']),
+      description: String(row['description'] ?? ''),
+      content: String(row['content'] ?? ''),
+      date: String(row['date']),
+      createdAt: String(row['created_at']),
+      updatedAt: String(row['updated_at']),
     };
   }
 

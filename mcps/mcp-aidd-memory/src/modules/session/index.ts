@@ -119,6 +119,7 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
             modelId: 'unknown',
             client: 'unknown',
           },
+          input: params['input'] as string | undefined,
           decisions: [],
           errorsResolved: [],
           filesModified: [],
@@ -159,6 +160,8 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
             })
             .optional()
             .describe('AI provider info (required for start)'),
+          input: z.string().optional().describe("The user's initial request / prompt (for start or update)"),
+          output: z.string().optional().describe('Summary of work produced (for update or end)'),
           memorySessionId: z.string().optional().describe('Cross-session continuity ID'),
           parentSessionId: z.string().optional().describe('Parent session for threading'),
           taskClassification: z
@@ -230,6 +233,7 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
                 branch: a['branch'] as string,
                 startedAt: now(),
                 aiProvider: a['aiProvider'] as AiProvider,
+                input: a['input'] as string | undefined,
                 decisions: [],
                 errorsResolved: [],
                 filesModified: [],
@@ -256,6 +260,10 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
               if (!a['id']) return createErrorResult('id is required for update');
               const session = await backend.getSession(a['id'] as string);
               if (!session) return createErrorResult(`Session ${a['id']} not found`);
+
+              // Set input/output if provided
+              if (a['input']) session.input = a['input'] as string;
+              if (a['output']) session.output = a['output'] as string;
 
               // Merge arrays
               if (a['decisions']) session.decisions.push(...(a['decisions'] as SessionState['decisions']));
@@ -305,6 +313,7 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
               if (!session) return createErrorResult(`Session ${a['id']} not found`);
 
               session.endedAt = now();
+              if (a['output']) session.output = a['output'] as string;
               if (a['outcome']) session.outcome = a['outcome'] as SessionState['outcome'];
 
               // Merge final token usage if provided

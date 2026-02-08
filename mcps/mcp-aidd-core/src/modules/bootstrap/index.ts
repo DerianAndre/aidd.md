@@ -175,7 +175,7 @@ export const bootstrapModule: AiddModule = {
         // =================================================================
         // 2. Engine header
         // =================================================================
-        sections.push('\\[\\[aidd.md\\]\\](https://aidd.md) Engine - ON');
+        sections.push('[aidd.md](https://aidd.md) Engine - ON');
 
         if (sessionId) {
           sections.push(`- **Session**: \`${sessionId}\` (active)`);

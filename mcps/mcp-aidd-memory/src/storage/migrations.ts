@@ -221,6 +221,26 @@ CREATE INDEX IF NOT EXISTS idx_pdet_model ON pattern_detections(model_id);
 CREATE INDEX IF NOT EXISTS idx_pdet_pattern ON pattern_detections(pattern_id);
 CREATE INDEX IF NOT EXISTS idx_pdet_created ON pattern_detections(created_at);
 
+-- Artifacts (workflow-produced documents)
+CREATE TABLE IF NOT EXISTS artifacts (
+  id TEXT PRIMARY KEY,
+  session_id TEXT,
+  type TEXT NOT NULL,
+  feature TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  date TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_artifacts_type ON artifacts(type);
+CREATE INDEX IF NOT EXISTS idx_artifacts_feature ON artifacts(feature);
+CREATE INDEX IF NOT EXISTS idx_artifacts_status ON artifacts(status);
+CREATE INDEX IF NOT EXISTS idx_artifacts_date ON artifacts(date);
+CREATE INDEX IF NOT EXISTS idx_artifacts_session ON artifacts(session_id);
+
 -- Audit scores
 CREATE TABLE IF NOT EXISTS audit_scores (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
