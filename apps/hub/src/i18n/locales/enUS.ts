@@ -22,6 +22,7 @@ export default {
   'nav.observations': 'Observations',
   'nav.permanentMemory': 'Permanent Memory',
   'nav.overrides': 'Overrides',
+  'nav.artifacts': 'Artifacts',
   'nav.analytics': 'Analytics',
   'nav.evolution': 'Evolution',
   'nav.drafts': 'Drafts',
@@ -243,6 +244,8 @@ export default {
   'page.sessionDetail.fix': 'Fix:',
   'page.sessionDetail.noObservations': 'No observations recorded for this session.',
   'page.sessionDetail.notFound': 'Session not found',
+  'page.sessionDetail.input': 'Input',
+  'page.sessionDetail.output': 'Output',
 
   'page.observations.title': 'Observations',
   'page.observations.description': 'Typed observations from sessions',
@@ -451,6 +454,16 @@ export default {
   'page.integrations.tool.geminiDesc': 'AGENTS.md + .gemini/settings.json',
   'page.integrations.tool.windsurf': 'Windsurf',
   'page.integrations.tool.windsurfDesc': 'Global MCP config + .windsurfrules + AGENTS.md',
+
+  'page.artifacts.title': 'Artifacts',
+  'page.artifacts.description': 'Workflow-produced documents and plans',
+  'page.artifacts.searchPlaceholder': 'Search by feature or title...',
+  'page.artifacts.count': '{{count}} artifacts',
+  'page.artifacts.active': 'Active ({{count}})',
+  'page.artifacts.done': 'Done ({{count}})',
+  'page.artifacts.noMatch': 'No artifacts match your filters.',
+  'page.artifacts.noArtifacts': 'No artifacts found. Create docs in docs/plans/active/.',
+  'page.artifacts.notFound': 'Artifact not found.',
 
   'page.adapters.title': 'Adapters',
   'page.adapters.description': 'IDE integration guides (read-only)',

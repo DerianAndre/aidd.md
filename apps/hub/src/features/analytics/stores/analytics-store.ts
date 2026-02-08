@@ -9,6 +9,8 @@ import {
   type TimelinePoint,
 } from '../lib/compute-analytics';
 
+const STALE_TTL = 30_000;
+
 interface AnalyticsStoreState {
   modelMetrics: ModelMetrics[];
   toolStats: ToolUsageStat[];
@@ -19,6 +21,7 @@ interface AnalyticsStoreState {
   uniqueModels: number;
   loading: boolean;
   stale: boolean;
+  lastFetchedAt: number;
 
   fetch: (projectRoot?: string) => Promise<void>;
   invalidate: () => void;
@@ -34,9 +37,13 @@ export const useAnalyticsStore = create<AnalyticsStoreState>((set, get) => ({
   uniqueModels: 0,
   loading: false,
   stale: true,
+  lastFetchedAt: 0,
 
   fetch: async (_projectRoot?: string) => {
-    if (!get().stale) return;
+    const { stale, lastFetchedAt, loading } = get();
+    if (loading) return;
+    const isExpired = Date.now() - lastFetchedAt > STALE_TTL;
+    if (!stale && !isExpired) return;
     set({ loading: true });
     try {
       const raw = await listAllSessions(200);
@@ -61,6 +68,7 @@ export const useAnalyticsStore = create<AnalyticsStoreState>((set, get) => ({
         uniqueModels: modelMetrics.length,
         loading: false,
         stale: false,
+        lastFetchedAt: Date.now(),
       });
     } catch {
       set({ loading: false, stale: false });

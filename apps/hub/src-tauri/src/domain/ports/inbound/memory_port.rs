@@ -6,6 +6,9 @@ pub trait MemoryPort: Send + Sync {
     /// List all sessions with full detail (data JSON blob from SQLite)
     fn list_all_sessions(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String>;
 
+    /// List all observations (no filter)
+    fn list_all_observations(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String>;
+
     /// Search observations by query
     fn search_observations(
         &self,
@@ -27,6 +30,20 @@ pub trait MemoryPort: Send + Sync {
 
     /// List permanent memory entries by type (decision, mistake, convention)
     fn list_permanent_memory(&self, memory_type: &str) -> Result<Vec<serde_json::Value>, String>;
+
+    /// Delete a permanent memory entry by type and id
+    fn delete_permanent_memory(&self, memory_type: &str, id: &str) -> Result<(), String>;
+
+    /// List draft entries
+    fn list_drafts(&self) -> Result<Vec<serde_json::Value>, String>;
+
+    /// List artifacts with optional filters
+    fn list_artifacts(
+        &self,
+        artifact_type: Option<&str>,
+        status: Option<&str>,
+        limit: Option<usize>,
+    ) -> Result<Vec<serde_json::Value>, String>;
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

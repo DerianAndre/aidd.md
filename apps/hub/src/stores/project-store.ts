@@ -10,6 +10,19 @@ import {
   type ProjectInfo,
 } from '../lib/tauri';
 
+/** Invalidate all data stores when active project changes.
+ *  Uses dynamic imports to avoid circular dependencies. */
+function invalidateAllStores() {
+  import('../features/memory/stores/sessions-store').then((m) => m.useSessionsStore.getState().invalidate());
+  import('../features/analytics/stores/analytics-store').then((m) => m.useAnalyticsStore.getState().invalidate());
+  import('../features/diagnostics/stores/diagnostics-store').then((m) => m.useDiagnosticsStore.getState().invalidate());
+  import('../features/evolution/stores/evolution-store').then((m) => m.useEvolutionStore.getState().invalidate());
+  import('../features/memory/stores/permanent-memory-store').then((m) => m.usePermanentMemoryStore.getState().invalidate());
+  import('../features/drafts/stores/drafts-store').then((m) => m.useDraftsStore.getState().invalidate());
+  import('../features/config/stores/config-store').then((m) => m.useConfigStore.getState().invalidate());
+  import('../features/memory/stores/memory-store').then((m) => m.useMemoryStore.getState().invalidate());
+}
+
 interface ProjectStoreState {
   projects: ProjectEntry[];
   activeProject: ProjectInfo | null;
@@ -65,12 +78,14 @@ export const useProjectStore = create<ProjectStoreState>((set) => ({
     }
 
     set({ projects, activeProject });
+    invalidateAllStores();
   },
 
   switchProject: async (path: string) => {
     await setActiveProject(path);
     const info = await detectProject(path);
     set({ activeProject: info });
+    invalidateAllStores();
   },
 
   refreshProject: async (path: string) => {

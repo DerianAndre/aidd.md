@@ -156,6 +156,7 @@ export interface DraftEntry {
   category: DraftCategory;
   title: string;
   filename: string;
+  content?: string;
   confidence: number;
   source: 'evolution' | 'manual';
   evolutionCandidateId?: string;
@@ -181,6 +182,34 @@ export interface ModelMetrics {
   testPassRate: number;
   positiveRate: number;
   taskTypes: Record<string, number>;
+}
+
+// ---------------------------------------------------------------------------
+// Diagnostics types (computed client-side)
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Artifact types (docs/plans/ documents produced by workflows)
+// ---------------------------------------------------------------------------
+
+export const ARTIFACT_TYPES = [
+  'plan', 'brainstorm', 'research', 'adr', 'diagram',
+  'issue', 'spec', 'checklist', 'retro',
+] as const;
+export type ArtifactType = (typeof ARTIFACT_TYPES)[number];
+export type ArtifactStatus = 'active' | 'done';
+
+export interface ArtifactEntry {
+  path: string;
+  filename: string;
+  date: string;
+  feature: string;
+  type: ArtifactType;
+  status: ArtifactStatus;
+  title: string;
+  description: string;
+  frontmatter: Record<string, unknown>;
+  lastModified: string;
 }
 
 // ---------------------------------------------------------------------------

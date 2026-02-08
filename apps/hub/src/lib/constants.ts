@@ -132,8 +132,16 @@ export const ROUTES = {
   CONFIG: '/config',
   INTEGRATIONS: '/integrations',
   OVERRIDES: '/overrides',
+  ARTIFACTS: '/artifacts',
+  ARTIFACT_DETAIL: '/artifacts/*',
   ADAPTERS: '/adapters',
   HELP: '/help',
+} as const;
+
+/** Artifact document directories (relative to project root) */
+export const ARTIFACT_DIRS = {
+  ACTIVE: 'docs/plans/active',
+  DONE: 'docs/plans/done',
 } as const;
 
 export const POLLING_INTERVALS = {

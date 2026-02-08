@@ -37,6 +37,16 @@ pub fn get_pattern_stats(
     Ok(serde_json::to_value(stats).map_err(|e| e.to_string())?)
 }
 
+/// List all observations
+#[tauri::command]
+pub fn list_all_observations(
+    ctx: State<'_, AppContext>,
+    limit: Option<usize>,
+) -> Result<serde_json::Value, String> {
+    let observations = ctx.memory_service.list_all_observations(limit)?;
+    Ok(serde_json::Value::Array(observations))
+}
+
 /// Search observations
 #[tauri::command]
 pub fn search_observations(
@@ -85,4 +95,23 @@ pub fn list_permanent_memory(
 ) -> Result<serde_json::Value, String> {
     let entries = ctx.memory_service.list_permanent_memory(&memory_type)?;
     Ok(serde_json::Value::Array(entries))
+}
+
+/// Delete a permanent memory entry by type and id
+#[tauri::command]
+pub fn delete_permanent_memory(
+    ctx: State<'_, AppContext>,
+    memory_type: String,
+    id: String,
+) -> Result<(), String> {
+    ctx.memory_service.delete_permanent_memory(&memory_type, &id)
+}
+
+/// List all draft entries
+#[tauri::command]
+pub fn list_drafts(
+    ctx: State<'_, AppContext>,
+) -> Result<serde_json::Value, String> {
+    let drafts = ctx.memory_service.list_drafts()?;
+    Ok(serde_json::Value::Array(drafts))
 }

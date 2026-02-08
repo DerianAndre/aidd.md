@@ -39,7 +39,9 @@ export function CandidateCard({ candidate }: CandidateCardProps) {
         <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
           <span>{candidate.sessionCount} session{candidate.sessionCount !== 1 ? 's' : ''}</span>
           <span>{candidate.evidence.length} evidence</span>
-          <span>{candidate.discoveryTokensTotal.toLocaleString()} tokens</span>
+          {candidate.discoveryTokensTotal > 0 && (
+            <span>{candidate.discoveryTokensTotal.toLocaleString()} tokens</span>
+          )}
           <span>Created {formatDate(candidate.createdAt)}</span>
         </div>
         {candidate.suggestedAction && (

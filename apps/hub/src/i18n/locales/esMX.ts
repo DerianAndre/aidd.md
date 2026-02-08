@@ -26,6 +26,7 @@ const esMX: DeepStringify<typeof enUS> = {
   'nav.observations': 'Observaciones',
   'nav.permanentMemory': 'Memoria Permanente',
   'nav.overrides': 'Personalizaciones',
+  'nav.artifacts': 'Artefactos',
   'nav.analytics': 'Analíticas',
   'nav.evolution': 'Evolución',
   'nav.drafts': 'Borradores',
@@ -247,6 +248,8 @@ const esMX: DeepStringify<typeof enUS> = {
   'page.sessionDetail.fix': 'Corrección:',
   'page.sessionDetail.noObservations': 'No se registraron observaciones para esta sesión.',
   'page.sessionDetail.notFound': 'Sesión no encontrada',
+  'page.sessionDetail.input': 'Entrada',
+  'page.sessionDetail.output': 'Salida',
 
   'page.observations.title': 'Observaciones',
   'page.observations.description': 'Observaciones tipificadas de sesiones',
@@ -455,6 +458,16 @@ const esMX: DeepStringify<typeof enUS> = {
   'page.integrations.tool.geminiDesc': 'AGENTS.md + .gemini/settings.json',
   'page.integrations.tool.windsurf': 'Windsurf',
   'page.integrations.tool.windsurfDesc': 'MCP global + .windsurfrules + AGENTS.md',
+
+  'page.artifacts.title': 'Artefactos',
+  'page.artifacts.description': 'Documentos y planes producidos por flujos de trabajo',
+  'page.artifacts.searchPlaceholder': 'Buscar por feature o título...',
+  'page.artifacts.count': '{{count}} artefactos',
+  'page.artifacts.active': 'Activos ({{count}})',
+  'page.artifacts.done': 'Completados ({{count}})',
+  'page.artifacts.noMatch': 'No hay artefactos que coincidan con tus filtros.',
+  'page.artifacts.noArtifacts': 'No se encontraron artefactos. Crea documentos en docs/plans/active/.',
+  'page.artifacts.notFound': 'Artefacto no encontrado.',
 
   'page.adapters.title': 'Adaptadores',
   'page.adapters.description': 'Guías de integración con IDEs (solo lectura)',

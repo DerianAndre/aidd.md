@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { readJsonFile, readFile } from '../../../lib/tauri';
-import { statePath, STATE_PATHS } from '../../../lib/constants';
+import { listDrafts } from '../../../lib/tauri';
 import type { DraftEntry } from '../../../lib/types';
+
+const STALE_TTL = 30_000;
 
 interface DraftsStoreState {
   drafts: DraftEntry[];
@@ -9,9 +10,10 @@ interface DraftsStoreState {
   draftContent: string | null;
   loading: boolean;
   stale: boolean;
+  lastFetchedAt: number;
 
-  fetch: (projectRoot: string) => Promise<void>;
-  selectDraft: (projectRoot: string, draft: DraftEntry) => Promise<void>;
+  fetch: (projectRoot?: string) => Promise<void>;
+  selectDraft: (draft: DraftEntry) => void;
   clearSelection: () => void;
   invalidate: () => void;
 }
@@ -22,33 +24,30 @@ export const useDraftsStore = create<DraftsStoreState>((set, get) => ({
   draftContent: null,
   loading: false,
   stale: true,
+  lastFetchedAt: 0,
 
-  fetch: async (projectRoot) => {
-    if (!get().stale) return;
+  fetch: async (_projectRoot?: string) => {
+    const { stale, lastFetchedAt, loading } = get();
+    if (loading) return;
+    const isExpired = Date.now() - lastFetchedAt > STALE_TTL;
+    if (!stale && !isExpired) return;
     set({ loading: true });
     try {
-      const base = statePath(projectRoot, STATE_PATHS.DRAFTS);
-      const manifest = (await readJsonFile(`${base}/manifest.json`)) as {
-        drafts?: DraftEntry[];
-      };
-      const drafts = (manifest.drafts ?? []).sort(
-        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+      const raw = await listDrafts();
+      const drafts = ((raw ?? []) as DraftEntry[]).sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
-      set({ drafts, loading: false, stale: false });
+      set({ drafts, loading: false, stale: false, lastFetchedAt: Date.now() });
     } catch {
       set({ drafts: [], loading: false, stale: false });
     }
   },
 
-  selectDraft: async (projectRoot, draft) => {
-    set({ selectedDraftId: draft.id, draftContent: null });
-    try {
-      const base = statePath(projectRoot, STATE_PATHS.DRAFTS);
-      const content = await readFile(`${base}/${draft.category}/${draft.id}.md`);
-      set({ draftContent: content });
-    } catch {
-      set({ draftContent: '*(Draft content not found)*' });
-    }
+  selectDraft: (draft) => {
+    set({
+      selectedDraftId: draft.id,
+      draftContent: draft.content ?? null,
+    });
   },
 
   clearSelection: () => set({ selectedDraftId: null, draftContent: null }),

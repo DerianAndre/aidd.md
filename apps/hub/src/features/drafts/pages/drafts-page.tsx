@@ -33,11 +33,10 @@ export function DraftsPage() {
   const pendingCount = drafts.filter((d) => d.status === 'pending').length;
 
   const handleSelect = (draft: DraftEntry) => {
-    if (!activeProject?.path) return;
     if (selectedDraftId === draft.id) {
       clearSelection();
     } else {
-      void selectDraft(activeProject.path, draft);
+      selectDraft(draft);
     }
   };
 

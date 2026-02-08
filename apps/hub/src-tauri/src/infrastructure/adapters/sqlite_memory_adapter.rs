@@ -17,6 +17,7 @@ const REQUIRED_TABLES: &[&str] = &[
     "banned_patterns",
     "pattern_detections",
     "permanent_memory",
+    "artifacts",
 ];
 
 /// SQLite Adapter for Memory Port.
@@ -140,6 +141,45 @@ impl MemoryPort for SqliteMemoryAdapter {
                 recent_sessions: vec![],
             })
         })
+    }
+
+    fn list_all_observations(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String> {
+        let limit = limit.unwrap_or(200);
+        self.safe_query(move |conn| {
+            let mut stmt = conn.prepare(
+                "SELECT id, session_id, type, title, content, facts, concepts, \
+                 files_read, files_modified, discovery_tokens, created_at \
+                 FROM observations ORDER BY created_at DESC LIMIT ?1"
+            )?;
+
+            let observations = stmt.query_map([limit], |row| {
+                let mut entry = serde_json::Map::new();
+                entry.insert("id".into(), serde_json::json!(row.get::<_, String>(0)?));
+                entry.insert("sessionId".into(), serde_json::json!(row.get::<_, String>(1)?));
+                entry.insert("type".into(), serde_json::json!(row.get::<_, String>(2)?));
+                entry.insert("title".into(), serde_json::json!(row.get::<_, String>(3)?));
+                entry.insert("narrative".into(), serde_json::json!(row.get::<_, Option<String>>(4)?.unwrap_or_default()));
+
+                // Parse JSON array fields
+                let facts_str: String = row.get::<_, Option<String>>(5)?.unwrap_or_default();
+                let concepts_str: String = row.get::<_, Option<String>>(6)?.unwrap_or_default();
+                let files_read_str: String = row.get::<_, Option<String>>(7)?.unwrap_or_default();
+                let files_modified_str: String = row.get::<_, Option<String>>(8)?.unwrap_or_default();
+
+                entry.insert("facts".into(), serde_json::from_str(&facts_str).unwrap_or(serde_json::json!([])));
+                entry.insert("concepts".into(), serde_json::from_str(&concepts_str).unwrap_or(serde_json::json!([])));
+                entry.insert("filesRead".into(), serde_json::from_str(&files_read_str).unwrap_or(serde_json::json!([])));
+                entry.insert("filesModified".into(), serde_json::from_str(&files_modified_str).unwrap_or(serde_json::json!([])));
+                entry.insert("discoveryTokens".into(), serde_json::json!(row.get::<_, Option<i64>>(9)?.unwrap_or(0)));
+                entry.insert("createdAt".into(), serde_json::json!(row.get::<_, String>(10)?));
+
+                Ok(serde_json::Value::Object(entry))
+            })?
+                .filter_map(|r| r.ok())
+                .collect();
+
+            Ok(observations)
+        }).or_else(|_| Ok(vec![]))
     }
 
     fn search_observations(
@@ -385,6 +425,59 @@ impl MemoryPort for SqliteMemoryAdapter {
                 .collect();
 
             Ok(entries)
+        }).or_else(|_| Ok(vec![]))
+    }
+
+    fn delete_permanent_memory(&self, _memory_type: &str, id: &str) -> Result<(), String> {
+        let id = id.to_string();
+        self.safe_query(move |conn| {
+            conn.execute(
+                "DELETE FROM permanent_memory WHERE id = ?1",
+                [&id],
+            )?;
+            // Also clean FTS index
+            conn.execute(
+                "DELETE FROM permanent_memory_fts WHERE rowid NOT IN (SELECT rowid FROM permanent_memory)",
+                [],
+            ).ok(); // Ignore FTS errors
+            Ok(())
+        }).map(|_| ())
+    }
+
+    fn list_drafts(&self) -> Result<Vec<serde_json::Value>, String> {
+        self.safe_query(move |conn| {
+            let mut stmt = conn.prepare(
+                "SELECT id, category, title, content, status, data, created_at, updated_at \
+                 FROM drafts ORDER BY created_at DESC"
+            )?;
+
+            let drafts = stmt.query_map([], |row| {
+                let mut entry = serde_json::Map::new();
+                entry.insert("id".into(), serde_json::json!(row.get::<_, String>(0)?));
+                entry.insert("category".into(), serde_json::json!(row.get::<_, String>(1)?));
+                entry.insert("title".into(), serde_json::json!(row.get::<_, String>(2)?));
+                entry.insert("content".into(), serde_json::json!(row.get::<_, String>(3)?));
+                entry.insert("status".into(), serde_json::json!(row.get::<_, String>(4)?));
+
+                // Parse the data JSON column for extra fields (filename, confidence, source, etc.)
+                let data_str: String = row.get::<_, String>(5).unwrap_or_default();
+                if let Ok(data) = serde_json::from_str::<serde_json::Value>(&data_str) {
+                    if let Some(obj) = data.as_object() {
+                        for (k, v) in obj {
+                            // Merge data fields into the entry (camelCase keys)
+                            entry.entry(k.clone()).or_insert_with(|| v.clone());
+                        }
+                    }
+                }
+
+                entry.insert("createdAt".into(), serde_json::json!(row.get::<_, String>(6)?));
+                entry.insert("updatedAt".into(), serde_json::json!(row.get::<_, String>(7).unwrap_or_default()));
+                Ok(serde_json::Value::Object(entry))
+            })?
+                .filter_map(|r| r.ok())
+                .collect();
+
+            Ok(drafts)
         }).or_else(|_| Ok(vec![]))
     }
 }

@@ -19,6 +19,11 @@ impl MemoryService {
         self.memory_port.get_session_summary()
     }
 
+    /// Use case: List all observations
+    pub fn list_all_observations(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String> {
+        self.memory_port.list_all_observations(limit)
+    }
+
     /// Use case: Search observations
     pub fn search_observations(
         &self,
@@ -56,6 +61,16 @@ impl MemoryService {
     /// Use case: List permanent memory by type
     pub fn list_permanent_memory(&self, memory_type: &str) -> Result<Vec<serde_json::Value>, String> {
         self.memory_port.list_permanent_memory(memory_type)
+    }
+
+    /// Use case: Delete a permanent memory entry
+    pub fn delete_permanent_memory(&self, memory_type: &str, id: &str) -> Result<(), String> {
+        self.memory_port.delete_permanent_memory(memory_type, id)
+    }
+
+    /// Use case: List all drafts
+    pub fn list_drafts(&self) -> Result<Vec<serde_json::Value>, String> {
+        self.memory_port.list_drafts()
     }
 
     /// Use case: Get complete memory snapshot (all data)

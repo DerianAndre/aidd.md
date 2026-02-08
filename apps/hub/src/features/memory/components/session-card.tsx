@@ -46,6 +46,11 @@ export function SessionCard({ session, onPress }: SessionCardProps) {
         <CardDescription className="text-xs text-muted-foreground">
           {modelLabel} · {duration} · {session.tasksCompleted.length} tasks
         </CardDescription>
+        {session.input && (
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground/80 italic">
+            {truncate(session.input, 120)}
+          </p>
+        )}
       </CardHeader>
       <CardFooter className="flex items-center justify-between pt-0">
         <Chip size="sm" color="default">{session.taskClassification?.domain ?? 'unknown'}</Chip>

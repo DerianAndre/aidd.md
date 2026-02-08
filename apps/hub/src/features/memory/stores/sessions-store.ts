@@ -3,11 +3,14 @@ import { invoke } from '@tauri-apps/api/core';
 import { listAllSessions } from '../../../lib/tauri';
 import type { SessionState, SessionObservation } from '../../../lib/types';
 
+const STALE_TTL = 30_000; // 30 seconds
+
 interface SessionsStoreState {
   activeSessions: SessionState[];
   completedSessions: SessionState[];
   loading: boolean;
   stale: boolean;
+  lastFetchedAt: number;
 
   fetchAll: (projectRoot?: string) => Promise<void>;
   fetchObservations: (projectRoot: string, sessionId: string, status: 'active' | 'completed') => Promise<SessionObservation[]>;
@@ -19,9 +22,13 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
   completedSessions: [],
   loading: false,
   stale: true,
+  lastFetchedAt: 0,
 
   fetchAll: async (_projectRoot?: string) => {
-    if (!get().stale && (get().activeSessions.length + get().completedSessions.length > 0)) return;
+    const { stale, lastFetchedAt, loading } = get();
+    if (loading) return;
+    const isExpired = Date.now() - lastFetchedAt > STALE_TTL;
+    if (!stale && !isExpired) return;
     set({ loading: true });
     try {
       const raw = await listAllSessions(200);
@@ -34,7 +41,7 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
         .filter((s) => !!s.endedAt)
         .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
 
-      set({ activeSessions: active, completedSessions: completed, loading: false, stale: false });
+      set({ activeSessions: active, completedSessions: completed, loading: false, stale: false, lastFetchedAt: Date.now() });
     } catch {
       set({ loading: false, stale: false });
     }

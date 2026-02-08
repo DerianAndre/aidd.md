@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SearchInput } from '@/components/ui/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,11 +6,11 @@ import { Chip } from '@/components/ui/chip';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { ObservationCard } from '../components/observation-card';
-import { useSessionsStore } from '../stores/sessions-store';
 import { useProjectStore } from '../../../stores/project-store';
-import { listDirectory, readJsonFile } from '../../../lib/tauri';
-import { statePath, STATE_PATHS } from '../../../lib/constants';
+import { listAllObservations } from '../../../lib/tauri';
 import type { SessionObservation, ObservationType } from '../../../lib/types';
+
+const STALE_TTL = 30_000;
 
 const ALL_TYPES: ObservationType[] = [
   'decision', 'mistake', 'convention', 'pattern',
@@ -20,41 +20,34 @@ const ALL_TYPES: ObservationType[] = [
 export function ObservationsPage() {
   const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
-  const { stale, fetchAll } = useSessionsStore();
   const [observations, setObservations] = useState<SessionObservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeTypes, setActiveTypes] = useState<Set<ObservationType>>(new Set());
+  const [lastFetchedAt, setLastFetchedAt] = useState(0);
+
+  const fetchObservations = useCallback(async () => {
+    if (!activeProject?.path) return;
+    const isExpired = Date.now() - lastFetchedAt > STALE_TTL;
+    if (!isExpired && observations.length > 0) return;
+
+    setLoading(true);
+    try {
+      const raw = await listAllObservations(500);
+      const allObs = ((raw ?? []) as SessionObservation[]).sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      setObservations(allObs);
+      setLastFetchedAt(Date.now());
+    } catch {
+      setObservations([]);
+    }
+    setLoading(false);
+  }, [activeProject?.path, lastFetchedAt, observations.length]);
 
   useEffect(() => {
-    if (!activeProject?.path) return;
-    void (async () => {
-      setLoading(true);
-      if (stale) await fetchAll(activeProject.path);
-
-      const allObs: SessionObservation[] = [];
-
-      for (const status of ['active', 'completed'] as const) {
-        try {
-          const dir = statePath(activeProject.path, `${STATE_PATHS.SESSIONS}/${status}`);
-          const files = await listDirectory(dir, ['json']);
-          const obsFiles = files.filter((f) => f.name.includes('-observations'));
-          const results = await Promise.all(
-            obsFiles.map((f) => readJsonFile(f.path) as Promise<SessionObservation[]>),
-          );
-          for (const arr of results) {
-            if (Array.isArray(arr)) allObs.push(...arr);
-          }
-        } catch {
-          // Directory may not exist
-        }
-      }
-
-      allObs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setObservations(allObs);
-      setLoading(false);
-    })();
-  }, [activeProject?.path, stale, fetchAll]);
+    void fetchObservations();
+  }, [fetchObservations]);
 
   const toggleType = (type: ObservationType) => {
     setActiveTypes((prev) => {

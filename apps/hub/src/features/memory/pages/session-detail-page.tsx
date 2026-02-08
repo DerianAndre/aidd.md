@@ -84,6 +84,28 @@ export function SessionDetailPage() {
         }
       />
 
+      {/* Input / Output */}
+      {(session.input || session.output) && (
+        <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2">
+          {session.input && (
+            <Card>
+              <CardContent>
+                <p className="text-[10px] font-medium uppercase text-muted-foreground">{t('page.sessionDetail.input')}</p>
+                <p className="mt-1 text-sm text-foreground whitespace-pre-wrap">{session.input}</p>
+              </CardContent>
+            </Card>
+          )}
+          {session.output && (
+            <Card>
+              <CardContent>
+                <p className="text-[10px] font-medium uppercase text-muted-foreground">{t('page.sessionDetail.output')}</p>
+                <p className="mt-1 text-sm text-foreground whitespace-pre-wrap">{session.output}</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
       {/* Metadata Grid */}
       <div className="mb-6 grid gap-3 grid-cols-2 sm:grid-cols-4">
         <MetaItem label={t('page.sessionDetail.provider')} value={`${session.aiProvider.provider} / ${modelLabel}`} />
@@ -108,7 +130,7 @@ export function SessionDetailPage() {
             )}
             {session.outcome.userFeedback && (
               <Chip size="sm" color={session.outcome.userFeedback === 'positive' ? 'success' : session.outcome.userFeedback === 'negative' ? 'danger' : 'default'}>
-                {t('page.sessionDetail.feedback', { value: session.outcome.userFeedback })}
+                {t('page.sessionDetail.feedback', { type: session.outcome.userFeedback })}
               </Chip>
             )}
           </div>

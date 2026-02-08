@@ -32,6 +32,7 @@ import {
   PanelLeft,
   Store,
   HelpCircle,
+  FileArchive,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -105,6 +106,7 @@ const NAV_GROUPS = [
       { labelKey: "nav.observations", path: ROUTES.OBSERVATIONS, icon: Eye },
       { labelKey: "nav.permanentMemory", path: ROUTES.MEMORY, icon: Brain },
       { labelKey: "nav.overrides", path: ROUTES.OVERRIDES, icon: Layers },
+      { labelKey: "nav.artifacts", path: ROUTES.ARTIFACTS, icon: FileArchive },
     ],
   },
   {

@@ -290,6 +290,15 @@ export const listEvolutionLog = (limit?: number) =>
 export const listPermanentMemory = (memoryType: string) =>
   invoke<unknown[]>('list_permanent_memory', { memoryType });
 
+export const deletePermanentMemory = (memoryType: string, id: string) =>
+  invoke<void>('delete_permanent_memory', { memoryType, id });
+
+export const listAllObservations = (limit?: number) =>
+  invoke<unknown[]>('list_all_observations', { limit: limit ?? null });
+
+export const listDrafts = () =>
+  invoke<unknown[]>('list_drafts');
+
 // File watcher
 export interface FileChangeEvent {
   event_type: 'created' | 'modified' | 'deleted';
