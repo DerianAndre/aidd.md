@@ -21,6 +21,14 @@ Call `aidd_start` immediately. Do NOT read files, search code, or begin any work
 This returns: session context + framework rules + active agents + suggested next steps.
 **Store the session ID returned by `aidd_start`. You need it for ALL subsequent operations.**
 
+**Immediately after `aidd_start`:** Set the session input with the user's request:
+
+```
+aidd_session { action: "update", id: SESSION_ID, input: "concise summary of user's request" }
+```
+
+This gives the session a meaningful description instead of just the branch name.
+
 **Fallback** (MCP unavailable): Run `pnpm mcp:check` in the terminal.
 
 Expected status:

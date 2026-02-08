@@ -7,7 +7,7 @@
 > The open standard for AI-Driven Development. Multi-IDE, AI-agnostic agent coordination.
 
 **Version**: 1.0.0
-**Last Updated**: 2026-02-07
+**Last Updated**: 2026-02-08
 **License**: MIT
 **Domain**: https://aidd.md
 
@@ -20,14 +20,16 @@
 **Core principles**: Evidence-First engineering, First Principles thinking, BLUF-6 communication, Zero Trust verification, Lean Antifragility.
 
 **Key benefits**:
-- Multi-IDE compatible (Claude Code, Cursor, VS Code, Gemini, Windsurf)
+- Multi-IDE compatible (Claude Code, Cursor, Gemini, Warp)
 - AI-agnostic (works with Claude, Gemini, ChatGPT, local models)
 - Modular and composable (load only what you need)
 - Evidence-based (every decision traceable to data or principles)
 - Progressive disclosure (token-efficient context loading)
+- Self-improving (session memory, pattern detection, framework evolution)
 
-## How to follow the methodology?
-If you want to take 100% advantage of AIDD make sure to read [WORKFLOW.MD](./WORKFLOW.md)
+## How to Follow the Methodology
+
+Read [WORKFLOW.md](./WORKFLOW.md) for the full user guide — core concepts, conversation lifecycle, automatic vs manual operations, and tips for getting best results.
 
 ## Quick Start
 
@@ -171,7 +173,38 @@ PLANNING (Tier 1)              EXECUTION (Tier 2)         CLOSURE (Tier 3)
 3. SPEC (persist spec)
 ```
 
-See `content/specs/aidd-lifecycle.md` for full details.
+See `content/specs/aidd-lifecycle.md` for full details and [WORKFLOW.md](./WORKFLOW.md) for the user guide.
+
+---
+
+## MCP Ecosystem
+
+The AIDD MCP engine exposes **71 tools** across 5 packages for full session tracking, memory persistence, validation, and self-improvement:
+
+```
+packages/
+  shared/           @aidd.md/mcp-shared    (types, utils, server factory)
+  cli/              @aidd.md/cli           (CLI — framework management)
+
+mcps/
+  mcp-aidd-engine/  @aidd.md/mcp-engine    (engine — all modules in one process)
+  mcp-aidd-core/    @aidd.md/mcp-core      (brain — guidance, routing, knowledge)
+  mcp-aidd-memory/  @aidd.md/mcp-memory    (memory — sessions, evolution, analytics)
+  mcp-aidd-tools/   @aidd.md/mcp-tools     (hands — validation, enforcement, CI)
+```
+
+| Category | Tools | Purpose |
+|----------|-------|---------|
+| Project + Guidance | 6 | Bootstrap, task routing, heuristic analysis |
+| Knowledge + Agents | 5 | TKB queries, tech compatibility, agent skills |
+| Sessions + Memory | 15 | Session lifecycle, observations, permanent memory |
+| Lifecycle + Evolution | 8 | Phase tracking, self-improvement candidates |
+| Analytics + Patterns | 9 | Model performance, output quality, fingerprinting |
+| Validation + CI | 18 | Code quality, compliance, commit generation |
+| Drafts + Artifacts | 4 | Content drafts, workflow documents |
+| Context + Health | 6 | Context optimization, diagnostics, scaffolding |
+
+See [mcps/README.md](mcps/README.md) for full architecture and [mcps/PLAN.md](mcps/PLAN.md) for implementation roadmap.
 
 ---
 
@@ -179,68 +212,69 @@ See `content/specs/aidd-lifecycle.md` for full details.
 
 ```
 aidd.md/
-├── AGENTS.md                    # Single Source of Truth
+├── AGENTS.md                    # Thin redirect to content/agents/ (Gemini compat)
+├── CLAUDE.md                    # Claude Code conversation lifecycle protocol
+├── WORKFLOW.md                  # User-facing methodology guide
 ├── README.md                    # This file
 ├── LICENSE                      # MIT
 ├── CONTRIBUTING.md              # Contribution guidelines
-├── CHANGELOG.md                 # Version history
-├── package.json                 # Validation script dependencies
+├── package.json                 # Monorepo root
+├── pnpm-workspace.yaml          # Workspace config
 │
-├── content/                     # Framework content
-│   ├── specs/                   # Formal specifications (6)
-│   │   ├── aidd-lifecycle.md
-│   │   ├── bluf-6.md
-│   │   ├── heuristics.md
-│   │   ├── version-protocol.md
-│   │   ├── memory-layer.md
-│   │   └── model-matrix.md
-│   │
-│   ├── rules/                   # Immutable constraints (12)
-│   │   ├── global.md
-│   │   ├── orchestrator.md
-│   │   ├── backend.md
-│   │   ├── frontend.md
-│   │   ├── testing.md
-│   │   ├── security.md
-│   │   ├── interfaces.md
-│   │   ├── code-style.md
-│   │   ├── git-workflow.md
-│   │   ├── documentation.md
-│   │   └── performance.md
-│   │
+├── content/                     # Framework content (SSOT)
+│   ├── agents/                  # Agent definitions + routing
+│   ├── specs/                   # Formal specifications (8)
+│   ├── rules/                   # Immutable constraints (11)
 │   ├── skills/                  # Agent capabilities (11)
-│   ├── workflows/               # Multi-step procedures (12)
+│   ├── workflows/               # Multi-step procedures (11)
 │   ├── knowledge/               # Technology Knowledge Base (106 entries)
 │   └── templates/               # Protocol templates (5) with routing
 │
 ├── adapters/                    # IDE/AI integration guides
-│   ├── claude/
-│   ├── cursor/
-│   ├── gemini/
-│   ├── vscode/
-│   └── windsurf/
+│   ├── README.md                # Adapter comparison and overview
+│   ├── claude/                  # Claude Code (full: context + hooks + MCP)
+│   ├── cursor/                  # Cursor (context + MCP)
+│   ├── gemini/                  # Gemini/Antigravity (context + MCP + API)
+│   └── warp/                    # Warp (context only)
+│
+├── packages/                    # Shared libraries and CLI
+│   ├── shared/                  # @aidd.md/mcp-shared
+│   └── cli/                     # @aidd.md/cli
+│
+├── mcps/                        # MCP server packages
+│   ├── mcp-aidd-engine/         # @aidd.md/mcp-engine (all-in-one)
+│   ├── mcp-aidd-core/           # @aidd.md/mcp-core (guidance)
+│   ├── mcp-aidd-memory/         # @aidd.md/mcp-memory (sessions)
+│   └── mcp-aidd-tools/          # @aidd.md/mcp-tools (validation)
+│
+├── apps/                        # Applications
+│   └── hub/                     # AIDD Hub (Tauri 2 + React 19)
 │
 ├── examples/                    # Project setup examples
-│   ├── minimal/
-│   └── full/
+│   ├── minimal/                 # Minimal AIDD setup
+│   └── full/                    # Full AIDD setup with memory
 │
-├── scripts/                     # Validation scripts
-└── website/                     # Future: https://aidd.md
+├── docs/                        # Documentation
+├── scripts/                     # Build and setup scripts
+└── .claude/                     # Claude Code configuration
+    ├── settings.json            # Permissions, hooks, status line
+    └── statusline.js            # Cross-platform status bar script
 ```
 
 ---
 
 ## IDE Integration
 
+AIDD integrates with AI-powered development tools through three layers: **Context** (file-based), **Protocol** (conversation lifecycle), and **MCP** (71 tools). See [adapters/README.md](adapters/README.md) for the full comparison.
+
 `pnpm setup` auto-detects and configures all supported IDEs:
 
-| IDE         | Detection                     | Config Files                                             | How It Works                              |
-| ----------- | ----------------------------- | -------------------------------------------------------- | ----------------------------------------- |
-| Claude Code | `~/.claude/` exists           | `~/.claude.json` + `.mcp.json`                           | MCP engine via user scope + project scope |
-| Cursor      | Always available              | `.cursor/mcp.json` + `.cursor/rules/aidd.mdc`            | MCP engine + rules pointer                |
-| VS Code     | `.vscode/` or `code` CLI      | `.vscode/mcp.json` + `.github/copilot-instructions.md`   | MCP engine via Copilot                    |
-| Gemini      | `AGENTS.md` exists            | `.gemini/settings.json`                                  | Reads AGENTS.md directly (no MCP needed)  |
-| Windsurf    | `~/.codeium/windsurf/` exists | `~/.codeium/windsurf/mcp_config.json` + `.windsurfrules` | MCP engine + rules pointer                |
+| IDE         | Detection                     | Integration Layers              | Adapter Guide                       |
+| ----------- | ----------------------------- | ------------------------------- | ----------------------------------- |
+| Claude Code | `~/.claude/` exists           | Context + Protocol + MCP        | [adapters/claude/](adapters/claude/) |
+| Cursor      | Always available              | Context + MCP                   | [adapters/cursor/](adapters/cursor/) |
+| Gemini      | `AGENTS.md` exists            | Context + MCP + API             | [adapters/gemini/](adapters/gemini/) |
+| Warp        | Manual setup                  | Context only                    | [adapters/warp/](adapters/warp/)     |
 
 Run `pnpm mcp:doctor` to verify IDE integration status.
 
