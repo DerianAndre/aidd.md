@@ -1,14 +1,18 @@
 import { Outlet } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { AppHeader } from "./app-header";
 import { ErrorBoundary } from "../error-boundary";
 import { useEntityWatcher } from "../../lib/hooks/use-entity-watcher";
 import { useProjectStore } from "../../stores/project-store";
+import { useNavigationStore } from "../../stores/navigation-store";
 import { AppFooter } from "./app-footer";
 
 export function AppLayout() {
   const loading = useProjectStore((s) => s.loading);
+  const sidebarCollapsed = useNavigationStore((s) => s.sidebarCollapsed);
+  const setSidebarCollapsed = useNavigationStore((s) => s.setSidebarCollapsed);
 
   // Start file watcher — routes change events to feature stores
   useEntityWatcher();
@@ -23,9 +27,12 @@ export function AppLayout() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <SidebarProvider
+      open={!sidebarCollapsed}
+      onOpenChange={(open) => setSidebarCollapsed(!open)}
+    >
       <AppSidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <SidebarInset>
         <AppHeader />
         <main className="flex flex-col flex-1 overflow-y-auto p-6">
           <ErrorBoundary>
@@ -33,7 +40,7 @@ export function AppLayout() {
           </ErrorBoundary>
           <AppFooter />
         </main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

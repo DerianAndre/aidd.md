@@ -7,7 +7,7 @@ import { useSessionsStore } from '../../memory/stores/sessions-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { formatRelativeTime } from '../../../lib/utils';
 import { ROUTES } from '../../../lib/constants';
-import { getDateInput, getSessionStartedMs } from '../../memory/lib/session-time';
+import { getSessionStartedMs } from '../../memory/lib/session-time';
 
 export function RecentSessionsWidget() {
   const { t } = useTranslation();
@@ -54,6 +54,7 @@ export function RecentSessionsWidget() {
         const passed = s.outcome?.testsPassing;
         const compliance = complianceBySessionId[s.id];
         const pendingDrafts = pendingDraftsBySession[s.id] ?? 0;
+        const startedMs = getSessionStartedMs(s);
         return (
           <div
             key={s.id}
@@ -94,7 +95,9 @@ export function RecentSessionsWidget() {
               )}
               <span className="text-xs text-foreground">{s.aiProvider.model}</span>
             </div>
-            <span className="text-[10px] text-muted-foreground">{formatRelativeTime(getDateInput(s.startedAtTs ?? s.startedAt))}</span>
+            <span className="text-[10px] text-muted-foreground">
+              {startedMs > 0 ? formatRelativeTime(startedMs) : 'unknown'}
+            </span>
           </div>
         );
       })}

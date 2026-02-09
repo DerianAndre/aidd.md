@@ -145,3 +145,120 @@ export const POLLING_INTERVALS = {
 } as const;
 
 export const FILE_WATCHER_DEBOUNCE_MS = 100;
+
+// ---------------------------------------------------------------------------
+// Navigation Groups — Sidebar Structure
+// ---------------------------------------------------------------------------
+
+import {
+  LayoutDashboard,
+  FolderKanban,
+  Users,
+  ShieldCheck,
+  Zap,
+  GitBranch,
+  FileText,
+  BookOpen,
+  ScrollText,
+  History,
+  Eye,
+  Brain,
+  BarChart3,
+  Dna,
+  FileStack,
+  Activity,
+  Server,
+  Terminal,
+  Settings,
+  Plug,
+  Store,
+  HelpCircle,
+  FileArchive,
+  Layers,
+} from 'lucide-react';
+
+export const NAV_GROUPS = [
+  {
+    labelKey: "nav.overview",
+    items: [
+      {
+        labelKey: "nav.dashboard",
+        path: ROUTES.DASHBOARD,
+        icon: LayoutDashboard,
+      },
+      { labelKey: "nav.projects", path: ROUTES.PROJECTS, icon: FolderKanban },
+    ],
+  },
+  {
+    labelKey: "nav.explore",
+    items: [
+      { labelKey: "nav.marketplace", path: ROUTES.MARKETPLACE, icon: Store },
+    ],
+  },
+  {
+    labelKey: "nav.mcp",
+    items: [
+      { labelKey: "nav.mcpOverview", path: ROUTES.MCP, icon: Server },
+      {
+        labelKey: "nav.mcpPlayground",
+        path: ROUTES.MCP_PLAYGROUND,
+        icon: Terminal,
+      },
+    ],
+  },
+  {
+    labelKey: "nav.framework",
+    items: [
+      { labelKey: "nav.agents", path: ROUTES.AGENTS, icon: Users },
+      {
+        labelKey: "nav.rules",
+        path: ROUTES.FRAMEWORK_RULES,
+        icon: ShieldCheck,
+      },
+      { labelKey: "nav.skills", path: ROUTES.FRAMEWORK_SKILLS, icon: Zap },
+      {
+        labelKey: "nav.knowledge",
+        path: ROUTES.FRAMEWORK_KNOWLEDGE,
+        icon: BookOpen,
+      },
+      {
+        labelKey: "nav.workflows",
+        path: ROUTES.FRAMEWORK_WORKFLOWS,
+        icon: GitBranch,
+      },
+      {
+        labelKey: "nav.templates",
+        path: ROUTES.FRAMEWORK_TEMPLATES,
+        icon: FileText,
+      },
+      { labelKey: "nav.spec", path: ROUTES.FRAMEWORK_SPEC, icon: ScrollText },
+    ],
+  },
+  {
+    labelKey: "nav.projectData",
+    items: [
+      { labelKey: "nav.sessions", path: ROUTES.SESSIONS, icon: History },
+      { labelKey: "nav.observations", path: ROUTES.OBSERVATIONS, icon: Eye },
+      { labelKey: "nav.permanentMemory", path: ROUTES.MEMORY, icon: Brain },
+      { labelKey: "nav.overrides", path: ROUTES.OVERRIDES, icon: Layers },
+      { labelKey: "nav.artifacts", path: ROUTES.ARTIFACTS, icon: FileArchive },
+    ],
+  },
+  {
+    labelKey: "nav.intelligence",
+    items: [
+      { labelKey: "nav.analytics", path: ROUTES.ANALYTICS, icon: BarChart3 },
+      { labelKey: "nav.evolution", path: ROUTES.EVOLUTION, icon: Dna },
+      { labelKey: "nav.drafts", path: ROUTES.DRAFTS, icon: FileStack },
+      { labelKey: "nav.diagnostics", path: ROUTES.DIAGNOSTICS, icon: Activity },
+    ],
+  },
+  {
+    labelKey: "nav.system",
+    items: [
+      { labelKey: "nav.config", path: ROUTES.CONFIG, icon: Settings },
+      { labelKey: "nav.integrations", path: ROUTES.INTEGRATIONS, icon: Plug },
+      { labelKey: "nav.help", path: ROUTES.HELP, icon: HelpCircle },
+    ],
+  },
+] as const;

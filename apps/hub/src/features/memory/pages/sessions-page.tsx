@@ -26,6 +26,7 @@ export function SessionsPage() {
     complianceBySessionId,
     artifactsBySessionId,
     pendingDraftsBySession,
+    draftStatusBySession,
     loading,
     fetchAll,
     removeSession,
@@ -112,14 +113,32 @@ export function SessionsPage() {
 
   const handleFixCompliance = async (id: string) => {
     try {
-      await fixCompliance(id);
-      showSuccess('Compliance drafts generated');
+      const result = await fixCompliance(id);
+      if (result.created > 0) {
+        showSuccess(
+          `${result.created} compliance draft${result.created === 1 ? '' : 's'} generated. Review, add context, and approve them before shipping.`,
+        );
+        return;
+      }
+      if (result.pendingAfter > 0) {
+        showSuccess(
+          `${result.pendingAfter} compliance draft${result.pendingAfter === 1 ? '' : 's'} already pending review. Approve or reject them first.`,
+        );
+        return;
+      }
+      showSuccess('No missing compliance artifacts detected.');
     } catch {
       showError('Failed to generate compliance drafts');
     }
   };
 
   const navigateToDetail = (id: string) => navigate(`/sessions/${encodeURIComponent(id)}`);
+  const getDraftStatus = (sessionId: string) =>
+    draftStatusBySession[sessionId] ?? {
+      pending: pendingDraftsBySession[sessionId] ?? 0,
+      approved: 0,
+      rejected: 0,
+    };
 
   return (
     <div>
@@ -223,20 +242,25 @@ export function SessionsPage() {
             <div className="h-px flex-1 bg-border" />
           </div>
           <div className="grid gap-3 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
-            {visibleActive.map((session) => (
+            {visibleActive.map((session) => {
+              const draftStatus = getDraftStatus(session.id);
+              return (
               <SessionCard
                 key={session.id}
                 session={session}
                 compliance={complianceBySessionId[session.id]}
                 artifacts={artifactsBySessionId[session.id] ?? []}
-                pendingDrafts={pendingDraftsBySession[session.id] ?? 0}
+                pendingDrafts={draftStatus.pending}
+                approvedDrafts={draftStatus.approved}
+                rejectedDrafts={draftStatus.rejected}
                 onPress={() => navigateToDetail(session.id)}
                 onEdit={() => navigateToDetail(session.id)}
                 onComplete={handleComplete}
                 onFixCompliance={handleFixCompliance}
                 onDelete={(id) => setDeleteTarget(id)}
               />
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
@@ -250,19 +274,24 @@ export function SessionsPage() {
             <div className="h-px flex-1 bg-border" />
           </div>
           <div className="grid gap-3 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
-            {visibleCompleted.map((session) => (
+            {visibleCompleted.map((session) => {
+              const draftStatus = getDraftStatus(session.id);
+              return (
               <SessionCard
                 key={session.id}
                 session={session}
                 compliance={complianceBySessionId[session.id]}
                 artifacts={artifactsBySessionId[session.id] ?? []}
-                pendingDrafts={pendingDraftsBySession[session.id] ?? 0}
+                pendingDrafts={draftStatus.pending}
+                approvedDrafts={draftStatus.approved}
+                rejectedDrafts={draftStatus.rejected}
                 onPress={() => navigateToDetail(session.id)}
                 onEdit={() => navigateToDetail(session.id)}
                 onFixCompliance={handleFixCompliance}
                 onDelete={(id) => setDeleteTarget(id)}
               />
-            ))}
+              );
+            })}
           </div>
         </section>
       )}

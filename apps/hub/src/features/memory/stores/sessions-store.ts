@@ -75,6 +75,7 @@ interface SessionsStoreState {
   complianceBySessionId: Record<string, WorkflowCompliance>;
   artifactsBySessionId: Record<string, ArtifactEntry[]>;
   pendingDraftsBySession: Record<string, number>;
+  draftStatusBySession: Record<string, { pending: number; approved: number; rejected: number }>;
   observationsBySessionId: Record<string, number>;
   auditScoresBySessionId: Record<string, AuditScore>;
   loading: boolean;
@@ -85,7 +86,12 @@ interface SessionsStoreState {
   fetchObservations: (projectRoot: string, sessionId: string, status: 'active' | 'completed') => Promise<SessionObservation[]>;
   removeSession: (id: string) => Promise<void>;
   completeSession: (id: string) => Promise<void>;
-  fixCompliance: (id: string) => Promise<void>;
+  fixCompliance: (id: string) => Promise<{
+    created: number;
+    skippedExisting: number;
+    pendingAfter: number;
+    missingRequired: string[];
+  }>;
   editSession: (id: string, branch?: string, input?: string, output?: string) => Promise<void>;
   editSessionFull: (id: string, updates: SessionUpdatePayload) => Promise<void>;
   invalidate: () => void;
@@ -97,6 +103,7 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
   complianceBySessionId: {},
   artifactsBySessionId: {},
   pendingDraftsBySession: {},
+  draftStatusBySession: {},
   observationsBySessionId: {},
   auditScoresBySessionId: {},
   loading: false,
@@ -162,11 +169,26 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
         acc[observation.sessionId] = (acc[observation.sessionId] ?? 0) + 1;
         return acc;
       }, {} as Record<string, number>);
-      const pendingDraftsBySession = drafts.reduce((acc, draft) => {
-        if (draft.status !== 'pending') return acc;
+      const draftStatusBySession = drafts.reduce((acc, draft) => {
         const sid = draft.sessionId ?? extractAutoDraftSessionId(draft.title);
         if (!sid) return acc;
-        acc[sid] = (acc[sid] ?? 0) + 1;
+        if (!acc[sid]) {
+          acc[sid] = { pending: 0, approved: 0, rejected: 0 };
+        }
+        if (draft.status === 'pending') {
+          acc[sid].pending += 1;
+        } else if (draft.status === 'approved') {
+          acc[sid].approved += 1;
+        } else if (draft.status === 'rejected') {
+          acc[sid].rejected += 1;
+        }
+        return acc;
+      }, {} as Record<string, { pending: number; approved: number; rejected: number }>);
+
+      const pendingDraftsBySession = Object.entries(draftStatusBySession).reduce((acc, [sid, summary]) => {
+        if (summary.pending > 0) {
+          acc[sid] = summary.pending;
+        }
         return acc;
       }, {} as Record<string, number>);
 
@@ -184,6 +206,7 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
         complianceBySessionId,
         artifactsBySessionId,
         pendingDraftsBySession,
+        draftStatusBySession,
         observationsBySessionId,
         auditScoresBySessionId,
         loading: false,
@@ -196,6 +219,7 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
         stale: false,
         complianceBySessionId: {},
         pendingDraftsBySession: {},
+        draftStatusBySession: {},
         observationsBySessionId: {},
         auditScoresBySessionId: {},
       });
@@ -218,17 +242,20 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
     const nextObservations = { ...get().observationsBySessionId };
     const nextAuditScores = { ...get().auditScoresBySessionId };
     const nextPendingDrafts = { ...get().pendingDraftsBySession };
+    const nextDraftStatus = { ...get().draftStatusBySession };
     delete nextCompliance[id];
     delete nextArtifacts[id];
     delete nextObservations[id];
     delete nextAuditScores[id];
     delete nextPendingDrafts[id];
+    delete nextDraftStatus[id];
     set({
       activeSessions: get().activeSessions.filter((s) => s.id !== id),
       completedSessions: get().completedSessions.filter((s) => s.id !== id),
       complianceBySessionId: nextCompliance,
       artifactsBySessionId: nextArtifacts,
       pendingDraftsBySession: nextPendingDrafts,
+      draftStatusBySession: nextDraftStatus,
       observationsBySessionId: nextObservations,
       auditScoresBySessionId: nextAuditScores,
     });
@@ -247,11 +274,25 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
     const state = get();
     const sessions = [...state.activeSessions, ...state.completedSessions];
     const session = sessions.find((s) => s.id === id);
-    if (!session) return;
+    if (!session) {
+      return {
+        created: 0,
+        skippedExisting: 0,
+        pendingAfter: 0,
+        missingRequired: [],
+      };
+    }
 
     const artifacts = state.artifactsBySessionId[id] ?? [];
     const missing = getMissingRequiredArtifacts(session, artifacts);
-    if (missing.length === 0) return;
+    if (missing.length === 0) {
+      return {
+        created: 0,
+        skippedExisting: 0,
+        pendingAfter: state.draftStatusBySession[id]?.pending ?? 0,
+        missingRequired: [],
+      };
+    }
 
     const rawDrafts = await listDrafts().catch(() => [] as unknown[]);
     const drafts = (rawDrafts ?? []) as DraftEntry[];
@@ -263,14 +304,20 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
 
     const observations = await listObservationsBySession(session.id, 250).catch(() => [] as unknown[]);
     const sessionObservations = (observations ?? []) as SessionObservation[];
+    let created = 0;
+    let skippedExisting = 0;
 
     for (const artifactType of missing) {
       const title = buildAutoDraftTitle(artifactType, session.id);
-      if (existingTitles.has(title)) continue;
+      if (existingTitles.has(title)) {
+        skippedExisting += 1;
+        continue;
+      }
 
       const filename = `auto-${artifactType}-${session.id.slice(0, 8)}.md`;
       const content = buildAutoDraftContent(artifactType, session, sessionObservations);
       await createDraft('workflows', title, filename, content, 90, 'manual');
+      created += 1;
     }
 
     const governanceOverheadMs = Math.max(0, Math.round(performance.now() - startedAt));
@@ -287,6 +334,12 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
 
     set({ stale: true });
     await get().fetchAll();
+    return {
+      created,
+      skippedExisting,
+      pendingAfter: get().draftStatusBySession[id]?.pending ?? 0,
+      missingRequired: missing,
+    };
   },
 
   editSession: async (id, branch, input, output) => {

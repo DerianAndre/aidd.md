@@ -64,7 +64,7 @@ importers:
         specifier: ^25.8.4
         version: 25.8.4(typescript@5.9.3)
       lucide-react:
-        specifier: ^0.480
+        specifier: ^0.480.0
         version: 0.480.0(react@19.2.4)
       next-themes:
         specifier: ^0.4.6

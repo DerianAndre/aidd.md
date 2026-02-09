@@ -237,6 +237,67 @@ fn extract_auto_draft_binding(
     (session_id, artifact_type)
 }
 
+const MAX_UNIX_SECONDS: i64 = 9_999_999_999;
+const MIN_REASONABLE_TS_MS: i64 = 946_684_800_000; // 2000-01-01T00:00:00Z
+
+fn normalize_epoch_timestamp_ms(raw: i64) -> Option<i64> {
+    if raw <= 0 {
+        return None;
+    }
+    let ms = if raw >= 1_000_000_000_000 {
+        raw
+    } else if raw >= 1_000_000_000 && raw <= MAX_UNIX_SECONDS {
+        raw * 1000
+    } else {
+        return None;
+    };
+    if ms >= MIN_REASONABLE_TS_MS {
+        Some(ms)
+    } else {
+        None
+    }
+}
+
+fn parse_timestamp_text_to_ms(conn: &Connection, raw: &str) -> Option<i64> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    if let Ok(num) = trimmed.parse::<i64>() {
+        return normalize_epoch_timestamp_ms(num);
+    }
+
+    conn.query_row(
+        "SELECT CAST(strftime('%s', ?1) AS INTEGER)",
+        rusqlite::params![trimmed],
+        |row| row.get::<_, Option<i64>>(0),
+    )
+    .ok()
+    .flatten()
+    .and_then(normalize_epoch_timestamp_ms)
+}
+
+fn parse_timestamp_json_to_ms(conn: &Connection, value: &serde_json::Value) -> Option<i64> {
+    if let Some(num) = value.as_i64() {
+        return normalize_epoch_timestamp_ms(num);
+    }
+    if let Some(s) = value.as_str() {
+        return parse_timestamp_text_to_ms(conn, s);
+    }
+    None
+}
+
+fn parse_timestamp_from_data_field(
+    conn: &Connection,
+    payload: &serde_json::Value,
+    field: &str,
+) -> Option<i64> {
+    payload
+        .get(field)
+        .and_then(|v| parse_timestamp_json_to_ms(conn, v))
+}
+
 /// Verify that required tables exist in the database.
 /// Extracted as standalone function for testability.
 fn verify_schema(conn: &Connection) -> Result<(), String> {
@@ -519,15 +580,35 @@ impl MemoryPort for SqliteMemoryAdapter {
             let mut stmt = conn.prepare(
                 "SELECT data,
                         CASE
-                          WHEN typeof(started_at) = 'integer' THEN CAST(started_at AS INTEGER)
-                          WHEN started_at IS NULL OR started_at = '' THEN CAST(strftime('%s', 'now') AS INTEGER) * 1000
-                          WHEN started_at GLOB '[0-9]*' THEN CAST(started_at AS INTEGER)
+                          WHEN typeof(started_at) = 'integer' THEN
+                            CASE
+                              WHEN CAST(started_at AS INTEGER) >= 1000000000000 THEN CAST(started_at AS INTEGER)
+                              WHEN CAST(started_at AS INTEGER) BETWEEN 1000000000 AND 9999999999 THEN CAST(started_at AS INTEGER) * 1000
+                              ELSE NULL
+                            END
+                          WHEN started_at IS NULL OR started_at = '' THEN NULL
+                          WHEN started_at GLOB '[0-9]*' THEN
+                            CASE
+                              WHEN CAST(started_at AS INTEGER) >= 1000000000000 THEN CAST(started_at AS INTEGER)
+                              WHEN CAST(started_at AS INTEGER) BETWEEN 1000000000 AND 9999999999 THEN CAST(started_at AS INTEGER) * 1000
+                              ELSE NULL
+                            END
                           ELSE CAST(strftime('%s', started_at) AS INTEGER) * 1000
                         END AS started_at_ts,
                         CASE
                           WHEN ended_at IS NULL OR ended_at = '' THEN NULL
-                          WHEN typeof(ended_at) = 'integer' THEN CAST(ended_at AS INTEGER)
-                          WHEN ended_at GLOB '[0-9]*' THEN CAST(ended_at AS INTEGER)
+                          WHEN typeof(ended_at) = 'integer' THEN
+                            CASE
+                              WHEN CAST(ended_at AS INTEGER) >= 1000000000000 THEN CAST(ended_at AS INTEGER)
+                              WHEN CAST(ended_at AS INTEGER) BETWEEN 1000000000 AND 9999999999 THEN CAST(ended_at AS INTEGER) * 1000
+                              ELSE NULL
+                            END
+                          WHEN ended_at GLOB '[0-9]*' THEN
+                            CASE
+                              WHEN CAST(ended_at AS INTEGER) >= 1000000000000 THEN CAST(ended_at AS INTEGER)
+                              WHEN CAST(ended_at AS INTEGER) BETWEEN 1000000000 AND 9999999999 THEN CAST(ended_at AS INTEGER) * 1000
+                              ELSE NULL
+                            END
                           ELSE CAST(strftime('%s', ended_at) AS INTEGER) * 1000
                         END AS ended_at_ts
                  FROM sessions
@@ -537,14 +618,23 @@ impl MemoryPort for SqliteMemoryAdapter {
 
             let sessions = stmt.query_map([limit], |row| {
                 let data: String = row.get(0)?;
-                let started_at_ts: i64 = row.get(1)?;
+                let started_at_ts: Option<i64> = row.get(1)?;
                 let ended_at_ts: Option<i64> = row.get(2)?;
 
                 let mut parsed = serde_json::from_str::<serde_json::Value>(&data)
                     .unwrap_or(serde_json::Value::Null);
+                let started = started_at_ts
+                    .and_then(normalize_epoch_timestamp_ms)
+                    .or_else(|| parse_timestamp_from_data_field(conn, &parsed, "startedAt"));
+                let ended = ended_at_ts
+                    .and_then(normalize_epoch_timestamp_ms)
+                    .or_else(|| parse_timestamp_from_data_field(conn, &parsed, "endedAt"));
                 if let Some(obj) = parsed.as_object_mut() {
-                    obj.insert("startedAtTs".into(), serde_json::json!(started_at_ts));
-                    if let Some(v) = ended_at_ts {
+                    if let Some(v) = started {
+                        obj.insert("startedAtTs".into(), serde_json::json!(v));
+                    }
+
+                    if let Some(v) = ended {
                         obj.insert("endedAtTs".into(), serde_json::json!(v));
                     }
                 }
@@ -1144,6 +1234,26 @@ impl MemoryPort for SqliteMemoryAdapter {
             // Deep-merge: overwrite top-level keys, nested-merge for objects
             if let (Some(data_obj), Some(updates_obj)) = (data.as_object_mut(), updates.as_object()) {
                 for (key, value) in updates_obj {
+                    if key == "startedAt" {
+                        // Ignore malformed timestamp updates (prevents persisting values like 2026).
+                        if parse_timestamp_json_to_ms(conn, value).is_none() {
+                            continue;
+                        }
+                        data_obj.insert(key.clone(), value.clone());
+                        continue;
+                    }
+                    if key == "endedAt" {
+                        // Allow explicit null to clear; otherwise require parseable timestamp.
+                        if value.is_null() {
+                            data_obj.insert(key.clone(), value.clone());
+                            continue;
+                        }
+                        if parse_timestamp_json_to_ms(conn, value).is_none() {
+                            continue;
+                        }
+                        data_obj.insert(key.clone(), value.clone());
+                        continue;
+                    }
                     // Nested objects: merge keys instead of replacing the whole object
                     if (key == "taskClassification" || key == "outcome") && value.is_object() {
                         if let Some(nested) = value.as_object() {
@@ -1166,40 +1276,14 @@ impl MemoryPort for SqliteMemoryAdapter {
 
             // Keep indexed columns in sync with the JSON blob.
             let branch_val = updates.get("branch").and_then(|v| v.as_str());
-            let started_at_ms: Option<i64> = updates.get("startedAt").and_then(|v| {
-                v.as_i64().or_else(|| {
-                    v.as_str().and_then(|s| {
-                        if let Ok(parsed) = s.parse::<i64>() {
-                            Some(parsed)
-                        } else {
-                            conn.query_row(
-                                "SELECT CAST(strftime('%s', ?1) AS INTEGER) * 1000",
-                                rusqlite::params![s],
-                                |row| row.get::<_, Option<i64>>(0),
-                            ).ok().flatten()
-                        }
-                    })
-                })
-            });
-            let ended_at_ms: Option<Option<i64>> = updates.get("endedAt").map(|v| {
-                if v.is_null() {
-                    None
-                } else if let Some(num) = v.as_i64() {
-                    Some(num)
-                } else if let Some(s) = v.as_str() {
-                    if let Ok(parsed) = s.parse::<i64>() {
-                        Some(parsed)
-                    } else {
-                        conn.query_row(
-                            "SELECT CAST(strftime('%s', ?1) AS INTEGER) * 1000",
-                            rusqlite::params![s],
-                            |row| row.get::<_, Option<i64>>(0),
-                        ).ok().flatten()
-                    }
-                } else {
-                    None
-                }
-            });
+            let started_at_ms: Option<i64> = updates
+                .get("startedAt")
+                .and_then(|v| parse_timestamp_json_to_ms(conn, v));
+            let ended_at_ms: Option<Option<i64>> = match updates.get("endedAt") {
+                Some(v) if v.is_null() => Some(None),
+                Some(v) => parse_timestamp_json_to_ms(conn, v).map(Some),
+                None => None,
+            };
 
             match (branch_val, started_at_ms, ended_at_ms) {
                 (Some(branch), Some(started), Some(ended)) => {
@@ -1729,5 +1813,32 @@ mod tests {
         let (session_id, artifact_type) = extract_auto_draft_binding(title, content, &data);
         assert_eq!(session_id, Some("session-from-data".to_string()));
         assert_eq!(artifact_type, Some("retro".to_string()));
+    }
+
+    #[test]
+    fn timestamp_normalization_rejects_short_year_values() {
+        assert_eq!(normalize_epoch_timestamp_ms(2026), None);
+        assert_eq!(
+            normalize_epoch_timestamp_ms(1_770_650_086),
+            Some(1_770_650_086_000),
+        );
+        assert_eq!(
+            normalize_epoch_timestamp_ms(1_770_650_086_000),
+            Some(1_770_650_086_000),
+        );
+    }
+
+    #[test]
+    fn timestamp_parsing_accepts_iso_and_numeric_seconds() {
+        let conn = create_test_db();
+        assert_eq!(
+            parse_timestamp_text_to_ms(&conn, "2026-02-09T15:14:46.241Z"),
+            Some(1_770_650_086_000),
+        );
+        assert_eq!(
+            parse_timestamp_text_to_ms(&conn, "1770650086"),
+            Some(1_770_650_086_000),
+        );
+        assert_eq!(parse_timestamp_text_to_ms(&conn, "2026"), None);
     }
 }

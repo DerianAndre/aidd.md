@@ -30,16 +30,14 @@ import { formatDate, formatRelativeTime, truncate } from "../../../lib/utils";
 import type { SessionState, ArtifactEntry } from "../../../lib/types";
 import type { WorkflowCompliance } from "../lib/workflow-compliance";
 import { resolveSessionTokenTelemetry } from "../lib/token-telemetry";
-import {
-  getDateInput,
-  getSessionEndedMs,
-  getSessionStartedMs,
-} from "../lib/session-time";
+import { getSessionEndedMs, getSessionStartedMs } from "../lib/session-time";
 
 interface SessionCardProps {
   session: SessionState;
   artifacts: ArtifactEntry[];
   pendingDrafts?: number;
+  approvedDrafts?: number;
+  rejectedDrafts?: number;
   compliance?: WorkflowCompliance;
   onPress?: () => void;
   onEdit?: () => void;
@@ -52,6 +50,8 @@ export function SessionCard({
   session,
   artifacts,
   pendingDrafts = 0,
+  approvedDrafts = 0,
+  rejectedDrafts = 0,
   compliance,
   onPress,
   onEdit,
@@ -68,6 +68,7 @@ export function SessionCard({
   const startedMs = getSessionStartedMs(session);
   const endedMs = session.endedAt ? getSessionEndedMs(session) : Date.now();
   const durationMs =
+    startedMs > 0 &&
     Number.isFinite(startedMs) &&
     Number.isFinite(endedMs) &&
     endedMs >= startedMs
@@ -80,16 +81,16 @@ export function SessionCard({
   const tokenTelemetry = resolveSessionTokenTelemetry(session);
   const inputTokens = tokenTelemetry.inputTokens;
   const outputTokens = tokenTelemetry.outputTokens;
-  const qualityState = isActive
-    ? "In Flight"
-    : compliance?.status === "non-compliant"
-      ? "Non-Compliant"
-      : "Compliant";
+  const qualityState =
+    compliance?.status === "non-compliant" ? "Non-Compliant" : "Compliant";
   const qualityColor = isActive
     ? "accent"
     : compliance?.status === "non-compliant"
       ? "danger"
       : "success";
+  const totalDrafts = pendingDrafts + approvedDrafts + rejectedDrafts;
+  const hideFixCompliance = totalDrafts > 0 && approvedDrafts === totalDrafts;
+  const disableFixCompliance = pendingDrafts > 0;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (onPress && (e.key === "Enter" || e.key === " ")) {
@@ -120,14 +121,12 @@ export function SessionCard({
           <span className="-ml-1.5">{modelLabel}</span>
           <Clock size={10} />
           <span className="-ml-1.5">
-            {formatRelativeTime(
-              getDateInput(session.startedAtTs ?? session.startedAt),
-            )}
+            {startedMs > 0 ? formatRelativeTime(startedMs) : "unknown"}
           </span>
 
           <Calendar size={10} />
           <span className="-ml-1.5">
-            {formatDate(getDateInput(session.startedAtTs ?? session.startedAt))}
+            {startedMs > 0 ? formatDate(startedMs) : "—"}
           </span>
         </CardDescription>
         <CardAction>
@@ -158,8 +157,16 @@ export function SessionCard({
                   Complete
                 </DropdownMenuItem>
               )}
-              {onFixCompliance && (
-                <DropdownMenuItem onClick={() => onFixCompliance(session.id)}>
+              {onFixCompliance && !hideFixCompliance && (
+                <DropdownMenuItem
+                  onClick={() => onFixCompliance(session.id)}
+                  disabled={disableFixCompliance}
+                  title={
+                    disableFixCompliance
+                      ? "Pending compliance drafts must be reviewed before generating more."
+                      : undefined
+                  }
+                >
                   Fix Compliance
                 </DropdownMenuItem>
               )}

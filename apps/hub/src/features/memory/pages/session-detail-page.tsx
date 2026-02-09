@@ -30,7 +30,8 @@ import { showSuccess, showError } from "../../../lib/toast";
 import { formatDuration, formatDate, scoreColor } from "../../../lib/utils";
 import { listArtifacts } from "../../../lib/tauri";
 import { resolveSessionTokenTelemetry } from "../lib/token-telemetry";
-import { getDateInput } from "../lib/session-time";
+import { getSessionStartedMs } from "../lib/session-time";
+import { artifactBelongsToSession } from "../lib/workflow-compliance";
 import type {
   SessionState,
   SessionObservation,
@@ -304,6 +305,7 @@ export function SessionDetailPage() {
     completedSessions,
     complianceBySessionId,
     pendingDraftsBySession,
+    draftStatusBySession,
     stale,
     fetchAll,
     fetchObservations,
@@ -358,11 +360,7 @@ export function SessionDetailPage() {
 
         // Filter artifacts for this session
         const sessionArtifacts = (arts as unknown as ArtifactEntry[])
-          .filter(
-            (a) =>
-              a.sessionId === found.id ||
-              a.feature.toLowerCase() === found.branch.toLowerCase(),
-          )
+          .filter((a) => artifactBelongsToSession(a, found))
           .sort(
             (a, b) =>
               new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -439,8 +437,20 @@ export function SessionDetailPage() {
   const handleFixCompliance = useCallback(async () => {
     if (!session) return;
     try {
-      await fixCompliance(session.id);
-      showSuccess("Compliance drafts generated");
+      const result = await fixCompliance(session.id);
+      if (result.created > 0) {
+        showSuccess(
+          `${result.created} compliance draft${result.created === 1 ? "" : "s"} generated. Review, add context, and approve them before shipping.`,
+        );
+        return;
+      }
+      if (result.pendingAfter > 0) {
+        showSuccess(
+          `${result.pendingAfter} compliance draft${result.pendingAfter === 1 ? "" : "s"} already pending review. Approve or reject them first.`,
+        );
+        return;
+      }
+      showSuccess("No missing compliance artifacts detected.");
     } catch {
       showError("Failed to generate compliance drafts");
     }
@@ -509,7 +519,15 @@ export function SessionDetailPage() {
   // Derived values
   const isActive = session && !session.endedAt;
   const compliance = session ? complianceBySessionId[session.id] : undefined;
-  const pendingDrafts = session ? pendingDraftsBySession[session.id] ?? 0 : 0;
+  const draftStatus = session
+    ? draftStatusBySession[session.id] ?? { pending: 0, approved: 0, rejected: 0 }
+    : { pending: 0, approved: 0, rejected: 0 };
+  const pendingDrafts = session ? pendingDraftsBySession[session.id] ?? draftStatus.pending : 0;
+  const approvedDrafts = draftStatus.approved;
+  const rejectedDrafts = draftStatus.rejected;
+  const totalDrafts = pendingDrafts + approvedDrafts + rejectedDrafts;
+  const hideFixCompliance = totalDrafts > 0 && approvedDrafts === totalDrafts;
+  const disableFixCompliance = pendingDrafts > 0;
   const isZenCandidate = session?.taskClassification?.complexity === "low";
   const zenMode = isZenCandidate && !showAdvanced && !editing;
   const durationMs = session?.endedAt
@@ -521,6 +539,7 @@ export function SessionDetailPage() {
   const tokenTelemetry = session
     ? resolveSessionTokenTelemetry(session)
     : null;
+  const startedAtMs = session ? getSessionStartedMs(session) : 0;
 
   // ---------------------------------------------------------------------------
   // Field definitions
@@ -777,7 +796,7 @@ export function SessionDetailPage() {
               </span>
             )}
             <span className="text-muted-foreground">
-              {formatDate(getDateInput(session.startedAtTs ?? session.startedAt))}
+              {startedAtMs > 0 ? formatDate(startedAtMs) : "—"}
             </span>
           </div>
         }
@@ -814,9 +833,21 @@ export function SessionDetailPage() {
                 >
                   <Pencil size={14} /> {t("common.edit")}
                 </Button>
-                <Button size="sm" variant="outline" onClick={handleFixCompliance}>
-                  Fix Compliance
-                </Button>
+                {!hideFixCompliance && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleFixCompliance}
+                    disabled={disableFixCompliance}
+                    title={
+                      disableFixCompliance
+                        ? "Pending compliance drafts must be reviewed before generating more."
+                        : undefined
+                    }
+                  >
+                    Fix Compliance
+                  </Button>
+                )}
                 {isZenCandidate && (
                   <Button
                     size="sm"

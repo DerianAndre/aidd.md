@@ -16,7 +16,7 @@ function normalize(value: string | undefined): string {
   return (value ?? '').trim().toLowerCase();
 }
 
-function artifactBelongsToSession(artifact: ArtifactEntry, session: SessionState): boolean {
+export function artifactBelongsToSession(artifact: ArtifactEntry, session: SessionState): boolean {
   if (artifact.sessionId && artifact.sessionId === session.id) return true;
 
   // Legacy fallback: when sessionId is absent, feature sometimes mirrors branch naming.
