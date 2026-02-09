@@ -333,6 +333,12 @@ export const listArtifacts = (artifactType?: string, status?: string, limit?: nu
 export const listAuditScores = (limit?: number) =>
   invoke<unknown[]>('list_audit_scores', { limit: limit ?? null });
 
+export const getGovernanceConfig = () =>
+  invoke<unknown>('get_governance_config');
+
+export const upsertGovernanceConfig = (config: unknown) =>
+  invoke<void>('upsert_governance_config', { config });
+
 // Memory write operations
 export const createPermanentMemory = (memoryType: string, title: string, content: string) =>
   invoke<string>('create_permanent_memory', { memoryType, title, content });

@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { readJsonFile, writeJsonFile, fileExists } from '../../../lib/tauri';
-import { statePath, STATE_PATHS } from '../../../lib/constants';
+import { getGovernanceConfig, upsertGovernanceConfig } from '../../../lib/tauri';
 import type { AiddConfig } from '../../../lib/types';
 import { DEFAULT_CONFIG } from '../../../lib/types';
 
@@ -15,11 +14,99 @@ function mergeConfig(partial: Record<string, unknown>): AiddConfig {
   };
 }
 
+function clamp(value: number, min: number, max: number): number {
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+}
+
+function numberOrDefault(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function boolOrDefault(value: unknown, fallback: boolean): boolean {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function stringArray(value: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(value)) return fallback;
+  return value.filter((item): item is string => typeof item === 'string');
+}
+
+function validateAndNormalizeConfig(config: AiddConfig): { ok: true; value: AiddConfig } | { ok: false; error: string } {
+  const overrideMode = config.content.overrideMode;
+  if (overrideMode !== 'merge' && overrideMode !== 'project_only' && overrideMode !== 'bundled_only') {
+    return { ok: false, error: 'Invalid override mode' };
+  }
+
+  const normalized: AiddConfig = {
+    evolution: {
+      enabled: boolOrDefault(config.evolution.enabled, DEFAULT_CONFIG.evolution.enabled),
+      autoApplyThreshold: clamp(
+        numberOrDefault(config.evolution.autoApplyThreshold, DEFAULT_CONFIG.evolution.autoApplyThreshold),
+        0,
+        100,
+      ),
+      draftThreshold: clamp(
+        numberOrDefault(config.evolution.draftThreshold, DEFAULT_CONFIG.evolution.draftThreshold),
+        0,
+        100,
+      ),
+      learningPeriodSessions: clamp(
+        Math.trunc(numberOrDefault(config.evolution.learningPeriodSessions, DEFAULT_CONFIG.evolution.learningPeriodSessions)),
+        1,
+        500,
+      ),
+      killSwitch: boolOrDefault(config.evolution.killSwitch, DEFAULT_CONFIG.evolution.killSwitch),
+    },
+    memory: {
+      maxSessionHistory: clamp(
+        Math.trunc(numberOrDefault(config.memory.maxSessionHistory, DEFAULT_CONFIG.memory.maxSessionHistory)),
+        10,
+        100000,
+      ),
+      autoPromoteBranchDecisions: boolOrDefault(
+        config.memory.autoPromoteBranchDecisions,
+        DEFAULT_CONFIG.memory.autoPromoteBranchDecisions,
+      ),
+      pruneAfterDays: clamp(
+        Math.trunc(numberOrDefault(config.memory.pruneAfterDays, DEFAULT_CONFIG.memory.pruneAfterDays)),
+        7,
+        3650,
+      ),
+    },
+    modelTracking: {
+      enabled: boolOrDefault(config.modelTracking.enabled, DEFAULT_CONFIG.modelTracking.enabled),
+      crossProject: boolOrDefault(config.modelTracking.crossProject, DEFAULT_CONFIG.modelTracking.crossProject),
+    },
+    ci: {
+      blockOn: stringArray(config.ci.blockOn, DEFAULT_CONFIG.ci.blockOn),
+      warnOn: stringArray(config.ci.warnOn, DEFAULT_CONFIG.ci.warnOn),
+      ignore: stringArray(config.ci.ignore, DEFAULT_CONFIG.ci.ignore),
+    },
+    content: {
+      overrideMode,
+      slimStartEnabled: boolOrDefault(
+        config.content.slimStartEnabled,
+        DEFAULT_CONFIG.content.slimStartEnabled ?? true,
+      ),
+      slimStartTargetTokens: clamp(
+        Math.trunc(numberOrDefault(config.content.slimStartTargetTokens, DEFAULT_CONFIG.content.slimStartTargetTokens ?? 600)),
+        100,
+        5000,
+      ),
+    },
+  };
+
+  return { ok: true, value: normalized };
+}
+
 interface ConfigStoreState {
   config: AiddConfig;
   loading: boolean;
   stale: boolean;
   saving: boolean;
+  lastError: string | null;
 
   fetch: (projectRoot: string) => Promise<void>;
   save: (projectRoot: string, config: AiddConfig) => Promise<boolean>;
@@ -32,38 +119,61 @@ export const useConfigStore = create<ConfigStoreState>((set, get) => ({
   loading: false,
   stale: true,
   saving: false,
+  lastError: null,
 
-  fetch: async (projectRoot) => {
+  fetch: async (_projectRoot) => {
     if (!get().stale || get().saving) return;
-    set({ loading: true });
+    set({ loading: true, lastError: null });
     try {
-      const path = statePath(projectRoot, STATE_PATHS.CONFIG);
-      if (await fileExists(path)) {
-        const raw = await readJsonFile(path);
-        const config = mergeConfig(raw as Record<string, unknown>);
-        set({ config, loading: false, stale: false });
+      const raw = await getGovernanceConfig();
+      const merged = mergeConfig((raw ?? {}) as Record<string, unknown>);
+      const parsed = validateAndNormalizeConfig(merged);
+      if (parsed.ok) {
+        set({ config: parsed.value, loading: false, stale: false });
       } else {
-        set({ config: { ...DEFAULT_CONFIG }, loading: false, stale: false });
+        set({
+          config: { ...DEFAULT_CONFIG },
+          loading: false,
+          stale: false,
+          lastError: parsed.error,
+        });
       }
-    } catch {
-      set({ config: { ...DEFAULT_CONFIG }, loading: false, stale: false });
+    } catch (error) {
+      set({
+        config: { ...DEFAULT_CONFIG },
+        loading: false,
+        stale: false,
+        lastError: error instanceof Error ? error.message : String(error),
+      });
     }
   },
 
-  save: async (projectRoot, config) => {
-    set({ saving: true });
+  save: async (_projectRoot, config) => {
+    set({ saving: true, lastError: null });
     try {
-      const path = statePath(projectRoot, STATE_PATHS.CONFIG);
-      await writeJsonFile(path, config);
-      set({ config, saving: false });
+      const merged = mergeConfig(config as unknown as Record<string, unknown>);
+      const parsed = validateAndNormalizeConfig(merged);
+      if (!parsed.ok) {
+        set({
+          saving: false,
+          lastError: parsed.error,
+        });
+        return false;
+      }
+
+      await upsertGovernanceConfig(parsed.value);
+      set({ config: parsed.value, saving: false, lastError: null });
       return true;
-    } catch {
-      set({ saving: false });
+    } catch (error) {
+      set({
+        saving: false,
+        lastError: error instanceof Error ? error.message : String(error),
+      });
       return false;
     }
   },
 
-  reset: () => set({ config: { ...DEFAULT_CONFIG } }),
+  reset: () => set({ config: { ...DEFAULT_CONFIG }, lastError: null }),
 
   invalidate: () => {
     if (!get().saving) set({ stale: true });

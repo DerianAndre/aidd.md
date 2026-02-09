@@ -2,6 +2,7 @@ import { Circle, CircleDot, CircleDashed } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import type { ArtifactEntry, SessionState } from '@/lib/types';
+import { getSkippedPhases } from '../lib/workflow-compliance';
 
 interface PhaseStepperProps {
   artifacts: ArtifactEntry[];
@@ -19,8 +20,6 @@ const PHASES = [
   { id: 'review', label: 'R', name: 'Review', artifactTypes: [] },
   { id: 'ship', label: 'S', name: 'Ship', artifactTypes: ['retro'] },
 ] as const;
-
-const FAST_TRACK_SKIPPED = ['brainstorm']; // brainstorming can be skipped in fast-track mode
 
 export function PhaseStepper({ artifacts, fastTrack, session, orientation = 'vertical', className }: PhaseStepperProps) {
   // Map which phases have artifacts
@@ -45,6 +44,7 @@ export function PhaseStepper({ artifacts, fastTrack, session, orientation = 'ver
     completedPhases.add('review');
   }
 
+  const skippedPhases = session ? getSkippedPhases(session) : (fastTrack ? ['brainstorm', 'plan', 'checklist'] : []);
   const isVertical = orientation === 'vertical';
 
   return (
@@ -57,7 +57,7 @@ export function PhaseStepper({ artifacts, fastTrack, session, orientation = 'ver
     >
       {PHASES.map((phase) => {
         const isCompleted = completedPhases.has(phase.id);
-        const isSkipped = fastTrack && FAST_TRACK_SKIPPED.includes(phase.id);
+        const isSkipped = skippedPhases.includes(phase.id);
         const isMissing = !isCompleted && !isSkipped;
         const status = isCompleted
           ? 'Completed'

@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ComplianceRing } from "./compliance-ring";
+import { ComplianceTooltip } from "./compliance-tooltip";
 import { PhaseStepper } from "./phase-stepper";
 import { formatDate, formatRelativeTime, truncate } from "../../../lib/utils";
 import type { SessionState, ArtifactEntry } from "../../../lib/types";
@@ -65,6 +66,11 @@ export function SessionCard({
     .replace(/-\d{8}$/, "");
   const complianceScore = session.outcome?.complianceScore ?? 0;
   const fastTrack = session.taskClassification?.fastTrack ?? false;
+  const lifecycle = compliance?.lifecycleProgress;
+  const lifecycleScore = lifecycle?.score ?? 0;
+  const displayScore = isActive ? lifecycleScore : complianceScore;
+  const isWip = isActive && (lifecycle?.isWip ?? false);
+  const isStale = !isActive && (compliance?.missing?.length ?? 0) > 0;
   const startedMs = getSessionStartedMs(session);
   const endedMs = session.endedAt ? getSessionEndedMs(session) : Date.now();
   const durationMs =
@@ -265,10 +271,25 @@ export function SessionCard({
         <div className="rounded-md border border-border mt-auto p-2">
           <div className="mb-2 flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Lifecycle</span>
-            <span className="font-medium">{complianceScore}%</span>
+            <span className="font-medium">
+              {isActive ? `${lifecycleScore}%` : `${complianceScore}%`}
+            </span>
           </div>
           <div className="flex items-center gap-2">
-            <ComplianceRing score={complianceScore} size="sm" />
+            <ComplianceRing
+              score={displayScore}
+              lifecycleProgress={lifecycleScore}
+              size="sm"
+              isWip={isWip}
+              isStale={isStale}
+              tooltipContent={
+                <ComplianceTooltip
+                  lifecycle={lifecycle}
+                  compliance={compliance}
+                  isActive={isActive}
+                />
+              }
+            />
             <PhaseStepper
               artifacts={artifacts}
               fastTrack={fastTrack}

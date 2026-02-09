@@ -55,6 +55,12 @@ pub trait MemoryPort: Send + Sync {
     /// List recent pattern audit scores.
     fn list_audit_scores(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String>;
 
+    /// Get governance configuration persisted in project-local data.db.
+    fn get_governance_config(&self) -> Result<serde_json::Value, String>;
+
+    /// Upsert governance configuration in project-local data.db.
+    fn upsert_governance_config(&self, config_json: &str) -> Result<(), String>;
+
     // --- Write operations ---
 
     /// Create a permanent memory entry. Returns the new entry ID.

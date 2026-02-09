@@ -16,6 +16,10 @@ function estimateTokenCount(text: string): number {
   return Math.max(1, Math.ceil(trimmed.length / CHARS_PER_TOKEN));
 }
 
+/**
+ * Lightweight client-side estimation for active sessions that haven't been
+ * enriched by the server yet. Only used as a last resort.
+ */
 function estimateFromSessionText(session: SessionState): TokenUsage | null {
   const inputParts = [
     session.name,
@@ -48,18 +52,21 @@ function formatRatio(inputTokens: number, outputTokens: number): string {
 export function resolveSessionTokenTelemetry(
   session: SessionState,
 ): SessionTokenTelemetry {
+  // Server-stored token data (reported or enriched estimation on session end)
   if (session.tokenUsage) {
     const inputTokens = session.tokenUsage.inputTokens ?? 0;
     const outputTokens = session.tokenUsage.outputTokens ?? 0;
+    const isEstimated = session.tokenTelemetrySource === "estimated";
     return {
       inputTokens,
       outputTokens,
       ratio: formatRatio(inputTokens, outputTokens),
       hasTelemetry: inputTokens > 0 || outputTokens > 0,
-      isEstimated: false,
+      isEstimated,
     };
   }
 
+  // Fallback: lightweight client-side estimation for active sessions only
   const estimated = estimateFromSessionText(session);
   if (!estimated) {
     return {

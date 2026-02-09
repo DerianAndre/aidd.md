@@ -49,6 +49,8 @@ export const DEFAULT_CONFIG: _AiddConfig = {
   },
   content: {
     overrideMode: 'merge',
+    slimStartEnabled: true,
+    slimStartTargetTokens: 600,
   },
 };
 
@@ -245,6 +247,8 @@ export interface SessionUpdatePayload {
     domain?: string;
     nature?: string;
     complexity?: string;
+    fastTrack?: boolean;
+    skippableStages?: string[];
   };
   outcome?: {
     testsPassing?: boolean;

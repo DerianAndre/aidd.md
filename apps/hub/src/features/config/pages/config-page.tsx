@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useOptimistic, useRef } from 'react';
 import {
   Card, CardHeader, CardTitle, CardDescription, CardContent,
 } from '@/components/ui/card';
@@ -30,8 +30,13 @@ export function ConfigPage() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
   const activeProject = useProjectStore((s) => s.activeProject);
-  const { config, loading, stale, saving, fetch, save, reset } = useConfigStore();
+  const { config, loading, stale, saving, lastError, fetch, save, reset } = useConfigStore();
   const [local, setLocal] = useState<AiddConfig>(config);
+  const [optimisticLocal, applyOptimistic] = useOptimistic(
+    local,
+    (_current, next: AiddConfig) => next,
+  );
+  const saveTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (activeProject?.path && stale) {
@@ -46,8 +51,22 @@ export function ConfigPage() {
   const isDirty = JSON.stringify(local) !== JSON.stringify(config);
   const isDefault = JSON.stringify(local) === JSON.stringify(DEFAULT_CONFIG);
 
+  const queueSave = useCallback((nextConfig: AiddConfig) => {
+    if (!activeProject?.path) return;
+    if (saveTimerRef.current != null) {
+      window.clearTimeout(saveTimerRef.current);
+    }
+    saveTimerRef.current = window.setTimeout(() => {
+      void save(activeProject.path, nextConfig);
+    }, 220);
+  }, [activeProject?.path, save]);
+
   const handleSave = useCallback(async () => {
     if (!activeProject?.path) return;
+    if (saveTimerRef.current != null) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
     const ok = await save(activeProject.path, local);
     if (ok) {
       showSuccess(t('page.config.saveSuccess'));
@@ -57,21 +76,35 @@ export function ConfigPage() {
   }, [activeProject?.path, local, save, t]);
 
   const handleReset = useCallback(() => {
+    const defaults = { ...DEFAULT_CONFIG };
     reset();
-    setLocal({ ...DEFAULT_CONFIG });
+    setLocal(defaults);
+    applyOptimistic(defaults);
+    queueSave(defaults);
     showSuccess(t('page.config.resetSuccess'));
-  }, [reset, t]);
+  }, [applyOptimistic, queueSave, reset, t]);
 
   const update = <S extends keyof AiddConfig, K extends keyof AiddConfig[S]>(
     section: S,
     key: K,
     value: AiddConfig[S][K],
   ) => {
-    setLocal((prev) => ({
-      ...prev,
-      [section]: { ...prev[section], [key]: value },
-    }));
+    setLocal((prev) => {
+      const next = {
+        ...prev,
+        [section]: { ...prev[section], [key]: value },
+      };
+      applyOptimistic(next);
+      queueSave(next);
+      return next;
+    });
   };
+
+  useEffect(() => () => {
+    if (saveTimerRef.current != null) {
+      window.clearTimeout(saveTimerRef.current);
+    }
+  }, []);
 
   // Ctrl+S / Cmd+S save shortcut
   useEffect(() => {
@@ -128,6 +161,9 @@ export function ConfigPage() {
             </Button>
             {isDirty && (
               <Chip size="sm" color="warning">{t('common.unsavedChanges')}</Chip>
+            )}
+            {lastError && (
+              <Chip size="sm" color="danger">{lastError}</Chip>
             )}
           </>
         }
@@ -201,30 +237,56 @@ export function ConfigPage() {
               <CardDescription>{t('page.config.content.description')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Field>
-                <FieldLabel>{t('page.config.content.overrideMode')}</FieldLabel>
-                <Select
-                  value={local.content.overrideMode}
-                  onValueChange={(value) => {
-                    update('content', 'overrideMode', value as AiddConfig['content']['overrideMode']);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="merge">
-                      {t('page.config.content.merge')}
-                    </SelectItem>
-                    <SelectItem value="project_only">
-                      {t('page.config.content.projectOnly')}
-                    </SelectItem>
-                    <SelectItem value="bundled_only">
-                      {t('page.config.content.bundledOnly')}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
+              <FieldGroup>
+                <Field>
+                  <FieldLabel>{t('page.config.content.overrideMode')}</FieldLabel>
+                  <Select
+                    value={optimisticLocal.content.overrideMode}
+                    onValueChange={(value) => {
+                      update('content', 'overrideMode', value as AiddConfig['content']['overrideMode']);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="merge">
+                        {t('page.config.content.merge')}
+                      </SelectItem>
+                      <SelectItem value="project_only">
+                        {t('page.config.content.projectOnly')}
+                      </SelectItem>
+                      <SelectItem value="bundled_only">
+                        {t('page.config.content.bundledOnly')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field orientation="horizontal">
+                  <FieldContent>
+                    <FieldLabel htmlFor="content-slim-start">{t('page.config.content.slimStart')}</FieldLabel>
+                    <FieldDescription>{t('page.config.content.slimStartHint')}</FieldDescription>
+                  </FieldContent>
+                  <Switch
+                    id="content-slim-start"
+                    size="sm"
+                    checked={optimisticLocal.content.slimStartEnabled ?? true}
+                    onCheckedChange={(v) => update('content', 'slimStartEnabled', v)}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>{t('page.config.content.slimTargetTokens')}</FieldLabel>
+                  <Input
+                    type="number"
+                    value={optimisticLocal.content.slimStartTargetTokens ?? 600}
+                    onChange={(e) => update('content', 'slimStartTargetTokens', Number(e.target.value) || 600)}
+                    min={100}
+                    max={5000}
+                    step={50}
+                    className="w-28"
+                  />
+                </Field>
+              </FieldGroup>
             </CardContent>
           </Card>
         </div>
@@ -247,7 +309,7 @@ export function ConfigPage() {
                 <Switch
                   id="evolution-enabled"
                   size="sm"
-                  checked={local.evolution.enabled}
+                  checked={optimisticLocal.evolution.enabled}
                   onCheckedChange={(v) => update('evolution', 'enabled', v)}
                 />
               </Field>
@@ -258,7 +320,7 @@ export function ConfigPage() {
                 <Switch
                   id="evolution-kill-switch"
                   size="sm"
-                  checked={local.evolution.killSwitch}
+                  checked={optimisticLocal.evolution.killSwitch}
                   onCheckedChange={(v) => update('evolution', 'killSwitch', v)}
                 />
               </Field>
@@ -268,7 +330,7 @@ export function ConfigPage() {
                   <div className="flex items-center gap-2">
                     <Input
                       type="number"
-                      value={local.evolution.autoApplyThreshold}
+                      value={optimisticLocal.evolution.autoApplyThreshold}
                       onChange={(e) => update('evolution', 'autoApplyThreshold', Number(e.target.value) || 90)}
                       min={0}
                       max={100}
@@ -285,7 +347,7 @@ export function ConfigPage() {
                   <div className="flex items-center gap-2">
                     <Input
                       type="number"
-                      value={local.evolution.draftThreshold}
+                      value={optimisticLocal.evolution.draftThreshold}
                       onChange={(e) => update('evolution', 'draftThreshold', Number(e.target.value) || 70)}
                       min={0}
                       max={100}
@@ -301,7 +363,7 @@ export function ConfigPage() {
                   <FieldLabel>{t('page.config.evolution.learningPeriod')}</FieldLabel>
                   <Input
                     type="number"
-                    value={local.evolution.learningPeriodSessions}
+                    value={optimisticLocal.evolution.learningPeriodSessions}
                     onChange={(e) => update('evolution', 'learningPeriodSessions', Number(e.target.value) || 5)}
                     min={1}
                     max={100}
@@ -336,7 +398,7 @@ export function ConfigPage() {
                   <Switch
                     id="memory-auto-promote"
                     size="sm"
-                    checked={local.memory.autoPromoteBranchDecisions}
+                    checked={optimisticLocal.memory.autoPromoteBranchDecisions}
                     onCheckedChange={(v) => update('memory', 'autoPromoteBranchDecisions', v)}
                   />
                 </Field>
@@ -344,7 +406,7 @@ export function ConfigPage() {
                   <FieldLabel>{t('page.config.memory.maxSessionHistory')}</FieldLabel>
                   <Input
                     type="number"
-                    value={local.memory.maxSessionHistory}
+                    value={optimisticLocal.memory.maxSessionHistory}
                     onChange={(e) => update('memory', 'maxSessionHistory', Number(e.target.value) || 100)}
                     min={10}
                     max={10000}
@@ -359,7 +421,7 @@ export function ConfigPage() {
                   <FieldLabel>{t('page.config.memory.pruneAfterDays')}</FieldLabel>
                   <Input
                     type="number"
-                    value={local.memory.pruneAfterDays}
+                    value={optimisticLocal.memory.pruneAfterDays}
                     onChange={(e) => update('memory', 'pruneAfterDays', Number(e.target.value) || 90)}
                     min={7}
                     max={365}
@@ -391,7 +453,7 @@ export function ConfigPage() {
                   <Switch
                     id="model-tracking-enabled"
                     size="sm"
-                    checked={local.modelTracking.enabled}
+                    checked={optimisticLocal.modelTracking.enabled}
                     onCheckedChange={(v) => update('modelTracking', 'enabled', v)}
                   />
                 </Field>
@@ -402,7 +464,7 @@ export function ConfigPage() {
                   <Switch
                     id="model-tracking-cross-project"
                     size="sm"
-                    checked={local.modelTracking.crossProject}
+                    checked={optimisticLocal.modelTracking.crossProject}
                     onCheckedChange={(v) => update('modelTracking', 'crossProject', v)}
                   />
                 </Field>
@@ -424,17 +486,17 @@ export function ConfigPage() {
             <FieldGroup>
               <TagField
                 label={t('page.config.ci.blockOn')}
-                tags={local.ci.blockOn}
+                tags={optimisticLocal.ci.blockOn}
                 onChange={(tags) => update('ci', 'blockOn', tags)}
               />
               <TagField
                 label={t('page.config.ci.warnOn')}
-                tags={local.ci.warnOn}
+                tags={optimisticLocal.ci.warnOn}
                 onChange={(tags) => update('ci', 'warnOn', tags)}
               />
               <TagField
                 label={t('page.config.ci.ignore')}
-                tags={local.ci.ignore}
+                tags={optimisticLocal.ci.ignore}
                 onChange={(tags) => update('ci', 'ignore', tags)}
               />
             </FieldGroup>
@@ -444,3 +506,4 @@ export function ConfigPage() {
     </div>
   );
 }
+

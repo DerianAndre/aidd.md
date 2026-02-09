@@ -1,6 +1,8 @@
-use tauri::State;
+use std::path::PathBuf;
+use tauri::{AppHandle, Emitter, State};
 use crate::AppContext;
 use crate::application::MemorySnapshot;
+use crate::domain::ports::inbound::ProjectPort;
 
 /// Get complete memory snapshot (sessions, observations, evolution, patterns)
 #[tauri::command]
@@ -153,6 +155,43 @@ pub fn list_audit_scores(
 ) -> Result<serde_json::Value, String> {
     let entries = ctx.memory_service.list_audit_scores(limit)?;
     Ok(serde_json::Value::Array(entries))
+}
+
+/// Get governance configuration from project-local SQLite.
+#[tauri::command]
+pub fn get_governance_config(
+    ctx: State<'_, AppContext>,
+) -> Result<serde_json::Value, String> {
+    ctx.memory_service.get_governance_config()
+}
+
+/// Upsert governance configuration in project-local SQLite and sync .aidd/config.json.
+#[tauri::command]
+pub fn upsert_governance_config(
+    ctx: State<'_, AppContext>,
+    app: AppHandle,
+    config: serde_json::Value,
+) -> Result<(), String> {
+    let payload = serde_json::to_string(&config).map_err(|e| e.to_string())?;
+    ctx.memory_service.upsert_governance_config(&payload)?;
+
+    let normalized = ctx.memory_service.get_governance_config()?;
+    let active_path = ctx
+        .project_service
+        .get_active_path()
+        .map_err(|e| format!("Failed to resolve active project: {}", e))?;
+    if let Some(project_root) = active_path {
+        let config_path = PathBuf::from(project_root).join(".aidd").join("config.json");
+        if let Some(parent) = config_path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| format!("Failed to create .aidd directory: {}", e))?;
+        }
+        let pretty = serde_json::to_string_pretty(&normalized).map_err(|e| e.to_string())?;
+        std::fs::write(&config_path, pretty)
+            .map_err(|e| format!("Failed to write {}: {}", config_path.display(), e))?;
+    }
+
+    let _ = app.emit("CONFIG_UPDATED", normalized);
+    Ok(())
 }
 
 // --- Write commands ---

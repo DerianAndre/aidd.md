@@ -231,6 +231,14 @@ impl MemoryPort for McpMemoryAdapter {
         Ok(vec![])
     }
 
+    fn get_governance_config(&self) -> Result<serde_json::Value, String> {
+        Err("Governance config reads are not supported via MCP adapter".to_string())
+    }
+
+    fn upsert_governance_config(&self, _config_json: &str) -> Result<(), String> {
+        Err("Governance config writes are not supported via MCP adapter".to_string())
+    }
+
     // Write operations — not supported via MCP adapter (use SQLite adapter)
     fn create_permanent_memory(&self, _memory_type: &str, _title: &str, _content: &str) -> Result<String, String> {
         Err("Write operations not supported via MCP adapter".to_string())

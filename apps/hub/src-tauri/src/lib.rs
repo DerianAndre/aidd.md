@@ -139,6 +139,8 @@ pub fn run() {
             presentation::commands::memory_commands::list_drafts,
             presentation::commands::memory_commands::list_artifacts,
             presentation::commands::memory_commands::list_audit_scores,
+            presentation::commands::memory_commands::get_governance_config,
+            presentation::commands::memory_commands::upsert_governance_config,
             // Memory write commands
             presentation::commands::memory_commands::create_permanent_memory,
             presentation::commands::memory_commands::update_permanent_memory,

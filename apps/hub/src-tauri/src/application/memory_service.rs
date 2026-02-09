@@ -97,6 +97,16 @@ impl MemoryService {
         self.memory_port.list_audit_scores(limit)
     }
 
+    /// Use case: Read governance config from project-local data.db
+    pub fn get_governance_config(&self) -> Result<serde_json::Value, String> {
+        self.memory_port.get_governance_config()
+    }
+
+    /// Use case: Persist governance config in project-local data.db
+    pub fn upsert_governance_config(&self, config_json: &str) -> Result<(), String> {
+        self.memory_port.upsert_governance_config(config_json)
+    }
+
     // --- Write operations ---
 
     pub fn create_permanent_memory(&self, memory_type: &str, title: &str, content: &str) -> Result<String, String> {

@@ -240,6 +240,151 @@ fn extract_auto_draft_binding(
 const MAX_UNIX_SECONDS: i64 = 9_999_999_999;
 const MIN_REASONABLE_TS_MS: i64 = 946_684_800_000; // 2000-01-01T00:00:00Z
 
+fn default_governance_config() -> serde_json::Value {
+    serde_json::json!({
+        "evolution": {
+            "enabled": true,
+            "autoApplyThreshold": 90,
+            "draftThreshold": 70,
+            "learningPeriodSessions": 5,
+            "killSwitch": false
+        },
+        "memory": {
+            "maxSessionHistory": 100,
+            "autoPromoteBranchDecisions": true,
+            "pruneAfterDays": 90
+        },
+        "modelTracking": {
+            "enabled": true,
+            "crossProject": false
+        },
+        "ci": {
+            "blockOn": ["security_critical", "type_safety"],
+            "warnOn": ["code_style", "documentation"],
+            "ignore": ["commit_format"]
+        },
+        "content": {
+            "overrideMode": "merge",
+            "slimStartEnabled": true,
+            "slimStartTargetTokens": 600
+        }
+    })
+}
+
+fn clamp_i64(value: i64, min: i64, max: i64) -> i64 {
+    if value < min {
+        min
+    } else if value > max {
+        max
+    } else {
+        value
+    }
+}
+
+fn string_array_or_default(value: Option<&serde_json::Value>, fallback: &[&str]) -> serde_json::Value {
+    if let Some(arr) = value.and_then(|v| v.as_array()) {
+        let out: Vec<serde_json::Value> = arr
+            .iter()
+            .filter_map(|item| item.as_str().map(|s| serde_json::Value::String(s.to_string())))
+            .collect();
+        return serde_json::Value::Array(out);
+    }
+    serde_json::Value::Array(
+        fallback
+            .iter()
+            .map(|item| serde_json::Value::String((*item).to_string()))
+            .collect(),
+    )
+}
+
+fn normalize_governance_config(input: &serde_json::Value) -> serde_json::Value {
+    let defaults = default_governance_config();
+
+    let evolution = input.get("evolution").cloned().unwrap_or_default();
+    let memory = input.get("memory").cloned().unwrap_or_default();
+    let model_tracking = input.get("modelTracking").cloned().unwrap_or_default();
+    let ci = input.get("ci").cloned().unwrap_or_default();
+    let content = input.get("content").cloned().unwrap_or_default();
+
+    let auto_apply = evolution
+        .get("autoApplyThreshold")
+        .and_then(|v| v.as_i64())
+        .map(|v| clamp_i64(v, 0, 100))
+        .unwrap_or_else(|| defaults["evolution"]["autoApplyThreshold"].as_i64().unwrap_or(90));
+    let draft_threshold = evolution
+        .get("draftThreshold")
+        .and_then(|v| v.as_i64())
+        .map(|v| clamp_i64(v, 0, 100))
+        .unwrap_or_else(|| defaults["evolution"]["draftThreshold"].as_i64().unwrap_or(70));
+    let learning_period = evolution
+        .get("learningPeriodSessions")
+        .and_then(|v| v.as_i64())
+        .map(|v| clamp_i64(v, 1, 500))
+        .unwrap_or_else(|| defaults["evolution"]["learningPeriodSessions"].as_i64().unwrap_or(5));
+
+    let max_history = memory
+        .get("maxSessionHistory")
+        .and_then(|v| v.as_i64())
+        .map(|v| clamp_i64(v, 10, 100_000))
+        .unwrap_or_else(|| defaults["memory"]["maxSessionHistory"].as_i64().unwrap_or(100));
+    let prune_days = memory
+        .get("pruneAfterDays")
+        .and_then(|v| v.as_i64())
+        .map(|v| clamp_i64(v, 7, 3650))
+        .unwrap_or_else(|| defaults["memory"]["pruneAfterDays"].as_i64().unwrap_or(90));
+
+    let slim_target_tokens = content
+        .get("slimStartTargetTokens")
+        .and_then(|v| v.as_i64())
+        .map(|v| clamp_i64(v, 100, 5000))
+        .unwrap_or_else(|| defaults["content"]["slimStartTargetTokens"].as_i64().unwrap_or(600));
+
+    serde_json::json!({
+        "evolution": {
+            "enabled": evolution.get("enabled").and_then(|v| v.as_bool()).unwrap_or_else(|| defaults["evolution"]["enabled"].as_bool().unwrap_or(true)),
+            "autoApplyThreshold": auto_apply,
+            "draftThreshold": draft_threshold,
+            "learningPeriodSessions": learning_period,
+            "killSwitch": evolution.get("killSwitch").and_then(|v| v.as_bool()).unwrap_or_else(|| defaults["evolution"]["killSwitch"].as_bool().unwrap_or(false))
+        },
+        "memory": {
+            "maxSessionHistory": max_history,
+            "autoPromoteBranchDecisions": memory.get("autoPromoteBranchDecisions").and_then(|v| v.as_bool()).unwrap_or_else(|| defaults["memory"]["autoPromoteBranchDecisions"].as_bool().unwrap_or(true)),
+            "pruneAfterDays": prune_days
+        },
+        "modelTracking": {
+            "enabled": model_tracking.get("enabled").and_then(|v| v.as_bool()).unwrap_or_else(|| defaults["modelTracking"]["enabled"].as_bool().unwrap_or(true)),
+            "crossProject": model_tracking.get("crossProject").and_then(|v| v.as_bool()).unwrap_or_else(|| defaults["modelTracking"]["crossProject"].as_bool().unwrap_or(false))
+        },
+        "ci": {
+            "blockOn": string_array_or_default(ci.get("blockOn"), &["security_critical", "type_safety"]),
+            "warnOn": string_array_or_default(ci.get("warnOn"), &["code_style", "documentation"]),
+            "ignore": string_array_or_default(ci.get("ignore"), &["commit_format"])
+        },
+        "content": {
+            "overrideMode": content
+                .get("overrideMode")
+                .and_then(|v| v.as_str())
+                .filter(|v| *v == "merge" || *v == "project_only" || *v == "bundled_only")
+                .unwrap_or_else(|| defaults["content"]["overrideMode"].as_str().unwrap_or("merge")),
+            "slimStartEnabled": content.get("slimStartEnabled").and_then(|v| v.as_bool()).unwrap_or_else(|| defaults["content"]["slimStartEnabled"].as_bool().unwrap_or(true)),
+            "slimStartTargetTokens": slim_target_tokens
+        }
+    })
+}
+
+fn ensure_config_table(conn: &Connection) -> Result<(), rusqlite::Error> {
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS config (
+            id TEXT PRIMARY KEY,
+            data TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_config_updated_at ON config(updated_at DESC);",
+    )?;
+    Ok(())
+}
+
 fn normalize_epoch_timestamp_ms(raw: i64) -> Option<i64> {
     if raw <= 0 {
         return None;
@@ -938,6 +1083,47 @@ impl MemoryPort for SqliteMemoryAdapter {
 
             Ok(scores)
         }).or_else(|_| Ok(vec![]))
+    }
+
+    fn get_governance_config(&self) -> Result<serde_json::Value, String> {
+        let conn = self.open_rw_connection()?;
+        self.verify_schema(&conn)?;
+        ensure_config_table(&conn).map_err(|e| format!("Failed to ensure config table: {}", e))?;
+
+        let raw: Option<String> = conn
+            .query_row(
+                "SELECT data FROM config WHERE id = 'governance' LIMIT 1",
+                [],
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(|e| format!("Failed to read governance config: {}", e))?;
+
+        if let Some(payload) = raw {
+            if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&payload) {
+                return Ok(normalize_governance_config(&parsed));
+            }
+        }
+        Ok(default_governance_config())
+    }
+
+    fn upsert_governance_config(&self, config_json: &str) -> Result<(), String> {
+        let parsed: serde_json::Value = serde_json::from_str(config_json)
+            .map_err(|e| format!("Invalid governance config JSON: {}", e))?;
+        let normalized = normalize_governance_config(&parsed);
+        let payload = normalized.to_string();
+        let updated_at = Self::now_iso();
+
+        self.safe_write(move |conn| {
+            ensure_config_table(conn)?;
+            conn.execute(
+                "INSERT INTO config (id, data, updated_at)
+                 VALUES ('governance', ?1, ?2)
+                 ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at",
+                rusqlite::params![payload, updated_at],
+            )?;
+            Ok(())
+        })
     }
 
     // --- Write operations ---
@@ -1840,5 +2026,36 @@ mod tests {
             Some(1_770_650_086_000),
         );
         assert_eq!(parse_timestamp_text_to_ms(&conn, "2026"), None);
+    }
+
+    #[test]
+    fn governance_config_normalization_clamps_ranges() {
+        let raw = serde_json::json!({
+            "evolution": { "autoApplyThreshold": 999, "draftThreshold": -10, "learningPeriodSessions": 0 },
+            "memory": { "maxSessionHistory": 1, "pruneAfterDays": 99999 },
+            "content": { "slimStartTargetTokens": 99999, "overrideMode": "invalid" }
+        });
+        let normalized = normalize_governance_config(&raw);
+        assert_eq!(normalized["evolution"]["autoApplyThreshold"], 100);
+        assert_eq!(normalized["evolution"]["draftThreshold"], 0);
+        assert_eq!(normalized["evolution"]["learningPeriodSessions"], 1);
+        assert_eq!(normalized["memory"]["maxSessionHistory"], 10);
+        assert_eq!(normalized["memory"]["pruneAfterDays"], 3650);
+        assert_eq!(normalized["content"]["slimStartTargetTokens"], 5000);
+        assert_eq!(normalized["content"]["overrideMode"], "merge");
+    }
+
+    #[test]
+    fn ensure_config_table_creates_governance_store() {
+        let conn = create_test_db();
+        ensure_config_table(&conn).unwrap();
+        let exists: bool = conn
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='config')",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(false);
+        assert!(exists);
     }
 }
