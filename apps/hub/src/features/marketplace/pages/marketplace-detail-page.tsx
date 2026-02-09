@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   ChevronRight,
@@ -9,19 +9,27 @@ import {
   Check,
   BadgeCheck,
   TrendingUp,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Chip } from '@/components/ui/chip';
-import { Spinner } from '@/components/ui/spinner';
-import { PageHeader } from '../../../components/layout/page-header';
-import { InstallSnippet } from '../components/install-snippet';
-import { InstallDialog } from '../components/install-dialog';
-import { TagCloud } from '../components/tag-cloud';
-import { useMarketplaceStore } from '../stores/marketplace-store';
-import { formatInstallCount } from '../lib/catalog-helpers';
-import { MCP_CATEGORIES, CONTENT_TYPES, COMPATIBILITY_TARGETS } from '../lib/constants';
-import type { McpServerEntry, ContentEntry, MarketplaceTab } from '../lib/types';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { Spinner } from "@/components/ui/spinner";
+import { PageHeader } from "../../../components/layout/page-header";
+import { InstallSnippet } from "../components/install-snippet";
+import { InstallDialog } from "../components/install-dialog";
+import { TagCloud } from "../components/tag-cloud";
+import { useMarketplaceStore } from "../stores/marketplace-store";
+import { formatInstallCount } from "../lib/catalog-helpers";
+import {
+  MCP_CATEGORIES,
+  CONTENT_TYPES,
+  COMPATIBILITY_TARGETS,
+} from "../lib/constants";
+import type {
+  McpServerEntry,
+  ContentEntry,
+  MarketplaceTab,
+} from "../lib/types";
 
 export function MarketplaceDetailPage() {
   const { t } = useTranslation();
@@ -54,48 +62,55 @@ export function MarketplaceDetailPage() {
   if (!entry) {
     return (
       <div>
-        <PageHeader title="Not Found" description="This entry could not be found" />
-        <Button variant="ghost" onClick={() => navigate('/marketplace')}>
-          <ArrowLeft size={14} /> {t('common.back')}
+        <PageHeader
+          title="Not Found"
+          description="This entry could not be found"
+        />
+        <Button variant="ghost" onClick={() => navigate("/marketplace")}>
+          <ArrowLeft size={14} /> {t("common.back")}
         </Button>
       </div>
     );
   }
 
-  const isMcp = entry.type === 'mcp-server';
+  const isMcp = entry.type === "mcp-server";
 
   // Resolve the tab label from content type
   const TAB_LABEL_KEYS = {
-    'mcp-servers': 'page.marketplace.mcpServers' as const,
-    'agents': 'page.marketplace.agents' as const,
-    'rules': 'page.marketplace.rules' as const,
-    'skills': 'page.marketplace.skills' as const,
-    'knowledge': 'page.marketplace.knowledge' as const,
-    'workflows': 'page.marketplace.workflows' as const,
-    'templates': 'page.marketplace.templates' as const,
-    'spec': 'page.marketplace.spec' as const,
+    "mcp-servers": "page.marketplace.mcpServers" as const,
+    agents: "page.marketplace.agents" as const,
+    rules: "page.marketplace.rules" as const,
+    skills: "page.marketplace.skills" as const,
+    knowledge: "page.marketplace.knowledge" as const,
+    workflows: "page.marketplace.workflows" as const,
+    templates: "page.marketplace.templates" as const,
+    spec: "page.marketplace.spec" as const,
   } satisfies Record<MarketplaceTab, string>;
   const CONTENT_TYPE_TO_TAB: Record<string, MarketplaceTab> = {
-    agent: 'agents',
-    rule: 'rules',
-    skill: 'skills',
-    knowledge: 'knowledge',
-    workflow: 'workflows',
-    template: 'templates',
-    spec: 'spec',
+    agent: "agents",
+    rule: "rules",
+    skill: "skills",
+    knowledge: "knowledge",
+    workflow: "workflows",
+    template: "templates",
+    spec: "spec",
   };
   const resolvedTab: MarketplaceTab = isMcp
-    ? 'mcp-servers'
-    : CONTENT_TYPE_TO_TAB[(entry as ContentEntry).contentType] ?? 'skills';
+    ? "mcp-servers"
+    : (CONTENT_TYPE_TO_TAB[(entry as ContentEntry).contentType] ?? "skills");
   const tabLabel = t(TAB_LABEL_KEYS[resolvedTab]);
 
   const categoryLabel = isMcp
-    ? MCP_CATEGORIES.find((c) => c.value === (entry as McpServerEntry).category)?.label ?? entry.type
-    : CONTENT_TYPES.find((c) => c.value === (entry as ContentEntry).contentType)?.label ?? entry.type;
+    ? (MCP_CATEGORIES.find(
+        (c) => c.value === (entry as McpServerEntry).category,
+      )?.label ?? entry.type)
+    : (CONTENT_TYPES.find(
+        (c) => c.value === (entry as ContentEntry).contentType,
+      )?.label ?? entry.type);
 
   const handleTagClick = (tag: string) => {
     toggleTag(tag);
-    navigate('/marketplace');
+    navigate("/marketplace");
   };
 
   return (
@@ -105,57 +120,84 @@ export function MarketplaceDetailPage() {
         <Button
           size="icon"
           variant="ghost"
-          onClick={() => navigate('/marketplace')}
-          aria-label={t('common.back')}
+          onClick={() => navigate("/marketplace")}
+          aria-label={t("common.back")}
         >
           <ArrowLeft size={16} />
         </Button>
         <ol className="flex items-center gap-1 text-sm">
           <li>
-            <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors">
-              {t('page.marketplace.title')}
+            <Link
+              to="/marketplace"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("page.marketplace.title")}
             </Link>
           </li>
-          <li><ChevronRight size={14} className="text-muted-foreground" /></li>
           <li>
-            <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors">
+            <ChevronRight size={14} className="text-muted-foreground" />
+          </li>
+          <li>
+            <Link
+              to="/marketplace"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               {tabLabel}
             </Link>
           </li>
-          <li><ChevronRight size={14} className="text-muted-foreground" /></li>
+          <li>
+            <ChevronRight size={14} className="text-muted-foreground" />
+          </li>
           <li className="text-foreground font-medium">{entry.name}</li>
         </ol>
       </nav>
 
-      <PageHeader
-        title={entry.name}
-        description={entry.description}
-      />
+      <PageHeader title={entry.name} description={entry.description} />
 
       {/* Two-column layout */}
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Left -- Main content */}
         <div className="space-y-6">
+          {/* Install directly button */}
+          {isMcp && (
+            <div>
+              <Button size="lg" onClick={() => setInstallOpen(true)}>
+                <Download size={14} /> {t("page.marketplace.installDirectly")}
+              </Button>
+              <InstallDialog
+                isOpen={installOpen}
+                onOpenChange={setInstallOpen}
+                configSnippet={(entry as McpServerEntry).configSnippet}
+                entryName={entry.name}
+              />
+            </div>
+          )}
           {/* Metadata chips */}
           <div className="flex flex-wrap items-center gap-2">
-            <Chip size="sm" color="default">{categoryLabel}</Chip>
-            {isMcp && (entry as McpServerEntry).transport.map((t) => (
-              <Chip key={t} size="sm" color="default">{t.toUpperCase()}</Chip>
-            ))}
+            <Chip size="sm" color="default">
+              {categoryLabel}
+            </Chip>
+            {isMcp &&
+              (entry as McpServerEntry).transport.map((t) => (
+                <Chip key={t} size="sm" color="default">
+                  {t.toUpperCase()}
+                </Chip>
+              ))}
             {entry.official && (
               <Chip size="sm" color="success">
-                <BadgeCheck size={12} className="mr-1" /> {t('common.official')}
+                <BadgeCheck size={12} className="mr-1" /> {t("common.official")}
               </Chip>
             )}
             {entry.trending && (
               <Chip size="sm" color="accent">
-                <TrendingUp size={12} className="mr-1" /> {t('common.trending')}
+                <TrendingUp size={12} className="mr-1" /> {t("common.trending")}
               </Chip>
             )}
           </div>
 
           {/* Long description / markdown */}
-          {(entry.longDescription || (!isMcp && (entry as ContentEntry).markdownContent)) && (
+          {(entry.longDescription ||
+            (!isMcp && (entry as ContentEntry).markdownContent)) && (
             <Card>
               <CardContent>
                 {entry.longDescription && (
@@ -175,10 +217,15 @@ export function MarketplaceDetailPage() {
           {/* Features list (MCP only) */}
           {isMcp && (entry as McpServerEntry).features.length > 0 && (
             <div>
-              <h3 className="mb-3 text-sm font-semibold text-foreground">{t('page.marketplace.features')}</h3>
+              <h3 className="mb-3 text-sm font-semibold text-foreground">
+                {t("page.marketplace.features")}
+              </h3>
               <ul className="space-y-1.5">
                 {(entry as McpServerEntry).features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-sm text-foreground">
+                  <li
+                    key={feature}
+                    className="flex items-center gap-2 text-sm text-foreground"
+                  >
                     <Check size={14} className="shrink-0 text-success" />
                     {feature}
                   </li>
@@ -190,7 +237,9 @@ export function MarketplaceDetailPage() {
           {/* Tags */}
           {entry.tags.length > 0 && (
             <div>
-              <h3 className="mb-3 text-sm font-semibold text-foreground">{t('page.marketplace.tags')}</h3>
+              <h3 className="mb-3 text-sm font-semibold text-foreground">
+                {t("page.marketplace.tags")}
+              </h3>
               <TagCloud tags={entry.tags} onTagClick={handleTagClick} />
             </div>
           )}
@@ -202,7 +251,11 @@ export function MarketplaceDetailPage() {
           {isMcp && (
             <InstallSnippet
               label="JSON Configuration"
-              code={JSON.stringify((entry as McpServerEntry).configSnippet, null, 2)}
+              code={JSON.stringify(
+                (entry as McpServerEntry).configSnippet,
+                null,
+                2,
+              )}
               language="json"
             />
           )}
@@ -214,33 +267,19 @@ export function MarketplaceDetailPage() {
             />
           )}
 
-          {/* Install directly button */}
-          {isMcp && (
-            <>
-              <Button
-                className="w-full"
-                onClick={() => setInstallOpen(true)}
-              >
-                <Download size={14} /> {t('page.marketplace.installDirectly')}
-              </Button>
-              <InstallDialog
-                isOpen={installOpen}
-                onOpenChange={setInstallOpen}
-                configSnippet={(entry as McpServerEntry).configSnippet}
-                entryName={entry.name}
-              />
-            </>
-          )}
-
           {/* Compatibility */}
           {entry.compatibility.length > 0 && (
             <Card className="gap-3 py-3">
               <CardHeader className="py-0">
-                <CardTitle className="text-xs font-medium text-muted-foreground">{t('page.marketplace.compatibleWith')}</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">
+                  {t("page.marketplace.compatibleWith")}
+                </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-1.5">
                 {entry.compatibility.map((c) => {
-                  const target = COMPATIBILITY_TARGETS.find((t) => t.value === c);
+                  const target = COMPATIBILITY_TARGETS.find(
+                    (t) => t.value === c,
+                  );
                   return (
                     <Chip key={c} size="sm" color="default">
                       {target?.label ?? c}
@@ -255,17 +294,27 @@ export function MarketplaceDetailPage() {
           <Card className="gap-3 py-3">
             <CardContent className="space-y-2">
               <div>
-                <span className="text-xs text-muted-foreground">{t('page.marketplace.author')}</span>
-                <p className="text-sm font-medium text-foreground">{entry.author}</p>
+                <span className="text-xs text-muted-foreground">
+                  {t("page.marketplace.author")}
+                </span>
+                <p className="text-sm font-medium text-foreground">
+                  {entry.author}
+                </p>
               </div>
               {!usingFallback && entry.installCount > 0 && (
                 <div>
-                  <span className="text-xs text-muted-foreground">{t('page.marketplace.installs')}</span>
-                  <p className="text-sm font-medium text-foreground">{formatInstallCount(entry.installCount)}</p>
+                  <span className="text-xs text-muted-foreground">
+                    {t("page.marketplace.installs")}
+                  </span>
+                  <p className="text-sm font-medium text-foreground">
+                    {formatInstallCount(entry.installCount)}
+                  </p>
                 </div>
               )}
               <div>
-                <span className="text-xs text-muted-foreground">{t('page.marketplace.updated')}</span>
+                <span className="text-xs text-muted-foreground">
+                  {t("page.marketplace.updated")}
+                </span>
                 <p className="text-sm text-foreground">{entry.updatedAt}</p>
               </div>
               {entry.githubUrl && (
@@ -275,7 +324,8 @@ export function MarketplaceDetailPage() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-sm text-accent hover:underline"
                 >
-                  <ExternalLink size={12} /> {t('page.marketplace.viewOnGithub')}
+                  <ExternalLink size={12} />{" "}
+                  {t("page.marketplace.viewOnGithub")}
                 </a>
               )}
             </CardContent>
