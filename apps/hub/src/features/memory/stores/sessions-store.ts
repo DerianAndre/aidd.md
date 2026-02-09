@@ -96,6 +96,11 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
       if (updates.branch !== undefined) merged.branch = updates.branch;
       if (updates.input !== undefined) merged.input = updates.input;
       if (updates.output !== undefined) merged.output = updates.output;
+      if (updates.aiProvider) {
+        merged.aiProvider = { ...merged.aiProvider, ...updates.aiProvider } as SessionState['aiProvider'];
+      }
+      if (updates.startedAt !== undefined) merged.startedAt = updates.startedAt;
+      if (updates.endedAt !== undefined) merged.endedAt = updates.endedAt ?? undefined;
       if (updates.taskClassification) {
         merged.taskClassification = { ...merged.taskClassification, ...updates.taskClassification } as SessionState['taskClassification'];
       }

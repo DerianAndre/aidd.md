@@ -22,7 +22,7 @@ interface ConfigStoreState {
   saving: boolean;
 
   fetch: (projectRoot: string) => Promise<void>;
-  save: (projectRoot: string, config: AiddConfig) => Promise<void>;
+  save: (projectRoot: string, config: AiddConfig) => Promise<boolean>;
   reset: () => void;
   invalidate: () => void;
 }
@@ -56,8 +56,10 @@ export const useConfigStore = create<ConfigStoreState>((set, get) => ({
       const path = statePath(projectRoot, STATE_PATHS.CONFIG);
       await writeJsonFile(path, config);
       set({ config, saving: false });
+      return true;
     } catch {
       set({ saving: false });
+      return false;
     }
   },
 

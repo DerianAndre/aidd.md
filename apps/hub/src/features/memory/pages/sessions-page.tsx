@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SearchInput } from '@/components/ui/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Chip } from '@/components/ui/chip';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { ConfirmDialog } from '../../../components/confirm-dialog';
@@ -25,20 +26,24 @@ export function SessionsPage() {
     }
   }, [activeProject?.path, stale, fetchAll]);
 
+  const filterSession = (s: { branch: string; input?: string; aiProvider: { model: string } }, q: string) => {
+    return (
+      s.branch.toLowerCase().includes(q) ||
+      s.aiProvider.model.toLowerCase().includes(q) ||
+      (s.input?.toLowerCase().includes(q) ?? false)
+    );
+  };
+
   const filteredActive = useMemo(() => {
     if (!search.trim()) return activeSessions;
     const q = search.toLowerCase();
-    return activeSessions.filter(
-      (s) => s.branch.toLowerCase().includes(q) || s.aiProvider.model.toLowerCase().includes(q),
-    );
+    return activeSessions.filter((s) => filterSession(s, q));
   }, [activeSessions, search]);
 
   const filteredCompleted = useMemo(() => {
     if (!search.trim()) return completedSessions;
     const q = search.toLowerCase();
-    return completedSessions.filter(
-      (s) => s.branch.toLowerCase().includes(q) || s.aiProvider.model.toLowerCase().includes(q),
-    );
+    return completedSessions.filter((s) => filterSession(s, q));
   }, [completedSessions, search]);
 
   const total = filteredActive.length + filteredCompleted.length;
@@ -57,24 +62,32 @@ export function SessionsPage() {
 
   return (
     <div>
-      <PageHeader title={t('page.sessions.title')} description={t('page.sessions.description')} />
+      <PageHeader
+        title={t('page.sessions.title')}
+        description={
+          <span className="flex items-center gap-2">
+            <span>{t('page.sessions.description')}</span>
+            <Chip size="sm" color="default">{total} total</Chip>
+            {filteredActive.length > 0 && (
+              <Chip size="sm" color="accent">{filteredActive.length} active</Chip>
+            )}
+          </span>
+        }
+      />
 
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-5">
         <SearchInput
           value={search}
           onChange={setSearch}
           placeholder={t('page.sessions.searchPlaceholder')}
-          className="max-w-xs"
+          className="max-w-sm"
         />
-        <span className="text-xs text-muted-foreground">
-          {total} session{total !== 1 ? 's' : ''}
-        </span>
       </div>
 
       {loading && (
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-xl" />
+            <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
       )}
@@ -84,8 +97,13 @@ export function SessionsPage() {
       )}
 
       {!loading && filteredActive.length > 0 && (
-        <div className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.sessions.active', { count: filteredActive.length })}</h3>
+        <section className="mb-8">
+          <div className="mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground">
+              {t('page.sessions.active', { count: filteredActive.length })}
+            </h3>
+            <div className="h-px flex-1 bg-border" />
+          </div>
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filteredActive.map((session) => (
               <SessionCard
@@ -96,12 +114,17 @@ export function SessionsPage() {
               />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {!loading && filteredCompleted.length > 0 && (
-        <div>
-          <h3 className="mb-2 text-sm font-semibold text-foreground">{t('page.sessions.completed', { count: filteredCompleted.length })}</h3>
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground">
+              {t('page.sessions.completed', { count: filteredCompleted.length })}
+            </h3>
+            <div className="h-px flex-1 bg-border" />
+          </div>
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCompleted.map((session) => (
               <SessionCard
@@ -113,7 +136,7 @@ export function SessionsPage() {
               />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Delete confirmation */}

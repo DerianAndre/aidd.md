@@ -223,6 +223,15 @@ export interface SessionUpdatePayload {
   branch?: string;
   input?: string;
   output?: string;
+  aiProvider?: {
+    provider?: string;
+    model?: string;
+    modelId?: string;
+    client?: string;
+    modelTier?: string;
+  };
+  startedAt?: string;
+  endedAt?: string | null;
   taskClassification?: {
     domain?: string;
     nature?: string;

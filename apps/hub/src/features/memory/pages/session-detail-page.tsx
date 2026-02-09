@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ChevronsUpDown, Pencil, Save } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronRight, Clock, GitBranch, Pencil, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Separator } from '@/components/ui/separator';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { ObservationCard } from '../components/observation-card';
@@ -20,7 +20,7 @@ import type { SessionState, SessionObservation, SessionUpdatePayload } from '../
 import type { FieldDefinition } from '../../../components/editor/frontmatter-form';
 
 // ---------------------------------------------------------------------------
-// Select options for task classification
+// Select options
 // ---------------------------------------------------------------------------
 
 const DOMAIN_OPTIONS = [
@@ -75,7 +75,6 @@ export function SessionDetailPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
-  const [draftInput, setDraftInput] = useState('');
   const [draftOutput, setDraftOutput] = useState('');
   const [draftTasksCompleted, setDraftTasksCompleted] = useState<string[]>([]);
   const [draftTasksPending, setDraftTasksPending] = useState<string[]>([]);
@@ -103,19 +102,17 @@ export function SessionDetailPage() {
     })();
   }, [activeProject?.path, id, stale, fetchAll, activeSessions, completedSessions, fetchObservations]);
 
-  // Build flat draft values from session whenever session changes or we enter edit mode
+  // Build flat draft values from session
   const populateDraft = useCallback((s: SessionState) => {
     setDraft({
+      sessionName: s.input ?? '',
       branch: s.branch ?? '',
-      provider: s.aiProvider?.provider ?? '—',
-      model: s.aiProvider?.model ?? '—',
-      client: s.aiProvider?.client ?? '—',
-      status: s.endedAt ? 'completed' : 'active',
-      startedAt: s.startedAt ? formatDate(s.startedAt) : '—',
-      endedAt: s.endedAt ? formatDate(s.endedAt) : '—',
-      duration: s.endedAt
-        ? formatDuration(new Date(s.endedAt).getTime() - new Date(s.startedAt).getTime())
-        : '—',
+      startedAt: s.startedAt ?? '',
+      endedAt: s.endedAt ?? '',
+      provider: s.aiProvider?.provider ?? '',
+      model: s.aiProvider?.model ?? '',
+      modelId: s.aiProvider?.modelId ?? '',
+      client: s.aiProvider?.client ?? '',
       taskDomain: s.taskClassification?.domain ?? '',
       taskNature: s.taskClassification?.nature ?? '',
       taskComplexity: s.taskClassification?.complexity ?? '',
@@ -125,7 +122,6 @@ export function SessionDetailPage() {
       reworks: String(s.outcome?.reworks ?? 0),
       userFeedback: s.outcome?.userFeedback || 'none',
     });
-    setDraftInput(s.input ?? '');
     setDraftOutput(s.output ?? '');
     setDraftTasksCompleted([...(s.tasksCompleted ?? [])]);
     setDraftTasksPending([...(s.tasksPending ?? [])]);
@@ -154,8 +150,16 @@ export function SessionDetailPage() {
     try {
       const updates: SessionUpdatePayload = {
         branch: draft.branch,
-        input: draftInput,
+        input: draft.sessionName,
         output: draftOutput,
+        aiProvider: {
+          provider: draft.provider || undefined,
+          model: draft.model || undefined,
+          modelId: draft.modelId || undefined,
+          client: draft.client || undefined,
+        },
+        startedAt: draft.startedAt || undefined,
+        endedAt: draft.endedAt || null,
         taskClassification: {
           domain: draft.taskDomain || undefined,
           nature: draft.taskNature || undefined,
@@ -190,7 +194,7 @@ export function SessionDetailPage() {
     } finally {
       setSaving(false);
     }
-  }, [session, draft, draftInput, draftOutput, draftTasksCompleted, draftTasksPending, draftFilesModified, draftDecisions, draftErrors, editSessionFull, t]);
+  }, [session, draft, draftOutput, draftTasksCompleted, draftTasksPending, draftFilesModified, draftDecisions, draftErrors, editSessionFull, t]);
 
   // Escape key cancels
   useEffect(() => {
@@ -202,16 +206,31 @@ export function SessionDetailPage() {
     return () => window.removeEventListener('keydown', handler);
   }, [editing, handleCancel]);
 
+  // Derived values
+  const isActive = session && !session.endedAt;
+  const durationMs = session?.endedAt
+    ? new Date(session.endedAt).getTime() - new Date(session.startedAt).getTime()
+    : session
+      ? Date.now() - new Date(session.startedAt).getTime()
+      : null;
+
+  // ---------------------------------------------------------------------------
   // Field definitions
+  // ---------------------------------------------------------------------------
+
   const metadataFields: FieldDefinition[] = useMemo(() => [
+    { type: 'separator', key: 'sep-session', label: t('page.sessionDetail.metadata') },
+    { type: 'text', key: 'sessionName', label: t('page.sessionDetail.sessionName'), placeholder: t('page.sessionDetail.sessionNamePlaceholder') },
     { type: 'text', key: 'branch', label: t('page.sessionDetail.branch') },
-    { type: 'readonly', key: 'provider', label: t('page.sessionDetail.provider') },
-    { type: 'readonly', key: 'model', label: t('page.sessionDetail.model') },
-    { type: 'readonly', key: 'client', label: t('page.sessionDetail.client') },
-    { type: 'readonly', key: 'status', label: t('page.sessionDetail.status') },
-    { type: 'readonly', key: 'startedAt', label: t('page.sessionDetail.startedAt') },
-    { type: 'readonly', key: 'endedAt', label: t('page.sessionDetail.endedAt') },
-    { type: 'readonly', key: 'duration', label: t('page.sessionDetail.duration') },
+    { type: 'readonly', key: '_status', label: t('page.sessionDetail.status') },
+    { type: 'datetime', key: 'startedAt', label: t('page.sessionDetail.startedAt') },
+    { type: 'datetime', key: 'endedAt', label: t('page.sessionDetail.endedAt') },
+    { type: 'separator', key: 'sep-provider', label: t('page.sessionDetail.provider') },
+    { type: 'text', key: 'provider', label: t('page.sessionDetail.provider'), placeholder: 'e.g. anthropic' },
+    { type: 'text', key: 'model', label: t('page.sessionDetail.model'), placeholder: 'e.g. claude-opus-4-6' },
+    { type: 'text', key: 'modelId', label: 'Model ID', placeholder: 'e.g. claude-opus-4-6' },
+    { type: 'text', key: 'client', label: t('page.sessionDetail.client'), placeholder: 'e.g. claude-code' },
+    { type: 'separator', key: 'sep-classification', label: t('page.sessionDetail.classification') },
     { type: 'select', key: 'taskDomain', label: t('page.sessionDetail.domain'), options: DOMAIN_OPTIONS },
     { type: 'select', key: 'taskNature', label: t('page.sessionDetail.nature'), options: NATURE_OPTIONS },
     { type: 'select', key: 'taskComplexity', label: t('page.sessionDetail.complexity'), options: COMPLEXITY_OPTIONS },
@@ -219,15 +238,26 @@ export function SessionDetailPage() {
 
   const outcomeFields: FieldDefinition[] = useMemo(() => [
     { type: 'switch', key: 'testsPassing', label: t('page.sessionDetail.testsPassing').replace('Tests: ', '') },
-    { type: 'number', key: 'complianceScore', label: 'Compliance Score', min: 0, max: 100 },
-    { type: 'number', key: 'reverts', label: 'Reverts', min: 0 },
-    { type: 'number', key: 'reworks', label: 'Reworks', min: 0 },
-    { type: 'select', key: 'userFeedback', label: 'User Feedback', options: FEEDBACK_OPTIONS },
+    { type: 'number', key: 'complianceScore', label: t('page.sessionDetail.complianceLabel'), min: 0, max: 100 },
+    { type: 'number', key: 'reverts', label: t('page.sessionDetail.revertsLabel'), min: 0 },
+    { type: 'number', key: 'reworks', label: t('page.sessionDetail.reworksLabel'), min: 0 },
+    { type: 'select', key: 'userFeedback', label: t('page.sessionDetail.feedbackLabel'), options: FEEDBACK_OPTIONS },
   ], [t]);
 
   const handleDraftChange = useCallback((key: string, value: string) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  const draftWithComputed = useMemo(() => ({
+    ...draft,
+    _status: draft.endedAt
+      ? t('page.sessionDetail.statusCompleted')
+      : t('page.sessionDetail.statusActive'),
+  }), [draft, t]);
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   if (loading) {
     return <div className="p-4 text-muted-foreground">Loading session...</div>;
@@ -249,14 +279,42 @@ export function SessionDetailPage() {
     );
   }
 
-  const providerLabel = session.aiProvider?.provider ?? '—';
-  const modelLabel = session.aiProvider?.model ?? '—';
+  // Header title: session name > branch
+  const headerTitle = editing
+    ? t('page.sessions.editSession')
+    : session.input
+      ? session.input.length > 80
+        ? session.input.slice(0, 80) + '...'
+        : session.input
+      : t('page.sessionDetail.title', { branch: session.branch });
 
   return (
     <div>
       <PageHeader
-        title={editing ? t('page.sessions.editSession') : t('page.sessionDetail.title', { branch: session.branch })}
-        description={`${providerLabel} · ${modelLabel} · ${formatDate(session.startedAt)}`}
+        title={headerTitle}
+        description={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Chip size="sm" color={isActive ? 'accent' : 'success'}>
+              {isActive ? t('page.sessionDetail.statusActive') : t('page.sessionDetail.statusCompleted')}
+            </Chip>
+            {session.branch && (
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <GitBranch size={12} />
+                {session.branch}
+              </span>
+            )}
+            <span className="text-muted-foreground">
+              {session.aiProvider?.provider}/{session.aiProvider?.model}
+            </span>
+            {durationMs != null && (
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <Clock size={12} />
+                {formatDuration(durationMs)}
+              </span>
+            )}
+            <span className="text-muted-foreground">{formatDate(session.startedAt)}</span>
+          </div>
+        }
         actions={
           <div className="flex items-center gap-2">
             {editing ? (
@@ -269,7 +327,7 @@ export function SessionDetailPage() {
                 </Button>
               </>
             ) : (
-              <Button size="sm" variant="ghost" onClick={handleEdit}>
+              <Button size="sm" variant="ghost" onClick={handleEdit} aria-label="Edit session">
                 <Pencil size={14} /> {t('common.edit')}
               </Button>
             )}
@@ -286,87 +344,95 @@ export function SessionDetailPage() {
           <FrontmatterForm
             disabled={!editing}
             fields={metadataFields}
-            values={draft}
+            values={draftWithComputed}
             onChange={handleDraftChange}
           />
         </CollapsibleSection>
 
-        {/* Section: Input / Output */}
-        <CollapsibleSection label={`${t('page.sessionDetail.input')} / ${t('page.sessionDetail.output')}`} defaultOpen>
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-            <Card className="gap-0 py-0 overflow-hidden">
-              <CardContent className="p-0">
-                <p className="px-4 pt-3 text-[10px] font-medium uppercase text-muted-foreground">{t('page.sessionDetail.input')}</p>
-                <BlockEditor
-                  initialMarkdown={draftInput}
-                  editable={editing}
-                  onChange={editing ? setDraftInput : undefined}
-                />
-              </CardContent>
-            </Card>
-            <Card className="gap-0 py-0 overflow-hidden">
-              <CardContent className="p-0">
-                <p className="px-4 pt-3 text-[10px] font-medium uppercase text-muted-foreground">{t('page.sessionDetail.output')}</p>
+        {/* Section: Output */}
+        <CollapsibleSection label={t('page.sessionDetail.output')} defaultOpen>
+          <Card className="gap-0 py-0 overflow-hidden">
+            <CardContent className="p-0">
+              {!editing && !draftOutput ? (
+                <p className="p-4 text-xs text-muted-foreground italic">{t('page.sessionDetail.noOutput')}</p>
+              ) : (
                 <BlockEditor
                   initialMarkdown={draftOutput}
                   editable={editing}
                   onChange={editing ? setDraftOutput : undefined}
                 />
-              </CardContent>
-            </Card>
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </CollapsibleSection>
 
         {/* Section: Outcome */}
         <CollapsibleSection label={t('page.sessionDetail.outcome')} defaultOpen>
-          {!editing && session.outcome ? (
-            <div className="flex flex-wrap gap-2">
-              <Chip size="sm" color={session.outcome.testsPassing ? 'success' : 'danger'}>
-                {session.outcome.testsPassing ? t('page.sessionDetail.testsPassing') : t('page.sessionDetail.testsFailing')}
-              </Chip>
-              <Chip size="sm" color={scoreColor(session.outcome.complianceScore)}>
-                {t('page.sessionDetail.compliance', { score: session.outcome.complianceScore })}
-              </Chip>
-              {session.outcome.reverts > 0 && (
-                <Chip size="sm" color="warning">{t('page.sessionDetail.reverts', { count: session.outcome.reverts })}</Chip>
-              )}
-              {session.outcome.userFeedback && (
-                <Chip size="sm" color={session.outcome.userFeedback === 'positive' ? 'success' : session.outcome.userFeedback === 'negative' ? 'danger' : 'default'}>
-                  {t('page.sessionDetail.feedback', { type: session.outcome.userFeedback })}
-                </Chip>
-              )}
-            </div>
-          ) : editing ? (
+          {editing ? (
             <FrontmatterForm
               disabled={false}
               fields={outcomeFields}
               values={draft}
               onChange={handleDraftChange}
             />
+          ) : session.outcome ? (
+            <Card>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                  <OutcomeStat
+                    label={t('page.sessionDetail.testsLabel')}
+                    value={session.outcome.testsPassing ? t('page.sessionDetail.passing') : t('page.sessionDetail.failing')}
+                    color={session.outcome.testsPassing ? 'success' : 'danger'}
+                  />
+                  <OutcomeStat
+                    label={t('page.sessionDetail.complianceLabel')}
+                    value={`${session.outcome.complianceScore}%`}
+                    color={scoreColor(session.outcome.complianceScore)}
+                  />
+                  <OutcomeStat
+                    label={t('page.sessionDetail.revertsLabel')}
+                    value={String(session.outcome.reverts)}
+                    color={session.outcome.reverts > 0 ? 'warning' : 'default'}
+                  />
+                  <OutcomeStat
+                    label={t('page.sessionDetail.reworksLabel')}
+                    value={String(session.outcome.reworks)}
+                    color={session.outcome.reworks > 0 ? 'warning' : 'default'}
+                  />
+                  {session.outcome.userFeedback && (
+                    <OutcomeStat
+                      label={t('page.sessionDetail.feedbackLabel')}
+                      value={session.outcome.userFeedback}
+                      color={session.outcome.userFeedback === 'positive' ? 'success' : session.outcome.userFeedback === 'negative' ? 'danger' : 'default'}
+                    />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           ) : (
-            <p className="text-xs text-muted-foreground">No outcome recorded.</p>
+            <p className="text-xs text-muted-foreground italic">{t('page.sessionDetail.noOutcome')}</p>
           )}
         </CollapsibleSection>
 
         {/* Section: Tasks */}
-        <CollapsibleSection label={t('page.sessionDetail.completedTasks', { count: draftTasksCompleted.length })}>
+        <CollapsibleSection label={t('page.sessionDetail.tasksLabel', { completed: draftTasksCompleted.length, pending: draftTasksPending.length })}>
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             <div>
               <EditableList
-                label="Completed Tasks"
+                label={t('page.sessionDetail.completedTasksLabel')}
                 items={draftTasksCompleted}
                 onChange={setDraftTasksCompleted}
                 editing={editing}
-                placeholder="Add completed task..."
+                placeholder={t('page.sessionDetail.addTaskPlaceholder')}
               />
             </div>
             <div>
               <EditableList
-                label="Pending Tasks"
+                label={t('page.sessionDetail.pendingTasksLabel')}
                 items={draftTasksPending}
                 onChange={setDraftTasksPending}
                 editing={editing}
-                placeholder="Add pending task..."
+                placeholder={t('page.sessionDetail.addTaskPlaceholder')}
               />
             </div>
           </div>
@@ -374,12 +440,12 @@ export function SessionDetailPage() {
 
         {/* Section: Files Modified */}
         {(draftFilesModified.length > 0 || editing) && (
-          <CollapsibleSection label={`Files Modified (${draftFilesModified.length})`}>
+          <CollapsibleSection label={t('page.sessionDetail.filesModified', { count: draftFilesModified.length })}>
             <EditableList
               items={draftFilesModified}
               onChange={setDraftFilesModified}
               editing={editing}
-              placeholder="Add file path..."
+              placeholder={t('page.sessionDetail.addFilePlaceholder')}
             />
           </CollapsibleSection>
         )}
@@ -392,8 +458,8 @@ export function SessionDetailPage() {
               onChange={setDraftDecisions}
               editing={editing}
               fields={[
-                { key: 'decision', label: 'Decision', placeholder: 'Decision...' },
-                { key: 'reasoning', label: 'Reasoning', placeholder: 'Reasoning...', multiline: true },
+                { key: 'decision', label: t('page.sessionDetail.decisionLabel'), placeholder: t('page.sessionDetail.decisionPlaceholder') },
+                { key: 'reasoning', label: t('page.sessionDetail.reasoningLabel'), placeholder: t('page.sessionDetail.reasoningPlaceholder'), multiline: true },
               ]}
             />
           </CollapsibleSection>
@@ -407,17 +473,17 @@ export function SessionDetailPage() {
               onChange={setDraftErrors}
               editing={editing}
               fields={[
-                { key: 'error', label: 'Error', placeholder: 'Error description...' },
-                { key: 'fix', label: 'Fix', placeholder: 'How it was fixed...', multiline: true },
+                { key: 'error', label: t('page.sessionDetail.errorLabel'), placeholder: t('page.sessionDetail.errorPlaceholder') },
+                { key: 'fix', label: t('page.sessionDetail.fixLabel'), placeholder: t('page.sessionDetail.fixPlaceholder'), multiline: true },
               ]}
             />
           </CollapsibleSection>
         )}
 
-        {/* Section: Observations — always read-only */}
+        {/* Section: Observations */}
         <CollapsibleSection label={t('page.sessionDetail.observations', { count: observations.length })} defaultOpen>
           {observations.length === 0 ? (
-            <p className="text-xs text-muted-foreground">{t('page.sessionDetail.noObservations')}</p>
+            <p className="text-xs text-muted-foreground italic">{t('page.sessionDetail.noObservations')}</p>
           ) : (
             <div className="space-y-2">
               {observations.map((obs) => (
@@ -432,7 +498,35 @@ export function SessionDetailPage() {
 }
 
 // ---------------------------------------------------------------------------
-// Collapsible Section wrapper
+// Outcome stat — structured view of a single outcome metric
+// ---------------------------------------------------------------------------
+
+function OutcomeStat({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: string;
+  color: 'success' | 'warning' | 'danger' | 'default';
+}) {
+  const colorClasses = {
+    success: 'text-green-700 dark:text-green-400',
+    warning: 'text-yellow-700 dark:text-yellow-400',
+    danger: 'text-red-700 dark:text-red-400',
+    default: 'text-foreground',
+  };
+
+  return (
+    <div className="space-y-0.5">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className={`text-sm font-semibold capitalize ${colorClasses[color]}`}>{value}</p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Collapsible Section — improved with chevron rotation
 // ---------------------------------------------------------------------------
 
 function CollapsibleSection({
@@ -444,15 +538,28 @@ function CollapsibleSection({
   defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
+
   return (
-    <Collapsible defaultOpen={defaultOpen}>
-      <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-2 text-sm font-semibold text-foreground transition-colors duration-200 hover:text-accent-foreground">
-        <ChevronsUpDown size={14} className="text-muted-foreground" />
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full cursor-pointer items-center gap-2 text-sm font-semibold text-foreground transition-colors duration-200 hover:text-primary"
+      >
+        {open ? (
+          <ChevronDown size={14} className="text-muted-foreground transition-transform duration-200" />
+        ) : (
+          <ChevronRight size={14} className="text-muted-foreground transition-transform duration-200" />
+        )}
         {label}
-      </CollapsibleTrigger>
-      <CollapsibleContent className="mt-3">
-        {children}
-      </CollapsibleContent>
-    </Collapsible>
+      </button>
+      {open && (
+        <div className="mt-3">
+          {children}
+        </div>
+      )}
+      {!open && <Separator className="mt-2" />}
+    </div>
   );
 }
