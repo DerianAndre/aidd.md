@@ -1,4 +1,5 @@
 use tauri::State;
+use serde_json::Value;
 
 use crate::AppContext;
 use crate::domain::model::{McpServer, McpServerMode};
@@ -34,4 +35,22 @@ pub fn get_mcp_servers(
     ctx: State<'_, AppContext>,
 ) -> Vec<McpServer> {
     ctx.mcp_service.get_servers()
+}
+
+#[tauri::command]
+pub fn list_mcp_tools(
+    ctx: State<'_, AppContext>,
+    package: String,
+) -> Result<Vec<Value>, String> {
+    ctx.mcp_service.list_tools(&package)
+}
+
+#[tauri::command]
+pub fn call_mcp_tool(
+    ctx: State<'_, AppContext>,
+    package: String,
+    tool_name: String,
+    arguments: Value,
+) -> Result<Value, String> {
+    ctx.mcp_service.call_tool(&package, &tool_name, arguments)
 }

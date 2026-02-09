@@ -47,7 +47,7 @@ pub fn run() {
         file_adapter.clone(),
     ));
     let process_manager = Arc::new(infrastructure::process::McpProcessManager::new());
-    let mcp_service = Arc::new(McpService::new(process_manager.clone()));
+    let mcp_service = Arc::new(McpService::new(process_manager.clone(), project_service.clone()));
     let config_scanner = infrastructure::integrations::McpConfigScanner::new();
     let mcp_health_service = Arc::new(McpHealthService::new(config_scanner, process_manager));
 
@@ -107,6 +107,8 @@ pub fn run() {
             presentation::commands::mcp_commands::stop_mcp_server,
             presentation::commands::mcp_commands::stop_all_mcp_servers,
             presentation::commands::mcp_commands::get_mcp_servers,
+            presentation::commands::mcp_commands::list_mcp_tools,
+            presentation::commands::mcp_commands::call_mcp_tool,
             // MCP health scanning
             presentation::commands::mcp_health_commands::scan_mcp_health,
             // Filesystem

@@ -1,5 +1,5 @@
 use serde_json::{json, Value};
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
@@ -11,7 +11,7 @@ const MCP_PROTOCOL_VERSION: &str = "2025-11-05";
 const CLIENT_NAME: &str = "aidd-hub";
 const CLIENT_VERSION: &str = "1.0.0";
 
-/// JSON-RPC 2.0 client for MCP servers over stdio (newline-delimited JSON).
+/// JSON-RPC 2.0 client for MCP servers over stdio.
 ///
 /// Spawns a dedicated engine process and communicates via stdin/stdout.
 /// Thread-safe: all I/O is Mutex-protected.
@@ -95,6 +95,15 @@ impl McpClient {
         )
     }
 
+    /// List available MCP tools.
+    pub fn list_tools(&self) -> Result<Value, String> {
+        if !self.initialized.load(Ordering::SeqCst) {
+            return Err("Client not initialized. Call initialize() first.".to_string());
+        }
+
+        self.send_request("tools/list", json!({}))
+    }
+
     /// Send a JSON-RPC 2.0 request and wait for the response.
     fn send_request(&self, method: &str, params: Value) -> Result<Value, String> {
         let id = self.next_id.fetch_add(1, Ordering::SeqCst);
@@ -106,41 +115,17 @@ impl McpClient {
             "params": params
         });
 
-        // Write request
+        // Write request using Content-Length framing (MCP stdio transport).
         {
             let mut stdin = self.stdin.lock().map_err(|e| format!("stdin lock: {}", e))?;
-            let line = serde_json::to_string(&request)
-                .map_err(|e| format!("serialize: {}", e))?;
-            stdin
-                .write_all(line.as_bytes())
-                .map_err(|e| format!("write: {}", e))?;
-            stdin
-                .write_all(b"\n")
-                .map_err(|e| format!("write newline: {}", e))?;
-            stdin.flush().map_err(|e| format!("flush: {}", e))?;
+            Self::write_message(&mut stdin, &request)?;
         }
 
         // Read response — skip notifications until we get a response with matching id
         let mut stdout = self.stdout.lock().map_err(|e| format!("stdout lock: {}", e))?;
-        let mut line_buf = String::new();
 
         loop {
-            line_buf.clear();
-            let bytes_read = stdout
-                .read_line(&mut line_buf)
-                .map_err(|e| format!("read: {}", e))?;
-
-            if bytes_read == 0 {
-                return Err("Server closed connection (EOF)".to_string());
-            }
-
-            let trimmed = line_buf.trim();
-            if trimmed.is_empty() {
-                continue;
-            }
-
-            let msg: Value =
-                serde_json::from_str(trimmed).map_err(|e| format!("parse response: {}", e))?;
+            let msg = Self::read_message(&mut stdout)?;
 
             // Check if this is our response (has matching id)
             if let Some(resp_id) = msg.get("id") {
@@ -172,16 +157,81 @@ impl McpClient {
         });
 
         let mut stdin = self.stdin.lock().map_err(|e| format!("stdin lock: {}", e))?;
-        let line =
-            serde_json::to_string(&notification).map_err(|e| format!("serialize: {}", e))?;
-        stdin
-            .write_all(line.as_bytes())
-            .map_err(|e| format!("write: {}", e))?;
-        stdin
-            .write_all(b"\n")
-            .map_err(|e| format!("write newline: {}", e))?;
-        stdin.flush().map_err(|e| format!("flush: {}", e))?;
+        Self::write_message(&mut stdin, &notification)?;
         Ok(())
+    }
+
+    fn write_message(writer: &mut BufWriter<ChildStdin>, message: &Value) -> Result<(), String> {
+        let payload = serde_json::to_string(message).map_err(|e| format!("serialize: {}", e))?;
+        let header = format!("Content-Length: {}\r\n\r\n", payload.as_bytes().len());
+        writer
+            .write_all(header.as_bytes())
+            .map_err(|e| format!("write header: {}", e))?;
+        writer
+            .write_all(payload.as_bytes())
+            .map_err(|e| format!("write payload: {}", e))?;
+        writer.flush().map_err(|e| format!("flush: {}", e))
+    }
+
+    fn read_message(reader: &mut BufReader<ChildStdout>) -> Result<Value, String> {
+        let mut first_line = String::new();
+
+        loop {
+            first_line.clear();
+            let bytes = reader
+                .read_line(&mut first_line)
+                .map_err(|e| format!("read header: {}", e))?;
+            if bytes == 0 {
+                return Err("Server closed connection (EOF)".to_string());
+            }
+
+            let trimmed = first_line.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+
+            // Backward-compat: accept newline-delimited JSON if encountered.
+            if trimmed.starts_with('{') {
+                return serde_json::from_str(trimmed).map_err(|e| format!("parse response: {}", e));
+            }
+
+            break;
+        }
+
+        let mut content_length: Option<usize> = None;
+        {
+            let line = first_line.trim();
+            if let Some(v) = line.strip_prefix("Content-Length:") {
+                content_length = v.trim().parse::<usize>().ok();
+            }
+        }
+
+        loop {
+            let mut line = String::new();
+            let bytes = reader
+                .read_line(&mut line)
+                .map_err(|e| format!("read header line: {}", e))?;
+            if bytes == 0 {
+                return Err("Server closed connection while reading headers".to_string());
+            }
+
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                break;
+            }
+
+            if let Some(v) = trimmed.strip_prefix("Content-Length:") {
+                content_length = v.trim().parse::<usize>().ok();
+            }
+        }
+
+        let len = content_length.ok_or("Missing Content-Length header in MCP response".to_string())?;
+        let mut body = vec![0u8; len];
+        reader
+            .read_exact(&mut body)
+            .map_err(|e| format!("read body: {}", e))?;
+        let json_str = String::from_utf8(body).map_err(|e| format!("utf8 body: {}", e))?;
+        serde_json::from_str(&json_str).map_err(|e| format!("parse response: {}", e))
     }
 
     /// Check if the client has been initialized.
