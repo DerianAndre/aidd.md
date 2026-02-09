@@ -11,7 +11,14 @@ import { ROUTES } from '../../../lib/constants';
 export function RecentSessionsWidget() {
   const { t } = useTranslation();
   const activeProject = useProjectStore((s) => s.activeProject);
-  const { activeSessions, completedSessions, loading, stale, fetchAll } = useSessionsStore();
+  const {
+    activeSessions,
+    completedSessions,
+    complianceBySessionId,
+    loading,
+    stale,
+    fetchAll,
+  } = useSessionsStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,6 +50,7 @@ export function RecentSessionsWidget() {
       {recent.map((s) => {
         const isActive = !s.endedAt;
         const passed = s.outcome?.testsPassing;
+        const compliance = complianceBySessionId[s.id];
         return (
           <div
             key={s.id}
@@ -61,6 +69,21 @@ export function RecentSessionsWidget() {
               >
                 {isActive ? t('page.dashboard.sessionActive') : passed ? t('page.dashboard.sessionPassed') : t('page.dashboard.sessionFailed')}
               </Chip>
+              {!isActive && compliance && (
+                <Chip
+                  size="sm"
+                  color={compliance.status === 'compliant' ? 'success' : 'danger'}
+                  title={
+                    compliance.status === 'non-compliant'
+                      ? `${t('page.sessions.missingArtifacts')}: ${compliance.missing.join(', ')}`
+                      : undefined
+                  }
+                >
+                  {compliance.status === 'compliant'
+                    ? t('page.sessions.compliant')
+                    : t('page.sessions.nonCompliant')}
+                </Chip>
+              )}
               <span className="text-xs text-foreground">{s.aiProvider.model}</span>
             </div>
             <span className="text-[10px] text-muted-foreground">{formatRelativeTime(s.startedAt)}</span>

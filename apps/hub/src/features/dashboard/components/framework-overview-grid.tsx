@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { Chip } from '@/components/ui/chip';
@@ -12,11 +12,51 @@ import {
   Users,
   ArrowRight,
 } from 'lucide-react';
-import { useFrameworkStore, CATEGORIES } from '../../framework/stores/framework-store';
 import { useProjectStore } from '../../../stores/project-store';
-import { ROUTES } from '../../../lib/constants';
-import type { FrameworkCategory } from '../../../lib/tauri';
+import { CONTENT_PATHS, ROUTES } from '../../../lib/constants';
+import { getFrameworkPath, getSyncStatus, listDirectory } from '../../../lib/tauri';
+import { normalizePath } from '../../../lib/utils';
+import type { FrameworkCategory, SyncInfo } from '../../../lib/tauri';
 import type { LucideIcon } from 'lucide-react';
+
+const CATEGORIES: FrameworkCategory[] = [
+  'agents',
+  'rules',
+  'skills',
+  'knowledge',
+  'workflows',
+  'templates',
+  'specs',
+];
+
+interface CategoryCount {
+  total: number;
+  global: number;
+  project: number;
+  loading: boolean;
+}
+
+function createEmptyCounts(): Record<FrameworkCategory, CategoryCount> {
+  return {
+    agents: { total: 0, global: 0, project: 0, loading: true },
+    rules: { total: 0, global: 0, project: 0, loading: true },
+    skills: { total: 0, global: 0, project: 0, loading: true },
+    knowledge: { total: 0, global: 0, project: 0, loading: true },
+    workflows: { total: 0, global: 0, project: 0, loading: true },
+    templates: { total: 0, global: 0, project: 0, loading: true },
+    specs: { total: 0, global: 0, project: 0, loading: true },
+  };
+}
+
+async function countMarkdownFiles(path: string | null): Promise<number> {
+  if (!path) return 0;
+  try {
+    const entries = await listDirectory(path, ['md'], true);
+    return entries.filter((entry) => !entry.is_dir).length;
+  } catch {
+    return 0;
+  }
+}
 
 const CATEGORY_META = {
   agents: { labelKey: 'page.dashboard.catAgents' as const, icon: Users, color: 'text-accent' },
@@ -32,33 +72,74 @@ export function FrameworkOverviewGrid() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
-  const entities = useFrameworkStore((s) => s.entities);
-  const stale = useFrameworkStore((s) => s.stale);
-  const fetchCategory = useFrameworkStore((s) => s.fetchCategory);
-  const syncInfo = useFrameworkStore((s) => s.syncInfo);
-  const initialize = useFrameworkStore((s) => s.initialize);
-  const frameworkPath = useFrameworkStore((s) => s.frameworkPath);
-
-  const invalidateAll = useFrameworkStore((s) => s.invalidateAll);
+  const [syncInfo, setSyncInfo] = useState<SyncInfo | null>(null);
+  const [counts, setCounts] = useState<Record<FrameworkCategory, CategoryCount>>(createEmptyCounts);
 
   useEffect(() => {
-    if (!frameworkPath) void initialize();
-  }, [frameworkPath, initialize]);
-
-  // Re-fetch all categories when active project changes
-  useEffect(() => {
-    if (activeProject?.path) {
-      invalidateAll();
-    }
-  }, [activeProject?.path, invalidateAll]);
-
-  useEffect(() => {
-    for (const cat of CATEGORIES) {
-      if (stale[cat]) {
-        void fetchCategory(cat, activeProject?.path);
+    let canceled = false;
+    const loadSync = async () => {
+      try {
+        const info = await getSyncStatus();
+        if (!canceled) setSyncInfo(info);
+      } catch {
+        // ignore
       }
+    };
+    void loadSync();
+    return () => {
+      canceled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!activeProject?.path) {
+      setCounts(createEmptyCounts());
+      return;
     }
-  }, [stale, fetchCategory, activeProject?.path]);
+
+    let canceled = false;
+    const loadCounts = async () => {
+      const projectRoot = normalizePath(activeProject.path);
+      let frameworkRoot: string | null = null;
+      try {
+        frameworkRoot = await getFrameworkPath();
+      } catch {
+        frameworkRoot = null;
+      }
+
+      setCounts((prev) => {
+        const next = { ...prev };
+        for (const cat of CATEGORIES) {
+          next[cat] = { ...next[cat], loading: true };
+        }
+        return next;
+      });
+
+      // Sequential category loading avoids I/O bursts when the dashboard mounts.
+      for (const cat of CATEGORIES) {
+        if (canceled) break;
+        const [globalCount, projectCount] = await Promise.all([
+          countMarkdownFiles(frameworkRoot ? `${frameworkRoot}/${cat}` : null),
+          countMarkdownFiles(`${projectRoot}/${CONTENT_PATHS[cat]}`),
+        ]);
+        if (canceled) break;
+        setCounts((prev) => ({
+          ...prev,
+          [cat]: {
+            total: globalCount + projectCount,
+            global: globalCount,
+            project: projectCount,
+            loading: false,
+          },
+        }));
+      }
+    };
+
+    void loadCounts();
+    return () => {
+      canceled = true;
+    };
+  }, [activeProject?.path]);
 
   return (
     <div className="mb-6">
@@ -85,10 +166,11 @@ export function FrameworkOverviewGrid() {
         {CATEGORIES.map((cat) => {
           const meta = CATEGORY_META[cat];
           const Icon = meta.icon;
-          const items = entities[cat];
-          const count = items.length;
-          const globalCount = items.filter((e) => e.source === 'global').length;
-          const projectCount = items.filter((e) => e.source === 'project').length;
+          const info = counts[cat];
+          const count = info.total;
+          const globalCount = info.global;
+          const projectCount = info.project;
+          const loading = info.loading;
 
           return (
             <button
@@ -99,8 +181,8 @@ export function FrameworkOverviewGrid() {
             >
               <Icon size={20} className={meta.color} />
               <span className="text-xs font-medium text-foreground">{t(meta.labelKey)}</span>
-              <span className="text-xl font-bold text-foreground">{count}</span>
-              {count > 0 && (
+              <span className="text-xl font-bold text-foreground">{loading ? '...' : count}</span>
+              {!loading && count > 0 && (
                 <span className="text-[10px] text-muted-foreground">
                   {t('page.dashboard.sourceBreakdown', { global: globalCount, project: projectCount })}
                 </span>

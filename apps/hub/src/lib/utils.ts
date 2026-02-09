@@ -73,3 +73,35 @@ export function scoreColor(score: number): 'success' | 'warning' | 'danger' {
   if (score >= 40) return 'warning';
   return 'danger';
 }
+
+/** Calculate TID (Token Information Density) ratio from token usage. */
+export function calculateTidRatio(tokenUsage?: { inputTokens: number; outputTokens: number }): string {
+  if (!tokenUsage || tokenUsage.inputTokens === 0) return '—';
+  const ratio = tokenUsage.outputTokens / tokenUsage.inputTokens;
+  return `${ratio.toFixed(1)}x`;
+}
+
+/** Format large token counts with K suffix. */
+export function formatTokenCount(count: number): string {
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+  return count.toString();
+}
+
+/** Get Tailwind color class for compliance score. */
+export function getComplianceColor(score: number): string {
+  if (score >= 70) return 'text-teal-500';
+  if (score >= 40) return 'text-yellow-500';
+  return 'text-red-500';
+}
+
+/** Map artifacts to AIDD phases for phase stepper visualization. */
+export function mapArtifactsToPhases(artifacts: Array<{ type: string }>): Record<string, boolean> {
+  return {
+    understand: artifacts.some(a => ['brainstorm', 'research'].includes(a.type)),
+    plan: artifacts.some(a => a.type === 'plan'),
+    spec: artifacts.some(a => ['spec', 'adr'].includes(a.type)),
+    build: artifacts.some(a => a.type === 'issue'),
+    verify: artifacts.some(a => a.type === 'checklist'),
+    ship: artifacts.some(a => a.type === 'retro'),
+  };
+}

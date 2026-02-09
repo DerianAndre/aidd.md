@@ -16,15 +16,23 @@ export function SessionsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
-  const { activeSessions, completedSessions, loading, stale, fetchAll, removeSession } = useSessionsStore();
+  const {
+    activeSessions,
+    completedSessions,
+    artifactsBySessionId,
+    loading,
+    fetchAll,
+    removeSession,
+    completeSession,
+  } = useSessionsStore();
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
-    if (activeProject?.path && stale) {
+    if (activeProject?.path) {
       void fetchAll(activeProject.path);
     }
-  }, [activeProject?.path, stale, fetchAll]);
+  }, [activeProject?.path, fetchAll]);
 
   const filterSession = (s: { id: string; name?: string; branch: string; input?: string; aiProvider: { model: string } }, q: string) => {
     return (
@@ -57,6 +65,15 @@ export function SessionsPage() {
       showSuccess(t('page.sessions.deleteSuccess'));
     } catch {
       showError(t('page.sessions.deleteError'));
+    }
+  };
+
+  const handleComplete = async (id: string) => {
+    try {
+      await completeSession(id);
+      showSuccess(t('page.sessions.completeSuccess'));
+    } catch {
+      showError(t('page.sessions.completeError'));
     }
   };
 
@@ -111,8 +128,11 @@ export function SessionsPage() {
               <SessionCard
                 key={session.id}
                 session={session}
+                artifacts={artifactsBySessionId[session.id] ?? []}
                 onPress={() => navigateToDetail(session.id)}
                 onEdit={() => navigateToDetail(session.id)}
+                onComplete={handleComplete}
+                onDelete={(id) => setDeleteTarget(id)}
               />
             ))}
           </div>
@@ -132,6 +152,7 @@ export function SessionsPage() {
               <SessionCard
                 key={session.id}
                 session={session}
+                artifacts={artifactsBySessionId[session.id] ?? []}
                 onPress={() => navigateToDetail(session.id)}
                 onEdit={() => navigateToDetail(session.id)}
                 onDelete={(id) => setDeleteTarget(id)}

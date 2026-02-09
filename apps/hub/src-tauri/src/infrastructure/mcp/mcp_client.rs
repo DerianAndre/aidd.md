@@ -24,16 +24,40 @@ pub struct McpClient {
 }
 
 impl McpClient {
-    /// Spawn an MCP server process and create a client connected to it.
+  /// Spawn an MCP server process and create a client connected to it.
+  ///
+  /// The process is spawned with piped stdin/stdout for JSON-RPC communication.
+  /// Stderr is inherited (logs to parent process stderr).
+  pub fn spawn(command: &str, args: &[&str]) -> Result<Self, String> {
+        Self::spawn_with_context(command, args, None, None)
+    }
+
+    /// Spawn an MCP server process with optional project execution context.
     ///
-    /// The process is spawned with piped stdin/stdout for JSON-RPC communication.
-    /// Stderr is inherited (logs to parent process stderr).
-    pub fn spawn(command: &str, args: &[&str]) -> Result<Self, String> {
-        let mut child = Command::new(command)
-            .args(args)
+    /// `cwd`: current working directory for process execution.
+    /// `env`: additional environment variables.
+    pub fn spawn_with_context(
+        command: &str,
+        args: &[&str],
+        cwd: Option<&str>,
+        env: Option<&[(&str, &str)]>,
+    ) -> Result<Self, String> {
+        let mut cmd = Command::new(command);
+        cmd.args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
+            .stderr(Stdio::inherit());
+
+        if let Some(dir) = cwd {
+            cmd.current_dir(dir);
+        }
+        if let Some(env_pairs) = env {
+            for &(key, value) in env_pairs {
+                cmd.env(key, value);
+            }
+        }
+
+        let mut child = cmd
             .spawn()
             .map_err(|e| format!("Failed to spawn MCP server: {}", e))?;
 

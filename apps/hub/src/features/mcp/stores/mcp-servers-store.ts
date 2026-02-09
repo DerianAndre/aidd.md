@@ -36,29 +36,23 @@ export const useMcpServersStore = create<McpServersStoreState>((set, get) => ({
     set({ loading: true });
     try {
       const root = normalizePath(projectRoot);
-      const results: McpPackageStatus[] = [];
+      const results: McpPackageStatus[] = await Promise.all(
+        MCP_PACKAGES.map(async (pkg) => {
+          const pkgJsonPath = `${root}/${pkg.location}/${pkg.dir}/package.json`;
+          const distPath = `${root}/${pkg.location}/${pkg.dir}/dist/index.js`;
 
-      for (const pkg of MCP_PACKAGES) {
-        const pkgJsonPath = `${root}/${pkg.location}/${pkg.dir}/package.json`;
-        const distPath = `${root}/${pkg.location}/${pkg.dir}/dist/index.js`;
+          const [version, built] = await Promise.all([
+            readJsonFile(pkgJsonPath)
+              .then((data) => (typeof (data as Record<string, unknown>).version === 'string'
+                ? (data as Record<string, unknown>).version as string
+                : '0.0.0'))
+              .catch(() => '0.0.0'),
+            fileExists(distPath).catch(() => false),
+          ]);
 
-        let version = '0.0.0';
-        try {
-          const data = await readJsonFile(pkgJsonPath) as Record<string, unknown>;
-          if (typeof data.version === 'string') version = data.version;
-        } catch {
-          // package.json not found — leave default version
-        }
-
-        let built = false;
-        try {
-          built = await fileExists(distPath);
-        } catch {
-          // ignore
-        }
-
-        results.push({ name: pkg.name, dir: pkg.dir, version, built });
-      }
+          return { name: pkg.name, dir: pkg.dir, version, built };
+        }),
+      );
 
       // Also fetch running servers
       let servers: McpServer[] = [];

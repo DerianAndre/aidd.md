@@ -6,7 +6,6 @@ import { Separator } from '@/components/ui/separator';
 import { Chip } from '@/components/ui/chip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Target, CheckCircle, Cpu, ArrowRight } from 'lucide-react';
-import { useAnalyticsStore } from '../../analytics/stores/analytics-store';
 import { useSessionsStore } from '../../memory/stores/sessions-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { formatRelativeTime } from '../../../lib/utils';
@@ -23,13 +22,6 @@ export function IntelligenceWidget() {
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
 
-  const totalSessions = useAnalyticsStore((s) => s.totalSessions);
-  const avgCompliance = useAnalyticsStore((s) => s.avgCompliance);
-  const testPassRate = useAnalyticsStore((s) => s.testPassRate);
-  const uniqueModels = useAnalyticsStore((s) => s.uniqueModels);
-  const analyticsStale = useAnalyticsStore((s) => s.stale);
-  const fetchAnalytics = useAnalyticsStore((s) => s.fetch);
-
   const activeSessions = useSessionsStore((s) => s.activeSessions);
   const completedSessions = useSessionsStore((s) => s.completedSessions);
   const sessionsLoading = useSessionsStore((s) => s.loading);
@@ -38,9 +30,26 @@ export function IntelligenceWidget() {
 
   useEffect(() => {
     if (!activeProject?.path) return;
-    if (analyticsStale) void fetchAnalytics(activeProject.path);
     if (sessionsStale) void fetchSessions(activeProject.path);
-  }, [activeProject?.path, analyticsStale, sessionsStale, fetchAnalytics, fetchSessions]);
+  }, [activeProject?.path, sessionsStale, fetchSessions]);
+
+  const completedWithOutcome = completedSessions.filter((session) => session.outcome);
+  const totalSessions = completedSessions.length;
+  const avgCompliance = completedWithOutcome.length > 0
+    ? Math.round(
+        completedWithOutcome.reduce((acc, session) => acc + (session.outcome?.complianceScore ?? 0), 0) /
+        completedWithOutcome.length,
+      )
+    : 0;
+  const testPassRate = completedWithOutcome.length > 0
+    ? Math.round(
+        (completedWithOutcome.filter((session) => session.outcome?.testsPassing).length / completedWithOutcome.length) *
+        100,
+      )
+    : 0;
+  const uniqueModels = new Set(
+    [...activeSessions, ...completedSessions].map((session) => session.aiProvider?.modelId ?? session.aiProvider?.model),
+  ).size;
 
   const recentSessions = [
     ...activeSessions.map((s) => ({ ...s, _active: true as const })),

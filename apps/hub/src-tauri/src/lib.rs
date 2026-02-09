@@ -137,6 +137,7 @@ pub fn run() {
             presentation::commands::memory_commands::delete_permanent_memory,
             presentation::commands::memory_commands::list_drafts,
             presentation::commands::memory_commands::list_artifacts,
+            presentation::commands::memory_commands::list_audit_scores,
             // Memory write commands
             presentation::commands::memory_commands::create_permanent_memory,
             presentation::commands::memory_commands::update_permanent_memory,

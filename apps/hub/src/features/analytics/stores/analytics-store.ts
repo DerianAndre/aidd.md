@@ -1,12 +1,15 @@
 import { create } from 'zustand';
-import { listAllSessions } from '../../../lib/tauri';
-import type { SessionState, ModelMetrics } from '../../../lib/types';
+import { listAllSessions, listAuditScores } from '../../../lib/tauri';
+import type { SessionState, ModelMetrics, AuditScore } from '../../../lib/types';
 import {
   computeModelMetrics,
   computeToolUsageStats,
   computeSessionTimeline,
+  computeSessionEfficiencyMetrics,
+  computeAuditDimensionAverages,
   type ToolUsageStat,
   type TimelinePoint,
+  type AuditDimensionAverages,
 } from '../lib/compute-analytics';
 
 const STALE_TTL = 30_000;
@@ -19,6 +22,10 @@ interface AnalyticsStoreState {
   avgCompliance: number;
   testPassRate: number;
   uniqueModels: number;
+  avgStartupMs: number;
+  avgContextEfficiency: number;
+  avgTidBonus: number;
+  auditDimensions: AuditDimensionAverages | null;
   loading: boolean;
   stale: boolean;
   lastFetchedAt: number;
@@ -35,6 +42,10 @@ export const useAnalyticsStore = create<AnalyticsStoreState>((set, get) => ({
   avgCompliance: 0,
   testPassRate: 0,
   uniqueModels: 0,
+  avgStartupMs: 0,
+  avgContextEfficiency: 0,
+  avgTidBonus: 0,
+  auditDimensions: null,
   loading: false,
   stale: true,
   lastFetchedAt: 0,
@@ -46,12 +57,18 @@ export const useAnalyticsStore = create<AnalyticsStoreState>((set, get) => ({
     if (!stale && !isExpired) return;
     set({ loading: true });
     try {
-      const raw = await listAllSessions(200);
+      const [raw, rawAudit] = await Promise.all([
+        listAllSessions(200),
+        listAuditScores(300).catch(() => [] as unknown[]),
+      ]);
       const sessions = ((raw ?? []) as SessionState[]).filter((s) => !!s.endedAt);
+      const auditScores = (rawAudit ?? []) as AuditScore[];
 
       const modelMetrics = computeModelMetrics(sessions);
       const toolStats = computeToolUsageStats(sessions);
       const timelineData = computeSessionTimeline(sessions);
+      const efficiency = computeSessionEfficiencyMetrics(sessions);
+      const auditDimensions = computeAuditDimensionAverages(auditScores);
 
       const withOutcome = sessions.filter((s) => s.outcome);
       const totalSessions = withOutcome.length;
@@ -66,6 +83,10 @@ export const useAnalyticsStore = create<AnalyticsStoreState>((set, get) => ({
         avgCompliance: totalSessions > 0 ? Math.round(sumCompliance / totalSessions) : 0,
         testPassRate: totalSessions > 0 ? Math.round((testPassing / totalSessions) * 100) : 0,
         uniqueModels: modelMetrics.length,
+        avgStartupMs: efficiency.avgStartupMs,
+        avgContextEfficiency: efficiency.avgContextEfficiency,
+        avgTidBonus: auditDimensions?.tidBonus ?? 0,
+        auditDimensions,
         loading: false,
         stale: false,
         lastFetchedAt: Date.now(),

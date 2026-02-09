@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { getAllTools } from '../lib/mcp-catalog';
 import { ToolDetail } from './tool-detail';
@@ -15,6 +16,7 @@ interface ToolExplorerProps {
 export function ToolExplorer({ tools, loading = false, error = null }: ToolExplorerProps) {
   const allTools = useMemo(() => tools ?? getAllTools(), [tools]);
   const [query, setQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(24);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return allTools;
@@ -27,16 +29,24 @@ export function ToolExplorer({ tools, loading = false, error = null }: ToolExplo
     );
   }, [allTools, query]);
 
+  useEffect(() => {
+    setVisibleCount(24);
+  }, [query, allTools.length]);
+
+  const visibleTools = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+
   // Group by package
   const grouped = useMemo(() => {
-    const map = new Map<string, typeof filtered>();
-    for (const tool of filtered) {
+    const map = new Map<string, typeof visibleTools>();
+    for (const tool of visibleTools) {
       const list = map.get(tool.packageName) ?? [];
       list.push(tool);
       map.set(tool.packageName, list);
     }
     return map;
-  }, [filtered]);
+  }, [visibleTools]);
+
+  const remaining = Math.max(0, filtered.length - visibleTools.length);
 
   return (
     <div className="space-y-4">
@@ -87,6 +97,18 @@ export function ToolExplorer({ tools, loading = false, error = null }: ToolExplo
         <p className="py-8 text-center text-sm text-muted-foreground">
           No tools match your search.
         </p>
+      )}
+
+      {!loading && remaining > 0 && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setVisibleCount((count) => count + 24)}
+          >
+            Show 24 more ({remaining} remaining)
+          </Button>
+        </div>
       )}
     </div>
   );

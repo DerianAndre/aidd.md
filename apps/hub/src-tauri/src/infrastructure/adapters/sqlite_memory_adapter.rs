@@ -384,7 +384,8 @@ impl MemoryPort for SqliteMemoryAdapter {
     fn list_evolution_candidates(&self) -> Result<Vec<serde_json::Value>, String> {
         self.safe_query(|conn| {
             let mut stmt = conn.prepare(
-                "SELECT data FROM evolution_candidates ORDER BY confidence DESC"
+                "SELECT json_set(data, '$.status', status) FROM evolution_candidates \
+                 WHERE status = 'pending' OR status IS NULL ORDER BY confidence DESC"
             )?;
 
             let candidates = stmt.query_map([], |row| {
@@ -605,6 +606,49 @@ impl MemoryPort for SqliteMemoryAdapter {
                 .collect();
 
             Ok(artifacts)
+        }).or_else(|_| Ok(vec![]))
+    }
+
+    fn list_audit_scores(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String> {
+        let limit = limit.unwrap_or(200);
+
+        self.safe_query(move |conn| {
+            let mut stmt = conn.prepare(
+                "SELECT id, session_id, model_id, input_hash, scores, verdict, created_at \
+                 FROM audit_scores ORDER BY created_at DESC LIMIT ?1"
+            )?;
+
+            let scores = stmt.query_map([limit], |row| {
+                let mut entry = serde_json::Map::new();
+                entry.insert("id".into(), serde_json::json!(row.get::<_, i64>(0)?));
+                let session_id: Option<String> = row.get(1)?;
+                if let Some(sid) = session_id {
+                    entry.insert("sessionId".into(), serde_json::json!(sid));
+                }
+                entry.insert("modelId".into(), serde_json::json!(row.get::<_, String>(2)?));
+                entry.insert("inputHash".into(), serde_json::json!(row.get::<_, String>(3)?));
+
+                let scores_json: String = row.get(4)?;
+                let parsed_scores = serde_json::from_str::<serde_json::Value>(&scores_json)
+                    .unwrap_or_else(|_| serde_json::json!({}));
+                if let Some(total) = parsed_scores.get("totalScore") {
+                    entry.insert("totalScore".into(), total.clone());
+                }
+                if let Some(patterns_found) = parsed_scores.get("patternsFound") {
+                    entry.insert("patternsFound".into(), patterns_found.clone());
+                }
+                if let Some(dimensions) = parsed_scores.get("dimensions") {
+                    entry.insert("dimensions".into(), dimensions.clone());
+                }
+
+                entry.insert("verdict".into(), serde_json::json!(row.get::<_, String>(5)?));
+                entry.insert("createdAt".into(), serde_json::json!(row.get::<_, String>(6)?));
+                Ok(serde_json::Value::Object(entry))
+            })?
+                .filter_map(|r| r.ok())
+                .collect();
+
+            Ok(scores)
         }).or_else(|_| Ok(vec![]))
     }
 

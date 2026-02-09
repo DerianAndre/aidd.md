@@ -16,6 +16,7 @@ import { useEvolutionStore } from '../../features/evolution/stores/evolution-sto
 import { useDraftsStore } from '../../features/drafts/stores/drafts-store';
 import { useDiagnosticsStore } from '../../features/diagnostics/stores/diagnostics-store';
 import { useConfigStore } from '../../features/config/stores/config-store';
+import { useArtifactsStore } from '../../features/artifacts/stores/artifacts-store';
 
 const DEBOUNCE_MS = 100;
 
@@ -30,6 +31,7 @@ const P_EVOLUTION = `/${AIDD_DIR}/${STATE_PATHS.EVOLUTION}/`;
 const P_DRAFTS = `/${AIDD_DIR}/${STATE_PATHS.DRAFTS}/`;
 const P_MEMORY = `/${AIDD_DIR}/${STATE_PATHS.MEMORY}/`;
 const P_CONFIG = `/${AIDD_DIR}/${STATE_PATHS.CONFIG}`;
+const P_DATA_DB = `/${AIDD_DIR}/data.db`;
 
 /**
  * Maps path prefixes to store invalidation functions.
@@ -55,6 +57,7 @@ export function useEntityWatcher() {
   const evolutionInvalidate = useEvolutionStore((s) => s.invalidate);
   const draftsInvalidate = useDraftsStore((s) => s.invalidate);
   const diagnosticsInvalidate = useDiagnosticsStore((s) => s.invalidate);
+  const artifactsInvalidate = useArtifactsStore((s) => s.invalidate);
 
   // Config store
   const configInvalidate = useConfigStore((s) => s.invalidate);
@@ -69,8 +72,8 @@ export function useEntityWatcher() {
     if (prefixes.has(P_WORKFLOWS)) workflowsInvalidate();
     if (prefixes.has(P_KNOWLEDGE)) knowledgeInvalidate();
 
-    // Memory layer — sessions + analytics + diagnostics
-    if (prefixes.has(P_SESSIONS)) {
+    // Session-related updates (legacy JSON sessions or SQLite db writes)
+    if (prefixes.has(P_SESSIONS) || prefixes.has(P_DATA_DB)) {
       sessionsInvalidate();
       analyticsInvalidate();
       diagnosticsInvalidate();
@@ -81,6 +84,14 @@ export function useEntityWatcher() {
 
     // Draft artifacts
     if (prefixes.has(P_DRAFTS)) draftsInvalidate();
+
+    // SQLite-backed state writes should refresh all memory/intelligence views.
+    if (prefixes.has(P_DATA_DB)) {
+      permanentMemoryInvalidate();
+      evolutionInvalidate();
+      draftsInvalidate();
+      artifactsInvalidate();
+    }
 
     // Permanent memory — decisions, mistakes, conventions
     if (prefixes.has(P_MEMORY)) {
@@ -96,7 +107,7 @@ export function useEntityWatcher() {
     rulesInvalidate, templatesInvalidate, skillsInvalidate, workflowsInvalidate, knowledgeInvalidate,
     sessionsInvalidate, permanentMemoryInvalidate, analyticsInvalidate,
     evolutionInvalidate, draftsInvalidate, diagnosticsInvalidate,
-    configInvalidate,
+    configInvalidate, artifactsInvalidate,
   ]);
 
   useEffect(() => {

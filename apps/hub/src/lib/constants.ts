@@ -73,6 +73,7 @@ export const WATCHER_PREFIXES = [
   `/${AIDD_DIR}/${STATE_PATHS.DRAFTS}/`,
   `/${AIDD_DIR}/${STATE_PATHS.MEMORY}/`,
   `/${AIDD_DIR}/${STATE_PATHS.CONFIG}`,
+  `/${AIDD_DIR}/data.db`,
 ] as const;
 
 /** Marker keys for project detection display */

@@ -1,139 +1,193 @@
-import { Clock, GitBranch, Pencil, Trash2 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Chip } from '@/components/ui/chip';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { formatRelativeTime, formatDuration, truncate } from '../../../lib/utils';
-import type { SessionState } from '../../../lib/types';
+import {
+  Clock,
+  GitBranch,
+  CheckCircle2,
+  Trash2,
+  MoreVertical,
+  Cpu,
+} from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardDescription,
+  CardContent,
+  CardTitle,
+  CardAction,
+} from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ComplianceRing } from "./compliance-ring";
+import { PhaseStepper } from "./phase-stepper";
+import { formatRelativeTime, truncate } from "../../../lib/utils";
+import type { SessionState, ArtifactEntry } from "../../../lib/types";
 
 interface SessionCardProps {
   session: SessionState;
+  artifacts: ArtifactEntry[];
   onPress?: () => void;
   onEdit?: () => void;
+  onComplete?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
-function statusChip(session: SessionState) {
-  if (!session.endedAt) {
-    return <Chip size="sm" color="accent">Active</Chip>;
-  }
-  if (session.outcome?.testsPassing) {
-    return <Chip size="sm" color="success">Passed</Chip>;
-  }
-  if (session.outcome && !session.outcome.testsPassing) {
-    return <Chip size="sm" color="danger">Failed</Chip>;
-  }
-  return <Chip size="sm" color="default">Completed</Chip>;
-}
+export function SessionCard({
+  session,
+  artifacts,
+  onPress,
+  onEdit,
+  onComplete,
+  onDelete,
+}: SessionCardProps) {
+  const isActive = !session.endedAt;
+  const modelLabel = session.aiProvider.model
+    .replace("claude-", "")
+    .replace(/-\d{8}$/, "");
+  const complianceScore = session.outcome?.complianceScore ?? 0;
+  const fastTrack = session.taskClassification?.fastTrack ?? false;
 
-export function SessionCard({ session, onPress, onEdit, onDelete }: SessionCardProps) {
-  const durationMs = session.endedAt
-    ? new Date(session.endedAt).getTime() - new Date(session.startedAt).getTime()
-    : Date.now() - new Date(session.startedAt).getTime();
-  const duration = formatDuration(durationMs);
-
-  const modelLabel = session.aiProvider.model.replace('claude-', '').replace(/-\d{8}$/, '');
-  const isCompleted = !!session.endedAt;
-  const hasCustomName = !!session.name?.trim();
-  const hasPromptTitle = !hasCustomName && !!session.input;
-  const showsBranchAsTitle = !hasCustomName && !hasPromptTitle;
-
-  // Primary title: explicit session name > input prompt > branch
-  const title = hasCustomName
-    ? truncate(session.name!, 50)
-    : hasPromptTitle
-      ? truncate(session.input!, 50)
-      : truncate(session.branch, 40);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (onPress && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onPress();
+    }
+  };
 
   return (
     <Card
       onClick={onPress}
-      role={onPress ? 'button' : undefined}
-      tabIndex={onPress ? 0 : undefined}
-      onKeyDown={onPress ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPress(); } } : undefined}
-      className={`group border border-border bg-card transition-all duration-200 hover:border-primary/50 hover:shadow-sm ${onPress ? 'cursor-pointer' : ''}`}
+      role="button"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      className="group/card-session transition-all hover:scale-[1.01] hover:shadow-lg cursor-pointer"
+      data-session-id={session.id}
     >
-      <CardHeader className="flex-col items-start gap-1.5 pb-2">
-        <div className="flex w-full items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <CardTitle className="truncate text-sm font-semibold leading-snug">
-              {title}
-            </CardTitle>
-            {!showsBranchAsTitle && (
-              <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
-                <GitBranch size={10} className="shrink-0" />
-                <span className="truncate">{truncate(session.branch, 30)}</span>
-              </div>
-            )}
-            <div className="mt-0.5 text-[11px] text-muted-foreground">
-              <span className="mr-1">ID:</span>
-              <code title={session.id} className="font-mono">
-                {truncate(session.id, 28)}
-              </code>
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            {statusChip(session)}
-            {onEdit && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                    onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                    aria-label="Edit session"
-                  >
-                    <Pencil size={13} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Edit</TooltipContent>
-              </Tooltip>
-            )}
-            {isCompleted && onDelete && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-destructive opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                    onClick={(e) => { e.stopPropagation(); onDelete(session.id); }}
-                    aria-label="Delete session"
-                  >
-                    <Trash2 size={13} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Delete</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        </div>
-        <CardDescription className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+      <CardHeader>
+        <CardTitle>
+          {session.name || truncate(session.input || session.id, 60)}
+        </CardTitle>
+        <CardDescription className="flex items-center gap-1 text-xs">
+          <GitBranch size={9} />
+          <span className="truncate">{truncate(session.branch, 20)}</span>
+          <Cpu size={9} />
           <span>{modelLabel}</span>
-          <span className="text-border">·</span>
-          <span className="flex items-center gap-0.5">
-            <Clock size={10} />
-            {duration}
-          </span>
-          {session.tasksCompleted.length > 0 && (
-            <>
-              <span className="text-border">·</span>
-              <span>{session.tasksCompleted.length} tasks</span>
-            </>
-          )}
+          <Clock size={10} />
+          {formatRelativeTime(session.startedAt)}
         </CardDescription>
+        <CardAction>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Session actions"
+              >
+                <MoreVertical size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {onEdit && (
+                <DropdownMenuItem onClick={() => onEdit()}>
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {isActive && onComplete && (
+                <DropdownMenuItem onClick={() => onComplete(session.id)}>
+                  <CheckCircle2 size={14} />
+                  Complete
+                </DropdownMenuItem>
+              )}
+              {(onEdit || (isActive && onComplete)) && onDelete && (
+                <DropdownMenuSeparator />
+              )}
+              {onDelete && (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => onDelete(session.id)}
+                >
+                  <Trash2 size={14} />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardAction>
       </CardHeader>
-      <CardFooter className="flex items-center justify-between pt-0">
-        <div className="flex items-center gap-1.5">
+
+      <CardContent>
+        <div className="hidden">{truncate(session.id, 8)}</div>
+        <div className="flex flex-1 flex-col">
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground"></div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {session.taskClassification?.complexity && (
+            <Chip
+              size="sm"
+              color={
+                session.taskClassification.complexity === "low"
+                  ? "success"
+                  : session.taskClassification.complexity === "moderate"
+                    ? "warning"
+                    : "danger"
+              }
+            >
+              {session.taskClassification.complexity}
+            </Chip>
+          )}
           {session.taskClassification?.domain && (
-            <Chip size="sm" color="default">{session.taskClassification.domain}</Chip>
+            <Chip size="sm" color="default">
+              {session.taskClassification.domain}
+            </Chip>
           )}
           {session.taskClassification?.nature && (
-            <Chip size="sm" color="info">{session.taskClassification.nature}</Chip>
+            <Chip size="sm" color="info">
+              {session.taskClassification.nature}
+            </Chip>
           )}
         </div>
-        <span className="text-[10px] text-muted-foreground">{formatRelativeTime(session.startedAt)}</span>
-      </CardFooter>
+
+        {/* Lifecycle Progress */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-muted-foreground font-medium">
+              Lifecycle Progress
+            </span>
+            {artifacts.length > 0 && (
+              <span className="text-accent-foreground font-medium">
+                {artifacts.length} artifact{artifacts.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          <div className="shrink-0 flex items-center gap-2">
+            <ComplianceRing score={complianceScore} size="sm" />
+            <PhaseStepper
+              artifacts={artifacts}
+              fastTrack={fastTrack}
+              orientation="horizontal"
+            />
+          </div>
+        </div>
+        {session.tokenUsage && (
+          <div className="text-[10px] text-muted-foreground font-mono">
+            TID:{" "}
+            {session.tokenUsage.inputTokens === 0
+              ? "—"
+              : `${(session.tokenUsage.outputTokens / session.tokenUsage.inputTokens).toFixed(1)}x`}
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 }

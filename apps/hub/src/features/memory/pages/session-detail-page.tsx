@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { ObservationCard } from '../components/observation-card';
+import { ArtifactPreviewCard } from '../components/artifact-preview-card';
 import { BlockEditor } from '../../../components/editor';
 import { FrontmatterForm } from '../../../components/editor/frontmatter-form';
 import { EditableList, EditableStructuredList } from '../../../components/editable-list';
@@ -16,7 +17,8 @@ import { useSessionsStore } from '../stores/sessions-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { showSuccess, showError } from '../../../lib/toast';
 import { formatDuration, formatDate, scoreColor } from '../../../lib/utils';
-import type { SessionState, SessionObservation, SessionUpdatePayload } from '../../../lib/types';
+import { listArtifacts } from '../../../lib/tauri';
+import type { SessionState, SessionObservation, SessionUpdatePayload, ArtifactEntry } from '../../../lib/types';
 import type { FieldDefinition } from '../../../components/editor/frontmatter-form';
 
 // ---------------------------------------------------------------------------
@@ -65,10 +67,19 @@ export function SessionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const activeProject = useProjectStore((s) => s.activeProject);
-  const { activeSessions, completedSessions, stale, fetchAll, fetchObservations, editSessionFull } = useSessionsStore();
+  const {
+    activeSessions,
+    completedSessions,
+    complianceBySessionId,
+    stale,
+    fetchAll,
+    fetchObservations,
+    editSessionFull,
+  } = useSessionsStore();
 
   const [session, setSession] = useState<SessionState | null>(null);
   const [observations, setObservations] = useState<SessionObservation[]>([]);
+  const [artifacts, setArtifacts] = useState<ArtifactEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Edit state
@@ -95,8 +106,17 @@ export function SessionDetailPage() {
       setSession(found);
       if (found) {
         const status = found.endedAt ? 'completed' : 'active';
-        const obs = await fetchObservations(activeProject.path, found.id, status);
+        const [obs, arts] = await Promise.all([
+          fetchObservations(activeProject.path, found.id, status),
+          listArtifacts(undefined, undefined, 500),
+        ]);
         setObservations(obs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+
+        // Filter artifacts for this session
+        const sessionArtifacts = (arts as unknown as ArtifactEntry[])
+          .filter(a => a.sessionId === found.id || a.feature.toLowerCase() === found.branch.toLowerCase())
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setArtifacts(sessionArtifacts);
       }
       setLoading(false);
     })();
@@ -210,6 +230,7 @@ export function SessionDetailPage() {
 
   // Derived values
   const isActive = session && !session.endedAt;
+  const compliance = session ? complianceBySessionId[session.id] : undefined;
   const durationMs = session?.endedAt
     ? new Date(session.endedAt).getTime() - new Date(session.startedAt).getTime()
     : session
@@ -306,6 +327,21 @@ export function SessionDetailPage() {
             <Chip size="sm" color={isActive ? 'accent' : 'success'}>
               {isActive ? t('page.sessionDetail.statusActive') : t('page.sessionDetail.statusCompleted')}
             </Chip>
+            {!isActive && compliance && (
+              <Chip
+                size="sm"
+                color={compliance.status === 'compliant' ? 'success' : 'danger'}
+                title={
+                  compliance.status === 'non-compliant'
+                    ? `${t('page.sessions.missingArtifacts')}: ${compliance.missing.join(', ')}`
+                    : undefined
+                }
+              >
+                {compliance.status === 'compliant'
+                  ? t('page.sessions.compliant')
+                  : t('page.sessions.nonCompliant')}
+              </Chip>
+            )}
             {session.branch && (
               <span className="inline-flex items-center gap-1 text-muted-foreground">
                 <GitBranch size={12} />
@@ -500,6 +536,19 @@ export function SessionDetailPage() {
             <div className="space-y-2">
               {observations.map((obs) => (
                 <ObservationCard key={obs.id} observation={obs} />
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
+
+        {/* Section: Artifacts */}
+        <CollapsibleSection label={`Artifacts (${artifacts.length})`} defaultOpen={artifacts.length > 0}>
+          {artifacts.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">No artifacts generated for this session</p>
+          ) : (
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {artifacts.map((artifact) => (
+                <ArtifactPreviewCard key={artifact.id} artifact={artifact} />
               ))}
             </div>
           )}

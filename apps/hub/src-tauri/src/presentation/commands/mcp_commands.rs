@@ -1,5 +1,7 @@
 use tauri::State;
 use serde_json::Value;
+use tauri::async_runtime;
+use tokio::time::{timeout, Duration};
 
 use crate::AppContext;
 use crate::domain::model::{McpServer, McpServerMode};
@@ -38,19 +40,33 @@ pub fn get_mcp_servers(
 }
 
 #[tauri::command]
-pub fn list_mcp_tools(
+pub async fn list_mcp_tools(
     ctx: State<'_, AppContext>,
     package: String,
 ) -> Result<Vec<Value>, String> {
-    ctx.mcp_service.list_tools(&package)
+    let service = ctx.mcp_service.clone();
+    timeout(
+        Duration::from_secs(12),
+        async_runtime::spawn_blocking(move || service.list_tools(&package)),
+    )
+    .await
+    .map_err(|_| "list_mcp_tools timed out after 12s".to_string())?
+    .map_err(|e| format!("list_mcp_tools task failed: {}", e))?
 }
 
 #[tauri::command]
-pub fn call_mcp_tool(
+pub async fn call_mcp_tool(
     ctx: State<'_, AppContext>,
     package: String,
     tool_name: String,
     arguments: Value,
 ) -> Result<Value, String> {
-    ctx.mcp_service.call_tool(&package, &tool_name, arguments)
+    let service = ctx.mcp_service.clone();
+    timeout(
+        Duration::from_secs(20),
+        async_runtime::spawn_blocking(move || service.call_tool(&package, &tool_name, arguments)),
+    )
+    .await
+    .map_err(|_| "call_mcp_tool timed out after 20s".to_string())?
+    .map_err(|e| format!("call_mcp_tool task failed: {}", e))?
 }

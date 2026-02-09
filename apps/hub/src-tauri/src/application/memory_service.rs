@@ -83,6 +83,11 @@ impl MemoryService {
         self.memory_port.list_artifacts(artifact_type, status, limit)
     }
 
+    /// Use case: List recent pattern audit scores.
+    pub fn list_audit_scores(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String> {
+        self.memory_port.list_audit_scores(limit)
+    }
+
     // --- Write operations ---
 
     pub fn create_permanent_memory(&self, memory_type: &str, title: &str, content: &str) -> Result<String, String> {

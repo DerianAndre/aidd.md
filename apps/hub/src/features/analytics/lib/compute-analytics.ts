@@ -1,4 +1,4 @@
-import type { SessionState, ModelMetrics } from '../../../lib/types';
+import type { SessionState, ModelMetrics, AuditScore } from '../../../lib/types';
 
 /** Group completed sessions by modelId and compute per-model metrics. */
 export function computeModelMetrics(sessions: SessionState[]): ModelMetrics[] {
@@ -75,6 +75,24 @@ export interface TimelinePoint {
   avgCompliance: number;
 }
 
+export interface SessionEfficiencyMetrics {
+  avgStartupMs: number;
+  startupSamples: number;
+  avgContextEfficiency: number;
+  contextEfficiencySamples: number;
+}
+
+export interface AuditDimensionAverages {
+  lexicalDiversity: number;
+  structuralVariation: number;
+  voiceAuthenticity: number;
+  patternAbsence: number;
+  semanticPreservation: number;
+  tidBonus: number;
+  totalScore: number;
+  samples: number;
+}
+
 /** Group sessions by date and compute per-day metrics. */
 export function computeSessionTimeline(sessions: SessionState[]): TimelinePoint[] {
   const byDate = new Map<string, SessionState[]>();
@@ -96,4 +114,65 @@ export function computeSessionTimeline(sessions: SessionState[]): TimelinePoint[
         avgCompliance: withOutcome.length > 0 ? Math.round(sum / withOutcome.length) : 0,
       };
     });
+}
+
+export function computeSessionEfficiencyMetrics(sessions: SessionState[]): SessionEfficiencyMetrics {
+  let startupSum = 0;
+  let startupSamples = 0;
+  let efficiencySum = 0;
+  let contextEfficiencySamples = 0;
+
+  for (const session of sessions) {
+    if (session.timingMetrics?.startupMs != null) {
+      startupSum += session.timingMetrics.startupMs;
+      startupSamples++;
+    }
+    if (session.outcome?.contextEfficiency != null) {
+      efficiencySum += session.outcome.contextEfficiency;
+      contextEfficiencySamples++;
+    }
+  }
+
+  return {
+    avgStartupMs: startupSamples > 0 ? Math.round(startupSum / startupSamples) : 0,
+    startupSamples,
+    avgContextEfficiency: contextEfficiencySamples > 0
+      ? Math.round((efficiencySum / contextEfficiencySamples) * 100) / 100
+      : 0,
+    contextEfficiencySamples,
+  };
+}
+
+export function computeAuditDimensionAverages(scores: AuditScore[]): AuditDimensionAverages | null {
+  if (scores.length === 0) return null;
+
+  let lexicalDiversity = 0;
+  let structuralVariation = 0;
+  let voiceAuthenticity = 0;
+  let patternAbsence = 0;
+  let semanticPreservation = 0;
+  let tidBonus = 0;
+  let totalScore = 0;
+
+  for (const score of scores) {
+    lexicalDiversity += score.dimensions.lexicalDiversity ?? 0;
+    structuralVariation += score.dimensions.structuralVariation ?? 0;
+    voiceAuthenticity += score.dimensions.voiceAuthenticity ?? 0;
+    patternAbsence += score.dimensions.patternAbsence ?? 0;
+    semanticPreservation += score.dimensions.semanticPreservation ?? 0;
+    tidBonus += score.dimensions.tidBonus ?? 0;
+    totalScore += score.totalScore ?? 0;
+  }
+
+  const sampleCount = scores.length;
+  return {
+    lexicalDiversity: Math.round((lexicalDiversity / sampleCount) * 10) / 10,
+    structuralVariation: Math.round((structuralVariation / sampleCount) * 10) / 10,
+    voiceAuthenticity: Math.round((voiceAuthenticity / sampleCount) * 10) / 10,
+    patternAbsence: Math.round((patternAbsence / sampleCount) * 10) / 10,
+    semanticPreservation: Math.round((semanticPreservation / sampleCount) * 10) / 10,
+    tidBonus: Math.round((tidBonus / sampleCount) * 10) / 10,
+    totalScore: Math.round((totalScore / sampleCount) * 10) / 10,
+    samples: sampleCount,
+  };
 }

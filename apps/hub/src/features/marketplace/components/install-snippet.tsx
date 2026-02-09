@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardHeader,
-  CardAction,
   CardContent,
   CardTitle,
 } from "@/components/ui/card";
@@ -54,7 +53,7 @@ export function InstallSnippet({
       <Separator />
       <CardContent className="px-3 py-0">
         <pre className="overflow-x-auto py-3 text-xs leading-relaxed">
-          <code>{code}</code>
+          <code data-language={language}>{code}</code>
         </pre>
       </CardContent>
     </Card>

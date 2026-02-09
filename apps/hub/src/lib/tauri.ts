@@ -327,6 +327,9 @@ export const listArtifacts = (artifactType?: string, status?: string, limit?: nu
     limit: limit ?? null,
   });
 
+export const listAuditScores = (limit?: number) =>
+  invoke<unknown[]>('list_audit_scores', { limit: limit ?? null });
+
 // Memory write operations
 export const createPermanentMemory = (memoryType: string, title: string, content: string) =>
   invoke<string>('create_permanent_memory', { memoryType, title, content });

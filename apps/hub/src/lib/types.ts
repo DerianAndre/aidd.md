@@ -5,6 +5,7 @@ export type {
   AiProvider,
   AnalyticsQuery,
   AnalyticsResult,
+  AuditScore,
   BranchContext,
   ContextBudget,
   MemoryEntry,
@@ -18,6 +19,7 @@ export type {
   SessionOutcome,
   SessionState,
   StackInfo,
+  TokenUsage,
   ToolUsageEntry,
 } from '@aidd.md/mcp-shared';
 
@@ -118,7 +120,7 @@ export type EvolutionType =
   | 'new_convention'
   | 'model_recommendation';
 
-export type EvolutionAction = 'auto_applied' | 'drafted' | 'pending' | 'reverted' | 'rejected';
+export type EvolutionAction = 'auto_applied' | 'drafted' | 'pending' | 'reverted' | 'rejected' | 'approved';
 
 export interface EvolutionCandidate {
   id: string;
@@ -132,6 +134,7 @@ export interface EvolutionCandidate {
   suggestedAction: string;
   modelScope?: string;
   modelEvidence?: Record<string, number>;
+  status?: 'pending' | 'auto_applied' | 'drafted' | 'approved' | 'rejected';
   createdAt: string;
   updatedAt: string;
 }

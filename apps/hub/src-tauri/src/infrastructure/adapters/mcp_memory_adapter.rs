@@ -219,6 +219,10 @@ impl MemoryPort for McpMemoryAdapter {
         Ok(vec![])
     }
 
+    fn list_audit_scores(&self, _limit: Option<usize>) -> Result<Vec<serde_json::Value>, String> {
+        Ok(vec![])
+    }
+
     // Write operations — not supported via MCP adapter (use SQLite adapter)
     fn create_permanent_memory(&self, _memory_type: &str, _title: &str, _content: &str) -> Result<String, String> {
         Err("Write operations not supported via MCP adapter".to_string())

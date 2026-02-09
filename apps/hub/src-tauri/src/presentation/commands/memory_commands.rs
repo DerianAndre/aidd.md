@@ -132,6 +132,16 @@ pub fn list_artifacts(
     Ok(serde_json::Value::Array(artifacts))
 }
 
+/// List recent pattern audit scores.
+#[tauri::command]
+pub fn list_audit_scores(
+    ctx: State<'_, AppContext>,
+    limit: Option<usize>,
+) -> Result<serde_json::Value, String> {
+    let entries = ctx.memory_service.list_audit_scores(limit)?;
+    Ok(serde_json::Value::Array(entries))
+}
+
 // --- Write commands ---
 
 /// Create a permanent memory entry. Returns the new entry ID.

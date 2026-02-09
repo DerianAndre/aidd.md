@@ -41,6 +41,7 @@ const ACTION_COLORS: Record<EvolutionAction, 'success' | 'accent' | 'warning' | 
   pending: 'warning',
   reverted: 'danger',
   rejected: 'danger',
+  approved: 'success',
 };
 
 const ACTION_KEYS = {
@@ -49,6 +50,7 @@ const ACTION_KEYS = {
   pending: 'page.evolution.pending' as const,
   reverted: 'page.evolution.reverted' as const,
   rejected: 'page.evolution.rejected' as const,
+  approved: 'page.evolution.approved' as const,
 } satisfies Record<EvolutionAction, string>;
 
 export function EvolutionPage() {

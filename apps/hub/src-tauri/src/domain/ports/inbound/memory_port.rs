@@ -45,6 +45,9 @@ pub trait MemoryPort: Send + Sync {
         limit: Option<usize>,
     ) -> Result<Vec<serde_json::Value>, String>;
 
+    /// List recent pattern audit scores.
+    fn list_audit_scores(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String>;
+
     // --- Write operations ---
 
     /// Create a permanent memory entry. Returns the new entry ID.
