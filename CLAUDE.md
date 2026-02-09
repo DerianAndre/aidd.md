@@ -37,14 +37,34 @@ Expected status:
 
 ## 2. Mandatory Workflow Pipeline
 
-**Every session follows this pipeline. No step is optional unless the user EXPLICITLY opts out.**
+**Every session follows this pipeline. No step is optional unless fast-tracked (§2.0) or user EXPLICITLY opts out.**
 **Escape hatch**: User EXPLICITLY says "skip brainstorm", "just implement this", or similar direct opt-out.
 **If MCP tools fail mid-workflow**: Continue the workflow without artifacts. Record what you would have created. Retry tool calls once. If still failing, inform the user.
 
+### 2.0 Fast-Track Classification
+
+**Auto-suggest**: When classifying a task during `aidd_start`, if complexity is `trivial` (fewer than 3 steps, single-file fix, typo, config change):
+- Set `fastTrack: true` and `skippableStages: ['brainstorm', 'plan', 'checklist']`
+- Inform the user: "Classified as fast-track (trivial). Skipping brainstorm, plan, test phases."
+- User can override: "no, this needs full workflow" → update session with `fastTrack: false, skippableStages: []`
+
+**Escalation**: If during analysis the task reveals higher complexity than initially classified:
+- Update classification: `aidd_session { action: "update", id: SESSION_ID, taskClassification: { complexity: "moderate", fastTrack: false, skippableStages: [] } }`
+- Inform the user: "Complexity upgraded — switching to full workflow."
+- Resume from §2.1 UNDERSTAND (create brainstorm artifact, enter plan mode)
+
+**Per-phase skip**: Users can skip any individual phase explicitly:
+- "Skip brainstorm" → `skippableStages: ['brainstorm']`
+- "Skip brainstorm and plan" → `skippableStages: ['brainstorm', 'plan']`
+- All phases are skippable — compliance score reflects completeness, nothing is forced
+- `skippableStages` overrides `fastTrack` when both are present
+
+**Defaults**: When `fastTrack: true` without explicit `skippableStages`, the default skip list is `['brainstorm', 'plan', 'checklist']` (only retro is required).
+
 ### 2.1 UNDERSTAND — Brainstorm
 
-**MANDATORY. Hook `on-session-init.cjs` enforces this after `aidd_start`.**
-**Skip ONLY if user EXPLICITLY requests it (e.g., "skip brainstorm", "just implement").**
+**MANDATORY unless fast-tracked (§2.0) or user EXPLICITLY opts out.**
+**Hook `on-session-init.cjs` enforces this after `aidd_start`.**
 
 After `aidd_start` and setting raw input, your FIRST action is brainstorming:
 

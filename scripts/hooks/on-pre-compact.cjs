@@ -12,6 +12,9 @@ try {
   if (row) {
     const s = JSON.parse(row.data);
     const ac = artCount ? artCount.cnt : 0;
-    console.log(`[AIDD] Compaction imminent. Session ${row.id}: ${(s.tasksCompleted || []).length} completed, ${(s.tasksPending || []).length} pending, ${(s.filesModified || []).length} files, ${ac} active artifacts. Call aidd_session { action: "update", id: "${row.id}" } NOW to save state.`);
+    const lines = ['[AIDD] Context compaction imminent.'];
+    lines.push(`  - Session ${row.id}: ${(s.tasksCompleted || []).length} completed, ${(s.tasksPending || []).length} pending, ${(s.filesModified || []).length} files, ${ac} artifact(s)`);
+    lines.push('Save session state now (CLAUDE.md \u00a72.7).');
+    console.log(lines.join('\n'));
   }
-} catch { console.log('[AIDD] Compaction imminent. Save state: aidd_session { action: "update" } NOW.'); }
+} catch { console.log('[AIDD] Context compaction imminent. Save session state now (CLAUDE.md \u00a72.7).'); }

@@ -5,8 +5,11 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
   registerTool,
   createTextResult,
+  readJsonFile,
+  deepMerge,
+  DEFAULT_CONFIG,
 } from '@aidd.md/mcp-shared';
-import type { AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
+import type { AiddConfig, AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
 
 // ---------------------------------------------------------------------------
 // S2D checksum reader
@@ -35,6 +38,13 @@ function readDocsChecksum(projectRoot: string): DocsChecksum {
   } catch {
     return { status: 'NOT_FOUND' };
   }
+}
+
+function getLiveCiConfig(context: ModuleContext): AiddConfig['ci'] {
+  const configPath = resolve(context.aiddDir, 'config.json');
+  const raw = readJsonFile<Partial<AiddConfig>>(configPath);
+  const merged = raw ? deepMerge(DEFAULT_CONFIG, raw) : context.config;
+  return merged.ci;
 }
 import type { ValidationResult, ValidationIssue } from '../validation/types.js';
 import { resolveContent } from '../validation/utils.js';
@@ -94,7 +104,7 @@ export const ciModule: AiddModule = {
       annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async (args) => {
         const { format: fmt } = args as { format?: 'markdown' | 'json' };
-        const ci = context.config.ci;
+        const ci = getLiveCiConfig(context);
         const format = fmt ?? 'markdown';
 
         const docsChecksum = readDocsChecksum(context.projectRoot);

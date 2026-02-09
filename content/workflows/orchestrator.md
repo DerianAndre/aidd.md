@@ -51,6 +51,8 @@ Coordinate the full brainstorm → research → plan → execute → complete pi
 
 **Default:** Enter at Stage 1 unless the user demonstrates clarity.
 
+**Fast-Track:** For trivial tasks (fewer than 3 steps, single-file, config/typo), skip directly to Stage 5 (Execute). See `specs/fast-track.md` for full semantics. Set `taskClassification.fastTrack: true` and `skippableStages: ['brainstorm', 'plan', 'checklist']`. Users can skip any individual stage via `skippableStages`. The AI should auto-suggest fast-track for trivial tasks and escalate if complexity grows during analysis.
+
 ---
 
 ### Stage 1: Brainstorm (Tier 1 — inline)

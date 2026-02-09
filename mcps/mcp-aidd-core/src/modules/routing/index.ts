@@ -5,8 +5,11 @@ import {
   createTextResult,
   parseAllMarkdownTables,
   extractSection,
+  readJsonFile,
+  deepMerge,
+  DEFAULT_CONFIG,
 } from '@aidd.md/mcp-shared';
-import type { AiddModule, ModelTier, ModuleContext } from '@aidd.md/mcp-shared';
+import type { AiddConfig, AiddModule, ModelTier, ModuleContext } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { routeToModel, getMatrixStatus, MODEL_MATRIX, TIER_DEFAULTS, COGNITIVE_TIER_MAP } from './model-matrix.js';
 
@@ -47,6 +50,9 @@ interface ClassificationResult {
   fastTrack: boolean;
   risky: boolean;
   skippableStages: string[];
+  slimStartEnabled: boolean;
+  slimStartRecommended: boolean;
+  slimStartTargetTokens: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,6 +62,12 @@ interface ClassificationResult {
 let aiddModeCache: AiddModeEntry[] | null = null;
 let fallbackModeCache: FallbackModeEntry[] | null = null;
 let decisionRulesCache: DecisionRule[] | null = null;
+
+function getLiveConfig(context: ModuleContext): AiddConfig {
+  const configPath = `${context.aiddDir}/config.json`;
+  const raw = readJsonFile<Partial<AiddConfig>>(configPath);
+  return raw ? deepMerge(DEFAULT_CONFIG, raw) : context.config;
+}
 
 function parseRoutingTables(context: ModuleContext): void {
   if (aiddModeCache && fallbackModeCache) return;
@@ -338,6 +350,10 @@ function classifyTask(
   const hasRiskyKeyword = keywords.some((k) => RISKY_KEYWORDS.has(k));
   const fastTrack = complexity === 'low' && tier >= 2 && phase !== 'RELEASE' && !hasRiskyKeyword;
   const skippableStages = fastTrack ? ['brainstorm', 'research'] : [];
+  const liveConfig = getLiveConfig(context);
+  const slimStartEnabled = liveConfig.content.slimStartEnabled ?? true;
+  const slimStartTargetTokens = liveConfig.content.slimStartTargetTokens ?? 600;
+  const slimStartRecommended = slimStartEnabled && fastTrack;
 
   return {
     taskSummary: description.slice(0, 100),
@@ -351,6 +367,9 @@ function classifyTask(
     fastTrack,
     risky: hasRiskyKeyword,
     skippableStages,
+    slimStartEnabled,
+    slimStartRecommended,
+    slimStartTargetTokens,
   };
 }
 

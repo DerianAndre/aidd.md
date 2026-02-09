@@ -11,21 +11,15 @@ process.stdin.on('data', (d) => { input += d; });
 process.stdin.on('end', () => {
   try {
     const db = new Database(resolve('.aidd', 'data.db'), { readonly: true });
-    const session = db.prepare(
-      "SELECT id FROM sessions WHERE status = 'active' ORDER BY started_at DESC LIMIT 1"
-    ).get();
     const plan = db.prepare(
       "SELECT id FROM artifacts WHERE type = 'plan' AND status = 'active' ORDER BY created_at DESC LIMIT 1"
     ).get();
     db.close();
 
     if (!plan) {
-      const sid = session ? session.id : 'SESSION_ID';
       process.stderr.write(
-        '[AIDD BLOCKED] Cannot exit plan mode: no active plan artifact found (CLAUDE.md §2.2). ' +
-        'Create one first:\n' +
-        `  aidd_artifact { action: "create", type: "plan", feature: "<slug>", title: "Plan: <feature>", sessionId: "${sid}", content: "## Tasks\\n..." }\n` +
-        'Then retry ExitPlanMode.'
+        '[AIDD] BLOCKED: No plan artifact found.\n' +
+        '  - Write a plan artifact (CLAUDE.md \u00a72.2) before exiting plan mode.'
       );
       process.exit(2);
     }

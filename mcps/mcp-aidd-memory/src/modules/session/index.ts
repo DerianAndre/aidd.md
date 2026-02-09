@@ -114,7 +114,15 @@ function estimateTokenCountFromText(text: string): number {
   return Math.max(1, Math.ceil(trimmed.length / CHARS_PER_TOKEN));
 }
 
-function estimateSessionTokenUsage(session: SessionState): TokenUsage | null {
+// Tool call token proxy: each MCP tool call implies ~1000 tokens of request/response
+const TOKENS_PER_TOOL_CALL_INPUT = 400;
+const TOKENS_PER_TOOL_CALL_OUTPUT = 600;
+
+async function estimateSessionTokenUsage(
+  session: SessionState,
+  backend: StorageBackend,
+): Promise<TokenUsage | null> {
+  // --- Session metadata (original sources) ---
   const inputParts = [
     session.name,
     session.input,
@@ -128,8 +136,31 @@ function estimateSessionTokenUsage(session: SessionState): TokenUsage | null {
     ...session.errorsResolved.map((e) => `${e.error} ${e.fix}`.trim()),
   ].filter((part): part is string => !!part && part.trim().length > 0);
 
-  const inputTokens = estimateTokenCountFromText(inputParts.join('\n'));
-  const outputTokens = estimateTokenCountFromText(outputParts.join('\n'));
+  // --- Enrichment: observations ---
+  const observations = await backend.listObservations({ sessionId: session.id });
+  for (const obs of observations) {
+    if (obs.narrative) outputParts.push(obs.narrative);
+    if (obs.facts) outputParts.push(...obs.facts);
+    if (obs.concepts) inputParts.push(...obs.concepts);
+  }
+
+  // --- Enrichment: artifacts ---
+  const artifacts = await backend.listArtifacts({ sessionId: session.id });
+  for (const art of artifacts) {
+    if (art.content) outputParts.push(art.content);
+    if (art.title) outputParts.push(art.title);
+  }
+
+  // --- Text-based estimation ---
+  let inputTokens = estimateTokenCountFromText(inputParts.join('\n'));
+  let outputTokens = estimateTokenCountFromText(outputParts.join('\n'));
+
+  // --- Tool call proxy ---
+  const toolCallCount = session.toolsCalled.length;
+  if (toolCallCount > 0) {
+    inputTokens += toolCallCount * TOKENS_PER_TOOL_CALL_INPUT;
+    outputTokens += toolCallCount * TOKENS_PER_TOOL_CALL_OUTPUT;
+  }
 
   if (inputTokens === 0 && outputTokens === 0) return null;
 
@@ -456,7 +487,7 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
                 }
                 tokenTelemetry = 'reported';
               } else if (!session.tokenUsage) {
-                const estimated = estimateSessionTokenUsage(session);
+                const estimated = await estimateSessionTokenUsage(session, backend);
                 if (estimated) {
                   session.tokenUsage = estimated;
                   tokenTelemetry = 'estimated';
@@ -470,6 +501,9 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
               } else {
                 tokenTelemetry = 'reported';
               }
+
+              // Persist telemetry source for downstream consumers (Hub, analytics)
+              session.tokenTelemetrySource = tokenTelemetry === 'reported' ? 'reported' : 'estimated';
 
               // Compute context efficiency: tasks completed per 1K output tokens
               if (session.tokenUsage && session.outcome) {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // AIDD Hook: PostToolUse(mcp__aidd-engine__aidd_start)
-// Fires after aidd_start. Enforces brainstorm unless persisted fast-track says skip.
+// Fires after aidd_start. Enforces brainstorm unless skipped via skippableStages/fastTrack.
 // Reads stdin for tool context. Adapter-agnostic.
 const Database = require('better-sqlite3');
 const { resolve } = require('path');
@@ -14,37 +14,43 @@ process.stdin.on('end', () => {
     const session = db.prepare("SELECT id, data FROM sessions WHERE status = 'active' ORDER BY started_at DESC LIMIT 1").get();
     const brainstorm = db.prepare("SELECT id FROM artifacts WHERE type = 'brainstorm' AND status = 'active' ORDER BY created_at DESC LIMIT 1").get();
     db.close();
-    const sid = session ? session.id : 'SESSION_ID';
-    let isFastTrack = false;
+
+    // Compute skipped phases
+    let skipped = [];
     if (session && session.data) {
       try {
         const data = JSON.parse(session.data);
-        isFastTrack = data.taskClassification && data.taskClassification.fastTrack === true;
-      } catch {
-        isFastTrack = false;
-      }
+        const tc = data.taskClassification || {};
+        const explicitSkip = Array.isArray(tc.skippableStages) && tc.skippableStages.length > 0
+          ? tc.skippableStages : null;
+        const isFastTrack = tc.fastTrack === true;
+        const defaultSkip = ['brainstorm', 'plan', 'checklist'];
+        skipped = explicitSkip || (isFastTrack ? defaultSkip : []);
+      } catch { /* safe fallback */ }
     }
 
-    if (isFastTrack) {
+    if (skipped.includes('brainstorm')) {
       console.log(
-        `[AIDD Workflow §2.1] [Fast-Track] Session ${sid} initialized. Brainstorm is optional by persisted policy.\n` +
-        `Proceed to plan artifact creation when ready.`
+        '[AIDD] Session initialized. Brainstorm skipped (fast-track).\n' +
+        'Proceed to planning when ready (CLAUDE.md \u00a72.2).'
       );
       return;
     }
 
     if (brainstorm) {
-      console.log(`[AIDD Workflow §2.1] Session ${sid} initialized. Active brainstorm: ${brainstorm.id}. Continue to planning (EnterPlanMode) when ready.`);
+      console.log(
+        '[AIDD] Session initialized. Brainstorm exists.\n' +
+        'Proceed to planning when ready (CLAUDE.md \u00a72.2).'
+      );
     } else {
       console.log(
-        `[AIDD Workflow §2.1] Session ${sid} initialized. MANDATORY next step: Brainstorm.\n` +
-        `You MUST create a brainstorm artifact BEFORE any planning or implementation:\n` +
-        `  aidd_artifact { action: "create", type: "brainstorm", feature: "<slug>", title: "Brainstorm: <topic>", sessionId: "${sid}", content: "## Ideas\\n...\\n## Options\\n...\\n## Trade-offs\\n..." }\n` +
-        `  aidd_session { action: "update", id: "${sid}", input: "<refined user intent>" }\n` +
-        `Skip ONLY if user EXPLICITLY requested no brainstorm.`
+        '[AIDD] Session initialized. Next: brainstorm (CLAUDE.md \u00a72.1).\n' +
+        '  - Explore the problem space and ask questions\n' +
+        '  - Create a brainstorm artifact\n' +
+        '  - Skip only if user explicitly opts out.'
       );
     }
   } catch {
-    console.log('[AIDD Workflow §2.1] Session initialized. Create brainstorm artifact before planning (mandatory unless user opts out).');
+    console.log('[AIDD] Session initialized. Next: brainstorm (CLAUDE.md \u00a72.1).');
   }
 });

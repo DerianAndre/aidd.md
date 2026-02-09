@@ -314,5 +314,7 @@ export const aiddConfigSchema = z.object({
   }),
   content: z.object({
     overrideMode: z.enum(['merge', 'project_only', 'bundled_only']),
+    slimStartEnabled: z.boolean().optional(),
+    slimStartTargetTokens: z.number().int().min(100).max(5000).optional(),
   }),
 });

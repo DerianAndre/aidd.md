@@ -124,6 +124,8 @@ export interface AiddConfig {
   };
   content: {
     overrideMode: 'merge' | 'project_only' | 'bundled_only';
+    slimStartEnabled?: boolean;
+    slimStartTargetTokens?: number;
     paths?: ContentPaths;
   };
 }
@@ -172,6 +174,8 @@ export const DEFAULT_CONFIG: AiddConfig = {
   },
   content: {
     overrideMode: 'merge',
+    slimStartEnabled: true,
+    slimStartTargetTokens: 600,
   },
 };
 
@@ -282,6 +286,7 @@ export interface SessionState {
   outcome?: SessionOutcome;
   lifecycleSessionId?: string;
   tokenUsage?: TokenUsage;
+  tokenTelemetrySource?: 'reported' | 'estimated';
   fingerprint?: ModelFingerprint;
   timingMetrics?: {
     startupMs?: number;

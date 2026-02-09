@@ -5,8 +5,11 @@ import {
   createTextResult,
   createErrorResult,
   readFileOrNull,
+  readJsonFile,
+  deepMerge,
+  DEFAULT_CONFIG,
 } from '@aidd.md/mcp-shared';
-import type { AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
+import type { AiddConfig, AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -104,6 +107,13 @@ const DANGEROUS_PATTERNS: Array<{ pattern: RegExp; rule: string; message: string
   { pattern: /\bnew\s+Function\s*\(/g, rule: 'security', message: 'Dynamic function constructor detected. Security vulnerability.' },
 ];
 
+function getLiveCiConfig(context: ModuleContext): AiddConfig['ci'] {
+  const configPath = `${context.aiddDir}/config.json`;
+  const raw = readJsonFile<Partial<AiddConfig>>(configPath);
+  const merged = raw ? deepMerge(DEFAULT_CONFIG, raw) : context.config;
+  return merged.ci;
+}
+
 // ---------------------------------------------------------------------------
 // Module
 // ---------------------------------------------------------------------------
@@ -172,7 +182,7 @@ export const enforcementModule: AiddModule = {
         }
 
         // Respect CI config for severity
-        const ci = context.config.ci;
+        const ci = getLiveCiConfig(context);
         const filteredIssues = issues.filter((issue) => {
           const ruleId = issue.rule;
           if (ci.ignore.some((p) => ruleId.includes(p))) return false;

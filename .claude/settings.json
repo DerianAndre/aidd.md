@@ -82,7 +82,7 @@
           { "type": "command", "command": "node scripts/hooks/on-stop.cjs" },
           {
             "type": "prompt",
-            "prompt": "Check AIDD protocol compliance. If 'stop_hook_active' is true in the input, respond {\"ok\": true}. Otherwise: check the conversation for a recent aidd_session tool call with action 'end' that includes outcome metrics (testsPassing, complianceScore). If found, respond {\"ok\": true}. If not found, respond {\"ok\": false, \"reason\": \"AIDD protocol: complete the 7-step Session End Protocol (CLAUDE.md §3) before closing.\"}."
+            "prompt": "Check if an AIDD session was properly ended. If 'stop_hook_active' is true, respond {\"ok\": true}. Otherwise: look for a recent aidd_session tool call with action 'end' and outcome metrics. If found, respond {\"ok\": true}. If not found, respond {\"ok\": false, \"reason\": \"Session still active. Complete the end protocol (CLAUDE.md §2.7) before closing.\"}."
           }
         ]
       }

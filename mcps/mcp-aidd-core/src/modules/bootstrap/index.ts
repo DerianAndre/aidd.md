@@ -7,8 +7,11 @@ import {
   createErrorResult,
   createTextResult,
   detectProject,
+  readJsonFile,
+  deepMerge,
+  DEFAULT_CONFIG,
 } from '@aidd.md/mcp-shared';
-import type { AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
+import type { AiddConfig, AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // ---------------------------------------------------------------------------
@@ -26,6 +29,12 @@ function detectGitBranch(projectRoot: string): string {
   } catch {
     return 'main';
   }
+}
+
+function getLiveConfig(context: ModuleContext): AiddConfig {
+  const configPath = resolvePath(context.aiddDir, 'config.json');
+  const raw = readJsonFile<Partial<AiddConfig>>(configPath);
+  return raw ? deepMerge(DEFAULT_CONFIG, raw) : context.config;
 }
 
 // ---------------------------------------------------------------------------
@@ -69,7 +78,7 @@ export const bootstrapModule: AiddModule = {
       schema: {},
       annotations: { readOnlyHint: true, idempotentHint: true },
       handler: async () => {
-        return createJsonResult(context.config);
+        return createJsonResult(getLiveConfig(context));
       },
     });
 
@@ -146,6 +155,7 @@ export const bootstrapModule: AiddModule = {
       handler: async (args) => {
         const startTime = performance.now();
         const a = args as Record<string, unknown>;
+        const liveConfig = getLiveConfig(context);
         const projectPath = a['path'] as string | undefined;
         if (projectPath) {
           const requestedRoot = resolvePath(projectPath);
@@ -164,7 +174,11 @@ export const bootstrapModule: AiddModule = {
           complexity?: string;
           fastTrack?: boolean;
         } | undefined;
-        const isSlim = classification?.complexity === 'low' || classification?.fastTrack === true;
+        const slimStartEnabled = liveConfig.content.slimStartEnabled ?? true;
+        const slimStartTargetTokens = liveConfig.content.slimStartTargetTokens ?? 600;
+        const isSlim = slimStartEnabled && (
+          classification?.complexity === 'low' || classification?.fastTrack === true
+        );
 
         const sections: string[] = [];
 
@@ -245,14 +259,17 @@ export const bootstrapModule: AiddModule = {
         }
 
         if (isSlim) {
-          // =============================================================
-          // SLIM MODE: Critical guardrails only (~500-700 tokens total)
-          // =============================================================
-          sections.push('\n## Critical Guardrails\n');
-          sections.push('- Never use `any` without documented exception');
-          sections.push('- Never commit secrets');
-          sections.push('- ES modules only (`import`/`export`)');
-          sections.push('\n[Slim] Low-complexity task. Full context via `aidd_get_agent`, `aidd_get_routing_table`.');
+            // =============================================================
+            // SLIM MODE: Critical guardrails only (~500-700 tokens total)
+            // =============================================================
+            sections.push('\n## Critical Guardrails\n');
+            sections.push('- Never use `any` without documented exception');
+            sections.push('- Never commit secrets');
+            sections.push('- ES modules only (`import`/`export`)');
+            sections.push(
+              `\n[Slim] Low-complexity task. Target context ~${slimStartTargetTokens} tokens. ` +
+              'Full context via `aidd_get_agent`, `aidd_get_routing_table`.',
+            );
         } else {
           // =============================================================
           // FULL MODE: All sections (agents, rules, workflows, etc.)

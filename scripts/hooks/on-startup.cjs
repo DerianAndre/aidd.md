@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // AIDD Hook: SessionStart(startup)
 // Queries .aidd/data.db for active session + orphaned artifacts.
+// Validates session endedAt to avoid reporting stale/ended sessions as active.
 // Adapter-agnostic — referenced by .claude/settings.json and other adapters.
 const Database = require('better-sqlite3');
 const { resolve } = require('path');
@@ -11,11 +12,25 @@ try {
   db.close();
   if (session) {
     const s = JSON.parse(session.data);
-    const input = s.input ? ` Input: "${s.input}".` : '';
-    const artStr = arts.length ? ` Active artifacts: ${arts.map(a => `${a.cnt} ${a.type}`).join(', ')}.` : '';
-    console.log(`[AIDD] Active session: ${session.id} (branch: ${session.branch}).${input}${artStr} Resume or end it. Workflow: Brainstorm → Plan → Execute → Test → Review → Ship (CLAUDE.md §2).`);
+    if (s.endedAt) {
+      const orphaned = arts.reduce((sum, a) => sum + a.cnt, 0);
+      const lines = ['[AIDD] No active session (stale session detected).'];
+      if (orphaned > 0) lines.push(`  - ${orphaned} orphaned artifact(s) found`);
+      lines.push('Call aidd_start. Workflow: CLAUDE.md \u00a72.');
+      console.log(lines.join('\n'));
+    } else {
+      const lines = [`[AIDD] Active session: ${session.id} (branch: ${session.branch}).`];
+      if (s.input) lines.push(`  - Input: "${s.input}"`);
+      const artTotal = arts.reduce((sum, a) => sum + a.cnt, 0);
+      if (artTotal > 0) lines.push(`  - ${artTotal} active artifact(s)`);
+      lines.push('Resume or end it. Workflow: CLAUDE.md \u00a72.');
+      console.log(lines.join('\n'));
+    }
   } else {
-    const artStr = arts.length ? ` Warning: ${arts.reduce((s, a) => s + a.cnt, 0)} orphaned active artifacts found — archive or review them.` : '';
-    console.log(`[AIDD] No active session.${artStr} Call aidd_start NOW. Mandatory workflow: Brainstorm → Plan → Execute → Test → Review → Ship (CLAUDE.md §2).`);
+    const orphaned = arts.reduce((sum, a) => sum + a.cnt, 0);
+    const lines = ['[AIDD] No active session.'];
+    if (orphaned > 0) lines.push(`  - ${orphaned} orphaned artifact(s) found`);
+    lines.push('Call aidd_start. Workflow: CLAUDE.md \u00a72.');
+    console.log(lines.join('\n'));
   }
-} catch { console.log('[AIDD] Call aidd_start NOW. Mandatory workflow: Brainstorm → Plan → Execute → Test → Review → Ship (CLAUDE.md §2).'); }
+} catch { console.log('[AIDD] No active session. Call aidd_start. Workflow: CLAUDE.md \u00a72.'); }
