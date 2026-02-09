@@ -21,7 +21,7 @@ export function createObservationModule(storage: StorageProvider): AiddModule {
     name: 'observation',
     description: 'Typed observation capture during sessions',
 
-    register(server: McpServer, _context: ModuleContext) {
+    register(server: McpServer, context: ModuleContext) {
       registerTool(server, {
         name: 'aidd_observation',
         description:
@@ -78,12 +78,14 @@ export function createObservationModule(storage: StorageProvider): AiddModule {
 
           await backend.saveObservation(observation);
 
-          // Hook fires AFTER response — fire-and-forget, silent
+          // Hook fires AFTER response — fire-and-forget with telemetry logging.
           hookBus.emit({
             type: 'observation_saved',
             observationId: observation.id,
             sessionId: observation.sessionId,
-          }).catch(() => {});
+          }).catch((err) => {
+            context.logger.error('HookBus emit failed (observation_saved):', err);
+          });
 
           return createJsonResult({
             id: observation.id,

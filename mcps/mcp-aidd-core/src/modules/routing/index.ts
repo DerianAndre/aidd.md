@@ -45,6 +45,7 @@ interface ClassificationResult {
   confidence: number;
   complexity: 'low' | 'moderate' | 'complex';
   fastTrack: boolean;
+  risky: boolean;
   skippableStages: string[];
 }
 
@@ -348,6 +349,7 @@ function classifyTask(
     confidence: Math.round(confidence * 100) / 100,
     complexity,
     fastTrack,
+    risky: hasRiskyKeyword,
     skippableStages,
   };
 }

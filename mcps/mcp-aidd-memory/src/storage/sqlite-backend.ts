@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { resolve } from 'node:path';
+import { copyFileSync, existsSync, statSync } from 'node:fs';
+import { basename, dirname, resolve } from 'node:path';
 import {
   ensureDir,
   now,
@@ -39,7 +40,13 @@ import type {
   ToolUsageEntry,
 } from '@aidd.md/mcp-shared';
 import type { StorageConfig } from './types.js';
-import { SCHEMA } from './migrations.js';
+import {
+  SCHEMA,
+  CURRENT_SCHEMA_VERSION,
+  MIGRATIONS,
+  REQUIRED_TABLES,
+  REQUIRED_INDEXES,
+} from './migrations.js';
 
 type BetterSqlite3 = typeof import('better-sqlite3');
 type Database = import('better-sqlite3').Database;
@@ -60,24 +67,67 @@ export class SqliteBackend implements StorageBackend {
     const Database = BetterSqlite3Module.default;
     this.db = new Database(this.dbPath);
 
-    // Check if schema exists via meta table
-    const hasMeta = this.db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='meta'",
-    ).get();
+    // Connection-level pragmas (applied every startup).
+    this.db.pragma('journal_mode = WAL');
+    this.db.pragma('foreign_keys = ON');
+    this.db.pragma('busy_timeout = 5000');
 
-    if (!hasMeta) {
-      this.db.exec(SCHEMA);
-    }
+    // Ensure meta table exists so versioning can run even on legacy DBs.
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS meta (
+        key TEXT PRIMARY KEY,
+        value TEXT
+      );
+    `);
 
-    // Schema checksum verification (R1)
-    const currentHash = createHash('sha256').update(SCHEMA).digest('hex').slice(0, 16);
-    const stored = this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema_hash') as
+    const versionRow = this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema_version') as
       | { value: string }
       | undefined;
-    if (stored && stored.value !== currentHash) {
-      console.warn('[aidd] Schema Mismatch — DB schema has changed since last run');
+    const currentVersion = versionRow?.value ? Number.parseInt(versionRow.value, 10) : 0;
+    if (Number.isNaN(currentVersion) || currentVersion < 0) {
+      throw new Error(`[aidd] Invalid schema_version value: ${versionRow?.value ?? 'null'}`);
     }
+    if (currentVersion > CURRENT_SCHEMA_VERSION) {
+      throw new Error(
+        `[aidd] Database schema_version (${currentVersion}) is newer than this binary (${CURRENT_SCHEMA_VERSION}).`,
+      );
+    }
+
+    const pendingMigrations = MIGRATIONS
+      .filter((m) => m.version > currentVersion)
+      .sort((a, b) => a.version - b.version);
+
+    if (pendingMigrations.length > 0) {
+      const targetVersion = pendingMigrations[pendingMigrations.length - 1]!.version;
+      this.createMigrationBackup(currentVersion, targetVersion);
+
+      this.db.transaction(() => {
+        for (const migration of pendingMigrations) {
+          for (const statement of migration.statements) {
+            this.db.exec(statement);
+          }
+          this.db
+            .prepare('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)')
+            .run('schema_version', String(migration.version));
+        }
+      })();
+    }
+
+    this.verifySchemaIntegrity();
+
+    // Schema checksum verification (informational, not the migration source of truth).
+    const currentHash = createHash('sha256').update(SCHEMA).digest('hex').slice(0, 16);
+    const storedHash = this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema_hash') as
+      | { value: string }
+      | undefined;
+    if (storedHash && storedHash.value !== currentHash) {
+      console.warn('[aidd] Schema hash changed — migration path reconciled and hash updated');
+    }
+
     this.db.prepare('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)').run('schema_hash', currentHash);
+    this.db
+      .prepare('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)')
+      .run('schema_version', String(CURRENT_SCHEMA_VERSION));
   }
 
   async close(): Promise<void> {
@@ -1041,6 +1091,39 @@ export class SqliteBackend implements StorageBackend {
   async deleteArtifact(id: string): Promise<boolean> {
     const result = this.db.prepare('DELETE FROM artifacts WHERE id = ?').run(id);
     return result.changes > 0;
+  }
+
+  // ---- Schema guards ----
+
+  private createMigrationBackup(fromVersion: number, toVersion: number): void {
+    if (!existsSync(this.dbPath)) return;
+
+    const fileStats = statSync(this.dbPath);
+    if (fileStats.size === 0) return;
+
+    const stamp = now().replace(/[:.]/g, '-');
+    const backupName = `${basename(this.dbPath)}.pre-migration-v${fromVersion}-to-v${toVersion}-${stamp}.bak`;
+    const backupPath = resolve(dirname(this.dbPath), backupName);
+    copyFileSync(this.dbPath, backupPath);
+  }
+
+  private verifySchemaIntegrity(): void {
+    const tableStmt = this.db.prepare(
+      "SELECT name FROM sqlite_master WHERE (type = 'table' OR type = 'view') AND name = ?",
+    );
+    const indexStmt = this.db.prepare(
+      "SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?",
+    );
+
+    const missingTables = REQUIRED_TABLES.filter((name) => !tableStmt.get(name));
+    if (missingTables.length > 0) {
+      throw new Error(`[aidd] Migration integrity failure: missing tables [${missingTables.join(', ')}]`);
+    }
+
+    const missingIndexes = REQUIRED_INDEXES.filter((name) => !indexStmt.get(name));
+    if (missingIndexes.length > 0) {
+      throw new Error(`[aidd] Migration integrity failure: missing indexes [${missingIndexes.join(', ')}]`);
+    }
   }
 
   // ---- Row mappers ----

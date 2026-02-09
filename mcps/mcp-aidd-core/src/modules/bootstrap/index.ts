@@ -123,6 +123,11 @@ export const bootstrapModule: AiddModule = {
             domain: z.string(),
             nature: z.string(),
             complexity: z.string(),
+            phase: z.string().optional(),
+            tier: z.number().optional(),
+            fastTrack: z.boolean().optional(),
+            risky: z.boolean().optional(),
+            skippableStages: z.array(z.string()).optional(),
           })
           .optional()
           .describe('Task classification'),
@@ -142,8 +147,12 @@ export const bootstrapModule: AiddModule = {
         const projectPath = a['path'] as string | undefined;
         const info = projectPath ? detectProject(projectPath) : context.projectInfo;
         const index = context.contentLoader.getIndex();
-        const classification = a['taskClassification'] as { domain?: string; complexity?: string } | undefined;
-        const isSlim = classification?.complexity === 'low';
+        const classification = a['taskClassification'] as {
+          domain?: string;
+          complexity?: string;
+          fastTrack?: boolean;
+        } | undefined;
+        const isSlim = classification?.complexity === 'low' || classification?.fastTrack === true;
 
         const sections: string[] = [];
 
@@ -247,14 +256,29 @@ export const bootstrapModule: AiddModule = {
             }
           }
 
-          // 6. Active Rules — full content (must be enforced)
+          // 6. Active Rules — compact summaries to avoid context inflation
           if (index.rules.length > 0) {
             sections.push('\n## Active Rules (ENFORCE)\n');
             for (const rule of index.rules) {
               const title = rule.frontmatter['title'] ?? rule.name.replace('.md', '');
               const content = rule.getContent();
               sections.push(`### ${title}\n`);
-              sections.push(content);
+              const strongLines = content
+                .split('\n')
+                .map((l) => l.trim())
+                .filter((l) => /\b(MUST|MUST NOT|NEVER|DO NOT|FORBIDDEN)\b/i.test(l))
+                .slice(0, 3);
+              if (strongLines.length > 0) {
+                for (const line of strongLines) {
+                  sections.push(`- ${line}`);
+                }
+              } else {
+                const fallback = content
+                  .split('\n')
+                  .map((l) => l.trim())
+                  .find((l) => l.length > 0 && !l.startsWith('#'));
+                if (fallback) sections.push(`- ${fallback.slice(0, 180)}`);
+              }
               sections.push('');
             }
           }

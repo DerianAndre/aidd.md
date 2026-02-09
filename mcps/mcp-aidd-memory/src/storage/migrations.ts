@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// AIDD Memory — SQLite Schema (single SCHEMA, no migrations)
+// AIDD Memory — SQLite Schema + Versioned Forward Migrations
 // ---------------------------------------------------------------------------
 
 export const SCHEMA = `
@@ -254,3 +254,76 @@ CREATE TABLE IF NOT EXISTS audit_scores (
 CREATE INDEX IF NOT EXISTS idx_audit_model ON audit_scores(model_id);
 CREATE INDEX IF NOT EXISTS idx_audit_session ON audit_scores(session_id);
 `;
+
+export interface SchemaMigration {
+  version: number;
+  name: string;
+  statements: string[];
+}
+
+const BASE_SCHEMA_DDL = SCHEMA
+  .split('\n')
+  .filter((line) => !line.trim().startsWith('PRAGMA '))
+  .join('\n')
+  .trim();
+
+const PERFORMANCE_INDEXES = `
+CREATE INDEX IF NOT EXISTS idx_sessions_status_started_at ON sessions(status, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_permanent_memory_type_created_at ON permanent_memory(type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tool_usage_session_timestamp ON tool_usage(session_id, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_evo_log_candidate_timestamp ON evolution_log(candidate_id, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_drafts_status_updated_at ON drafts(status, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_branches_archived_updated_at ON branches(archived, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pattern_detections_model_created_at ON pattern_detections(model_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_model_created_at ON audit_scores(model_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_artifacts_feature_status_date ON artifacts(feature, status, date DESC);
+CREATE INDEX IF NOT EXISTS idx_lifecycle_status_updated_at ON lifecycle_sessions(status, updated_at DESC);
+`.trim();
+
+export const CURRENT_SCHEMA_VERSION = 2;
+
+export const MIGRATIONS: SchemaMigration[] = [
+  {
+    version: 1,
+    name: 'baseline_schema',
+    statements: [BASE_SCHEMA_DDL],
+  },
+  {
+    version: 2,
+    name: 'performance_indexes',
+    statements: [PERFORMANCE_INDEXES],
+  },
+];
+
+export const REQUIRED_TABLES = [
+  'meta',
+  'sessions',
+  'observations',
+  'permanent_memory',
+  'tool_usage',
+  'branches',
+  'evolution_candidates',
+  'evolution_log',
+  'evolution_snapshots',
+  'drafts',
+  'lifecycle_sessions',
+  'banned_patterns',
+  'pattern_detections',
+  'artifacts',
+  'audit_scores',
+  'observations_fts',
+  'permanent_memory_fts',
+] as const;
+
+export const REQUIRED_INDEXES = [
+  'idx_sessions_status_started_at',
+  'idx_permanent_memory_type_created_at',
+  'idx_tool_usage_session_timestamp',
+  'idx_evo_log_candidate_timestamp',
+  'idx_drafts_status_updated_at',
+  'idx_branches_archived_updated_at',
+  'idx_pattern_detections_model_created_at',
+  'idx_audit_model_created_at',
+  'idx_artifacts_feature_status_date',
+  'idx_lifecycle_status_updated_at',
+] as const;

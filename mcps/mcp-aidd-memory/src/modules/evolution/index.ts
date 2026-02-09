@@ -11,14 +11,17 @@ import {
 } from '@aidd.md/mcp-shared';
 import type {
   AiddModule,
+  StorageBackend,
   ModuleContext,
+  EvolutionCandidate,
   SessionState,
 } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { StorageProvider } from '../../storage/index.js';
 import { hookBus } from '../hooks.js';
 import { findMemoryDir } from '../memory/permanent-memory.js';
-import { analyzePatterns, shadowTestPattern } from './analyzer.js';
+import { analyzePatterns } from './analyzer.js';
+import { promoteCandidate } from './promotion.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -27,6 +30,17 @@ import { analyzePatterns, shadowTestPattern } from './analyzer.js';
 const MAX_SESSIONS = 200;
 const ANALYSIS_INTERVAL = 5;
 const PRUNE_INTERVAL = 10;
+const REJECTION_COOLDOWN_DAYS = 30;
+
+async function getRejectedPatterns(backend: StorageBackend): Promise<Set<string>> {
+  const recentLog = await backend.getEvolutionLog({ limit: 200 });
+  const cutoff = new Date(Date.now() - REJECTION_COOLDOWN_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  return new Set(
+    recentLog
+      .filter((e) => e.action === 'rejected' && e.timestamp > cutoff)
+      .map((e) => e.title),
+  );
+}
 
 // ---------------------------------------------------------------------------
 // SQL helpers — escape for INSERT statements
@@ -209,6 +223,51 @@ export function createEvolutionModule(storage: StorageProvider): AiddModule {
     description: 'Evolution engine — pattern recognition, confidence-based auto-improvements, rollback',
 
     register(server: McpServer, context: ModuleContext) {
+      const thresholds = {
+        autoApplyThreshold: context.config.evolution.autoApplyThreshold,
+        draftThreshold: context.config.evolution.draftThreshold,
+      };
+
+      const promoteAndLog = async (
+        backend: StorageBackend,
+        candidate: EvolutionCandidate,
+        rejectedTitles: Set<string>,
+      ): Promise<{ action: 'auto_applied' | 'drafted' | 'pending' | 'rejected' | 'skipped' }> => {
+        const promoted = await promoteCandidate({
+          backend,
+          candidate,
+          thresholds,
+          rejectedTitles,
+        });
+
+        if (promoted.action === 'skipped') {
+          return { action: 'skipped' };
+        }
+
+        await backend.appendEvolutionLog({
+          id: generateId(),
+          candidateId: promoted.candidate?.id ?? candidate.id,
+          action: promoted.action,
+          title: promoted.candidate?.title ?? candidate.title,
+          confidence: promoted.candidate?.confidence ?? candidate.confidence,
+          timestamp: now(),
+        });
+
+        if (promoted.action === 'rejected' && promoted.candidate?.id && !promoted.mergedExisting) {
+          await backend.deleteEvolutionCandidate(promoted.candidate.id);
+        }
+
+        return { action: promoted.action };
+      };
+
+      // Cross-module service: enforce centralized promotion policy from any module.
+      context.services['promoteEvolutionCandidate'] = async (...args: unknown[]) => {
+        const candidate = args[0] as EvolutionCandidate;
+        const backend = await storage.getBackend();
+        const rejectedTitles = await getRejectedPatterns(backend);
+        return promoteAndLog(backend, candidate, rejectedTitles);
+      };
+
       // ---- Analyze patterns ----
       registerTool(server, {
         name: 'aidd_evolution_analyze',
@@ -257,63 +316,20 @@ export function createEvolutionModule(storage: StorageProvider): AiddModule {
             });
           }
 
-          // Merge with existing pending candidates
-          const existingCandidates = await backend.listEvolutionCandidates({ status: 'pending' });
-          const existingTitles = new Set(existingCandidates.map((c) => c.title));
-
-          const { autoApplyThreshold, draftThreshold } = context.config.evolution;
+          const rejectedTitles = await getRejectedPatterns(backend);
           let autoApplied = 0;
           let drafted = 0;
           let pending = 0;
+          let rejected = 0;
+          let skipped = 0;
 
           for (const candidate of newCandidates) {
-            if (existingTitles.has(candidate.title)) {
-              // Update existing candidate
-              const existing = existingCandidates.find((c) => c.title === candidate.title);
-              if (existing) {
-                existing.confidence = Math.max(existing.confidence, candidate.confidence);
-                existing.sessionCount = Math.max(existing.sessionCount, candidate.sessionCount);
-                existing.evidence = [...new Set([...existing.evidence, ...candidate.evidence])];
-                existing.updatedAt = now();
-                await backend.updateEvolutionCandidate(existing);
-              }
-              continue;
-            }
-
-            if (candidate.confidence >= autoApplyThreshold) {
-              autoApplied++;
-              await backend.saveEvolutionCandidate(candidate);
-              await backend.appendEvolutionLog({
-                id: generateId(),
-                candidateId: candidate.id,
-                action: 'auto_applied',
-                title: candidate.title,
-                confidence: candidate.confidence,
-                timestamp: now(),
-              });
-            } else if (candidate.confidence >= draftThreshold) {
-              drafted++;
-              await backend.saveEvolutionCandidate(candidate);
-              await backend.appendEvolutionLog({
-                id: generateId(),
-                candidateId: candidate.id,
-                action: 'drafted',
-                title: candidate.title,
-                confidence: candidate.confidence,
-                timestamp: now(),
-              });
-            } else {
-              pending++;
-              await backend.saveEvolutionCandidate(candidate);
-              await backend.appendEvolutionLog({
-                id: generateId(),
-                candidateId: candidate.id,
-                action: 'pending',
-                title: candidate.title,
-                confidence: candidate.confidence,
-                timestamp: now(),
-              });
-            }
+            const result = await promoteAndLog(backend, candidate, rejectedTitles);
+            if (result.action === 'auto_applied') autoApplied++;
+            else if (result.action === 'drafted') drafted++;
+            else if (result.action === 'pending') pending++;
+            else if (result.action === 'rejected') rejected++;
+            else skipped++;
           }
 
           const totalPending = (await backend.listEvolutionCandidates({ status: 'pending' })).length;
@@ -325,8 +341,10 @@ export function createEvolutionModule(storage: StorageProvider): AiddModule {
             autoApplied,
             drafted,
             pending,
+            rejected,
+            skipped,
             totalPending,
-            thresholds: { autoApply: autoApplyThreshold, draft: draftThreshold },
+            thresholds: { autoApply: thresholds.autoApplyThreshold, draft: thresholds.draftThreshold },
           });
         },
       });
@@ -481,60 +499,10 @@ export function createEvolutionModule(storage: StorageProvider): AiddModule {
 
         const patternStats = await backend.getPatternStats({});
         const newCandidates = analyzePatterns(sessions, context.config, patternStats);
-        const { autoApplyThreshold } = context.config.evolution;
-
-        // Cooldown blacklist: recently rejected patterns (last 30 days)
-        const recentLog = await backend.getEvolutionLog({ limit: 200 });
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        const rejectedPatterns = new Set(
-          recentLog
-            .filter((e) => e.action === 'rejected' && e.timestamp > thirtyDaysAgo)
-            .map((e) => e.title),
-        );
+        const rejectedTitles = await getRejectedPatterns(backend);
 
         for (const candidate of newCandidates) {
-          const existing = await backend.listEvolutionCandidates({ title: candidate.title });
-          if (existing.length > 0) {
-            const e = existing[0]!;
-            e.confidence = Math.max(e.confidence, candidate.confidence);
-            e.updatedAt = now();
-            await backend.updateEvolutionCandidate(e);
-          } else {
-            // Cooldown check: skip if recently rejected
-            if (candidate.type === 'model_pattern_ban' && rejectedPatterns.has(candidate.title)) {
-              continue;
-            }
-
-            // Shadow test for model_pattern_ban candidates before promotion
-            if (candidate.type === 'model_pattern_ban' && candidate.confidence >= autoApplyThreshold) {
-              const patternText = candidate.title.match(/^(?:Ban |Frequent pattern: )"?([^"]+)"?/)?.[1] ?? '';
-              if (patternText) {
-                const result = await shadowTestPattern(patternText, backend);
-                if (!result.passed) {
-                  // Shadow test failed — reject and log
-                  await backend.appendEvolutionLog({
-                    id: generateId(),
-                    candidateId: candidate.id,
-                    action: 'rejected',
-                    title: candidate.title,
-                    confidence: candidate.confidence,
-                    timestamp: now(),
-                  });
-                  continue;
-                }
-              }
-            }
-
-            await backend.saveEvolutionCandidate(candidate);
-            await backend.appendEvolutionLog({
-              id: generateId(),
-              candidateId: candidate.id,
-              action: candidate.confidence >= autoApplyThreshold ? 'auto_applied' : 'pending',
-              title: candidate.title,
-              confidence: candidate.confidence,
-              timestamp: now(),
-            });
-          }
+          await promoteAndLog(backend, candidate, rejectedTitles);
         }
 
         // Write insights.md + state-dump.sql after analysis

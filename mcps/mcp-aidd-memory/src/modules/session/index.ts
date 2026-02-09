@@ -33,6 +33,54 @@ const FILLER_PATTERNS = [
   /\bit is important to note\b/gi, /\blet's dive into\b/gi,
 ];
 
+type SessionStartParams = {
+  branch: string;
+  aiProvider: AiProvider;
+  input?: string;
+  memorySessionId?: string;
+  parentSessionId?: string;
+  taskClassification?: SessionState['taskClassification'];
+};
+
+function normalizeTaskClassification(
+  classification?: SessionState['taskClassification'],
+): SessionState['taskClassification'] {
+  return {
+    domain: classification?.domain ?? 'unknown',
+    nature: classification?.nature ?? 'unknown',
+    complexity: classification?.complexity ?? 'unknown',
+    phase: classification?.phase,
+    tier: classification?.tier,
+    fastTrack: classification?.fastTrack,
+    risky: classification?.risky,
+    skippableStages: classification?.skippableStages,
+  };
+}
+
+function buildSessionFromParams(params: SessionStartParams): SessionState {
+  return {
+    id: generateId(),
+    memorySessionId: params.memorySessionId,
+    parentSessionId: params.parentSessionId,
+    branch: params.branch,
+    startedAt: now(),
+    aiProvider: params.aiProvider,
+    input: params.input,
+    decisions: [],
+    errorsResolved: [],
+    filesModified: [],
+    tasksCompleted: [],
+    tasksPending: [],
+    agentsUsed: [],
+    skillsUsed: [],
+    toolsCalled: [],
+    rulesApplied: [],
+    workflowsFollowed: [],
+    tkbEntriesConsulted: [],
+    taskClassification: normalizeTaskClassification(params.taskClassification),
+  };
+}
+
 async function computeSessionFingerprint(
   sessionId: string,
   backend: StorageBackend,
@@ -122,12 +170,8 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
         const params = (args[0] ?? {}) as Record<string, unknown>;
         const backend = await storage.getBackend();
 
-        const session: SessionState = {
-          id: generateId(),
-          memorySessionId: params['memorySessionId'] as string | undefined,
-          parentSessionId: params['parentSessionId'] as string | undefined,
+        const session = buildSessionFromParams({
           branch: (params['branch'] as string) || 'main',
-          startedAt: now(),
           aiProvider: (params['aiProvider'] as AiProvider) ?? {
             provider: 'unknown',
             model: 'unknown',
@@ -135,23 +179,10 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
             client: 'unknown',
           },
           input: params['input'] as string | undefined,
-          decisions: [],
-          errorsResolved: [],
-          filesModified: [],
-          tasksCompleted: [],
-          tasksPending: [],
-          agentsUsed: [],
-          skillsUsed: [],
-          toolsCalled: [],
-          rulesApplied: [],
-          workflowsFollowed: [],
-          tkbEntriesConsulted: [],
-          taskClassification: (params['taskClassification'] as SessionState['taskClassification']) ?? {
-            domain: 'unknown',
-            nature: 'unknown',
-            complexity: 'unknown',
-          },
-        };
+          memorySessionId: params['memorySessionId'] as string | undefined,
+          parentSessionId: params['parentSessionId'] as string | undefined,
+          taskClassification: params['taskClassification'] as SessionState['taskClassification'] | undefined,
+        });
 
         await backend.saveSession(session);
         return { id: session.id, status: 'active', startedAt: session.startedAt };
@@ -184,6 +215,11 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
               domain: z.string(),
               nature: z.string(),
               complexity: z.string(),
+              phase: z.string().optional(),
+              tier: z.number().optional(),
+              fastTrack: z.boolean().optional(),
+              risky: z.boolean().optional(),
+              skippableStages: z.array(z.string()).optional(),
             })
             .optional()
             .describe('Task classification'),
@@ -241,31 +277,14 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
               if (!a['branch']) return createErrorResult('branch is required for start');
               if (!a['aiProvider']) return createErrorResult('aiProvider is required for start');
 
-              const session: SessionState = {
-                id: generateId(),
-                memorySessionId: a['memorySessionId'] as string | undefined,
-                parentSessionId: a['parentSessionId'] as string | undefined,
+              const session = buildSessionFromParams({
                 branch: a['branch'] as string,
-                startedAt: now(),
                 aiProvider: a['aiProvider'] as AiProvider,
                 input: a['input'] as string | undefined,
-                decisions: [],
-                errorsResolved: [],
-                filesModified: [],
-                tasksCompleted: [],
-                tasksPending: [],
-                agentsUsed: [],
-                skillsUsed: [],
-                toolsCalled: [],
-                rulesApplied: [],
-                workflowsFollowed: [],
-                tkbEntriesConsulted: [],
-                taskClassification: (a['taskClassification'] as SessionState['taskClassification']) ?? {
-                  domain: 'unknown',
-                  nature: 'unknown',
-                  complexity: 'unknown',
-                },
-              };
+                memorySessionId: a['memorySessionId'] as string | undefined,
+                parentSessionId: a['parentSessionId'] as string | undefined,
+                taskClassification: a['taskClassification'] as SessionState['taskClassification'] | undefined,
+              });
 
               await backend.saveSession(session);
               return createJsonResult({ id: session.id, status: 'active', startedAt: session.startedAt });
@@ -363,8 +382,10 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
 
               await backend.saveSession(session);
 
-              // Hook fires AFTER response — fire-and-forget, silent
-              hookBus.emit({ type: 'session_ended', sessionId: session.id }).catch(() => {});
+              // Hook fires AFTER response — fire-and-forget with telemetry logging.
+              hookBus.emit({ type: 'session_ended', sessionId: session.id }).catch((err) => {
+                context.logger.error('HookBus emit failed (session_ended):', err);
+              });
 
               return createJsonResult({
                 id: session.id,

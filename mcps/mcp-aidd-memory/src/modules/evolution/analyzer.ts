@@ -402,7 +402,7 @@ function detectModelPatternFrequency(
 export async function shadowTestPattern(
   pattern: string,
   backend: StorageBackend,
-): Promise<{ passed: boolean; falsePositiveRate: number }> {
+): Promise<{ passed: boolean; falsePositiveRate: number; sampleSize: number }> {
   // Fetch last 50 completed sessions with good outcomes
   const entries = await backend.listSessions({ status: 'completed', limit: 50 });
   const goodSessions: Array<{ id: string; text: string }> = [];
@@ -424,7 +424,7 @@ export async function shadowTestPattern(
 
   // Auto-pass if insufficient data
   if (goodSessions.length < 20) {
-    return { passed: true, falsePositiveRate: 0 };
+    return { passed: true, falsePositiveRate: 0, sampleSize: goodSessions.length };
   }
 
   // Test pattern against good sessions
@@ -438,11 +438,15 @@ export async function shadowTestPattern(
       }
     }
   } catch {
-    return { passed: true, falsePositiveRate: 0 };
+    return { passed: true, falsePositiveRate: 0, sampleSize: goodSessions.length };
   }
 
   const rate = matchCount / goodSessions.length;
-  return { passed: rate <= 0.10, falsePositiveRate: Math.round(rate * 100) / 100 };
+  return {
+    passed: rate <= 0.10,
+    falsePositiveRate: Math.round(rate * 100) / 100,
+    sampleSize: goodSessions.length,
+  };
 }
 
 // ---------------------------------------------------------------------------

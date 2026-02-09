@@ -351,18 +351,31 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
           const { autoFix } = args as { autoFix?: boolean };
           const backend = await storage.getBackend();
 
-          // Parse negative constraints from rules
+          // Parse negative constraints from rules (phrase-aware to reduce false positives)
           const rules = context.contentLoader.getIndex().rules;
-          const constraints: Array<{ keyword: string; source: string }> = [];
+          const GENERIC_TOKENS = new Set([
+            'must', 'not', 'never', 'forbidden', 'dont', 'do', 'avoid',
+            'should', 'with', 'from', 'that', 'this', 'data', 'code', 'files',
+          ]);
+          const constraints: Array<{ keywords: string[]; source: string; line: string }> = [];
           for (const rule of rules) {
             const content = rule.getContent();
             const lines = content.split('\n');
             for (const line of lines) {
               const match = line.match(/\b(?:Never|MUST NOT|Forbidden|NEVER|Do NOT|Don't)\b[:\s]+(.+)/i);
               if (match) {
-                const keywords = match[1]!.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
-                for (const kw of keywords) {
-                  constraints.push({ keyword: kw, source: rule.name });
+                const clause = match[1]!.toLowerCase();
+                const quoted = [...clause.matchAll(/`([^`]+)`|"([^"]+)"|'([^']+)'/g)]
+                  .map((m) => (m[1] ?? m[2] ?? m[3] ?? '').trim())
+                  .filter((v) => v.length >= 3);
+                const tokens = clause
+                  .replace(/[^a-z0-9_\-\s]/g, ' ')
+                  .split(/\s+/)
+                  .map((t) => t.trim())
+                  .filter((t) => t.length >= 4 && !GENERIC_TOKENS.has(t));
+                const keywords = [...new Set([...quoted, ...tokens])].slice(0, 8);
+                if (keywords.length > 0) {
+                  constraints.push({ keywords, source: rule.name, line: clause });
                 }
               }
             }
@@ -374,25 +387,48 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
 
           // Check all permanent memory entries
           const entries = await backend.listPermanentMemory({});
-          const violations: Array<{ id: string; type: string; title: string; matchedConstraints: string[]; confidence: number }> = [];
+          const violations: Array<{
+            id: string;
+            type: string;
+            title: string;
+            matchedConstraints: string[];
+            confidence: number;
+          }> = [];
           let autoFixed = 0;
 
           for (const entry of entries) {
             const text = `${entry.title} ${entry.content}`.toLowerCase();
-            const matched = constraints.filter((c) => text.includes(c.keyword));
-            if (matched.length === 0) continue;
+            const matchedConstraints: string[] = [];
+            let bestConfidence = 0;
 
-            const confidence = Math.min(1, matched.length / Math.max(constraints.length * 0.1, 1));
+            for (const c of constraints) {
+              const matchedKeywords = c.keywords.filter((kw) => {
+                const re = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                return re.test(text);
+              });
+              if (matchedKeywords.length === 0) continue;
+
+              const confidence = matchedKeywords.length / c.keywords.length;
+              if (confidence >= 0.5) {
+                bestConfidence = Math.max(bestConfidence, confidence);
+                matchedConstraints.push(
+                  `${matchedKeywords.join(', ')} (${c.source})`,
+                );
+              }
+            }
+
+            if (matchedConstraints.length === 0) continue;
+
             violations.push({
               id: entry.id,
               type: entry.type,
               title: entry.title,
-              matchedConstraints: [...new Set(matched.map((c) => `${c.keyword} (${c.source})`))],
-              confidence: Math.round(confidence * 100) / 100,
+              matchedConstraints: [...new Set(matchedConstraints)],
+              confidence: Math.round(bestConfidence * 100) / 100,
             });
 
             // AutoFix: only conventions with high confidence
-            if (autoFix && entry.type === 'convention' && confidence > 0.8) {
+            if (autoFix && entry.type === 'convention' && bestConfidence > 0.8) {
               await backend.deletePermanentMemory(entry.id);
               autoFixed++;
             }

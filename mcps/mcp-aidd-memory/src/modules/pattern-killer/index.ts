@@ -10,6 +10,7 @@ import type {
   AiddModule,
   ModuleContext,
   BannedPattern,
+  EvolutionCandidate,
 } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { StorageProvider } from '../../storage/index.js';
@@ -325,6 +326,8 @@ export function createPatternKillerModule(storage: StorageProvider): AiddModule 
         const backend = await storage.getBackend();
         const session = await backend.getSession(event.sessionId);
         if (!session) return;
+        const promoteCandidate = context.services['promoteEvolutionCandidate'] as
+          ((candidate: unknown) => Promise<{ action: string }>) | undefined;
 
         const modelId = session.aiProvider.modelId;
         const stats = await backend.getPatternStats({ modelId });
@@ -337,7 +340,7 @@ export function createPatternKillerModule(storage: StorageProvider): AiddModule 
             });
             const alreadyTracked = existing.some((c) => c.title.includes(stat.pattern));
             if (!alreadyTracked) {
-              await backend.saveEvolutionCandidate({
+              const candidate: EvolutionCandidate = {
                 id: generateId(),
                 type: 'model_pattern_ban',
                 title: `Ban "${stat.pattern}" for ${modelId}`,
@@ -351,7 +354,14 @@ export function createPatternKillerModule(storage: StorageProvider): AiddModule 
                 modelEvidence: { [modelId]: stat.uniqueSessions },
                 createdAt: now(),
                 updatedAt: now(),
-              });
+              };
+
+              if (promoteCandidate) {
+                await promoteCandidate(candidate);
+              } else {
+                // Fallback for safety if evolution module service is unavailable.
+                await backend.saveEvolutionCandidate(candidate);
+              }
             }
           }
         }
