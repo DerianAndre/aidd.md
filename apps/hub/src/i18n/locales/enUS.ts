@@ -753,5 +753,5 @@ export default {
   'footer.humanName': 'Derian Castillo',
   'footer.humanHandle': '(@derianandre)',
   'footer.aiName': 'Artificial Intelligence',
-  'footer.aiModels': '(Claude / Gemini)',
+  'footer.aiModels': '(ChatGPT / Claude / Gemini)',
 } as const;

@@ -757,7 +757,7 @@ const esMX: DeepStringify<typeof enUS> = {
   'footer.humanName': 'Derian Castillo',
   'footer.humanHandle': '(@derianandre)',
   'footer.aiName': 'Inteligencia Artificial',
-  'footer.aiModels': '(Claude / Gemini)',
+  'footer.aiModels': '(ChatGPT / Claude / Gemini)',
 };
 
 export default esMX;
