@@ -8,5 +8,6 @@ dist/
 Thumbs.db
 nul
 target/
+.mcp.json
 # AIDD runtime state
 .aidd/
