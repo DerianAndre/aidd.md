@@ -39,6 +39,24 @@
         "hooks": [{ "type": "command", "command": "node scripts/hooks/on-pre-compact.cjs" }]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "EnterPlanMode",
+        "hooks": [{ "type": "command", "command": "node scripts/hooks/pre-plan-enter.cjs" }]
+      },
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [{ "type": "command", "command": "node scripts/hooks/pre-plan-exit.cjs" }]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{ "type": "command", "command": "node scripts/hooks/pre-edit.cjs" }]
+      },
+      {
+        "matcher": "mcp__aidd-engine__aidd_session",
+        "hooks": [{ "type": "command", "command": "node scripts/hooks/pre-session-end.cjs" }]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "mcp__aidd-engine__aidd_start",
