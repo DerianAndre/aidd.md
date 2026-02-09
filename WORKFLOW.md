@@ -198,6 +198,7 @@ Every conversation is a tracked session with:
 - **Files** — All files modified during the session
 - **Decisions** — Choices made with reasoning
 - **Errors** — Problems encountered and how they were resolved
+- **Token telemetry** — Input/output token counts captured at session updates/end for cost and output-density tracking
 - **Outcome** — Tests passing, compliance score, reverts, reworks, your feedback
 
 Sessions provide continuity. If a conversation is compacted or resumed, session state is recovered automatically.

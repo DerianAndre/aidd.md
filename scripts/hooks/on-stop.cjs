@@ -22,12 +22,16 @@ try {
     const hasChecklist = allArts.includes('checklist');
     const hasBrainstorm = allArts.includes('brainstorm');
     const hasPlan = allArts.includes('plan');
+    const hasTokenUsage = !!(s && s.tokenUsage && (
+      Number(s.tokenUsage.inputTokens || 0) > 0 || Number(s.tokenUsage.outputTokens || 0) > 0
+    ));
 
     const missing = [];
     if (!hasChecklist) missing.push('checklist (TEST — automated checks)');
     if (!hasRetro) missing.push('retro (SHIP — retrospective)');
+    if (!hasTokenUsage) missing.push('token telemetry (inputTokens/outputTokens)');
     const missingStr = missing.length
-      ? `\n** Missing workflow artifacts: ${missing.join(', ')} — create them before ending **`
+      ? `\n** Missing workflow requirements: ${missing.join(', ')} — complete them before ending **`
       : '';
 
     // Compliance hint
@@ -52,7 +56,7 @@ try {
       `5. Create retro artifact (if not created) — retrospective\n` +
       `6. Archive ALL active artifacts: aidd_artifact { action: "archive", id: "..." } for each\n` +
       `7. aidd_memory_export (if decisions/mistakes were recorded)\n` +
-      `8. aidd_session { action: "end", id: "${row.id}", outcome: { testsPassing, complianceScore, reverts, reworks } }`
+      `8. aidd_session { action: "end", id: "${row.id}", tokenUsage: { inputTokens: <n>, outputTokens: <n> }, outcome: { testsPassing, complianceScore, reverts, reworks } }`
     );
   }
 } catch { /* silent */ }

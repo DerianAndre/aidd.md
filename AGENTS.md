@@ -150,6 +150,10 @@ aidd_session {
   action: "end",
   id: SESSION_ID,
   output: "Brief summary of work completed",
+  tokenUsage: {
+    inputTokens: 1234,
+    outputTokens: 5678
+  },
   outcome: {
     testsPassing: true | false,
     complianceScore: 0-100,

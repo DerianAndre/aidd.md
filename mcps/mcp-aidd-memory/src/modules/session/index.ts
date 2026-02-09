@@ -32,6 +32,7 @@ const FILLER_PATTERNS = [
   /\bI should mention\b/gi, /\bas an AI\b/gi, /\bin order to\b/gi,
   /\bit is important to note\b/gi, /\blet's dive into\b/gi,
 ];
+const CHARS_PER_TOKEN = 4;
 
 type SessionStartParams = {
   branch: string;
@@ -81,6 +82,37 @@ function buildSessionFromParams(params: SessionStartParams): SessionState {
     workflowsFollowed: [],
     tkbEntriesConsulted: [],
     taskClassification: normalizeTaskClassification(params.taskClassification),
+  };
+}
+
+function estimateTokenCountFromText(text: string): number {
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return 0;
+  return Math.max(1, Math.ceil(trimmed.length / CHARS_PER_TOKEN));
+}
+
+function estimateSessionTokenUsage(session: SessionState): TokenUsage | null {
+  const inputParts = [
+    session.name,
+    session.input,
+    ...session.tasksPending,
+  ].filter((part): part is string => !!part && part.trim().length > 0);
+
+  const outputParts = [
+    session.output,
+    ...session.tasksCompleted,
+    ...session.decisions.map((d) => `${d.decision} ${d.reasoning}`.trim()),
+    ...session.errorsResolved.map((e) => `${e.error} ${e.fix}`.trim()),
+  ].filter((part): part is string => !!part && part.trim().length > 0);
+
+  const inputTokens = estimateTokenCountFromText(inputParts.join('\n'));
+  const outputTokens = estimateTokenCountFromText(outputParts.join('\n'));
+
+  if (inputTokens === 0 && outputTokens === 0) return null;
+
+  return {
+    inputTokens: Math.max(1, inputTokens),
+    outputTokens: Math.max(1, outputTokens),
   };
 }
 
@@ -255,7 +287,7 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
               totalCost: z.number().optional(),
             })
             .optional()
-            .describe('Token usage to merge (additive) — opt-in, system works without it'),
+            .describe('Token usage to merge (additive). If omitted on end, session module estimates usage from session text for telemetry continuity.'),
           // end params
           outcome: z
             .object({
@@ -360,6 +392,7 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
               session.endedAt = now();
               if (a['output']) session.output = a['output'] as string;
               if (a['outcome']) session.outcome = a['outcome'] as SessionState['outcome'];
+              let tokenTelemetry: 'reported' | 'estimated' | 'missing' = 'missing';
 
               // Merge final token usage if provided
               if (a['tokenUsage']) {
@@ -376,6 +409,21 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
                   if (incoming.totalCost != null)
                     session.tokenUsage.totalCost = (session.tokenUsage.totalCost ?? 0) + incoming.totalCost;
                 }
+                tokenTelemetry = 'reported';
+              } else if (!session.tokenUsage) {
+                const estimated = estimateSessionTokenUsage(session);
+                if (estimated) {
+                  session.tokenUsage = estimated;
+                  tokenTelemetry = 'estimated';
+                  context.logger.info(
+                    `[aidd_session:end] token telemetry estimated for ${session.id} ` +
+                    `(in=${estimated.inputTokens}, out=${estimated.outputTokens})`,
+                  );
+                } else {
+                  context.logger.warn(`[aidd_session:end] token telemetry missing for ${session.id}`);
+                }
+              } else {
+                tokenTelemetry = 'reported';
               }
 
               // Compute context efficiency: tasks completed per 1K output tokens
@@ -403,6 +451,7 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
                 status: 'completed',
                 startedAt: session.startedAt,
                 endedAt: session.endedAt,
+                tokenTelemetry,
               });
             }
 

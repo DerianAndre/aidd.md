@@ -186,7 +186,7 @@ aidd_artifact { action: "create", type: "retro", feature: "session-<short-id>", 
 
 **Step 7 — Close session:**
 ```
-aidd_session { action: "end", id: SESSION_ID, output: "summary", outcome: { testsPassing: true|false, complianceScore: 0-100, reverts: 0, reworks: 0, userFeedback: "positive"|"neutral"|"negative" } }
+aidd_session { action: "end", id: SESSION_ID, output: "summary", tokenUsage: { inputTokens: 1234, outputTokens: 5678 }, outcome: { testsPassing: true|false, complianceScore: 0-100, reverts: 0, reworks: 0, userFeedback: "positive"|"neutral"|"negative" } }
 ```
 
 **Hook `on-session-end.cjs` fires after Step 7** — verifies checklist + retro artifacts exist, warns about active artifacts.
