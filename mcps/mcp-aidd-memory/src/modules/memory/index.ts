@@ -13,9 +13,11 @@ import type { StorageProvider } from '../../storage/index.js';
 import {
   findMemoryDir,
   decisionToEntry,
+  entryToDecision,
   mistakeToEntry,
   entryToMistake,
   conventionToEntry,
+  entryToConvention,
   exportPermanentMemoryToJson,
 } from './permanent-memory.js';
 import type { DecisionEntry, MistakeEntry, ConventionEntry } from './permanent-memory.js';
@@ -270,6 +272,116 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
           await backend.savePermanentMemory(conventionToEntry(entry));
 
           return createJsonResult({ id: entry.id, type: 'convention', saved: true });
+        },
+      });
+
+      // ---- Permanent memory EDIT ----
+
+      registerTool(server, {
+        name: 'aidd_memory_edit_decision',
+        description:
+          'Edit an existing permanent decision. Updates only the provided fields, preserving the rest.',
+        schema: {
+          id: z.string().describe('Decision entry ID'),
+          decision: z.string().optional().describe('Updated decision text'),
+          reasoning: z.string().optional().describe('Updated reasoning'),
+          alternatives: z.array(z.string()).optional().describe('Updated alternatives'),
+          context: z.string().optional().describe('Updated context'),
+        },
+        annotations: { idempotentHint: true },
+        handler: async (args) => {
+          const a = args as {
+            id: string;
+            decision?: string;
+            reasoning?: string;
+            alternatives?: string[];
+            context?: string;
+          };
+
+          const backend = await storage.getBackend();
+          const entry = await backend.getPermanentMemory(a.id);
+          if (!entry) return createErrorResult(`Entry ${a.id} not found`);
+          if (entry.type !== 'decision') return createErrorResult(`Entry ${a.id} is type '${entry.type}', not 'decision'`);
+
+          const existing = entryToDecision(entry);
+          if (a.decision !== undefined) existing.decision = stripPrivateTags(a.decision);
+          if (a.reasoning !== undefined) existing.reasoning = stripPrivateTags(a.reasoning);
+          if (a.alternatives !== undefined) existing.alternatives = a.alternatives.map(stripPrivateTags);
+          if (a.context !== undefined) existing.context = stripPrivateTags(a.context);
+
+          await backend.savePermanentMemory(decisionToEntry(existing));
+          return createJsonResult({ id: a.id, type: 'decision', updated: true });
+        },
+      });
+
+      registerTool(server, {
+        name: 'aidd_memory_edit_mistake',
+        description:
+          'Edit an existing permanent mistake entry. Updates only the provided fields, preserving the rest.',
+        schema: {
+          id: z.string().describe('Mistake entry ID'),
+          error: z.string().optional().describe('Updated error description'),
+          rootCause: z.string().optional().describe('Updated root cause'),
+          fix: z.string().optional().describe('Updated fix'),
+          prevention: z.string().optional().describe('Updated prevention strategy'),
+        },
+        annotations: { idempotentHint: true },
+        handler: async (args) => {
+          const a = args as {
+            id: string;
+            error?: string;
+            rootCause?: string;
+            fix?: string;
+            prevention?: string;
+          };
+
+          const backend = await storage.getBackend();
+          const entry = await backend.getPermanentMemory(a.id);
+          if (!entry) return createErrorResult(`Entry ${a.id} not found`);
+          if (entry.type !== 'mistake') return createErrorResult(`Entry ${a.id} is type '${entry.type}', not 'mistake'`);
+
+          const existing = entryToMistake(entry);
+          if (a.error !== undefined) existing.error = stripPrivateTags(a.error);
+          if (a.rootCause !== undefined) existing.rootCause = stripPrivateTags(a.rootCause);
+          if (a.fix !== undefined) existing.fix = stripPrivateTags(a.fix);
+          if (a.prevention !== undefined) existing.prevention = stripPrivateTags(a.prevention);
+
+          await backend.savePermanentMemory(mistakeToEntry(existing));
+          return createJsonResult({ id: a.id, type: 'mistake', updated: true });
+        },
+      });
+
+      registerTool(server, {
+        name: 'aidd_memory_edit_convention',
+        description:
+          'Edit an existing permanent convention entry. Updates only the provided fields, preserving the rest.',
+        schema: {
+          id: z.string().describe('Convention entry ID'),
+          convention: z.string().optional().describe('Updated convention text'),
+          example: z.string().optional().describe('Updated example'),
+          rationale: z.string().optional().describe('Updated rationale'),
+        },
+        annotations: { idempotentHint: true },
+        handler: async (args) => {
+          const a = args as {
+            id: string;
+            convention?: string;
+            example?: string;
+            rationale?: string;
+          };
+
+          const backend = await storage.getBackend();
+          const entry = await backend.getPermanentMemory(a.id);
+          if (!entry) return createErrorResult(`Entry ${a.id} not found`);
+          if (entry.type !== 'convention') return createErrorResult(`Entry ${a.id} is type '${entry.type}', not 'convention'`);
+
+          const existing = entryToConvention(entry);
+          if (a.convention !== undefined) existing.convention = stripPrivateTags(a.convention);
+          if (a.example !== undefined) existing.example = stripPrivateTags(a.example);
+          if (a.rationale !== undefined) existing.rationale = stripPrivateTags(a.rationale);
+
+          await backend.savePermanentMemory(conventionToEntry(existing));
+          return createJsonResult({ id: a.id, type: 'convention', updated: true });
         },
       });
 

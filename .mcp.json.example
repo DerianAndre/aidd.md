@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "aidd-engine": {
+      "env": {
+        "AIDD_PROJECT_PATH": "<project_path>"
+      },
+      "args": [
+        "<project_path>\\mcps\\mcp-aidd-engine\\dist\\index.js"
+      ],
+      "command": "node"
+    }
+  }
+}

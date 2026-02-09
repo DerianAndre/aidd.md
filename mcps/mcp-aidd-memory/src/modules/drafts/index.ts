@@ -165,12 +165,91 @@ export function createDraftsModule(storage: StorageProvider): AiddModule {
           draft.updatedAt = now();
           await backend.updateDraft(draft);
 
+          // Update linked evolution candidate status
+          let evolutionUpdated = false;
+          if (draft.evolutionCandidateId) {
+            try {
+              const candidates = await backend.listEvolutionCandidates({});
+              const candidate = candidates.find((c) => c.id === draft.evolutionCandidateId);
+              if (candidate) {
+                candidate.status = 'approved';
+                candidate.updatedAt = now();
+                await backend.updateEvolutionCandidate(candidate);
+                await backend.appendEvolutionLog({
+                  id: generateId(),
+                  candidateId: candidate.id,
+                  action: 'approved',
+                  title: candidate.title,
+                  confidence: candidate.confidence,
+                  timestamp: now(),
+                });
+                evolutionUpdated = true;
+              }
+            } catch { /* non-critical — draft approval succeeds regardless */ }
+          }
+
           return createJsonResult({
             id: draft.id,
             approved: true,
             promotedTo: target,
             category: draft.category,
             filename: draft.filename,
+            evolutionUpdated,
+          });
+        },
+      });
+
+      // ---- Reject draft ----
+      registerTool(server, {
+        name: 'aidd_draft_reject',
+        description:
+          'Reject a pending draft. Optionally updates linked evolution candidate status.',
+        schema: {
+          id: z.string().describe('Draft ID to reject'),
+          reason: z.string().optional().describe('Reason for rejection'),
+        },
+        annotations: { idempotentHint: true },
+        handler: async (args) => {
+          const { id, reason } = args as { id: string; reason?: string };
+
+          const backend = await storage.getBackend();
+          const draft = await backend.getDraft(id);
+          if (!draft) return createErrorResult(`Draft ${id} not found`);
+          if (draft.status !== 'pending') return createErrorResult(`Draft ${id} is already ${draft.status}`);
+
+          draft.status = 'rejected';
+          draft.rejectedReason = reason;
+          draft.updatedAt = now();
+          await backend.updateDraft(draft);
+
+          // Update linked evolution candidate status
+          let evolutionUpdated = false;
+          if (draft.evolutionCandidateId) {
+            try {
+              const candidates = await backend.listEvolutionCandidates({});
+              const candidate = candidates.find((c) => c.id === draft.evolutionCandidateId);
+              if (candidate) {
+                candidate.status = 'rejected';
+                candidate.updatedAt = now();
+                await backend.updateEvolutionCandidate(candidate);
+                await backend.appendEvolutionLog({
+                  id: generateId(),
+                  candidateId: candidate.id,
+                  action: 'rejected',
+                  title: candidate.title,
+                  confidence: candidate.confidence,
+                  timestamp: now(),
+                });
+                evolutionUpdated = true;
+              }
+            } catch { /* non-critical */ }
+          }
+
+          return createJsonResult({
+            id: draft.id,
+            rejected: true,
+            reason,
+            evolutionUpdated,
           });
         },
       });

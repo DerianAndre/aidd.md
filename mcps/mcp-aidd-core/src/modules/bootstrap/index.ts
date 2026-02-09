@@ -1,8 +1,10 @@
 import { z } from 'zod';
 import { execFileSync } from 'node:child_process';
+import { resolve as resolvePath } from 'node:path';
 import {
   registerTool,
   createJsonResult,
+  createErrorResult,
   createTextResult,
   detectProject,
 } from '@aidd.md/mcp-shared';
@@ -145,6 +147,16 @@ export const bootstrapModule: AiddModule = {
         const startTime = performance.now();
         const a = args as Record<string, unknown>;
         const projectPath = a['path'] as string | undefined;
+        if (projectPath) {
+          const requestedRoot = resolvePath(projectPath);
+          const boundRoot = resolvePath(context.projectRoot);
+          if (requestedRoot !== boundRoot) {
+            return createErrorResult(
+              `Project scope mismatch: MCP server is bound to "${boundRoot}" but aidd_start requested "${requestedRoot}". ` +
+              `Restart/rebind MCP for that project root (cwd or AIDD_PROJECT_PATH) before creating sessions.`,
+            );
+          }
+        }
         const info = projectPath ? detectProject(projectPath) : context.projectInfo;
         const index = context.contentLoader.getIndex();
         const classification = a['taskClassification'] as {

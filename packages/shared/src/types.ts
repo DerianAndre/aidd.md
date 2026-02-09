@@ -434,6 +434,7 @@ export interface EvolutionCandidate {
   falsePositiveRate?: number;
   sampleSize?: number;
   testedAt?: string;
+  status?: 'pending' | 'auto_applied' | 'drafted' | 'approved' | 'rejected';
   createdAt: string;
   updatedAt: string;
 }
@@ -441,7 +442,7 @@ export interface EvolutionCandidate {
 export interface EvolutionLogEntry {
   id: string;
   candidateId: string;
-  action: 'auto_applied' | 'drafted' | 'pending' | 'reverted' | 'rejected';
+  action: 'auto_applied' | 'drafted' | 'pending' | 'reverted' | 'rejected' | 'approved';
   title: string;
   confidence: number;
   snapshot?: string;
@@ -738,6 +739,7 @@ export interface StorageBackend {
   saveSession(session: SessionState): Promise<void>;
   getSession(id: string): Promise<SessionState | null>;
   listSessions(filter?: SessionFilter): Promise<MemoryIndexEntry[]>;
+  deleteSession(id: string): Promise<void>;
 
   // Observations
   saveObservation(observation: SessionObservation): Promise<void>;

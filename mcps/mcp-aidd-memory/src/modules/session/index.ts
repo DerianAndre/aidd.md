@@ -195,9 +195,9 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
       registerTool(server, {
         name: 'aidd_session',
         description:
-          'Manage development sessions. Actions: start (create new session), update (add decisions/errors/files), end (close session), get (retrieve session), list (query sessions).',
+          'Manage development sessions. Actions: start (create new session), update (add decisions/errors/files), end (close session), get (retrieve session), list (query sessions), delete (remove session and its observations).',
         schema: {
-          action: z.enum(['start', 'update', 'end', 'get', 'list']).describe('Action to perform'),
+          action: z.enum(['start', 'update', 'end', 'get', 'list', 'delete']).describe('Action to perform'),
           // start params
           branch: z.string().optional().describe('Git branch name (required for start)'),
           aiProvider: z
@@ -421,6 +421,14 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
                 limit: (a['limit'] as number | undefined) ?? 20,
               });
               return createJsonResult({ count: entries.length, sessions: entries });
+            }
+
+            case 'delete': {
+              if (!a['id']) return createErrorResult('id is required for delete');
+              const session = await backend.getSession(a['id'] as string);
+              if (!session) return createErrorResult(`Session ${a['id']} not found`);
+              await backend.deleteSession(a['id'] as string);
+              return createJsonResult({ id: a['id'], deleted: true });
             }
 
             default:

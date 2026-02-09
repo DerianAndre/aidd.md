@@ -240,6 +240,11 @@ export class SqliteBackend implements StorageBackend {
     });
   }
 
+  async deleteSession(id: string): Promise<void> {
+    this.db.prepare('DELETE FROM observations WHERE session_id = ?').run(id);
+    this.db.prepare('DELETE FROM sessions WHERE id = ?').run(id);
+  }
+
   // ---- Observations ----
 
   async saveObservation(observation: SessionObservation): Promise<void> {
@@ -562,13 +567,14 @@ export class SqliteBackend implements StorageBackend {
   async saveEvolutionCandidate(candidate: EvolutionCandidate): Promise<void> {
     this.db.prepare(`
       INSERT OR REPLACE INTO evolution_candidates (id, type, title, confidence, model_scope, status, data, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       candidate.id,
       candidate.type,
       candidate.title,
       candidate.confidence,
       candidate.modelScope ?? null,
+      candidate.status ?? 'pending',
       JSON.stringify(candidate),
       candidate.createdAt,
       candidate.updatedAt,
@@ -610,13 +616,14 @@ export class SqliteBackend implements StorageBackend {
 
   async updateEvolutionCandidate(candidate: EvolutionCandidate): Promise<void> {
     this.db.prepare(`
-      UPDATE evolution_candidates SET type = ?, title = ?, confidence = ?, model_scope = ?, data = ?, updated_at = ?
+      UPDATE evolution_candidates SET type = ?, title = ?, confidence = ?, model_scope = ?, status = ?, data = ?, updated_at = ?
       WHERE id = ?
     `).run(
       candidate.type,
       candidate.title,
       candidate.confidence,
       candidate.modelScope ?? null,
+      candidate.status ?? 'pending',
       JSON.stringify(candidate),
       candidate.updatedAt,
       candidate.id,

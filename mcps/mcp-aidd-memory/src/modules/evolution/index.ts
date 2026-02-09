@@ -473,6 +473,108 @@ export function createEvolutionModule(storage: StorageProvider): AiddModule {
         },
       });
 
+      // ---- Approve candidate ----
+      registerTool(server, {
+        name: 'aidd_evolution_approve',
+        description:
+          'Approve an evolution candidate. Updates its status and logs the approval.',
+        schema: {
+          candidateId: z.string().describe('Evolution candidate ID to approve'),
+          reason: z.string().optional().describe('Reason for approval'),
+        },
+        annotations: { idempotentHint: true },
+        handler: async (args) => {
+          const { candidateId, reason } = args as { candidateId: string; reason?: string };
+          const backend = await storage.getBackend();
+
+          const candidates = await backend.listEvolutionCandidates({});
+          const candidate = candidates.find((c) => c.id === candidateId);
+          if (!candidate) return createErrorResult(`Candidate ${candidateId} not found`);
+
+          candidate.status = 'approved';
+          candidate.updatedAt = now();
+          await backend.updateEvolutionCandidate(candidate);
+
+          await backend.appendEvolutionLog({
+            id: generateId(),
+            candidateId,
+            action: 'approved',
+            title: candidate.title,
+            confidence: candidate.confidence,
+            timestamp: now(),
+          });
+
+          return createJsonResult({ approved: true, candidateId, title: candidate.title, reason });
+        },
+      });
+
+      // ---- Reject candidate ----
+      registerTool(server, {
+        name: 'aidd_evolution_reject',
+        description:
+          'Reject an evolution candidate. Keeps it in the database for audit trail with rejected status.',
+        schema: {
+          candidateId: z.string().describe('Evolution candidate ID to reject'),
+          reason: z.string().optional().describe('Reason for rejection'),
+        },
+        annotations: { idempotentHint: true },
+        handler: async (args) => {
+          const { candidateId, reason } = args as { candidateId: string; reason?: string };
+          const backend = await storage.getBackend();
+
+          const candidates = await backend.listEvolutionCandidates({});
+          const candidate = candidates.find((c) => c.id === candidateId);
+          if (!candidate) return createErrorResult(`Candidate ${candidateId} not found`);
+
+          candidate.status = 'rejected';
+          candidate.updatedAt = now();
+          await backend.updateEvolutionCandidate(candidate);
+
+          await backend.appendEvolutionLog({
+            id: generateId(),
+            candidateId,
+            action: 'rejected',
+            title: candidate.title,
+            confidence: candidate.confidence,
+            timestamp: now(),
+          });
+
+          return createJsonResult({ rejected: true, candidateId, title: candidate.title, reason });
+        },
+      });
+
+      // ---- Delete candidate ----
+      registerTool(server, {
+        name: 'aidd_evolution_delete',
+        description:
+          'Permanently delete an evolution candidate from the database.',
+        schema: {
+          candidateId: z.string().describe('Evolution candidate ID to delete'),
+        },
+        annotations: { destructiveHint: true, idempotentHint: true },
+        handler: async (args) => {
+          const { candidateId } = args as { candidateId: string };
+          const backend = await storage.getBackend();
+
+          const candidates = await backend.listEvolutionCandidates({});
+          const candidate = candidates.find((c) => c.id === candidateId);
+          const title = candidate?.title ?? `Unknown candidate ${candidateId}`;
+
+          await backend.deleteEvolutionCandidate(candidateId);
+
+          await backend.appendEvolutionLog({
+            id: generateId(),
+            candidateId,
+            action: 'rejected',
+            title: `Deleted: ${title}`,
+            confidence: 0,
+            timestamp: now(),
+          });
+
+          return createJsonResult({ deleted: true, candidateId, title });
+        },
+      });
+
       // ---- Auto-hooks (zero AI token cost, server-side) ----
 
       let sessionsSinceAnalysis = 0;

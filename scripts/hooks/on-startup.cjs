@@ -13,9 +13,9 @@ try {
     const s = JSON.parse(session.data);
     const input = s.input ? ` Input: "${s.input}".` : '';
     const artStr = arts.length ? ` Active artifacts: ${arts.map(a => `${a.cnt} ${a.type}`).join(', ')}.` : '';
-    console.log(`[AIDD] Active session: ${session.id} (branch: ${session.branch}).${input}${artStr} Resume or end it. Workflow: Brainstorm → Plan → Execute → Review → End (CLAUDE.md §2).`);
+    console.log(`[AIDD] Active session: ${session.id} (branch: ${session.branch}).${input}${artStr} Resume or end it. Workflow: Brainstorm → Plan → Execute → Test → Review → Ship (CLAUDE.md §2).`);
   } else {
     const artStr = arts.length ? ` Warning: ${arts.reduce((s, a) => s + a.cnt, 0)} orphaned active artifacts found — archive or review them.` : '';
-    console.log(`[AIDD] No active session.${artStr} Call aidd_start NOW. Mandatory workflow: Brainstorm → Plan → Execute → Review → End (CLAUDE.md §2).`);
+    console.log(`[AIDD] No active session.${artStr} Call aidd_start NOW. Mandatory workflow: Brainstorm → Plan → Execute → Test → Review → Ship (CLAUDE.md §2).`);
   }
-} catch { console.log('[AIDD] Call aidd_start NOW. Mandatory workflow: Brainstorm → Plan → Execute → Review → End (CLAUDE.md §2).'); }
+} catch { console.log('[AIDD] Call aidd_start NOW. Mandatory workflow: Brainstorm → Plan → Execute → Test → Review → Ship (CLAUDE.md §2).'); }
