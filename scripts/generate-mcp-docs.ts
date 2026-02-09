@@ -50,12 +50,17 @@ interface SignatureInfo {
 interface DimensionInfo {
   name: string;
   formula: string;
+  maxScore: number;
+  optional?: boolean;
 }
 
 interface PatternData {
   signatures: SignatureInfo[];
   fingerprintMetrics: string[];
   auditDimensions: DimensionInfo[];
+  baseScoreCap: number;
+  maxScoreCap: number;
+  hasTidBonus: boolean;
 }
 
 interface HookInfo {
@@ -224,14 +229,6 @@ const JSON_COLUMNS = new Set([
   'files_modified',
 ]);
 
-const FK_COLUMNS = new Set([
-  'session_id',
-  'candidate_id',
-  'pattern_id',
-  'memory_session_id',
-  'parent_session_id',
-]);
-
 function extractSchema(): TableInfo[] {
   const src = readText(MIGRATIONS_FILE);
 
@@ -265,6 +262,13 @@ function extractSchema(): TableInfo[] {
     const pkCol = aiPk?.[1] ?? textPk?.[1];
 
     // Extract columns (non-PK)
+    const fkCols = new Set<string>();
+    const fkColRe = /(\w+)\s+(?:TEXT|INTEGER|REAL|INT)\b[^,\n]*\bREFERENCES\b/gi;
+    let fkMatch: RegExpExecArray | null;
+    while ((fkMatch = fkColRe.exec(body)) !== null) {
+      fkCols.add(fkMatch[1]!);
+    }
+
     const cols: string[] = [];
     for (const line of body.split('\n')) {
       const trimmed = line.trim();
@@ -275,7 +279,7 @@ function extractSchema(): TableInfo[] {
       if (colName === pkCol) continue;
 
       let label = colName;
-      if (FK_COLUMNS.has(colName)) label += ' FK';
+      if (fkCols.has(colName)) label += ' FK';
       else if (JSON_COLUMNS.has(colName)) label += '(JSON)';
       else if (colName.endsWith('_at')) continue; // skip timestamp cols for brevity
       cols.push(label);
@@ -364,30 +368,30 @@ function extractPatternSignatures(): PatternData {
     }
   }
 
-  // Audit dimensions — from dimensions: { ... } inside computeAuditScore
-  const auditBlock = src.match(/dimensions:\s*\{([\s\S]*?)\}/);
-  const auditDimensions: DimensionInfo[] = [];
-  if (auditBlock) {
-    const dimRe = /^\s*(\w+),?\s*$/gm;
-    let dm: RegExpExecArray | null;
-    while ((dm = dimRe.exec(auditBlock[1]!)) !== null) {
-      auditDimensions.push({ name: dm[1]!, formula: '' });
-    }
-  }
+  const knownDimensions: DimensionInfo[] = [
+    { name: 'lexicalDiversity', formula: 'min(20, TTR*40)', maxScore: 20 },
+    { name: 'structuralVariation', formula: 'max(0, 20-|variance-30|*0.3)', maxScore: 20 },
+    { name: 'voiceAuthenticity', formula: '20-passivePen-fillerPen', maxScore: 20 },
+    { name: 'patternAbsence', formula: '20-min(20, matches*3)', maxScore: 20 },
+    { name: 'semanticPreservation', formula: '15 (default)', maxScore: 15 },
+    { name: 'tidBonus', formula: '+15 if output_tokens/model_avg_tokens < 0.4', maxScore: 15, optional: true },
+  ];
 
-  // Formulas are computed logic — map from known dimension names
-  const formulaMap: Record<string, string> = {
-    lexicalDiversity: 'min(20, TTR*40)',
-    structuralVariation: 'max(0, 20-|variance-30|*0.3)',
-    voiceAuthenticity: '20-passivePen-fillerPen',
-    patternAbsence: '20-min(20, matches*3)',
-    semanticPreservation: '15 (default)',
+  const auditDimensions = knownDimensions.filter((d) => new RegExp(`\\b${d.name}\\b`).test(src));
+  const hasTidBonus = auditDimensions.some((d) => d.name === 'tidBonus');
+  const baseScoreCap = auditDimensions
+    .filter((d) => !d.optional)
+    .reduce((sum, d) => sum + d.maxScore, 0);
+  const maxScoreCap = auditDimensions.reduce((sum, d) => sum + d.maxScore, 0);
+
+  return {
+    signatures,
+    fingerprintMetrics,
+    auditDimensions,
+    baseScoreCap,
+    maxScoreCap,
+    hasTidBonus,
   };
-  for (const d of auditDimensions) {
-    d.formula = formulaMap[d.name] ?? '';
-  }
-
-  return { signatures, fingerprintMetrics, auditDimensions };
 }
 
 // ---------------------------------------------------------------------------
@@ -503,7 +507,7 @@ function renderIndex(
     `Engine (single process) ← Core(${pkgCounts.get('core') ?? 0}) + Memory(${pkgCounts.get('memory') ?? 0}) + Tools(${pkgCounts.get('tools') ?? 0}) = ${tools.length} tools, ${uniqueModules.size} modules`,
     ``,
     `## Storage`,
-    `SQLite WAL | ${tableCount} tables + ${ftsCount} FTS5 | FK=ON | busy_timeout=5000`,
+    `SQLite WAL | ${tableCount} tables + ${ftsCount} FTS5 | FK pragma ON (soft relations) | busy_timeout=5000`,
     ``,
     `## Memory Layers`,
     `L1 Session → L2 Observation(FTS5) → L3 Branch → L4 Permanent → L5 Evolution`,
@@ -584,7 +588,7 @@ function renderSqlSchema(tables: TableInfo[]): string {
   const lines: string[] = [
     `# SQLite Schema (${realTables.length} tables, ${totalIdx} idx, ${totalTrig} triggers)`,
     ``,
-    `PRAGMA: WAL, FK=ON, busy_timeout=5000`,
+    `PRAGMA: WAL, FK=ON, busy_timeout=5000 (no SQL REFERENCES constraints in current schema)`,
     ``,
     `## Tables`,
     ``,
@@ -640,16 +644,18 @@ function renderPatternSignatures(data: PatternData): string {
   );
   lines.push(data.fingerprintMetrics.join(', '));
   lines.push('');
-  lines.push(
-    `## Audit Score (${data.auditDimensions.length}x20=100)`,
-  );
+  lines.push(`## Audit Score (base ${data.baseScoreCap}, max ${data.maxScoreCap})`);
   lines.push('');
-  lines.push(`| Dim | Calc |`);
-  lines.push(`|-----|------|`);
+  lines.push(`| Dim | Calc | Max |`);
+  lines.push(`|-----|------|-----|`);
   for (const d of data.auditDimensions) {
-    lines.push(`| ${d.name} | ${d.formula} |`);
+    lines.push(`| ${d.name} | ${d.formula} | ${d.maxScore}${d.optional ? ' (opt)' : ''} |`);
   }
   lines.push('');
+  if (data.hasTidBonus) {
+    lines.push(`TID bonus active: audit score can exceed base cap without changing verdict thresholds.`);
+    lines.push('');
+  }
   lines.push(`Verdict: >=70 pass | >=40 retry | <40 escalate`);
   lines.push('');
   lines.push(`## False Positive Protocol`);
