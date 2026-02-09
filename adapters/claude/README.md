@@ -26,7 +26,7 @@ AIDD integrates with Claude Code through three layers:
 
 | Layer | File | Purpose |
 |-------|------|---------|
-| **Protocol** | `CLAUDE.md` | Directive instructions the AI follows (startup, lifecycle, session end) |
+| **Protocol** | `CLAUDE.md` | Directive instructions the AI follows (startup, mandatory workflow pipeline, session end) |
 | **Configuration** | `.claude/settings.json` | Permissions, hooks, status line — one-file DX setup |
 | **MCP Server** | `@aidd.md/mcp-engine` | 71 tools for sessions, memory, validation, evolution |
 
@@ -59,7 +59,8 @@ pnpm mcp:check
 1. Start a new Claude Code conversation
 2. The SessionStart hook should fire: `[AIDD Protocol] You MUST call aidd_start...`
 3. AI should call `aidd_start` as its first action
-4. Status line should show: `[Model] ▓▓▓░░░░░░░ 30% | $0.05 | 3m 20s`
+4. Hook `on-session-init.cjs` fires — enforces mandatory brainstorm
+5. Status line should show: `[Model] ▓▓▓░░░░░░░ 30% | $0.05 | 3m 20s`
 
 ---
 
@@ -70,7 +71,7 @@ pnpm mcp:check
 Project-level configuration committed to Git. Contains:
 
 - **Permissions**: Auto-allow all 71 AIDD MCP tools + common Bash commands
-- **Hooks**: 5 hooks across 3 events for protocol enforcement
+- **Hooks**: 9 hooks (8 command + 1 prompt) across 4 events for mandatory workflow pipeline enforcement
 - **Status Line**: Node.js script showing model, context, cost, duration
 
 ### `.claude/settings.local.json`
@@ -79,11 +80,11 @@ User-local overrides (gitignored). Use for personal preferences that shouldn't a
 
 ### `CLAUDE.md`
 
-Project instructions loaded at every conversation start. Contains the full AIDD conversation lifecycle protocol with directive language (MUST/ALWAYS/NEVER). Sections:
+Project instructions loaded at every conversation start. Contains the full AIDD mandatory workflow pipeline with directive language (MUST/ALWAYS/NEVER). Sections:
 
 1. **Startup Protocol** — `aidd_start` as mandatory first call
-2. **Conversation Lifecycle** — Session updates, observations, memory, artifacts, error diagnosis, pre-commit
-3. **Session End Protocol** — `aidd_session:end` as mandatory last call
+2. **Mandatory Workflow Pipeline** — Brainstorm → Plan → Execute → Test → Review → Ship (every step enforced by hooks)
+3. **Operations Reference** — Session updates, observations, memory, artifacts, error diagnosis, pre-commit
 4. **Quick Reference** — Trigger-to-tool lookup table
 5. **Automatic Operations** — Zero-token server-side hooks
 6. **Project Overview** — Repository structure, commands, tech stack
@@ -96,30 +97,63 @@ Cross-platform Node.js script for the status line. Receives JSON via stdin, outp
 
 ## 4. Hooks System
 
-AIDD uses 4 command hooks across 3 Claude Code events for protocol enforcement:
+AIDD uses 9 hooks (8 command + 1 prompt) across 4 Claude Code events for mandatory workflow pipeline enforcement:
 
 ### Hook Inventory
 
-| # | Event | Type | Matcher | Purpose |
-|---|-------|------|---------|---------|
-| 1 | `SessionStart` | command | `startup` | Inject AIDD protocol reminder on fresh sessions |
-| 2 | `SessionStart` | command | `resume\|compact\|clear` | Re-inject context after compaction/resume |
-| 3 | `PreCompact` | command | `""` (all) | Remind to save pending state before context loss |
-| 4 | `Stop` | command | `""` (all) | Inject session end reminder |
+| # | Event | Type | Matcher | Script | Workflow Step |
+|---|-------|------|---------|--------|---------------|
+| 1 | `SessionStart` | command | `startup` | `on-startup.cjs` | Query DB for active session + orphaned artifacts |
+| 2 | `SessionStart` | command | `resume\|compact\|clear` | `on-resume.cjs` | Recover session context with task/artifact counts |
+| 3 | `PreCompact` | command | `""` (all) | `on-pre-compact.cjs` | Warn with session state + artifact count |
+| 4 | `PostToolUse` | command | `mcp__aidd-engine__aidd_start` | `on-session-init.cjs` | **Enforce mandatory brainstorm (§2.1)** |
+| 5 | `PostToolUse` | command | `EnterPlanMode` | `on-plan-enter.cjs` | **Verify brainstorm exists + enforce plan artifact (§2.2)** |
+| 6 | `PostToolUse` | command | `ExitPlanMode` | `on-plan-exit.cjs` | **Compliance tracking + approval/rejection protocol (§2.3)** |
+| 7 | `PostToolUse` | command | `mcp__aidd-engine__aidd_session` | `on-session-end.cjs` | **Review enforcement: verify checklist + retro on end (§2.7)** |
+| 8 | `Stop` | command | `""` (all) | `on-stop.cjs` | Enforce test + review + retro + archival + session end |
+| 9 | `Stop` | prompt | `""` (all) | (inline) | Block conversation end if session still active |
+
+All hook scripts live in `scripts/hooks/` (adapter-agnostic). The `.claude/settings.json` references them as `node scripts/hooks/<name>.cjs`.
+
+### Mandatory Workflow Enforcement
+
+Hooks enforce the mandatory pipeline at every transition:
+
+| Workflow Step | Hook | Enforcement |
+|---------------|------|-------------|
+| §2.1 Brainstorm | `on-session-init.cjs` | After `aidd_start`, requires brainstorm artifact creation |
+| §2.2 Plan | `on-plan-enter.cjs` | Checks brainstorm artifact exists, provides session/artifact IDs |
+| §2.3 Plan Approval | `on-plan-exit.cjs` | Tracks iteration count, computes compliance score hints |
+| §2.7 Ship | `on-session-end.cjs` | On `action: "end"`, verifies checklist + retro artifacts exist |
+| Stop | `on-stop.cjs` | Scores workflow completeness (X/4 steps), lists missing artifacts |
+
+### Smart Hooks
+
+Hook scripts query `.aidd/data.db` via `better-sqlite3` (readonly) to provide state-aware enforcement:
+
+- **Session state**: Active session ID, branch, input, task counts
+- **Artifact tracking**: Active artifacts by type, orphaned artifacts, plan/brainstorm/research IDs
+- **Compliance hints**: Iteration count from session decisions, workflow completeness scoring
+- **Specific instructions**: Hook output includes exact session/artifact IDs for MCP tool calls
+
+PostToolUse hooks (#4, #7) receive JSON via stdin with `tool_name`, `tool_input`, `tool_response` — enabling context-aware filtering (e.g., `on-session-end.cjs` only acts when `action === "end"`).
+
+All scripts use `try/catch` with generic fallback messages for graceful degradation when the DB doesn't exist (fresh projects).
 
 ### Enforcement Strategy
 
-Two enforcement layers ensure protocol compliance:
+Three enforcement layers ensure protocol compliance:
 
-1. **CLAUDE.md** — Directive instructions (MUST/ALWAYS/NEVER) make the AI follow the protocol
-2. **Command hooks** — Deterministic reminders injected into context at key events (zero token cost)
+1. **CLAUDE.md** — Directive instructions (MUST/ALWAYS/NEVER) with mandatory workflow pipeline make the AI follow the pipeline at every step
+2. **Smart command hooks** — DB-aware Node.js scripts inject specific session/artifact IDs and enforce artifact creation at every workflow transition
+3. **Prompt enforcer on Stop** — Blocks conversation from ending if AIDD session is still active
 
 ### Windows Compatibility
 
-All hooks use portable commands:
+All hooks use portable Node.js scripts (`.cjs` extension for CommonJS compatibility):
 
-- `echo` for command hooks (works in cmd, PowerShell, bash)
-- `node .claude/statusline.js` for status line (Node.js handles path separators)
+- `node scripts/hooks/<name>.cjs` for command hooks (cross-platform)
+- `node .claude/statusline.js` for status line
 - No `jq`, `grep`, or Unix-specific dependencies
 
 ---
@@ -186,6 +220,7 @@ These tools form the minimum viable protocol:
 | `aidd_start` | Conversation start | Yes |
 | `aidd_session { update }` | During work | Yes |
 | `aidd_session { end }` | Conversation end | Yes |
+| `aidd_artifact` | Every workflow step | Yes |
 | `aidd_memory_search` | Before planning | Recommended |
 | `aidd_diagnose_error` | On errors | Recommended |
 | `aidd_observation` | On learnings | Recommended |
@@ -225,7 +260,8 @@ Committed to Git for team visibility and cross-tool access.
 | UNDERSTAND | Search all memory | — |
 | PLAN | Check decisions + mistakes | — |
 | BUILD | Consult conventions | Observations |
-| VERIFY | — | Observations (mistakes) |
+| TEST | — | Observations (mistakes) |
+| REVIEW | — | — |
 | SHIP | — | Permanent memory + export |
 
 ---
@@ -234,26 +270,56 @@ Committed to Git for team visibility and cross-tool access.
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│ CONVERSATION START                                   │
-│   Hook: SessionStart(startup) → protocol reminder    │
+│ §1 STARTUP                                           │
+│   Hook: on-startup.cjs → DB query, session + arts    │
 │   AI: aidd_start → session ID                        │
+│   AI: aidd_session { update, input } → raw input     │
+│   Hook: on-session-init.cjs → enforce brainstorm     │
 ├─────────────────────────────────────────────────────┤
-│ WORK PHASE                                           │
-│   AI: aidd_memory_search (before planning)           │
-│   AI: aidd_session { update } (at task boundaries)   │
-│   AI: aidd_observation (on significant learnings)    │
-│   AI: aidd_diagnose_error (on errors)                │
-│   AI: aidd_artifact (at workflow stages)              │
+│ §2.1 UNDERSTAND — Brainstorm (MANDATORY)             │
+│   AI: aidd_memory_search (check prior context)       │
+│   AI: aidd_artifact (brainstorm + research)          │
+│   AI: aidd_session { update, input } → refined       │
+├─────────────────────────────────────────────────────┤
+│ §2.2 PLAN — Create Plan (MANDATORY)                  │
+│   Hook: on-plan-enter.cjs → verify brainstorm exists │
+│   AI: aidd_session { update, tasksPending }          │
+│   AI: aidd_artifact (plan + adr + diagram)           │
+├─────────────────────────────────────────────────────┤
+│ §2.3 PLAN — Plan Approval                            │
+│   Hook: on-plan-exit.cjs → compliance tracking       │
+│   AI: aidd_artifact { archive } + observation        │
+│   AI: aidd_artifact (spec) + aidd_draft_create       │
+│   [If rejected: return to §2.1 Brainstorm]           │
+├─────────────────────────────────────────────────────┤
+│ §2.4 BUILD — Execution                               │
+│   AI: aidd_session { update } at task boundaries     │
+│   AI: aidd_artifact (issue) on bugs/blockers         │
+│   AI: aidd_observation on significant learnings      │
+│   AI: aidd_diagnose_error on errors                  │
 │   Server: pattern-auto-detect (after observations)   │
 ├─────────────────────────────────────────────────────┤
-│ PRE-COMMIT                                           │
-│   AI: aidd_generate_commit_message                   │
-│   AI: aidd_ci_diff_check                             │
-│   AI: aidd_scan_secrets                              │
+│ §2.5 TEST — Automated Checks                         │
+│   AI: aidd_artifact (checklist)                      │
+│   AI: Run typecheck + tests + build                  │
+│   [If fail: return to §2.4 BUILD to fix]             │
+│   AI: aidd_generate_commit_message + ci_diff_check   │
 ├─────────────────────────────────────────────────────┤
-│ CONVERSATION END                                     │
-│   Hook: Stop → reminder + enforcement                │
+│ §2.6 REVIEW — Final Approval                         │
+│   AI: Present results for user review                │
+│   [If rejected: return to §2.1 Brainstorm]           │
+│   [If approved: proceed to §2.7 SHIP]                │
+├─────────────────────────────────────────────────────┤
+│ §2.7 SHIP — Session End (7-step protocol)            │
+│   Hook: on-stop.cjs → workflow completeness score    │
+│   Hook: prompt enforcer → block if session active    │
+│   AI: aidd_session { update } → final state          │
+│   AI: aidd_observation + permanent memory            │
+│   AI: aidd_artifact (retro)                          │
+│   AI: aidd_artifact { archive } → all active arts    │
+│   AI: aidd_memory_export → Git visibility            │
 │   AI: aidd_session { end } → close with outcome      │
+│   Hook: on-session-end.cjs → verify artifacts        │
 │   Server: pattern-model-profile (auto)               │
 │   Server: evolution-auto-analyze (every 5th)          │
 └─────────────────────────────────────────────────────┘

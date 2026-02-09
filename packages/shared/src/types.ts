@@ -263,11 +263,21 @@ export interface SessionState {
   rulesApplied: string[];
   workflowsFollowed: string[];
   tkbEntriesConsulted: string[];
-  taskClassification: { domain: string; nature: string; complexity: string };
+  taskClassification: {
+    domain: string;
+    nature: string;
+    complexity: string;
+    phase?: string;
+    tier?: number;
+    fastTrack?: boolean;
+    risky?: boolean;
+    skippableStages?: string[];
+  };
   outcome?: SessionOutcome;
   lifecycleSessionId?: string;
   tokenUsage?: TokenUsage;
   fingerprint?: ModelFingerprint;
+  timingMetrics?: { startupMs?: number };
 }
 
 export interface SessionOutcome {
@@ -418,6 +428,10 @@ export interface EvolutionCandidate {
   suggestedAction: string;
   modelScope?: string;
   modelEvidence?: Record<string, number>;
+  shadowTested?: boolean;
+  falsePositiveRate?: number;
+  sampleSize?: number;
+  testedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -579,6 +593,7 @@ export interface AuditScore {
     voiceAuthenticity: number;
     patternAbsence: number;
     semanticPreservation: number;
+    tidBonus?: number;
   };
   patternsFound: number;
   verdict: 'pass' | 'retry' | 'escalate';

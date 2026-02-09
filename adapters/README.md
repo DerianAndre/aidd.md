@@ -27,7 +27,7 @@ AIDD provides three integration layers. Not all tools support all layers:
 |---------|-------------|--------|--------|------|
 | Context loading | `CLAUDE.md` + `AGENTS.md` | `.cursor/rules/` + `AGENTS.md` | `AGENTS.md` (native) | `AGENTS.md` (manual) |
 | MCP support | Full (71 tools) | Full (71 tools) | Partial (API-level) | No |
-| Hooks/automation | 4 hooks (command) | Rules auto-apply | Auto-load | Manual |
+| Hooks/automation | 9 hooks (8 command + 1 prompt) | Rules auto-apply | Auto-load | Manual |
 | Session tracking | Full lifecycle | Via MCP | Via MCP | No |
 | Memory persistence | 3-layer (obs → permanent → export) | Via MCP | Via MCP | No |
 | Status line | Custom Node.js script | Built-in | N/A | N/A |
@@ -39,7 +39,7 @@ AIDD provides three integration layers. Not all tools support all layers:
 
 ### [Claude Code](claude/README.md)
 
-Full integration with 3-layer enforcement: `CLAUDE.md` protocol + `.claude/settings.json` hooks + MCP server. Supports session lifecycle, memory persistence, pattern detection, evolution, and automated compliance enforcement via hooks.
+Full integration with 3-layer enforcement: `CLAUDE.md` mandatory workflow pipeline + smart DB-aware hooks (`scripts/hooks/`) + MCP server. 9 hooks (8 command + 1 prompt) across 4 events enforce the mandatory workflow pipeline — Brainstorm → Plan → Execute → Test → Review → Ship — with artifact creation at every step, compliance tracking, and session state updates throughout. Hooks are adapter-agnostic Node.js scripts that query `.aidd/data.db`.
 
 ### [Cursor](cursor/README.md)
 

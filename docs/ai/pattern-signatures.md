@@ -22,15 +22,18 @@ All `/gi`. DB `banned_patterns` extends at runtime.
 ## Fingerprint (7 metrics)
 avgSentenceLength, sentenceLengthVariance, typeTokenRatio, avgParagraphLength, passiveVoiceRatio, fillerDensity, questionFrequency
 
-## Audit Score (5x20=100)
+## Audit Score (base 95, max 110)
 
-| Dim | Calc |
-|-----|------|
-| lexicalDiversity | min(20, TTR*40) |
-| structuralVariation | max(0, 20-|variance-30|*0.3) |
-| voiceAuthenticity | 20-passivePen-fillerPen |
-| patternAbsence | 20-min(20, matches*3) |
-| semanticPreservation | 15 (default) |
+| Dim | Calc | Max |
+|-----|------|-----|
+| lexicalDiversity | min(20, TTR*40) | 20 |
+| structuralVariation | max(0, 20-|variance-30|*0.3) | 20 |
+| voiceAuthenticity | 20-passivePen-fillerPen | 20 |
+| patternAbsence | 20-min(20, matches*3) | 20 |
+| semanticPreservation | 15 (default) | 15 |
+| tidBonus | +15 if output_tokens/model_avg_tokens < 0.4 | 15 (opt) |
+
+TID bonus active: audit score can exceed base cap without changing verdict thresholds.
 
 Verdict: >=70 pass | >=40 retry | <40 escalate
 

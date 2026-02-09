@@ -150,8 +150,9 @@ When using Warp without an MCP editor, manually follow the AIDD lifecycle:
 1. **UNDERSTAND** — Read requirements, check `content/specs/aidd-lifecycle.md`
 2. **PLAN** — Create plan in `docs/plans/active/`
 3. **BUILD** — Follow the plan, reference `content/rules/` for constraints
-4. **VERIFY** — Run tests, typecheck, lint
-5. **SHIP** — Commit with conventional format, archive plan to `docs/plans/done/`
+4. **TEST** — Run tests, typecheck, build, lint
+5. **REVIEW** — Verify results meet expectations
+6. **SHIP** — Commit with conventional format, archive plan to `docs/plans/done/`
 
 ---
 

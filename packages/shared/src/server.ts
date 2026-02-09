@@ -12,6 +12,8 @@ import { DEFAULT_CONFIG } from './types.js';
 
 export { McpServer };
 
+type InitializableServer = McpServer & { __aiddInit?: Promise<void> };
+
 /**
  * Create and configure an AIDD MCP server.
  * Ported from EnXingaPay's createMcpServer pattern with module support.
@@ -73,37 +75,33 @@ export function createAiddServer(options: AiddServerOptions): McpServer {
   const storageCoordinator = onReadyModules.find(isStorageCoordinator);
   const otherModules = onReadyModules.filter((m) => !isStorageCoordinator(m));
 
-  // Run storage coordinator first, wait for completion
-  async function initializeModules() {
-    try {
-      if (storageCoordinator) {
-        logger.info('Initializing storage coordinator...');
-        await storageCoordinator.onReady!(context);
-        logger.info('Storage coordinator initialized successfully');
-      }
-
-      // Then run other modules in parallel
-      const results = await Promise.allSettled(
-        otherModules.map((m) => {
-          logger.info(`Initializing module: ${m.name}`);
-          return m.onReady!(context);
-        }),
-      );
-
-      for (const result of results) {
-        if (result.status === 'rejected') {
-          logger.error('Module onReady failed', result.reason);
-        }
-      }
-
-      logger.info('All modules initialized successfully');
-    } catch (error) {
-      logger.error('Critical error during module initialization:', error);
+  // Run storage coordinator first, wait for completion.
+  // Storage failures are fatal; other module failures are logged but non-fatal.
+  async function initializeModules(): Promise<void> {
+    if (storageCoordinator) {
+      logger.info('Initializing storage coordinator...');
+      await storageCoordinator.onReady!(context);
+      logger.info('Storage coordinator initialized successfully');
     }
+
+    const results = await Promise.allSettled(
+      otherModules.map((m) => {
+        logger.info(`Initializing module: ${m.name}`);
+        return m.onReady!(context);
+      }),
+    );
+
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        logger.error('Module onReady failed', result.reason);
+      }
+    }
+
+    logger.info('All modules initialized successfully');
   }
 
-  // Run initialization without blocking the server creation
-  void initializeModules();
+  // Block transport startup on initialization completion.
+  (server as InitializableServer).__aiddInit = initializeModules();
 
   return server;
 }
@@ -128,6 +126,10 @@ export function registerTool(server: McpServer, tool: ToolDefinition): void {
 
 /** Start the server with stdio transport. */
 export async function startStdioServer(server: McpServer): Promise<void> {
+  const init = (server as InitializableServer).__aiddInit;
+  if (init) {
+    await init;
+  }
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
