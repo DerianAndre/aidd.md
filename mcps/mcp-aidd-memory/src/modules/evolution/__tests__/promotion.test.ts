@@ -81,6 +81,22 @@ function makeCandidate(title: string, confidence = 92): EvolutionCandidate {
   };
 }
 
+function makeConventionCandidate(title: string, confidence = 80): EvolutionCandidate {
+  return {
+    id: 'conv-1',
+    type: 'new_convention',
+    title,
+    description: 'desc',
+    confidence,
+    sessionCount: 8,
+    evidence: [],
+    discoveryTokensTotal: 0,
+    suggestedAction: 'add convention',
+    createdAt: now(),
+    updatedAt: now(),
+  };
+}
+
 describe('promoteCandidate shadow gating', () => {
   it('rejects new model_pattern_ban candidate when false positive rate is high', async () => {
     const backend = new PromotionBackendStub(5, 25);
@@ -124,5 +140,31 @@ describe('promoteCandidate shadow gating', () => {
     expect(backend.saved[0]?.shadowTested).toBe(true);
     expect(backend.saved[0]?.sampleSize).toBeGreaterThanOrEqual(20);
   });
-});
 
+  it('rejects new_convention candidates when overlap with good sessions is too high', async () => {
+    const backend = new PromotionBackendStub(8, 25);
+    const result = await promoteCandidate({
+      backend: backend as never,
+      candidate: makeConventionCandidate('Recurring error: noisy pattern token'),
+      thresholds: { autoApplyThreshold: 90, draftThreshold: 70 },
+    });
+
+    expect(result.action).toBe('rejected');
+    expect(backend.saved).toHaveLength(0);
+    expect(result.candidate?.shadowTested).toBe(true);
+    expect((result.candidate?.falsePositiveRate ?? 0)).toBeGreaterThan(0.1);
+  });
+
+  it('promotes new_convention candidates when overlap with good sessions is low', async () => {
+    const backend = new PromotionBackendStub(1, 25);
+    const result = await promoteCandidate({
+      backend: backend as never,
+      candidate: makeConventionCandidate('Recurring error: noisy pattern token', 75),
+      thresholds: { autoApplyThreshold: 90, draftThreshold: 70 },
+    });
+
+    expect(result.action).toBe('drafted');
+    expect(backend.saved).toHaveLength(1);
+    expect(backend.saved[0]?.shadowTested).toBe(true);
+  });
+});

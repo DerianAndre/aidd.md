@@ -173,7 +173,19 @@ export function computeAuditScore(
     if (tidContext.responseTokens / tidContext.modelAvgTokens < 0.4) tidBonus = 15;
   }
 
-  const totalScore = lexicalDiversity + structuralVariation + voiceAuthenticity + patternAbsence + semanticPreservation + tidBonus;
+  // Guardrail anti-bypass penalty: detect verbose filler templates used only to satisfy compliance.
+  const wordCount = text.split(/\s+/).filter((w) => w.length > 0).length;
+  const fillerLikeMatches = matches.filter((m) => m.category === 'filler' || m.category === 'verbosity').length;
+  const templateMarkers = /\b(auto-generated|pendingapproval|proposed content|next step)\b/i.test(text);
+  let guardrailPenalty = 0;
+  if (templateMarkers && wordCount > 350 && fillerLikeMatches >= 3) guardrailPenalty = 12;
+  else if (templateMarkers && wordCount > 240 && fillerLikeMatches >= 2) guardrailPenalty = 8;
+  else if (wordCount > 700 && fillerLikeMatches >= 2) guardrailPenalty = 6;
+
+  const totalScore = Math.max(
+    0,
+    lexicalDiversity + structuralVariation + voiceAuthenticity + patternAbsence + semanticPreservation + tidBonus - guardrailPenalty,
+  );
   const verdict: AuditScore['verdict'] = totalScore >= 70 ? 'pass' : totalScore >= 40 ? 'retry' : 'escalate';
 
   const inputHash = createHash('sha256').update(text.slice(0, 1000)).digest('hex').slice(0, 16);
@@ -190,6 +202,7 @@ export function computeAuditScore(
       patternAbsence,
       semanticPreservation,
       ...(tidBonus > 0 ? { tidBonus } : {}),
+      ...(guardrailPenalty > 0 ? { guardrailPenalty } : {}),
     },
     patternsFound: matches.length,
     verdict,

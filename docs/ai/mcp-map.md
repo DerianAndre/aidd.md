@@ -1,6 +1,6 @@
 # MCP & Tool Mapping
 
-## 72 Tools across 21 Modules
+## 79 Tools across 21 Modules
 
 ### core (17)
 - **bootstrap**: aidd_detect_project, aidd_get_config, aidd_start
@@ -10,15 +10,15 @@
 - **routing**: aidd_classify_task, aidd_get_routing_table, aidd_model_route, aidd_get_model_matrix, aidd_model_matrix_status
 - **scaffold**: aidd_scaffold
 
-### memory (36)
+### memory (43)
 - **analytics**: aidd_model_performance, aidd_model_compare, aidd_model_recommend
 - **artifacts**: aidd_artifact
 - **branch**: aidd_branch
 - **diagnostics**: aidd_diagnose_error, aidd_project_health
-- **drafts**: aidd_draft_create, aidd_draft_list, aidd_draft_approve
-- **evolution**: aidd_evolution_analyze, aidd_evolution_status, aidd_evolution_review, aidd_evolution_revert
+- **drafts**: aidd_draft_create, aidd_draft_list, aidd_draft_approve, aidd_draft_reject
+- **evolution**: aidd_evolution_analyze, aidd_evolution_status, aidd_evolution_review, aidd_evolution_revert, aidd_evolution_approve, aidd_evolution_reject, aidd_evolution_delete
 - **lifecycle**: aidd_lifecycle_get, aidd_lifecycle_init, aidd_lifecycle_advance, aidd_lifecycle_status, aidd_lifecycle_list
-- **memory**: aidd_memory_search, aidd_memory_context, aidd_memory_get, aidd_memory_add_decision, aidd_memory_add_mistake, aidd_memory_add_convention, aidd_memory_prune, aidd_memory_export, aidd_memory_integrity_check
+- **memory**: aidd_memory_search, aidd_memory_context, aidd_memory_get, aidd_memory_add_decision, aidd_memory_add_mistake, aidd_memory_add_convention, aidd_memory_edit_decision, aidd_memory_edit_mistake, aidd_memory_edit_convention, aidd_memory_prune, aidd_memory_export, aidd_memory_integrity_check
 - **observation**: aidd_observation
 - **pattern-killer**: aidd_pattern_audit, aidd_pattern_list, aidd_pattern_add, aidd_pattern_stats, aidd_pattern_score, aidd_pattern_false_positive
 - **session**: aidd_session

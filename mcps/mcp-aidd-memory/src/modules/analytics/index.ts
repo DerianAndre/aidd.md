@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { z } from 'zod';
 import {
   registerTool,
@@ -53,6 +55,8 @@ function computeMetrics(modelId: string, sessions: SessionState[]): ModelMetrics
   // TTH (startup timing) accumulators
   let totalStartupMs = 0;
   let startupCount = 0;
+  let totalGovernanceOverheadMs = 0;
+  let governanceOverheadCount = 0;
 
   // Fingerprint accumulators
   let fpCount = 0;
@@ -88,6 +92,12 @@ function computeMetrics(modelId: string, sessions: SessionState[]): ModelMetrics
       startupCount++;
       totalStartupMs += s.timingMetrics.startupMs;
     }
+    const governanceOverheadMs =
+      (s.timingMetrics as { governanceOverheadMs?: number } | undefined)?.governanceOverheadMs;
+    if (governanceOverheadMs != null) {
+      governanceOverheadCount++;
+      totalGovernanceOverheadMs += governanceOverheadMs;
+    }
     if (s.fingerprint) {
       fpCount++;
       for (const key of Object.keys(fpSums) as (keyof ModelFingerprint)[]) {
@@ -120,6 +130,9 @@ function computeMetrics(modelId: string, sessions: SessionState[]): ModelMetrics
     avgStartupMs: startupCount > 0
       ? Math.round(totalStartupMs / startupCount)
       : undefined,
+    avgGovernanceOverheadMs: governanceOverheadCount > 0
+      ? Math.round(totalGovernanceOverheadMs / governanceOverheadCount)
+      : undefined,
     avgFingerprint: fpCount > 0
       ? {
           avgSentenceLength: Math.round((fpSums.avgSentenceLength / fpCount) * 100) / 100,
@@ -132,6 +145,31 @@ function computeMetrics(modelId: string, sessions: SessionState[]): ModelMetrics
         }
       : undefined,
   };
+}
+
+function writeModelPerformanceSnapshot(aiddDir: string, models: ModelMetrics[]): void {
+  const analyticsDir = join(aiddDir, 'analytics');
+  mkdirSync(analyticsDir, { recursive: true });
+  const snapshot = {
+    generatedAt: new Date().toISOString(),
+    models: models.map((m) => ({
+      provider: m.provider,
+      model: m.model,
+      modelId: m.modelId,
+      sessionsCount: m.sessionsCount,
+      avgComplianceScore: m.avgComplianceScore,
+      avgReverts: m.avgReverts,
+      avgReworks: m.avgReworks,
+      testPassRate: m.testPassRate,
+      positiveRate: m.positiveRate,
+      avgInputTokens: m.avgInputTokens,
+      avgOutputTokens: m.avgOutputTokens,
+      avgContextEfficiency: m.avgContextEfficiency,
+      startupMs: m.avgStartupMs,
+      governanceOverheadMs: m.avgGovernanceOverheadMs,
+    })),
+  };
+  writeFileSync(join(analyticsDir, 'model-performance.json'), JSON.stringify(snapshot, null, 2), 'utf8');
 }
 
 function scoreModel(m: ModelMetrics): number {
@@ -209,6 +247,12 @@ export function createAnalyticsModule(storage: StorageProvider): AiddModule {
 
           // Sort by composite score
           metrics.sort((a, b) => scoreModel(b) - scoreModel(a));
+
+          try {
+            writeModelPerformanceSnapshot(context.aiddDir, metrics);
+          } catch (err) {
+            context.logger.warn('[aidd_model_performance] Failed to write analytics/model-performance.json', err);
+          }
 
           return createJsonResult({
             count: Math.min(metrics.length, limit),

@@ -1,6 +1,6 @@
 import { now } from '@aidd.md/mcp-shared';
 import type { EvolutionCandidate, StorageBackend } from '@aidd.md/mcp-shared';
-import { shadowTestPattern } from './analyzer.js';
+import { shadowTestConvention, shadowTestPattern } from './analyzer.js';
 
 export type PromotionAction = 'auto_applied' | 'drafted' | 'pending' | 'rejected' | 'skipped';
 
@@ -114,6 +114,26 @@ export async function promoteCandidate(input: PromoteCandidateInput): Promise<Pr
     }
   }
 
+  if (working.type === 'new_convention') {
+    const shadow = await shadowTestConvention(working.title, backend);
+    working = {
+      ...working,
+      shadowTested: true,
+      falsePositiveRate: shadow.falsePositiveRate,
+      sampleSize: shadow.sampleSize,
+      testedAt: now(),
+    };
+
+    if (!shadow.passed) {
+      return {
+        action: 'rejected',
+        reason: `convention_false_positive_rate=${shadow.falsePositiveRate}`,
+        candidate: working,
+        mergedExisting: !!existing,
+      };
+    }
+  }
+
   await backend.saveEvolutionCandidate(working);
   return {
     action: classifyAction(working.confidence, thresholds),
@@ -121,4 +141,3 @@ export async function promoteCandidate(input: PromoteCandidateInput): Promise<Pr
     mergedExisting: !!existing,
   };
 }
-

@@ -35,7 +35,7 @@ export function createArtifactsModule(storage: StorageProvider): AiddModule {
           description: z.string().optional().describe('Short description'),
           status: z.string().optional().describe('Status: active or done'),
           sessionId: z.string().optional().describe('Associated session ID'),
-          date: z.string().optional().describe('Date override (YYYY.MM.DD)'),
+          date: z.union([z.string(), z.number()]).optional().describe('Date override (Unix ms integer or ISO date string)'),
           // list params
           limit: z.number().optional().describe('Max results for list (default 50)'),
         },
@@ -50,8 +50,8 @@ export function createArtifactsModule(storage: StorageProvider): AiddModule {
               if (!a['feature']) return createErrorResult('feature is required for create');
               if (!a['title']) return createErrorResult('title is required for create');
 
-              const today = new Date();
-              const dateStr = (a['date'] as string) ?? `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`;
+              const nowMs = Date.now();
+              const dateValue = (a['date'] as string | number | undefined) ?? nowMs;
 
               const artifact: ArtifactEntry = {
                 id: generateId(),
@@ -62,7 +62,7 @@ export function createArtifactsModule(storage: StorageProvider): AiddModule {
                 title: a['title'] as string,
                 description: (a['description'] as string) ?? '',
                 content: (a['content'] as string) ?? '',
-                date: dateStr,
+                date: dateValue,
                 createdAt: now(),
                 updatedAt: now(),
               };

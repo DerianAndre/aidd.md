@@ -449,6 +449,57 @@ export async function shadowTestPattern(
   };
 }
 
+export async function shadowTestConvention(
+  conventionTitle: string,
+  backend: StorageBackend,
+): Promise<{ passed: boolean; falsePositiveRate: number; sampleSize: number }> {
+  const key = conventionTitle
+    .replace(/^Recurring error:\s*/i, '')
+    .replace(/^Convention:\s*/i, '')
+    .trim()
+    .toLowerCase();
+  const keyTokens = tokenize(key).slice(0, 8);
+  if (keyTokens.length === 0) {
+    return { passed: true, falsePositiveRate: 0, sampleSize: 0 };
+  }
+
+  const entries = await backend.listSessions({ status: 'completed', limit: 50 });
+  const goodSessions: string[] = [];
+
+  for (const entry of entries) {
+    const session = await backend.getSession(entry.id);
+    if (!session?.outcome) continue;
+    if (!session.outcome.testsPassing || session.outcome.complianceScore < 70) continue;
+
+    const observations = await backend.listObservations({ sessionId: session.id });
+    const text = observations
+      .filter((o) => o.narrative && o.narrative.length > 50)
+      .map((o) => o.narrative!)
+      .join('\n')
+      .toLowerCase();
+
+    if (text.length > 0) goodSessions.push(text);
+  }
+
+  if (goodSessions.length < 20) {
+    return { passed: true, falsePositiveRate: 0, sampleSize: goodSessions.length };
+  }
+
+  let matchCount = 0;
+  for (const text of goodSessions) {
+    const overlap = keyTokens.filter((t) => text.includes(t)).length;
+    const overlapRatio = overlap / keyTokens.length;
+    if (overlapRatio >= 0.6) matchCount++;
+  }
+
+  const rate = matchCount / goodSessions.length;
+  return {
+    passed: rate <= 0.10,
+    falsePositiveRate: Math.round(rate * 100) / 100,
+    sampleSize: goodSessions.length,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Main analyzer
 // ---------------------------------------------------------------------------

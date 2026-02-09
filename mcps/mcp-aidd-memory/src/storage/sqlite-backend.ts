@@ -60,6 +60,38 @@ export class SqliteBackend implements StorageBackend {
     this.dbPath = resolve(config.aiddDir, 'data.db');
   }
 
+  private toUnixMs(value: string | number | undefined): number {
+    if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
+    if (typeof value !== 'string') return Date.now();
+
+    const trimmed = value.trim();
+    if (trimmed.length === 0) return Date.now();
+    if (/^\d+$/.test(trimmed)) return Number.parseInt(trimmed, 10);
+
+    if (/^\d{4}\.\d{2}\.\d{2}$/.test(trimmed)) {
+      const isoDate = `${trimmed.replace(/\./g, '-') }T00:00:00.000Z`;
+      const parsed = Date.parse(isoDate);
+      return Number.isFinite(parsed) ? parsed : Date.now();
+    }
+
+    const parsed = Date.parse(trimmed);
+    return Number.isFinite(parsed) ? parsed : Date.now();
+  }
+
+  private fromUnixMs(value: unknown): string {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return new Date(value).toISOString();
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (/^\d+$/.test(trimmed)) {
+        return new Date(Number.parseInt(trimmed, 10)).toISOString();
+      }
+      return trimmed;
+    }
+    return now();
+  }
+
   async initialize(): Promise<void> {
     ensureDir(this.config.aiddDir);
 
@@ -187,8 +219,8 @@ export class SqliteBackend implements StorageBackend {
       session.memorySessionId ?? null,
       session.parentSessionId ?? null,
       session.branch,
-      session.startedAt,
-      session.endedAt ?? null,
+      this.toUnixMs(session.startedAt),
+      session.endedAt ? this.toUnixMs(session.endedAt) : null,
       status,
       session.aiProvider.modelId,
       JSON.stringify(session),
@@ -1066,9 +1098,9 @@ export class SqliteBackend implements StorageBackend {
       artifact.title,
       artifact.description,
       artifact.content,
-      artifact.date,
-      artifact.createdAt,
-      artifact.updatedAt,
+      this.toUnixMs(artifact.date),
+      this.toUnixMs(artifact.createdAt),
+      this.toUnixMs(artifact.updatedAt),
     );
   }
 
@@ -1243,9 +1275,9 @@ export class SqliteBackend implements StorageBackend {
       title: String(row['title']),
       description: String(row['description'] ?? ''),
       content: String(row['content'] ?? ''),
-      date: String(row['date']),
-      createdAt: String(row['created_at']),
-      updatedAt: String(row['updated_at']),
+      date: this.fromUnixMs(row['date']),
+      createdAt: this.fromUnixMs(row['created_at']),
+      updatedAt: this.fromUnixMs(row['updated_at']),
     };
   }
 

@@ -44,6 +44,29 @@ type SessionStartParams = {
   taskClassification?: SessionState['taskClassification'];
 };
 
+type SessionTimingMetrics = {
+  startupMs?: number;
+  governanceOverheadMs?: number;
+};
+
+function mergeTimingMetrics(
+  current: SessionTimingMetrics | undefined,
+  incoming: SessionTimingMetrics | undefined,
+): SessionTimingMetrics | undefined {
+  if (!incoming) return current;
+  const next = { ...(current ?? {}) };
+  if (incoming.startupMs != null && Number.isFinite(incoming.startupMs)) {
+    next.startupMs = Math.max(0, Math.round(incoming.startupMs));
+  }
+  if (incoming.governanceOverheadMs != null && Number.isFinite(incoming.governanceOverheadMs)) {
+    next.governanceOverheadMs = Math.max(
+      0,
+      Math.round((current?.governanceOverheadMs ?? 0) + incoming.governanceOverheadMs),
+    );
+  }
+  return Object.keys(next).length > 0 ? next : current;
+}
+
 function normalizeTaskClassification(
   classification?: SessionState['taskClassification'],
 ): SessionState['taskClassification'] {
@@ -188,11 +211,14 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
       // -----------------------------------------------------------------------
       context.services['updateSessionTiming'] = async (...args: unknown[]) => {
         const sessionId = args[0] as string;
-        const startupMs = args[1] as number;
+        const timingArg = args[1] as number | SessionTimingMetrics | undefined;
         const backend = await storage.getBackend();
         const session = await backend.getSession(sessionId);
         if (session) {
-          session.timingMetrics = { startupMs };
+          const incoming = typeof timingArg === 'number'
+            ? { startupMs: timingArg }
+            : timingArg;
+          session.timingMetrics = mergeTimingMetrics(session.timingMetrics, incoming);
           await backend.saveSession(session);
         }
       };
@@ -288,6 +314,13 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
             })
             .optional()
             .describe('Token usage to merge (additive). If omitted on end, session module estimates usage from session text for telemetry continuity.'),
+          timingMetrics: z
+            .object({
+              startupMs: z.number().int().min(0).optional(),
+              governanceOverheadMs: z.number().int().min(0).optional(),
+            })
+            .optional()
+            .describe('Timing telemetry to merge. startupMs overwrites; governanceOverheadMs accumulates.'),
           // end params
           outcome: z
             .object({
@@ -357,6 +390,12 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
               if (a['tasksPending']) session.tasksPending = a['tasksPending'] as string[];
               if (a['toolsCalled'])
                 session.toolsCalled.push(...(a['toolsCalled'] as SessionState['toolsCalled']));
+              if (a['timingMetrics']) {
+                session.timingMetrics = mergeTimingMetrics(
+                  session.timingMetrics as SessionTimingMetrics | undefined,
+                  a['timingMetrics'] as SessionTimingMetrics,
+                ) as SessionState['timingMetrics'];
+              }
 
               // Additive merge of token usage
               if (a['tokenUsage']) {
@@ -392,6 +431,12 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
               session.endedAt = now();
               if (a['output']) session.output = a['output'] as string;
               if (a['outcome']) session.outcome = a['outcome'] as SessionState['outcome'];
+              if (a['timingMetrics']) {
+                session.timingMetrics = mergeTimingMetrics(
+                  session.timingMetrics as SessionTimingMetrics | undefined,
+                  a['timingMetrics'] as SessionTimingMetrics,
+                ) as SessionState['timingMetrics'];
+              }
               let tokenTelemetry: 'reported' | 'estimated' | 'missing' = 'missing';
 
               // Merge final token usage if provided

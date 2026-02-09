@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS sessions (
   memory_session_id TEXT,
   parent_session_id TEXT,
   branch TEXT NOT NULL,
-  started_at TEXT NOT NULL,
-  ended_at TEXT,
+  started_at INTEGER NOT NULL,
+  ended_at INTEGER,
   status TEXT NOT NULL DEFAULT 'active',
   model_id TEXT,
   data TEXT NOT NULL
@@ -231,9 +231,9 @@ CREATE TABLE IF NOT EXISTS artifacts (
   title TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
   content TEXT NOT NULL DEFAULT '',
-  date TEXT NOT NULL,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  date INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_artifacts_type ON artifacts(type);
 CREATE INDEX IF NOT EXISTS idx_artifacts_feature ON artifacts(feature);
@@ -280,7 +280,103 @@ CREATE INDEX IF NOT EXISTS idx_artifacts_feature_status_date ON artifacts(featur
 CREATE INDEX IF NOT EXISTS idx_lifecycle_status_updated_at ON lifecycle_sessions(status, updated_at DESC);
 `.trim();
 
-export const CURRENT_SCHEMA_VERSION = 2;
+const TIMESTAMP_ENFORCEMENT_MIGRATION = `
+ALTER TABLE sessions RENAME TO sessions_legacy_v3;
+CREATE TABLE sessions (
+  id TEXT PRIMARY KEY,
+  memory_session_id TEXT,
+  parent_session_id TEXT,
+  branch TEXT NOT NULL,
+  started_at INTEGER NOT NULL,
+  ended_at INTEGER,
+  status TEXT NOT NULL DEFAULT 'active',
+  model_id TEXT,
+  data TEXT NOT NULL
+);
+INSERT INTO sessions (id, memory_session_id, parent_session_id, branch, started_at, ended_at, status, model_id, data)
+SELECT
+  id,
+  memory_session_id,
+  parent_session_id,
+  branch,
+  CASE
+    WHEN typeof(started_at) = 'integer' THEN CAST(started_at AS INTEGER)
+    WHEN started_at IS NULL OR started_at = '' THEN CAST(strftime('%s', 'now') AS INTEGER) * 1000
+    WHEN started_at GLOB '[0-9]*' THEN CAST(started_at AS INTEGER)
+    ELSE CAST(strftime('%s', started_at) AS INTEGER) * 1000
+  END,
+  CASE
+    WHEN ended_at IS NULL OR ended_at = '' THEN NULL
+    WHEN typeof(ended_at) = 'integer' THEN CAST(ended_at AS INTEGER)
+    WHEN ended_at GLOB '[0-9]*' THEN CAST(ended_at AS INTEGER)
+    ELSE CAST(strftime('%s', ended_at) AS INTEGER) * 1000
+  END,
+  status,
+  model_id,
+  data
+FROM sessions_legacy_v3;
+DROP TABLE sessions_legacy_v3;
+CREATE INDEX IF NOT EXISTS idx_sessions_branch ON sessions(branch);
+CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
+CREATE INDEX IF NOT EXISTS idx_sessions_memory_sid ON sessions(memory_session_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_model_id ON sessions(model_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_started_at ON sessions(started_at);
+CREATE INDEX IF NOT EXISTS idx_sessions_status_started_at ON sessions(status, started_at DESC);
+
+ALTER TABLE artifacts RENAME TO artifacts_legacy_v3;
+CREATE TABLE artifacts (
+  id TEXT PRIMARY KEY,
+  session_id TEXT,
+  type TEXT NOT NULL,
+  feature TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  date INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+INSERT INTO artifacts (id, session_id, type, feature, status, title, description, content, date, created_at, updated_at)
+SELECT
+  id,
+  session_id,
+  type,
+  feature,
+  status,
+  title,
+  description,
+  content,
+  CASE
+    WHEN typeof(date) = 'integer' THEN CAST(date AS INTEGER)
+    WHEN date IS NULL OR date = '' THEN CAST(strftime('%s', 'now') AS INTEGER) * 1000
+    WHEN date GLOB '[0-9]*' THEN CAST(date AS INTEGER)
+    WHEN instr(date, '.') > 0 THEN CAST(strftime('%s', replace(date, '.', '-') || ' 00:00:00') AS INTEGER) * 1000
+    ELSE CAST(strftime('%s', date) AS INTEGER) * 1000
+  END,
+  CASE
+    WHEN typeof(created_at) = 'integer' THEN CAST(created_at AS INTEGER)
+    WHEN created_at IS NULL OR created_at = '' THEN CAST(strftime('%s', 'now') AS INTEGER) * 1000
+    WHEN created_at GLOB '[0-9]*' THEN CAST(created_at AS INTEGER)
+    ELSE CAST(strftime('%s', created_at) AS INTEGER) * 1000
+  END,
+  CASE
+    WHEN typeof(updated_at) = 'integer' THEN CAST(updated_at AS INTEGER)
+    WHEN updated_at IS NULL OR updated_at = '' THEN CAST(strftime('%s', 'now') AS INTEGER) * 1000
+    WHEN updated_at GLOB '[0-9]*' THEN CAST(updated_at AS INTEGER)
+    ELSE CAST(strftime('%s', updated_at) AS INTEGER) * 1000
+  END
+FROM artifacts_legacy_v3;
+DROP TABLE artifacts_legacy_v3;
+CREATE INDEX IF NOT EXISTS idx_artifacts_type ON artifacts(type);
+CREATE INDEX IF NOT EXISTS idx_artifacts_feature ON artifacts(feature);
+CREATE INDEX IF NOT EXISTS idx_artifacts_status ON artifacts(status);
+CREATE INDEX IF NOT EXISTS idx_artifacts_date ON artifacts(date);
+CREATE INDEX IF NOT EXISTS idx_artifacts_session ON artifacts(session_id);
+CREATE INDEX IF NOT EXISTS idx_artifacts_feature_status_date ON artifacts(feature, status, date DESC);
+`.trim();
+
+export const CURRENT_SCHEMA_VERSION = 3;
 
 export const MIGRATIONS: SchemaMigration[] = [
   {
@@ -292,6 +388,11 @@ export const MIGRATIONS: SchemaMigration[] = [
     version: 2,
     name: 'performance_indexes',
     statements: [PERFORMANCE_INDEXES],
+  },
+  {
+    version: 3,
+    name: 'timestamp_enforcement_sessions_artifacts',
+    statements: [TIMESTAMP_ENFORCEMENT_MIGRATION],
   },
 ];
 

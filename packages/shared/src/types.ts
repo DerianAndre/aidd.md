@@ -249,6 +249,10 @@ export interface SessionState {
   branch: string;
   startedAt: string;
   endedAt?: string;
+  /** Unix timestamp in milliseconds from DB column projection (Hub bridge). */
+  startedAtTs?: number;
+  /** Unix timestamp in milliseconds from DB column projection (Hub bridge). */
+  endedAtTs?: number;
   aiProvider: AiProvider;
   /** The user's initial request / prompt that started this session */
   input?: string;
@@ -279,7 +283,10 @@ export interface SessionState {
   lifecycleSessionId?: string;
   tokenUsage?: TokenUsage;
   fingerprint?: ModelFingerprint;
-  timingMetrics?: { startupMs?: number };
+  timingMetrics?: {
+    startupMs?: number;
+    governanceOverheadMs?: number;
+  };
 }
 
 export interface SessionOutcome {
@@ -528,9 +535,9 @@ export interface ArtifactEntry {
   title: string;
   description: string;
   content: string;
-  date: string;
-  createdAt: string;
-  updatedAt: string;
+  date: string | number;
+  createdAt: string | number;
+  updatedAt: string | number;
 }
 
 export interface ArtifactFilter {
@@ -597,6 +604,7 @@ export interface AuditScore {
     patternAbsence: number;
     semanticPreservation: number;
     tidBonus?: number;
+    guardrailPenalty?: number;
   };
   patternsFound: number;
   verdict: 'pass' | 'retry' | 'escalate';

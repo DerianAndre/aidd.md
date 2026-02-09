@@ -25,7 +25,7 @@ class MockMcpServer {
 
 function createContext(projectRoot: string): ModuleContext {
   return {
-    contentLoader: {
+    contentLoader: ({
       getIndex: () => ({
         agents: [],
         rules: [],
@@ -35,7 +35,7 @@ function createContext(projectRoot: string): ModuleContext {
         knowledge: [],
         templates: [],
       }),
-    } as ModuleContext['contentLoader'],
+    } as unknown) as ModuleContext['contentLoader'],
     projectInfo: {
       stack: {
         name: 'aidd.md',
@@ -56,10 +56,11 @@ function createContext(projectRoot: string): ModuleContext {
     } as ModuleContext['projectInfo'],
     config: {} as ModuleContext['config'],
     logger: {
+      debug: vi.fn(),
       info: vi.fn(),
       warn: vi.fn(),
       error: vi.fn(),
-    } as ModuleContext['logger'],
+    } as unknown as ModuleContext['logger'],
     projectRoot,
     aiddDir: `${projectRoot}/.aidd`,
     services: {
@@ -127,4 +128,3 @@ describe('aidd_start project scope guardrail', () => {
     expect(resultText(result)).toContain('Project scope mismatch');
   });
 });
-

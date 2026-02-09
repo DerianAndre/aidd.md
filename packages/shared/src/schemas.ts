@@ -59,6 +59,8 @@ export const sessionStateSchema = z.object({
   branch: z.string(),
   startedAt: z.string(),
   endedAt: z.string().optional(),
+  startedAtTs: z.number().int().optional(),
+  endedAtTs: z.number().int().optional(),
   aiProvider: aiProviderSchema,
   decisions: z.array(z.object({
     decision: z.string(),
@@ -94,6 +96,10 @@ export const sessionStateSchema = z.object({
   }),
   outcome: sessionOutcomeSchema.optional(),
   lifecycleSessionId: z.string().optional(),
+  timingMetrics: z.object({
+    startupMs: z.number().int().min(0).optional(),
+    governanceOverheadMs: z.number().int().min(0).optional(),
+  }).optional(),
 });
 
 // ---------------------------------------------------------------------------
