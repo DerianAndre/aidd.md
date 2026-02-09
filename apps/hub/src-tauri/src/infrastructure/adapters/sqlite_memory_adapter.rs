@@ -1,4 +1,4 @@
-use rusqlite::{Connection, OpenFlags};
+use rusqlite::{Connection, OpenFlags, OptionalExtension};
 use std::path::PathBuf;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -111,14 +111,12 @@ impl SqliteMemoryAdapter {
         )
     }
 
-    /// Generate a date string in YYYY.MM.DD format
-    fn today_dot() -> String {
+    /// Generate current Unix timestamp in milliseconds.
+    fn now_unix_ms() -> i64 {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default();
-        let days_since_epoch = now.as_secs() / 86400;
-        let (year, month, day) = days_to_ymd(days_since_epoch);
-        format!("{:04}.{:02}.{:02}", year, month, day)
+        now.as_millis() as i64
     }
 }
 
@@ -136,6 +134,107 @@ fn days_to_ymd(days: u64) -> (u64, u64, u64) {
     let m = if mp < 10 { mp + 3 } else { mp - 9 };
     let y = if m <= 2 { y + 1 } else { y };
     (y, m, d)
+}
+
+fn normalize_artifact_type(raw: &str) -> Option<String> {
+    let normalized = raw.trim().to_lowercase();
+    match normalized.as_str() {
+        "plan" | "brainstorm" | "research" | "adr" | "diagram" | "issue" | "spec" | "checklist" | "retro" => {
+            Some(normalized)
+        }
+        _ => None,
+    }
+}
+
+fn parse_auto_draft_title(title: &str) -> (Option<String>, Option<String>) {
+    let trimmed = title.trim();
+    if !trimmed.to_ascii_lowercase().starts_with("auto draft:") {
+        return (None, None);
+    }
+    let rest = trimmed
+        .split_once(':')
+        .map(|(_, tail)| tail.trim())
+        .unwrap_or_default();
+    let marker = " for session ";
+    let rest_lc = rest.to_ascii_lowercase();
+    if let Some(pos) = rest_lc.find(marker) {
+        let artifact_raw = rest[..pos].trim();
+        let session_raw = rest[pos + marker.len()..].trim();
+        let artifact_type = normalize_artifact_type(artifact_raw);
+        let session_id = if session_raw.is_empty() {
+            None
+        } else {
+            Some(session_raw.to_string())
+        };
+        return (session_id, artifact_type);
+    }
+    (None, None)
+}
+
+fn parse_auto_draft_content(content: &str) -> (Option<String>, Option<String>) {
+    let mut session_id: Option<String> = None;
+    let mut artifact_type: Option<String> = None;
+    for raw_line in content.lines() {
+        let line = raw_line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let line_lc = line.to_ascii_lowercase();
+        if session_id.is_none() && line_lc.starts_with("- sessionid:") {
+            let value = line.split_once(':').map(|(_, v)| v.trim()).unwrap_or_default();
+            if !value.is_empty() {
+                session_id = Some(value.to_string());
+            }
+            continue;
+        }
+        if artifact_type.is_none() && line_lc.starts_with("- artifacttype:") {
+            let value = line.split_once(':').map(|(_, v)| v.trim()).unwrap_or_default();
+            artifact_type = normalize_artifact_type(value);
+        }
+    }
+    (session_id, artifact_type)
+}
+
+fn extract_auto_draft_binding(
+    title: &str,
+    content: &str,
+    data: &serde_json::Value,
+) -> (Option<String>, Option<String>) {
+    let mut session_id = data
+        .get("sessionId")
+        .and_then(|v| v.as_str())
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty());
+    let mut artifact_type = data
+        .get("artifactType")
+        .and_then(|v| v.as_str())
+        .and_then(normalize_artifact_type);
+
+    if session_id.is_some() && artifact_type.is_some() {
+        return (session_id, artifact_type);
+    }
+
+    let (title_session, title_type) = parse_auto_draft_title(title);
+    if session_id.is_none() {
+        session_id = title_session;
+    }
+    if artifact_type.is_none() {
+        artifact_type = title_type;
+    }
+
+    if session_id.is_some() && artifact_type.is_some() {
+        return (session_id, artifact_type);
+    }
+
+    let (content_session, content_type) = parse_auto_draft_content(content);
+    if session_id.is_none() {
+        session_id = content_session;
+    }
+    if artifact_type.is_none() {
+        artifact_type = content_type;
+    }
+
+    (session_id, artifact_type)
 }
 
 /// Verify that required tables exist in the database.
@@ -181,10 +280,16 @@ impl MemoryPort for SqliteMemoryAdapter {
             )?;
 
             let recent = stmt.query_map([], |row| {
+                let started_at_val = row.get_ref(2)?;
+                let started_at = match started_at_val {
+                    rusqlite::types::ValueRef::Integer(v) => v.to_string(),
+                    rusqlite::types::ValueRef::Text(v) => String::from_utf8_lossy(v).to_string(),
+                    _ => String::new(),
+                };
                 Ok(SessionInfo {
                     id: row.get(0)?,
                     branch: row.get(1)?,
-                    started_at: row.get(2)?,
+                    started_at,
                     status: "completed".to_string(),
                 })
             })?
@@ -412,12 +517,39 @@ impl MemoryPort for SqliteMemoryAdapter {
         let limit = limit.unwrap_or(100);
         self.safe_query(move |conn| {
             let mut stmt = conn.prepare(
-                "SELECT data FROM sessions ORDER BY started_at DESC LIMIT ?1"
+                "SELECT data,
+                        CASE
+                          WHEN typeof(started_at) = 'integer' THEN CAST(started_at AS INTEGER)
+                          WHEN started_at IS NULL OR started_at = '' THEN CAST(strftime('%s', 'now') AS INTEGER) * 1000
+                          WHEN started_at GLOB '[0-9]*' THEN CAST(started_at AS INTEGER)
+                          ELSE CAST(strftime('%s', started_at) AS INTEGER) * 1000
+                        END AS started_at_ts,
+                        CASE
+                          WHEN ended_at IS NULL OR ended_at = '' THEN NULL
+                          WHEN typeof(ended_at) = 'integer' THEN CAST(ended_at AS INTEGER)
+                          WHEN ended_at GLOB '[0-9]*' THEN CAST(ended_at AS INTEGER)
+                          ELSE CAST(strftime('%s', ended_at) AS INTEGER) * 1000
+                        END AS ended_at_ts
+                 FROM sessions
+                 ORDER BY started_at_ts DESC
+                 LIMIT ?1"
             )?;
 
             let sessions = stmt.query_map([limit], |row| {
                 let data: String = row.get(0)?;
-                Ok(serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::Value::Null))
+                let started_at_ts: i64 = row.get(1)?;
+                let ended_at_ts: Option<i64> = row.get(2)?;
+
+                let mut parsed = serde_json::from_str::<serde_json::Value>(&data)
+                    .unwrap_or(serde_json::Value::Null);
+                if let Some(obj) = parsed.as_object_mut() {
+                    obj.insert("startedAtTs".into(), serde_json::json!(started_at_ts));
+                    if let Some(v) = ended_at_ts {
+                        obj.insert("endedAtTs".into(), serde_json::json!(v));
+                    }
+                }
+
+                Ok(parsed)
             })?
                 .filter_map(|r| r.ok())
                 .filter(|v| !v.is_null())
@@ -605,7 +737,27 @@ impl MemoryPort for SqliteMemoryAdapter {
 
         self.safe_query(move |conn| {
             let mut sql = String::from(
-                "SELECT id, session_id, type, feature, status, title, description, content, date, created_at, updated_at FROM artifacts"
+                "SELECT id, session_id, type, feature, status, title, description, content,
+                        CASE
+                          WHEN typeof(date) = 'integer' THEN CAST(date AS INTEGER)
+                          WHEN date IS NULL OR date = '' THEN CAST(strftime('%s', 'now') AS INTEGER) * 1000
+                          WHEN date GLOB '[0-9]*' THEN CAST(date AS INTEGER)
+                          WHEN instr(date, '.') > 0 THEN CAST(strftime('%s', replace(date, '.', '-') || ' 00:00:00') AS INTEGER) * 1000
+                          ELSE CAST(strftime('%s', date) AS INTEGER) * 1000
+                        END AS date_ts,
+                        CASE
+                          WHEN typeof(created_at) = 'integer' THEN CAST(created_at AS INTEGER)
+                          WHEN created_at IS NULL OR created_at = '' THEN CAST(strftime('%s', 'now') AS INTEGER) * 1000
+                          WHEN created_at GLOB '[0-9]*' THEN CAST(created_at AS INTEGER)
+                          ELSE CAST(strftime('%s', created_at) AS INTEGER) * 1000
+                        END AS created_at_ts,
+                        CASE
+                          WHEN typeof(updated_at) = 'integer' THEN CAST(updated_at AS INTEGER)
+                          WHEN updated_at IS NULL OR updated_at = '' THEN CAST(strftime('%s', 'now') AS INTEGER) * 1000
+                          WHEN updated_at GLOB '[0-9]*' THEN CAST(updated_at AS INTEGER)
+                          ELSE CAST(strftime('%s', updated_at) AS INTEGER) * 1000
+                        END AS updated_at_ts
+                 FROM artifacts"
             );
             let mut conditions: Vec<String> = vec![];
             let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = vec![];
@@ -624,7 +776,7 @@ impl MemoryPort for SqliteMemoryAdapter {
                 sql.push_str(&conditions.join(" AND "));
             }
 
-            sql.push_str(&format!(" ORDER BY date DESC, created_at DESC LIMIT ?{}", params.len() + 1));
+            sql.push_str(&format!(" ORDER BY date_ts DESC, created_at_ts DESC LIMIT ?{}", params.len() + 1));
             params.push(Box::new(limit));
 
             let mut stmt = conn.prepare(&sql)?;
@@ -643,9 +795,9 @@ impl MemoryPort for SqliteMemoryAdapter {
                 entry.insert("title".into(), serde_json::json!(row.get::<_, String>(5)?));
                 entry.insert("description".into(), serde_json::json!(row.get::<_, String>(6)?));
                 entry.insert("content".into(), serde_json::json!(row.get::<_, String>(7)?));
-                entry.insert("date".into(), serde_json::json!(row.get::<_, String>(8)?));
-                entry.insert("createdAt".into(), serde_json::json!(row.get::<_, String>(9)?));
-                entry.insert("updatedAt".into(), serde_json::json!(row.get::<_, String>(10)?));
+                entry.insert("date".into(), serde_json::json!(row.get::<_, i64>(8)?));
+                entry.insert("createdAt".into(), serde_json::json!(row.get::<_, i64>(9)?));
+                entry.insert("updatedAt".into(), serde_json::json!(row.get::<_, i64>(10)?));
                 Ok(serde_json::Value::Object(entry))
             })?
                 .filter_map(|r| r.ok())
@@ -736,14 +888,13 @@ impl MemoryPort for SqliteMemoryAdapter {
         let title = title.to_string();
         let description = description.to_string();
         let content = content.to_string();
-        let now = Self::now_iso();
-        let date = Self::today_dot();
+        let now = Self::now_unix_ms();
         let id_clone = id.clone();
         self.safe_write(move |conn| {
             conn.execute(
                 "INSERT INTO artifacts (id, type, feature, status, title, description, content, date, created_at, updated_at) \
                  VALUES (?1, ?2, ?3, 'active', ?4, ?5, ?6, ?7, ?8, ?8)",
-                rusqlite::params![id_clone, artifact_type, feature, title, description, content, date, now],
+                rusqlite::params![id_clone, artifact_type, feature, title, description, content, now, now],
             )?;
             Ok(id_clone.clone())
         })
@@ -757,7 +908,7 @@ impl MemoryPort for SqliteMemoryAdapter {
         let description = description.to_string();
         let content = content.to_string();
         let status = status.to_string();
-        let now = Self::now_iso();
+        let now = Self::now_unix_ms();
         self.safe_write(move |conn| {
             conn.execute(
                 "UPDATE artifacts SET type = ?1, feature = ?2, title = ?3, description = ?4, content = ?5, status = ?6, updated_at = ?7 WHERE id = ?8",
@@ -769,7 +920,7 @@ impl MemoryPort for SqliteMemoryAdapter {
 
     fn archive_artifact(&self, id: &str) -> Result<(), String> {
         let id = id.to_string();
-        let now = Self::now_iso();
+        let now = Self::now_unix_ms();
         self.safe_write(move |conn| {
             conn.execute(
                 "UPDATE artifacts SET status = 'done', updated_at = ?1 WHERE id = ?2",
@@ -840,11 +991,69 @@ impl MemoryPort for SqliteMemoryAdapter {
     fn approve_draft(&self, id: &str) -> Result<(), String> {
         let id = id.to_string();
         let now = Self::now_iso();
+        let now_ms = Self::now_unix_ms();
         self.safe_write(move |conn| {
+            let (category, title, content, status, data_str): (String, String, String, String, String) = conn.query_row(
+                "SELECT category, title, content, status, data FROM drafts WHERE id = ?1",
+                rusqlite::params![id],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
+            )?;
+
+            if status != "pending" {
+                return Ok(());
+            }
+
+            let mut data_json = serde_json::from_str::<serde_json::Value>(&data_str)
+                .unwrap_or_else(|_| serde_json::json!({}));
+
+            if category == "workflows" {
+                let (session_id, artifact_type) = extract_auto_draft_binding(&title, &content, &data_json);
+                if let (Some(sid), Some(atype)) = (session_id, artifact_type) {
+                    let feature = conn
+                        .query_row(
+                            "SELECT branch FROM sessions WHERE id = ?1",
+                            rusqlite::params![sid.clone()],
+                            |row| row.get::<_, String>(0),
+                        )
+                        .unwrap_or_else(|_| sid.clone());
+
+                    let description = "Auto-materialized from approved compliance draft";
+                    let existing_id = conn
+                        .query_row(
+                            "SELECT id FROM artifacts WHERE session_id = ?1 AND type = ?2 ORDER BY created_at DESC LIMIT 1",
+                            rusqlite::params![sid.clone(), atype.clone()],
+                            |row| row.get::<_, String>(0),
+                        )
+                        .optional()?;
+
+                    let artifact_id = if let Some(existing) = existing_id {
+                        conn.execute(
+                            "UPDATE artifacts SET session_id = ?1, type = ?2, feature = ?3, status = 'active', title = ?4, description = ?5, content = ?6, updated_at = ?7 WHERE id = ?8",
+                            rusqlite::params![sid.clone(), atype.clone(), feature, title, description, content, now_ms, existing],
+                        )?;
+                        existing
+                    } else {
+                        let new_id = Uuid::new_v4().to_string();
+                        conn.execute(
+                            "INSERT INTO artifacts (id, session_id, type, feature, status, title, description, content, date, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, 'active', ?5, ?6, ?7, ?8, ?8, ?8)",
+                            rusqlite::params![new_id, sid.clone(), atype.clone(), feature, title, description, content, now_ms],
+                        )?;
+                        new_id
+                    };
+
+                    data_json["sessionId"] = serde_json::json!(sid);
+                    data_json["artifactType"] = serde_json::json!(atype);
+                    data_json["artifactId"] = serde_json::json!(artifact_id);
+                }
+            }
+
+            data_json["approvedAt"] = serde_json::json!(now.clone());
+            let data_updated = serde_json::to_string(&data_json)
+                .unwrap_or_else(|_| "{}".to_string());
+
             conn.execute(
-                "UPDATE drafts SET status = 'approved', \
-                 data = json_set(data, '$.approvedAt', ?1), updated_at = ?1 WHERE id = ?2",
-                rusqlite::params![now, id],
+                "UPDATE drafts SET status = 'approved', data = ?1, updated_at = ?2 WHERE id = ?3",
+                rusqlite::params![data_updated, now, id],
             )?;
             Ok(())
         })
@@ -955,17 +1164,92 @@ impl MemoryPort for SqliteMemoryAdapter {
 
             let updated = serde_json::to_string(&data).unwrap_or_default();
 
-            // If branch was updated, also update the branch column
-            if let Some(branch_val) = updates.get("branch").and_then(|v| v.as_str()) {
-                conn.execute(
-                    "UPDATE sessions SET branch = ?1, data = ?2 WHERE id = ?3",
-                    rusqlite::params![branch_val, updated, id],
-                )?;
-            } else {
-                conn.execute(
-                    "UPDATE sessions SET data = ?1 WHERE id = ?2",
-                    rusqlite::params![updated, id],
-                )?;
+            // Keep indexed columns in sync with the JSON blob.
+            let branch_val = updates.get("branch").and_then(|v| v.as_str());
+            let started_at_ms: Option<i64> = updates.get("startedAt").and_then(|v| {
+                v.as_i64().or_else(|| {
+                    v.as_str().and_then(|s| {
+                        if let Ok(parsed) = s.parse::<i64>() {
+                            Some(parsed)
+                        } else {
+                            conn.query_row(
+                                "SELECT CAST(strftime('%s', ?1) AS INTEGER) * 1000",
+                                rusqlite::params![s],
+                                |row| row.get::<_, Option<i64>>(0),
+                            ).ok().flatten()
+                        }
+                    })
+                })
+            });
+            let ended_at_ms: Option<Option<i64>> = updates.get("endedAt").map(|v| {
+                if v.is_null() {
+                    None
+                } else if let Some(num) = v.as_i64() {
+                    Some(num)
+                } else if let Some(s) = v.as_str() {
+                    if let Ok(parsed) = s.parse::<i64>() {
+                        Some(parsed)
+                    } else {
+                        conn.query_row(
+                            "SELECT CAST(strftime('%s', ?1) AS INTEGER) * 1000",
+                            rusqlite::params![s],
+                            |row| row.get::<_, Option<i64>>(0),
+                        ).ok().flatten()
+                    }
+                } else {
+                    None
+                }
+            });
+
+            match (branch_val, started_at_ms, ended_at_ms) {
+                (Some(branch), Some(started), Some(ended)) => {
+                    conn.execute(
+                        "UPDATE sessions SET branch = ?1, started_at = ?2, ended_at = ?3, data = ?4 WHERE id = ?5",
+                        rusqlite::params![branch, started, ended, updated, id],
+                    )?;
+                }
+                (Some(branch), Some(started), None) => {
+                    conn.execute(
+                        "UPDATE sessions SET branch = ?1, started_at = ?2, data = ?3 WHERE id = ?4",
+                        rusqlite::params![branch, started, updated, id],
+                    )?;
+                }
+                (Some(branch), None, Some(ended)) => {
+                    conn.execute(
+                        "UPDATE sessions SET branch = ?1, ended_at = ?2, data = ?3 WHERE id = ?4",
+                        rusqlite::params![branch, ended, updated, id],
+                    )?;
+                }
+                (Some(branch), None, None) => {
+                    conn.execute(
+                        "UPDATE sessions SET branch = ?1, data = ?2 WHERE id = ?3",
+                        rusqlite::params![branch, updated, id],
+                    )?;
+                }
+                (None, Some(started), Some(ended)) => {
+                    conn.execute(
+                        "UPDATE sessions SET started_at = ?1, ended_at = ?2, data = ?3 WHERE id = ?4",
+                        rusqlite::params![started, ended, updated, id],
+                    )?;
+                }
+                (None, Some(started), None) => {
+                    conn.execute(
+                        "UPDATE sessions SET started_at = ?1, data = ?2 WHERE id = ?3",
+                        rusqlite::params![started, updated, id],
+                    )?;
+                }
+                (None, None, Some(ended)) => {
+                    conn.execute(
+                        "UPDATE sessions SET ended_at = ?1, data = ?2 WHERE id = ?3",
+                        rusqlite::params![ended, updated, id],
+                    )?;
+                }
+                (None, None, None) => {
+                    conn.execute(
+                        "UPDATE sessions SET data = ?1 WHERE id = ?2",
+                        rusqlite::params![updated, id],
+                    )?;
+                }
             }
             Ok(())
         })
@@ -1126,11 +1410,19 @@ impl MemoryPort for SqliteMemoryAdapter {
         let title = title.to_string();
         let content = content.to_string();
         let now = Self::now_iso();
-        let data = serde_json::json!({
+        let mut data_json = serde_json::json!({
             "filename": filename,
             "confidence": confidence,
             "source": source,
-        }).to_string();
+        });
+        let (session_id, artifact_type) = extract_auto_draft_binding(&title, &content, &data_json);
+        if let Some(sid) = session_id {
+            data_json["sessionId"] = serde_json::json!(sid);
+        }
+        if let Some(atype) = artifact_type {
+            data_json["artifactType"] = serde_json::json!(atype);
+        }
+        let data = data_json.to_string();
         let id_clone = id.clone();
         self.safe_write(move |conn| {
             conn.execute(
@@ -1195,8 +1487,8 @@ mod tests {
                 memory_session_id TEXT,
                 parent_session_id TEXT,
                 branch TEXT NOT NULL DEFAULT '',
-                started_at TEXT NOT NULL DEFAULT '',
-                ended_at TEXT,
+                started_at INTEGER NOT NULL DEFAULT 0,
+                ended_at INTEGER,
                 status TEXT NOT NULL DEFAULT 'active',
                 model_id TEXT,
                 data TEXT NOT NULL DEFAULT '{}'
@@ -1304,11 +1596,24 @@ mod tests {
         // Insert test sessions (using real schema with data column)
         conn.execute(
             "INSERT INTO sessions (id, branch, started_at, ended_at, status, data) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-            ["s1", "main", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", "completed", r#"{"id":"s1","branch":"main","startedAt":"2026-01-01T00:00:00Z"}"#],
+            rusqlite::params![
+                "s1",
+                "main",
+                1767225600000_i64,
+                1767229200000_i64,
+                "completed",
+                r#"{"id":"s1","branch":"main","startedAt":"2026-01-01T00:00:00Z"}"#
+            ],
         ).unwrap();
         conn.execute(
             "INSERT INTO sessions (id, branch, started_at, status, data) VALUES (?1, ?2, ?3, ?4, ?5)",
-            ["s2", "feat/test", "2026-01-02T00:00:00Z", "active", r#"{"id":"s2","branch":"feat/test","startedAt":"2026-01-02T00:00:00Z"}"#],
+            rusqlite::params![
+                "s2",
+                "feat/test",
+                1767312000000_i64,
+                "active",
+                r#"{"id":"s2","branch":"feat/test","startedAt":"2026-01-02T00:00:00Z"}"#
+            ],
         ).unwrap();
 
         let total: usize = conn.query_row(
@@ -1401,5 +1706,28 @@ mod tests {
 
         assert_eq!(results.len(), 1);
         assert_eq!(results[0], "o1");
+    }
+
+    #[test]
+    fn auto_draft_binding_is_extracted_from_title() {
+        let title = "Auto Draft: checklist for session mlfc4ewl-egb58r";
+        let content = "# Auto";
+        let data = serde_json::json!({});
+        let (session_id, artifact_type) = extract_auto_draft_binding(title, content, &data);
+        assert_eq!(session_id, Some("mlfc4ewl-egb58r".to_string()));
+        assert_eq!(artifact_type, Some("checklist".to_string()));
+    }
+
+    #[test]
+    fn auto_draft_binding_prefers_data_payload() {
+        let title = "Some other title";
+        let content = "- sessionId: ignored\n- artifactType: ignored";
+        let data = serde_json::json!({
+            "sessionId": "session-from-data",
+            "artifactType": "retro"
+        });
+        let (session_id, artifact_type) = extract_auto_draft_binding(title, content, &data);
+        assert_eq!(session_id, Some("session-from-data".to_string()));
+        assert_eq!(artifact_type, Some("retro".to_string()));
     }
 }

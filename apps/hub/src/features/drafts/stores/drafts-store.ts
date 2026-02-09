@@ -1,13 +1,15 @@
 import { create } from 'zustand';
 import {
   listDrafts,
-  approveDraft,
+  approveDraft as approveDraftCommand,
   rejectDraft,
   createDraft,
   updateDraft,
   deleteDraft,
 } from '../../../lib/tauri';
 import type { DraftEntry, DraftCategory } from '../../../lib/types';
+import { useSessionsStore } from '../../memory/stores/sessions-store';
+import { useArtifactsStore } from '../../artifacts/stores/artifacts-store';
 
 const STALE_TTL = 30_000;
 
@@ -68,12 +70,16 @@ export const useDraftsStore = create<DraftsStoreState>((set, get) => ({
   invalidate: () => set({ stale: true }),
 
   approveDraft: async (id) => {
-    await approveDraft(id);
+    await approveDraftCommand(id);
     set({
       drafts: get().drafts.map((d) =>
         d.id === id ? { ...d, status: 'approved' as const } : d,
       ),
     });
+    useSessionsStore.getState().invalidate();
+    useArtifactsStore.getState().invalidate();
+    void useSessionsStore.getState().fetchAll();
+    void useArtifactsStore.getState().fetch();
   },
 
   rejectDraft: async (id, reason) => {

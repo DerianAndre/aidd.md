@@ -7,6 +7,7 @@ import { useSessionsStore } from '../../memory/stores/sessions-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { formatRelativeTime } from '../../../lib/utils';
 import { ROUTES } from '../../../lib/constants';
+import { getDateInput, getSessionStartedMs } from '../../memory/lib/session-time';
 
 export function RecentSessionsWidget() {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ export function RecentSessionsWidget() {
     activeSessions,
     completedSessions,
     complianceBySessionId,
+    pendingDraftsBySession,
     loading,
     stale,
     fetchAll,
@@ -28,7 +30,7 @@ export function RecentSessionsWidget() {
   }, [activeProject?.path, stale, fetchAll]);
 
   const recent = [...activeSessions, ...completedSessions]
-    .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+    .sort((a, b) => getSessionStartedMs(b) - getSessionStartedMs(a))
     .slice(0, 5);
 
   if (loading) {
@@ -51,6 +53,7 @@ export function RecentSessionsWidget() {
         const isActive = !s.endedAt;
         const passed = s.outcome?.testsPassing;
         const compliance = complianceBySessionId[s.id];
+        const pendingDrafts = pendingDraftsBySession[s.id] ?? 0;
         return (
           <div
             key={s.id}
@@ -84,9 +87,14 @@ export function RecentSessionsWidget() {
                     : t('page.sessions.nonCompliant')}
                 </Chip>
               )}
+              {pendingDrafts > 0 && (
+                <Chip size="sm" color="warning">
+                  Pending {pendingDrafts}
+                </Chip>
+              )}
               <span className="text-xs text-foreground">{s.aiProvider.model}</span>
             </div>
-            <span className="text-[10px] text-muted-foreground">{formatRelativeTime(s.startedAt)}</span>
+            <span className="text-[10px] text-muted-foreground">{formatRelativeTime(getDateInput(s.startedAtTs ?? s.startedAt))}</span>
           </div>
         );
       })}

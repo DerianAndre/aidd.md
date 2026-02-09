@@ -78,6 +78,8 @@ export interface TimelinePoint {
 export interface SessionEfficiencyMetrics {
   avgStartupMs: number;
   startupSamples: number;
+  avgGovernanceOverheadMs: number;
+  governanceOverheadSamples: number;
   avgContextEfficiency: number;
   contextEfficiencySamples: number;
 }
@@ -89,6 +91,7 @@ export interface AuditDimensionAverages {
   patternAbsence: number;
   semanticPreservation: number;
   tidBonus: number;
+  guardrailPenalty: number;
   totalScore: number;
   samples: number;
 }
@@ -97,7 +100,10 @@ export interface AuditDimensionAverages {
 export function computeSessionTimeline(sessions: SessionState[]): TimelinePoint[] {
   const byDate = new Map<string, SessionState[]>();
   for (const s of sessions) {
-    const date = s.startedAt.slice(0, 10); // YYYY-MM-DD
+    const startedMs = typeof s.startedAtTs === 'number' ? s.startedAtTs : Date.parse(s.startedAt);
+    const date = Number.isFinite(startedMs)
+      ? new Date(startedMs).toISOString().slice(0, 10)
+      : s.startedAt.slice(0, 10); // YYYY-MM-DD
     const arr = byDate.get(date) ?? [];
     arr.push(s);
     byDate.set(date, arr);
@@ -119,6 +125,8 @@ export function computeSessionTimeline(sessions: SessionState[]): TimelinePoint[
 export function computeSessionEfficiencyMetrics(sessions: SessionState[]): SessionEfficiencyMetrics {
   let startupSum = 0;
   let startupSamples = 0;
+  let governanceOverheadSum = 0;
+  let governanceOverheadSamples = 0;
   let efficiencySum = 0;
   let contextEfficiencySamples = 0;
 
@@ -126,6 +134,12 @@ export function computeSessionEfficiencyMetrics(sessions: SessionState[]): Sessi
     if (session.timingMetrics?.startupMs != null) {
       startupSum += session.timingMetrics.startupMs;
       startupSamples++;
+    }
+    const governanceOverheadMs =
+      (session.timingMetrics as { governanceOverheadMs?: number } | undefined)?.governanceOverheadMs;
+    if (governanceOverheadMs != null) {
+      governanceOverheadSum += governanceOverheadMs;
+      governanceOverheadSamples++;
     }
     if (session.outcome?.contextEfficiency != null) {
       efficiencySum += session.outcome.contextEfficiency;
@@ -136,6 +150,10 @@ export function computeSessionEfficiencyMetrics(sessions: SessionState[]): Sessi
   return {
     avgStartupMs: startupSamples > 0 ? Math.round(startupSum / startupSamples) : 0,
     startupSamples,
+    avgGovernanceOverheadMs: governanceOverheadSamples > 0
+      ? Math.round(governanceOverheadSum / governanceOverheadSamples)
+      : 0,
+    governanceOverheadSamples,
     avgContextEfficiency: contextEfficiencySamples > 0
       ? Math.round((efficiencySum / contextEfficiencySamples) * 100) / 100
       : 0,
@@ -152,6 +170,7 @@ export function computeAuditDimensionAverages(scores: AuditScore[]): AuditDimens
   let patternAbsence = 0;
   let semanticPreservation = 0;
   let tidBonus = 0;
+  let guardrailPenalty = 0;
   let totalScore = 0;
 
   for (const score of scores) {
@@ -161,6 +180,7 @@ export function computeAuditDimensionAverages(scores: AuditScore[]): AuditDimens
     patternAbsence += score.dimensions.patternAbsence ?? 0;
     semanticPreservation += score.dimensions.semanticPreservation ?? 0;
     tidBonus += score.dimensions.tidBonus ?? 0;
+    guardrailPenalty += score.dimensions.guardrailPenalty ?? 0;
     totalScore += score.totalScore ?? 0;
   }
 
@@ -172,6 +192,7 @@ export function computeAuditDimensionAverages(scores: AuditScore[]): AuditDimens
     patternAbsence: Math.round((patternAbsence / sampleCount) * 10) / 10,
     semanticPreservation: Math.round((semanticPreservation / sampleCount) * 10) / 10,
     tidBonus: Math.round((tidBonus / sampleCount) * 10) / 10,
+    guardrailPenalty: Math.round((guardrailPenalty / sampleCount) * 10) / 10,
     totalScore: Math.round((totalScore / sampleCount) * 10) / 10,
     samples: sampleCount,
   };

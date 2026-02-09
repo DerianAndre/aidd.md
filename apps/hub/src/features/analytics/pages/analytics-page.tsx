@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BarChart3, Target, FlaskConical, Cpu, Timer, Gauge, Sparkles } from 'lucide-react';
+import { BarChart3, Target, FlaskConical, Cpu, Timer, Gauge, Sparkles, Shield } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { StatCard } from '../components/stat-card';
@@ -18,7 +18,7 @@ export function AnalyticsPage() {
   const {
     modelMetrics, toolStats, timelineData,
     totalSessions, avgCompliance, testPassRate, uniqueModels,
-    avgStartupMs, avgContextEfficiency, avgTidBonus, auditDimensions,
+    avgStartupMs, avgGovernanceOverheadMs, avgContextEfficiency, avgTidBonus, auditDimensions,
     loading, stale, fetch,
   } = useAnalyticsStore();
 
@@ -63,11 +63,16 @@ export function AnalyticsPage() {
         <StatCard label={t('page.analytics.modelsUsed')} value={uniqueModels} icon={Cpu} />
       </div>
 
-      <div className="mb-6 grid gap-3 grid-cols-1 sm:grid-cols-3">
+      <div className="mb-6 grid gap-3 grid-cols-1 sm:grid-cols-4">
         <StatCard
           label={t('page.analytics.avgStartupMs')}
           value={`${avgStartupMs}ms`}
           icon={Timer}
+        />
+        <StatCard
+          label={t('page.analytics.avgGovernanceOverheadMs')}
+          value={`${avgGovernanceOverheadMs}ms`}
+          icon={Shield}
         />
         <StatCard
           label={t('page.analytics.avgContextEfficiency')}
@@ -146,6 +151,11 @@ export function AnalyticsPage() {
               <DimensionRow
                 label={t('page.analytics.tidBonus')}
                 value={auditDimensions.tidBonus}
+                max={15}
+              />
+              <DimensionRow
+                label={t('page.analytics.guardrailPenalty')}
+                value={auditDimensions.guardrailPenalty}
                 max={15}
               />
               <DimensionRow

@@ -34,6 +34,7 @@ export function McpPlaygroundPage() {
   const [selectedTool, setSelectedTool] = useState<string>('');
   const [toolArguments, setToolArguments] = useState<string>('{}');
   const [runningTool, setRunningTool] = useState(false);
+  const [governanceSyncing, setGovernanceSyncing] = useState(false);
   const [toolOutput, setToolOutput] = useState<string>('');
   const [runnerError, setRunnerError] = useState<string | null>(null);
 
@@ -100,9 +101,18 @@ export function McpPlaygroundPage() {
     if (!selectedTool) return;
     setRunnerError(null);
     setRunningTool(true);
+    setGovernanceSyncing(false);
     setToolOutput('');
     try {
       const parsed = parseRunnerArgs(toolArguments);
+      if (isMajorMutationTool(selectedTool)) {
+        setGovernanceSyncing(true);
+        await withTimeout(
+          callMcpTool<unknown>('engine', 'aidd_optimize_context', { budget: 2000 }),
+          10_000,
+          'Architecture sync timed out.',
+        );
+      }
       const result = await withTimeout(
         callMcpTool<unknown>(
           selectedPackage,
@@ -117,6 +127,7 @@ export function McpPlaygroundPage() {
       const message = error instanceof Error ? error.message : t('page.mcpPlayground.executionFailed');
       setRunnerError(message);
     } finally {
+      setGovernanceSyncing(false);
       setRunningTool(false);
     }
   };
@@ -216,7 +227,11 @@ export function McpPlaygroundPage() {
                   onClick={() => void runSelectedTool()}
                   disabled={runningTool || !selectedTool}
                 >
-                  {runningTool ? t('page.mcpPlayground.executing') : t('page.mcpPlayground.execute')}
+                  {runningTool
+                    ? governanceSyncing
+                      ? 'Synchronizing Architecture...'
+                      : t('page.mcpPlayground.executing')
+                    : t('page.mcpPlayground.execute')}
                 </Button>
                 <p className="text-xs text-muted-foreground">
                   {t('page.mcpPlayground.targetServer')}
@@ -279,6 +294,15 @@ function parseRunnerArgs(rawArgs: string): Record<string, unknown> {
     throw new Error('Tool arguments must be a JSON object.');
   }
   return parsed as Record<string, unknown>;
+}
+
+function isMajorMutationTool(toolName: string): boolean {
+  return [
+    'aidd_draft_approve',
+    'aidd_evolution_approve',
+    'aidd_evolution_revert',
+    'aidd_scaffold',
+  ].includes(toolName);
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage: string): Promise<T> {

@@ -39,6 +39,20 @@ function requiredArtifacts(session: SessionState): ArtifactType[] {
     : REQUIRED_DEFAULT;
 }
 
+export function getRequiredArtifacts(session: SessionState): ArtifactType[] {
+  return requiredArtifacts(session);
+}
+
+export function getMissingRequiredArtifacts(
+  session: SessionState,
+  artifacts: ArtifactEntry[],
+): ArtifactType[] {
+  const required = requiredArtifacts(session);
+  const relevant = artifacts.filter((artifact) => artifactBelongsToSession(artifact, session));
+  const present = new Set<ArtifactType>(relevant.map((artifact) => artifact.type));
+  return required.filter((artifactType) => !present.has(artifactType));
+}
+
 export function deriveWorkflowCompliance(
   session: SessionState,
   artifacts: ArtifactEntry[],
@@ -56,9 +70,7 @@ export function deriveWorkflowCompliance(
     };
   }
 
-  const relevant = artifacts.filter((artifact) => artifactBelongsToSession(artifact, session));
-  const present = new Set<ArtifactType>(relevant.map((artifact) => artifact.type));
-  const missing = required.filter((artifactType) => !present.has(artifactType));
+  const missing = getMissingRequiredArtifacts(session, artifacts);
 
   return {
     status: missing.length === 0 ? 'compliant' : 'non-compliant',
@@ -78,4 +90,3 @@ export function deriveWorkflowComplianceMap(
   }
   return map;
 }
-

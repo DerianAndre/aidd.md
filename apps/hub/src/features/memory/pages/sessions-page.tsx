@@ -25,10 +25,12 @@ export function SessionsPage() {
     completedSessions,
     complianceBySessionId,
     artifactsBySessionId,
+    pendingDraftsBySession,
     loading,
     fetchAll,
     removeSession,
     completeSession,
+    fixCompliance,
   } = useSessionsStore();
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -105,6 +107,15 @@ export function SessionsPage() {
       showSuccess(t('page.sessions.completeSuccess'));
     } catch {
       showError(t('page.sessions.completeError'));
+    }
+  };
+
+  const handleFixCompliance = async (id: string) => {
+    try {
+      await fixCompliance(id);
+      showSuccess('Compliance drafts generated');
+    } catch {
+      showError('Failed to generate compliance drafts');
     }
   };
 
@@ -218,9 +229,11 @@ export function SessionsPage() {
                 session={session}
                 compliance={complianceBySessionId[session.id]}
                 artifacts={artifactsBySessionId[session.id] ?? []}
+                pendingDrafts={pendingDraftsBySession[session.id] ?? 0}
                 onPress={() => navigateToDetail(session.id)}
                 onEdit={() => navigateToDetail(session.id)}
                 onComplete={handleComplete}
+                onFixCompliance={handleFixCompliance}
                 onDelete={(id) => setDeleteTarget(id)}
               />
             ))}
@@ -243,8 +256,10 @@ export function SessionsPage() {
                 session={session}
                 compliance={complianceBySessionId[session.id]}
                 artifacts={artifactsBySessionId[session.id] ?? []}
+                pendingDrafts={pendingDraftsBySession[session.id] ?? 0}
                 onPress={() => navigateToDetail(session.id)}
                 onEdit={() => navigateToDetail(session.id)}
+                onFixCompliance={handleFixCompliance}
                 onDelete={(id) => setDeleteTarget(id)}
               />
             ))}

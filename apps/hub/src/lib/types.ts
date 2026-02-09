@@ -165,6 +165,9 @@ export interface DraftEntry {
   confidence: number;
   source: 'evolution' | 'manual';
   evolutionCandidateId?: string;
+  sessionId?: string;
+  artifactType?: string;
+  artifactId?: string;
   status: DraftStatus;
   createdAt: string;
   updatedAt: string;
@@ -187,6 +190,8 @@ export interface ModelMetrics {
   testPassRate: number;
   positiveRate: number;
   taskTypes: Record<string, number>;
+  avgStartupMs?: number;
+  avgGovernanceOverheadMs?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -213,9 +218,9 @@ export interface ArtifactEntry {
   title: string;
   description: string;
   content: string;
-  date: string;
-  createdAt: string;
-  updatedAt: string;
+  date: string | number;
+  createdAt: string | number;
+  updatedAt: string | number;
 }
 
 // ---------------------------------------------------------------------------
@@ -234,8 +239,8 @@ export interface SessionUpdatePayload {
     client?: string;
     modelTier?: string;
   };
-  startedAt?: string;
-  endedAt?: string | null;
+  startedAt?: string | number;
+  endedAt?: string | number | null;
   taskClassification?: {
     domain?: string;
     nature?: string;
@@ -253,6 +258,10 @@ export interface SessionUpdatePayload {
   filesModified?: string[];
   decisions?: Array<{ decision: string; reasoning: string; timestamp: string }>;
   errorsResolved?: Array<{ error: string; fix: string; timestamp: string }>;
+  timingMetrics?: {
+    startupMs?: number;
+    governanceOverheadMs?: number;
+  };
 }
 
 // ---------------------------------------------------------------------------

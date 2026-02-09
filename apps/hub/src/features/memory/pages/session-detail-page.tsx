@@ -30,6 +30,7 @@ import { showSuccess, showError } from "../../../lib/toast";
 import { formatDuration, formatDate, scoreColor } from "../../../lib/utils";
 import { listArtifacts } from "../../../lib/tauri";
 import { resolveSessionTokenTelemetry } from "../lib/token-telemetry";
+import { getDateInput } from "../lib/session-time";
 import type {
   SessionState,
   SessionObservation,
@@ -302,9 +303,11 @@ export function SessionDetailPage() {
     activeSessions,
     completedSessions,
     complianceBySessionId,
+    pendingDraftsBySession,
     stale,
     fetchAll,
     fetchObservations,
+    fixCompliance,
     editSessionFull,
   } = useSessionsStore();
 
@@ -327,6 +330,7 @@ export function SessionDetailPage() {
   const [draftErrors, setDraftErrors] = useState<Array<Record<string, string>>>(
     [],
   );
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Load session
   useEffect(() => {
@@ -432,6 +436,16 @@ export function SessionDetailPage() {
     setEditing(false);
   }, [session, populateDraft]);
 
+  const handleFixCompliance = useCallback(async () => {
+    if (!session) return;
+    try {
+      await fixCompliance(session.id);
+      showSuccess("Compliance drafts generated");
+    } catch {
+      showError("Failed to generate compliance drafts");
+    }
+  }, [fixCompliance, session]);
+
   const pendingUpdates = useMemo(() => {
     if (!session) return null;
     return buildSessionPatch({
@@ -495,6 +509,9 @@ export function SessionDetailPage() {
   // Derived values
   const isActive = session && !session.endedAt;
   const compliance = session ? complianceBySessionId[session.id] : undefined;
+  const pendingDrafts = session ? pendingDraftsBySession[session.id] ?? 0 : 0;
+  const isZenCandidate = session?.taskClassification?.complexity === "low";
+  const zenMode = isZenCandidate && !showAdvanced && !editing;
   const durationMs = session?.endedAt
     ? new Date(session.endedAt).getTime() -
       new Date(session.startedAt).getTime()
@@ -722,6 +739,11 @@ export function SessionDetailPage() {
                   : t("page.sessions.nonCompliant")}
               </Chip>
             )}
+            {pendingDrafts > 0 && (
+              <Chip size="sm" color="warning">
+                Pending Approval {pendingDrafts}
+              </Chip>
+            )}
             {session.branch && (
               <span className="inline-flex items-center gap-1 text-muted-foreground">
                 <GitBranch size={12} />
@@ -755,7 +777,7 @@ export function SessionDetailPage() {
               </span>
             )}
             <span className="text-muted-foreground">
-              {formatDate(session.startedAt)}
+              {formatDate(getDateInput(session.startedAtTs ?? session.startedAt))}
             </span>
           </div>
         }
@@ -783,14 +805,28 @@ export function SessionDetailPage() {
                 </Button>
               </>
             ) : (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleEdit}
-                aria-label="Edit session"
-              >
-                <Pencil size={14} /> {t("common.edit")}
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleEdit}
+                  aria-label="Edit session"
+                >
+                  <Pencil size={14} /> {t("common.edit")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleFixCompliance}>
+                  Fix Compliance
+                </Button>
+                {isZenCandidate && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowAdvanced((v) => !v)}
+                  >
+                    {showAdvanced ? "Zen Mode" : "Show Advanced"}
+                  </Button>
+                )}
+              </>
             )}
             <Button
               variant="ghost"
@@ -836,98 +872,100 @@ export function SessionDetailPage() {
           </Card>
         </CollapsibleSection>
 
-        {/* Section: Outcome */}
-        <CollapsibleSection label={t("page.sessionDetail.outcome")} defaultOpen>
-          {editing ? (
-            <FrontmatterForm
-              disabled={false}
-              fields={outcomeFields}
-              values={draft}
-              onChange={handleDraftChange}
-            />
-          ) : session.outcome ? (
-            <Card>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                  <OutcomeStat
-                    label={t("page.sessionDetail.testsLabel")}
-                    value={
-                      session.outcome.testsPassing
-                        ? t("page.sessionDetail.passing")
-                        : t("page.sessionDetail.failing")
-                    }
-                    color={session.outcome.testsPassing ? "success" : "danger"}
-                  />
-                  <OutcomeStat
-                    label={t("page.sessionDetail.complianceLabel")}
-                    value={`${session.outcome.complianceScore}%`}
-                    color={scoreColor(session.outcome.complianceScore)}
-                  />
-                  <OutcomeStat
-                    label={t("page.sessionDetail.revertsLabel")}
-                    value={String(session.outcome.reverts)}
-                    color={session.outcome.reverts > 0 ? "warning" : "default"}
-                  />
-                  <OutcomeStat
-                    label={t("page.sessionDetail.reworksLabel")}
-                    value={String(session.outcome.reworks)}
-                    color={session.outcome.reworks > 0 ? "warning" : "default"}
-                  />
-                  {session.outcome.userFeedback && (
+        {!zenMode && (
+          <CollapsibleSection label={t("page.sessionDetail.outcome")} defaultOpen>
+            {editing ? (
+              <FrontmatterForm
+                disabled={false}
+                fields={outcomeFields}
+                values={draft}
+                onChange={handleDraftChange}
+              />
+            ) : session.outcome ? (
+              <Card>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                     <OutcomeStat
-                      label={t("page.sessionDetail.feedbackLabel")}
-                      value={session.outcome.userFeedback}
-                      color={
-                        session.outcome.userFeedback === "positive"
-                          ? "success"
-                          : session.outcome.userFeedback === "negative"
-                            ? "danger"
-                            : "default"
+                      label={t("page.sessionDetail.testsLabel")}
+                      value={
+                        session.outcome.testsPassing
+                          ? t("page.sessionDetail.passing")
+                          : t("page.sessionDetail.failing")
                       }
+                      color={session.outcome.testsPassing ? "success" : "danger"}
                     />
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <p className="text-xs text-muted-foreground italic">
-              {t("page.sessionDetail.noOutcome")}
-            </p>
-          )}
-        </CollapsibleSection>
+                    <OutcomeStat
+                      label={t("page.sessionDetail.complianceLabel")}
+                      value={`${session.outcome.complianceScore}%`}
+                      color={scoreColor(session.outcome.complianceScore)}
+                    />
+                    <OutcomeStat
+                      label={t("page.sessionDetail.revertsLabel")}
+                      value={String(session.outcome.reverts)}
+                      color={session.outcome.reverts > 0 ? "warning" : "default"}
+                    />
+                    <OutcomeStat
+                      label={t("page.sessionDetail.reworksLabel")}
+                      value={String(session.outcome.reworks)}
+                      color={session.outcome.reworks > 0 ? "warning" : "default"}
+                    />
+                    {session.outcome.userFeedback && (
+                      <OutcomeStat
+                        label={t("page.sessionDetail.feedbackLabel")}
+                        value={session.outcome.userFeedback}
+                        color={
+                          session.outcome.userFeedback === "positive"
+                            ? "success"
+                            : session.outcome.userFeedback === "negative"
+                              ? "danger"
+                              : "default"
+                        }
+                      />
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">
+                {t("page.sessionDetail.noOutcome")}
+              </p>
+            )}
+          </CollapsibleSection>
+        )}
 
-        {/* Section: Tasks */}
-        <CollapsibleSection
-          label={t("page.sessionDetail.tasksLabel", {
-            completed: draftTasksCompleted.length,
-            pending: draftTasksPending.length,
-          })}
-          defaultOpen
-        >
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-            <div>
-              <EditableList
-                label={t("page.sessionDetail.completedTasksLabel")}
-                items={draftTasksCompleted}
-                onChange={setDraftTasksCompleted}
-                editing={editing}
-                placeholder={t("page.sessionDetail.addTaskPlaceholder")}
-              />
+        {!zenMode && (
+          <CollapsibleSection
+            label={t("page.sessionDetail.tasksLabel", {
+              completed: draftTasksCompleted.length,
+              pending: draftTasksPending.length,
+            })}
+            defaultOpen
+          >
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+              <div>
+                <EditableList
+                  label={t("page.sessionDetail.completedTasksLabel")}
+                  items={draftTasksCompleted}
+                  onChange={setDraftTasksCompleted}
+                  editing={editing}
+                  placeholder={t("page.sessionDetail.addTaskPlaceholder")}
+                />
+              </div>
+              <div>
+                <EditableList
+                  label={t("page.sessionDetail.pendingTasksLabel")}
+                  items={draftTasksPending}
+                  onChange={setDraftTasksPending}
+                  editing={editing}
+                  placeholder={t("page.sessionDetail.addTaskPlaceholder")}
+                />
+              </div>
             </div>
-            <div>
-              <EditableList
-                label={t("page.sessionDetail.pendingTasksLabel")}
-                items={draftTasksPending}
-                onChange={setDraftTasksPending}
-                editing={editing}
-                placeholder={t("page.sessionDetail.addTaskPlaceholder")}
-              />
-            </div>
-          </div>
-        </CollapsibleSection>
+          </CollapsibleSection>
+        )}
 
         {/* Section: Files Modified */}
-        {(draftFilesModified.length > 0 || editing) && (
+        {!zenMode && (draftFilesModified.length > 0 || editing) && (
           <CollapsibleSection
             label={t("page.sessionDetail.filesModified", {
               count: draftFilesModified.length,
@@ -944,7 +982,7 @@ export function SessionDetailPage() {
         )}
 
         {/* Section: Decisions */}
-        {(draftDecisions.length > 0 || editing) && (
+        {!zenMode && (draftDecisions.length > 0 || editing) && (
           <CollapsibleSection
             label={t("page.sessionDetail.decisions", {
               count: draftDecisions.length,
@@ -973,7 +1011,7 @@ export function SessionDetailPage() {
         )}
 
         {/* Section: Errors Resolved */}
-        {(draftErrors.length > 0 || editing) && (
+        {!zenMode && (draftErrors.length > 0 || editing) && (
           <CollapsibleSection
             label={t("page.sessionDetail.errorsResolved", {
               count: draftErrors.length,
@@ -1002,24 +1040,26 @@ export function SessionDetailPage() {
         )}
 
         {/* Section: Observations */}
-        <CollapsibleSection
-          label={t("page.sessionDetail.observations", {
-            count: observations.length,
-          })}
-          defaultOpen
-        >
-          {observations.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic">
-              {t("page.sessionDetail.noObservations")}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {observations.map((obs) => (
-                <ObservationCard key={obs.id} observation={obs} />
-              ))}
-            </div>
-          )}
-        </CollapsibleSection>
+        {!zenMode && (
+          <CollapsibleSection
+            label={t("page.sessionDetail.observations", {
+              count: observations.length,
+            })}
+            defaultOpen
+          >
+            {observations.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">
+                {t("page.sessionDetail.noObservations")}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {observations.map((obs) => (
+                  <ObservationCard key={obs.id} observation={obs} />
+                ))}
+              </div>
+            )}
+          </CollapsibleSection>
+        )}
 
         {/* Section: Artifacts */}
         <CollapsibleSection

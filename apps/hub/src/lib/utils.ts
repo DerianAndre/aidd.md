@@ -6,9 +6,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Format a date string as relative time (e.g., "2h ago"). */
-export function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr);
+/** Format a date input as relative time (e.g., "2h ago"). */
+export function formatRelativeTime(dateInput: string | number): string {
+  const date = new Date(dateInput);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
@@ -58,9 +58,9 @@ export function formatDuration(ms: number): string {
   return `${sec}s`;
 }
 
-/** Format an ISO date string as a short date (e.g., "Feb 5, 2026"). */
-export function formatDate(isoStr: string): string {
-  return new Date(isoStr).toLocaleDateString('en-US', {
+/** Format a date input as a short date (e.g., "Feb 5, 2026"). */
+export function formatDate(dateInput: string | number): string {
+  return new Date(dateInput).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

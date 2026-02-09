@@ -23,6 +23,7 @@ interface AnalyticsStoreState {
   testPassRate: number;
   uniqueModels: number;
   avgStartupMs: number;
+  avgGovernanceOverheadMs: number;
   avgContextEfficiency: number;
   avgTidBonus: number;
   auditDimensions: AuditDimensionAverages | null;
@@ -43,6 +44,7 @@ export const useAnalyticsStore = create<AnalyticsStoreState>((set, get) => ({
   testPassRate: 0,
   uniqueModels: 0,
   avgStartupMs: 0,
+  avgGovernanceOverheadMs: 0,
   avgContextEfficiency: 0,
   avgTidBonus: 0,
   auditDimensions: null,
@@ -84,6 +86,7 @@ export const useAnalyticsStore = create<AnalyticsStoreState>((set, get) => ({
         testPassRate: totalSessions > 0 ? Math.round((testPassing / totalSessions) * 100) : 0,
         uniqueModels: modelMetrics.length,
         avgStartupMs: efficiency.avgStartupMs,
+        avgGovernanceOverheadMs: efficiency.avgGovernanceOverheadMs,
         avgContextEfficiency: efficiency.avgContextEfficiency,
         avgTidBonus: auditDimensions?.tidBonus ?? 0,
         auditDimensions,
