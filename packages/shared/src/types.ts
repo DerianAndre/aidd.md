@@ -242,6 +242,8 @@ export interface AiProvider {
 
 export interface SessionState {
   id: string;
+  /** Human-friendly session label (distinct from input prompt) */
+  name?: string;
   memorySessionId?: string;
   parentSessionId?: string;
   branch: string;

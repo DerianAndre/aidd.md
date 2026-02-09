@@ -35,6 +35,7 @@ const FILLER_PATTERNS = [
 
 type SessionStartParams = {
   branch: string;
+  name?: string;
   aiProvider: AiProvider;
   input?: string;
   memorySessionId?: string;
@@ -58,8 +59,10 @@ function normalizeTaskClassification(
 }
 
 function buildSessionFromParams(params: SessionStartParams): SessionState {
+  const sessionName = params.name?.trim();
   return {
     id: generateId(),
+    name: sessionName && sessionName.length > 0 ? sessionName : undefined,
     memorySessionId: params.memorySessionId,
     parentSessionId: params.parentSessionId,
     branch: params.branch,
@@ -172,6 +175,7 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
 
         const session = buildSessionFromParams({
           branch: (params['branch'] as string) || 'main',
+          name: params['name'] as string | undefined,
           aiProvider: (params['aiProvider'] as AiProvider) ?? {
             provider: 'unknown',
             model: 'unknown',
@@ -207,6 +211,7 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
             .optional()
             .describe('AI provider info (required for start)'),
           input: z.string().optional().describe("The user's initial request / prompt (for start or update)"),
+          name: z.string().optional().describe('Human-friendly session name (for start or update)'),
           output: z.string().optional().describe('Summary of work produced (for update or end)'),
           memorySessionId: z.string().optional().describe('Cross-session continuity ID'),
           parentSessionId: z.string().optional().describe('Parent session for threading'),
@@ -279,6 +284,7 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
 
               const session = buildSessionFromParams({
                 branch: a['branch'] as string,
+                name: a['name'] as string | undefined,
                 aiProvider: a['aiProvider'] as AiProvider,
                 input: a['input'] as string | undefined,
                 memorySessionId: a['memorySessionId'] as string | undefined,
@@ -296,6 +302,11 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
               if (!session) return createErrorResult(`Session ${a['id']} not found`);
 
               // Set input/output if provided
+              if (a['name'] !== undefined) {
+                const raw = a['name'] as string;
+                const trimmed = raw.trim();
+                session.name = trimmed.length > 0 ? trimmed : undefined;
+              }
               if (a['input']) session.input = a['input'] as string;
               if (a['output']) session.output = a['output'] as string;
 

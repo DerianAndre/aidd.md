@@ -23,7 +23,8 @@ AIDD works with any AI-powered development tool that supports the MCP protocol (
 
 ## 2. The Workflow
 
-Every session follows a structured pipeline. Artifacts (versioned documents) are created at every step and session state is updated throughout.
+Every session follows a structured pipeline. If you have something in mind start by New session name: <your_idea>.
+Artifacts (versioned documents) are created at every step and session state is updated throughout.
 
 ```
 Your Request → Brainstorm → Plan → [Approved?] → Execute → Test → [Pass?] → Review → [Approved?] → Ship
@@ -191,6 +192,7 @@ flowchart LR
 
 Every conversation is a tracked session with:
 
+- **Name** — What your intention is to do 
 - **Input** — Your initial request (refined after brainstorming)
 - **Tasks** — Pending and completed work items
 - **Files** — All files modified during the session
