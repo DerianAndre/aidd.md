@@ -18,7 +18,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { StorageProvider } from '../../storage/index.js';
 import { hookBus } from '../hooks.js';
 import { findMemoryDir } from '../memory/permanent-memory.js';
-import { analyzePatterns } from './analyzer.js';
+import { analyzePatterns, shadowTestPattern } from './analyzer.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -483,6 +483,15 @@ export function createEvolutionModule(storage: StorageProvider): AiddModule {
         const newCandidates = analyzePatterns(sessions, context.config, patternStats);
         const { autoApplyThreshold } = context.config.evolution;
 
+        // Cooldown blacklist: recently rejected patterns (last 30 days)
+        const recentLog = await backend.getEvolutionLog({ limit: 200 });
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const rejectedPatterns = new Set(
+          recentLog
+            .filter((e) => e.action === 'rejected' && e.timestamp > thirtyDaysAgo)
+            .map((e) => e.title),
+        );
+
         for (const candidate of newCandidates) {
           const existing = await backend.listEvolutionCandidates({ title: candidate.title });
           if (existing.length > 0) {
@@ -491,6 +500,31 @@ export function createEvolutionModule(storage: StorageProvider): AiddModule {
             e.updatedAt = now();
             await backend.updateEvolutionCandidate(e);
           } else {
+            // Cooldown check: skip if recently rejected
+            if (candidate.type === 'model_pattern_ban' && rejectedPatterns.has(candidate.title)) {
+              continue;
+            }
+
+            // Shadow test for model_pattern_ban candidates before promotion
+            if (candidate.type === 'model_pattern_ban' && candidate.confidence >= autoApplyThreshold) {
+              const patternText = candidate.title.match(/^(?:Ban |Frequent pattern: )"?([^"]+)"?/)?.[1] ?? '';
+              if (patternText) {
+                const result = await shadowTestPattern(patternText, backend);
+                if (!result.passed) {
+                  // Shadow test failed — reject and log
+                  await backend.appendEvolutionLog({
+                    id: generateId(),
+                    candidateId: candidate.id,
+                    action: 'rejected',
+                    title: candidate.title,
+                    confidence: candidate.confidence,
+                    timestamp: now(),
+                  });
+                  continue;
+                }
+              }
+            }
+
             await backend.saveEvolutionCandidate(candidate);
             await backend.appendEvolutionLog({
               id: generateId(),

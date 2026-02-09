@@ -43,6 +43,9 @@ interface ClassificationResult {
   workflows: string[];
   templates: string[];
   confidence: number;
+  complexity: 'low' | 'moderate' | 'complex';
+  fastTrack: boolean;
+  skippableStages: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -315,6 +318,26 @@ function classifyTask(
     ? Math.min(1, totalMatches / Math.max(totalPossible, keywords.length))
     : 0.3;
 
+  // Complexity heuristic
+  const descriptionWords = description.split(/\s+/).length;
+  let complexity: 'low' | 'moderate' | 'complex';
+  if (keywords.length > 8 || totalMatches > 5 || descriptionWords > 50) {
+    complexity = 'complex';
+  } else if (keywords.length <= 3 && totalMatches <= 2 && descriptionWords <= 15) {
+    complexity = 'low';
+  } else {
+    complexity = 'moderate';
+  }
+
+  // Fast-track: triple guard (low complexity + not tier 1 + not release + no risky keywords)
+  const RISKY_KEYWORDS = new Set([
+    'auth', 'security', 'prod', 'production', 'migration', 'deploy',
+    'database', 'delete', 'drop', 'secret', 'credential', 'permission',
+  ]);
+  const hasRiskyKeyword = keywords.some((k) => RISKY_KEYWORDS.has(k));
+  const fastTrack = complexity === 'low' && tier >= 2 && phase !== 'RELEASE' && !hasRiskyKeyword;
+  const skippableStages = fastTrack ? ['brainstorm', 'research'] : [];
+
   return {
     taskSummary: description.slice(0, 100),
     phase,
@@ -323,6 +346,9 @@ function classifyTask(
     workflows: workflows.slice(0, 3),
     templates: templates.slice(0, 3),
     confidence: Math.round(confidence * 100) / 100,
+    complexity,
+    fastTrack,
+    skippableStages,
   };
 }
 

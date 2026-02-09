@@ -25,7 +25,7 @@ export function createPatternKillerModule(storage: StorageProvider): AiddModule 
     name: 'pattern-killer',
     description: 'Pattern detection, statistical fingerprinting, and AI output quality scoring',
 
-    register(server: McpServer, _context: ModuleContext) {
+    register(server: McpServer, context: ModuleContext) {
       // ---- 1. Audit: full pipeline on explicit text ----
       registerTool(server, {
         name: 'aidd_pattern_audit',
@@ -46,7 +46,24 @@ export function createPatternKillerModule(storage: StorageProvider): AiddModule 
 
           const backend = await storage.getBackend();
           const banned = await backend.listBannedPatterns({ active: true, modelScope: modelId });
-          const score = computeAuditScore(text, banned, modelId, sessionId);
+
+          // TID context: fetch session output tokens + model average
+          let tidContext: { responseTokens: number; modelAvgTokens: number } | undefined;
+          if (sessionId) {
+            try {
+              const session = await backend.getSession(sessionId);
+              const getAvg = context.services['getModelAvgTokens'] as
+                ((id: string) => Promise<number | null>) | undefined;
+              if (session?.tokenUsage && getAvg) {
+                const avg = await getAvg(session.aiProvider.modelId);
+                if (avg && avg > 0) {
+                  tidContext = { responseTokens: session.tokenUsage.outputTokens, modelAvgTokens: avg };
+                }
+              }
+            } catch { /* non-critical */ }
+          }
+
+          const score = computeAuditScore(text, banned, modelId, sessionId, tidContext);
           const matches = detectPatterns(text, banned);
 
           // Save audit score

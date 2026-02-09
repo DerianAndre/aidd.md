@@ -142,6 +142,7 @@ export function computeAuditScore(
   bannedPatterns: BannedPattern[],
   modelId: string,
   sessionId?: string,
+  tidContext?: { responseTokens: number; modelAvgTokens: number },
 ): AuditScore {
   const fingerprint = computeFingerprint(text);
   const matches = detectPatterns(text, bannedPatterns);
@@ -166,7 +167,13 @@ export function computeAuditScore(
   // Dimension 5: Semantic preservation (0-20) — default to 15 (user rates)
   const semanticPreservation = 15;
 
-  const totalScore = lexicalDiversity + structuralVariation + voiceAuthenticity + patternAbsence + semanticPreservation;
+  // TID bonus: +15 for token-dense responses (<40% of model avg)
+  let tidBonus = 0;
+  if (tidContext && tidContext.modelAvgTokens > 0) {
+    if (tidContext.responseTokens / tidContext.modelAvgTokens < 0.4) tidBonus = 15;
+  }
+
+  const totalScore = lexicalDiversity + structuralVariation + voiceAuthenticity + patternAbsence + semanticPreservation + tidBonus;
   const verdict: AuditScore['verdict'] = totalScore >= 70 ? 'pass' : totalScore >= 40 ? 'retry' : 'escalate';
 
   const inputHash = createHash('sha256').update(text.slice(0, 1000)).digest('hex').slice(0, 16);
@@ -182,6 +189,7 @@ export function computeAuditScore(
       voiceAuthenticity,
       patternAbsence,
       semanticPreservation,
+      ...(tidBonus > 0 ? { tidBonus } : {}),
     },
     patternsFound: matches.length,
     verdict,

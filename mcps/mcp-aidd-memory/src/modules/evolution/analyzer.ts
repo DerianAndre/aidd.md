@@ -1,5 +1,5 @@
 import { generateId, now } from '@aidd.md/mcp-shared';
-import type { SessionState, AiddConfig, PatternStats } from '@aidd.md/mcp-shared';
+import type { SessionState, AiddConfig, PatternStats, StorageBackend } from '@aidd.md/mcp-shared';
 import type { EvolutionCandidate } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -393,6 +393,56 @@ function detectModelPatternFrequency(
   }
 
   return candidates;
+}
+
+// ---------------------------------------------------------------------------
+// Shadow test — validate pattern against good sessions before promotion
+// ---------------------------------------------------------------------------
+
+export async function shadowTestPattern(
+  pattern: string,
+  backend: StorageBackend,
+): Promise<{ passed: boolean; falsePositiveRate: number }> {
+  // Fetch last 50 completed sessions with good outcomes
+  const entries = await backend.listSessions({ status: 'completed', limit: 50 });
+  const goodSessions: Array<{ id: string; text: string }> = [];
+
+  for (const entry of entries) {
+    const session = await backend.getSession(entry.id);
+    if (!session?.outcome) continue;
+    if (!session.outcome.testsPassing || session.outcome.complianceScore < 70) continue;
+
+    const observations = await backend.listObservations({ sessionId: session.id });
+    const text = observations
+      .filter((o) => o.narrative && o.narrative.length > 50)
+      .map((o) => o.narrative!)
+      .join('\n');
+    if (text.length > 0) {
+      goodSessions.push({ id: session.id, text });
+    }
+  }
+
+  // Auto-pass if insufficient data
+  if (goodSessions.length < 20) {
+    return { passed: true, falsePositiveRate: 0 };
+  }
+
+  // Test pattern against good sessions
+  let matchCount = 0;
+  try {
+    const re = new RegExp(`\\b${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+    for (const gs of goodSessions) {
+      if (re.test(gs.text)) {
+        matchCount++;
+        re.lastIndex = 0;
+      }
+    }
+  } catch {
+    return { passed: true, falsePositiveRate: 0 };
+  }
+
+  const rate = matchCount / goodSessions.length;
+  return { passed: rate <= 0.10, falsePositiveRate: Math.round(rate * 100) / 100 };
 }
 
 // ---------------------------------------------------------------------------

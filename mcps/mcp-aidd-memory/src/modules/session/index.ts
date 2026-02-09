@@ -100,6 +100,21 @@ export function createSessionModule(storage: StorageProvider): AiddModule {
 
     register(server: McpServer, context: ModuleContext) {
       // -----------------------------------------------------------------------
+      // Cross-module service: updateSessionTiming (TTH)
+      // Called by aidd_start to record startup timing.
+      // -----------------------------------------------------------------------
+      context.services['updateSessionTiming'] = async (...args: unknown[]) => {
+        const sessionId = args[0] as string;
+        const startupMs = args[1] as number;
+        const backend = await storage.getBackend();
+        const session = await backend.getSession(sessionId);
+        if (session) {
+          session.timingMetrics = { startupMs };
+          await backend.saveSession(session);
+        }
+      };
+
+      // -----------------------------------------------------------------------
       // Cross-module service: startSession
       // Called by aidd_start in core to auto-start sessions.
       // -----------------------------------------------------------------------

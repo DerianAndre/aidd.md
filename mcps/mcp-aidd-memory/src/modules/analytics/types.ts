@@ -19,6 +19,7 @@ export interface ModelMetrics {
   avgInputTokens?: number;
   avgOutputTokens?: number;
   avgContextEfficiency?: number;
+  avgStartupMs?: number;
   patternScore?: number;
   avgFingerprint?: ModelFingerprint;
 }

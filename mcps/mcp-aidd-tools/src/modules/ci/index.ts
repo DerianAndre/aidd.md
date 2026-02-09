@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
@@ -5,6 +7,35 @@ import {
   createTextResult,
 } from '@aidd.md/mcp-shared';
 import type { AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
+
+// ---------------------------------------------------------------------------
+// S2D checksum reader
+// ---------------------------------------------------------------------------
+
+interface DocsChecksum {
+  status: 'FOUND' | 'NOT_FOUND' | 'INVALID';
+  checksum?: string;
+  lastMutation?: string;
+  docsPath?: string;
+}
+
+function readDocsChecksum(projectRoot: string): DocsChecksum {
+  const docsPath = resolve(projectRoot, 'docs', 'ai', 'index.md');
+  try {
+    const content = readFileSync(docsPath, 'utf-8');
+    const checksumMatch = content.match(/archChecksum:\s*([a-f0-9]+)/);
+    const mutationMatch = content.match(/lastMutation:\s*(\S+)/);
+    if (!checksumMatch) return { status: 'INVALID', docsPath };
+    return {
+      status: 'FOUND',
+      checksum: checksumMatch[1],
+      lastMutation: mutationMatch?.[1],
+      docsPath,
+    };
+  } catch {
+    return { status: 'NOT_FOUND' };
+  }
+}
 import type { ValidationResult, ValidationIssue } from '../validation/types.js';
 import { resolveContent } from '../validation/utils.js';
 
@@ -66,6 +97,7 @@ export const ciModule: AiddModule = {
         const ci = context.config.ci;
         const format = fmt ?? 'markdown';
 
+        const docsChecksum = readDocsChecksum(context.projectRoot);
         const report = {
           blockOn: ci.blockOn,
           warnOn: ci.warnOn,
@@ -77,6 +109,7 @@ export const ciModule: AiddModule = {
           totalTools: 19,
           phases: ['sync', 'story', 'plan', 'commit_spec', 'execute', 'test', 'verify', 'commit_impl'],
           qualityGates: 10,
+          docsChecksum,
         };
 
         if (format === 'json') {
@@ -89,6 +122,13 @@ export const ciModule: AiddModule = {
         lines.push(`  Block on: ${ci.blockOn.join(', ') || '(none)'}`);
         lines.push(`  Warn on: ${ci.warnOn.join(', ') || '(none)'}`);
         lines.push(`  Ignore: ${ci.ignore.join(', ') || '(none)'}`);
+        lines.push('');
+        lines.push('## Documentation Checksum');
+        lines.push(`  Status: ${docsChecksum.status}`);
+        if (docsChecksum.docsPath) lines.push(`  Path: ${docsChecksum.docsPath}`);
+        if (docsChecksum.checksum) lines.push(`  Checksum: ${docsChecksum.checksum}`);
+        if (docsChecksum.lastMutation) lines.push(`  Last mutation: ${docsChecksum.lastMutation}`);
+        if (docsChecksum.status !== 'FOUND') lines.push(`  Verify: pnpm mcp:docs --check`);
         lines.push('');
         lines.push('## Available Validators');
         lines.push(`  Validation tools: ${report.validators}`);

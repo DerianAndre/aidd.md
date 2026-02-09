@@ -137,10 +137,13 @@ export const bootstrapModule: AiddModule = {
       },
       annotations: { idempotentHint: false },
       handler: async (args) => {
+        const startTime = performance.now();
         const a = args as Record<string, unknown>;
         const projectPath = a['path'] as string | undefined;
         const info = projectPath ? detectProject(projectPath) : context.projectInfo;
         const index = context.contentLoader.getIndex();
+        const classification = a['taskClassification'] as { domain?: string; complexity?: string } | undefined;
+        const isSlim = classification?.complexity === 'low';
 
         const sections: string[] = [];
 
@@ -204,98 +207,133 @@ export const bootstrapModule: AiddModule = {
         }
 
         // =================================================================
-        // 4. Agents (SSOT) — full routing.md content
+        // 4. PAPI: Pre-emptive mistake injection (both slim and full)
         // =================================================================
-        if (index.agents.length > 0) {
-          sections.push('\n## Agents (SSOT)\n');
-          const mainAgent = index.agents.find((ag) => ag.name === 'routing.md') ?? index.agents[0]!;
-          sections.push(mainAgent.getContent());
-          if (index.agents.length > 1) {
-            sections.push(`\n*${index.agents.length} agent files available — use \`aidd_get_agent\` for individual agents*`);
+        const queryMistakes = context.services['queryDomainMistakes'] as
+          ((domain: string, limit: number) => Promise<Array<{ error: string; fix: string }>>) | undefined;
+        if (queryMistakes && classification?.domain) {
+          try {
+            const hazards = await queryMistakes(classification.domain, 3);
+            if (hazards.length > 0) {
+              sections.push('\n## Hazards to Avoid\n');
+              for (const h of hazards) {
+                sections.push(`- **${h.error}** → ${h.fix}`);
+              }
+            }
+          } catch { /* silent — PAPI is best-effort */ }
+        }
+
+        if (isSlim) {
+          // =============================================================
+          // SLIM MODE: Critical guardrails only (~500-700 tokens total)
+          // =============================================================
+          sections.push('\n## Critical Guardrails\n');
+          sections.push('- Never use `any` without documented exception');
+          sections.push('- Never commit secrets');
+          sections.push('- ES modules only (`import`/`export`)');
+          sections.push('\n[Slim] Low-complexity task. Full context via `aidd_get_agent`, `aidd_get_routing_table`.');
+        } else {
+          // =============================================================
+          // FULL MODE: All sections (agents, rules, workflows, etc.)
+          // =============================================================
+
+          // 5. Agents (SSOT) — full routing.md content
+          if (index.agents.length > 0) {
+            sections.push('\n## Agents (SSOT)\n');
+            const mainAgent = index.agents.find((ag) => ag.name === 'routing.md') ?? index.agents[0]!;
+            sections.push(mainAgent.getContent());
+            if (index.agents.length > 1) {
+              sections.push(`\n*${index.agents.length} agent files available — use \`aidd_get_agent\` for individual agents*`);
+            }
+          }
+
+          // 6. Active Rules — full content (must be enforced)
+          if (index.rules.length > 0) {
+            sections.push('\n## Active Rules (ENFORCE)\n');
+            for (const rule of index.rules) {
+              const title = rule.frontmatter['title'] ?? rule.name.replace('.md', '');
+              const content = rule.getContent();
+              sections.push(`### ${title}\n`);
+              sections.push(content);
+              sections.push('');
+            }
+          }
+
+          // 7. Workflows — list with descriptions
+          if (index.workflows.length > 0) {
+            sections.push('\n## Workflows\n');
+            for (const wf of index.workflows) {
+              const title = wf.frontmatter['title'] ?? wf.name.replace('.md', '');
+              const desc = wf.frontmatter['description'] ?? '';
+              const invocation = wf.frontmatter['invocation'] ?? '';
+              sections.push(`- **${title}**${invocation ? ` (\`${invocation}\`)` : ''}${desc ? ` — ${desc}` : ''}`);
+            }
+          }
+
+          // 8. Skills — list with triggers
+          if (index.skills.length > 0) {
+            sections.push('\n## Skills\n');
+            for (const skill of index.skills) {
+              const title = skill.frontmatter['title'] ?? skill.name.replace('.md', '');
+              const triggers = skill.frontmatter['triggers'] ?? '';
+              sections.push(`- **${title}**${triggers ? ` — triggers: ${triggers}` : ''}`);
+            }
+          }
+
+          // 9. Specs — list
+          if (index.specs.length > 0) {
+            sections.push('\n## Specs\n');
+            for (const spec of index.specs) {
+              const title = spec.frontmatter['title'] ?? spec.name.replace('.md', '');
+              sections.push(`- ${title}`);
+            }
+          }
+
+          // 10. Knowledge (TKB) — list with categories
+          if (index.knowledge.length > 0) {
+            sections.push('\n## Knowledge (TKB)\n');
+            for (const entry of index.knowledge) {
+              const name = entry.frontmatter['name'] ?? entry.name.replace('.md', '');
+              const category = entry.frontmatter['category'] ?? '';
+              const maturity = entry.frontmatter['maturity'] ?? '';
+              sections.push(`- **${name}**${category ? ` [${category}]` : ''}${maturity ? ` (${maturity})` : ''}`);
+            }
+          }
+
+          // 11. Templates — list
+          if (index.templates.length > 0) {
+            sections.push('\n## Templates\n');
+            for (const tpl of index.templates) {
+              const title = tpl.frontmatter['title'] ?? tpl.name.replace('.md', '');
+              sections.push(`- ${title}`);
+            }
+          }
+
+          // 12. Suggested next steps (only if AIDD not detected)
+          if (!info.detected) {
+            sections.push('\n## Setup Required\n');
+            sections.push('1. **Initialize AIDD**: `aidd_scaffold { preset: "standard" }`');
+            sections.push('2. **Classify your task**: `aidd_classify_task { description: "..." }`');
           }
         }
 
         // =================================================================
-        // 5. Active Rules — full content (must be enforced)
+        // TTH: Time to Hydrate
         // =================================================================
-        if (index.rules.length > 0) {
-          sections.push('\n## Active Rules (ENFORCE)\n');
-          for (const rule of index.rules) {
-            const title = rule.frontmatter['title'] ?? rule.name.replace('.md', '');
-            const content = rule.getContent();
-            sections.push(`### ${title}\n`);
-            sections.push(content);
-            sections.push('');
+        const startupMs = Math.round(performance.now() - startTime);
+        // Append timing to session line
+        if (sessionId) {
+          const sessionLineIdx = sections.findIndex((s) => s.includes('**Session**'));
+          if (sessionLineIdx >= 0) {
+            sections[sessionLineIdx] = `- **Session**: \`${sessionId}\` (active, ${startupMs}ms)`;
           }
         }
 
-        // =================================================================
-        // 6. Workflows — list with descriptions
-        // =================================================================
-        if (index.workflows.length > 0) {
-          sections.push('\n## Workflows\n');
-          for (const wf of index.workflows) {
-            const title = wf.frontmatter['title'] ?? wf.name.replace('.md', '');
-            const desc = wf.frontmatter['description'] ?? '';
-            const invocation = wf.frontmatter['invocation'] ?? '';
-            sections.push(`- **${title}**${invocation ? ` (\`${invocation}\`)` : ''}${desc ? ` — ${desc}` : ''}`);
-          }
-        }
-
-        // =================================================================
-        // 7. Skills — list with triggers
-        // =================================================================
-        if (index.skills.length > 0) {
-          sections.push('\n## Skills\n');
-          for (const skill of index.skills) {
-            const title = skill.frontmatter['title'] ?? skill.name.replace('.md', '');
-            const triggers = skill.frontmatter['triggers'] ?? '';
-            sections.push(`- **${title}**${triggers ? ` — triggers: ${triggers}` : ''}`);
-          }
-        }
-
-        // =================================================================
-        // 8. Specs — list
-        // =================================================================
-        if (index.specs.length > 0) {
-          sections.push('\n## Specs\n');
-          for (const spec of index.specs) {
-            const title = spec.frontmatter['title'] ?? spec.name.replace('.md', '');
-            sections.push(`- ${title}`);
-          }
-        }
-
-        // =================================================================
-        // 9. Knowledge (TKB) — list with categories
-        // =================================================================
-        if (index.knowledge.length > 0) {
-          sections.push('\n## Knowledge (TKB)\n');
-          for (const entry of index.knowledge) {
-            const name = entry.frontmatter['name'] ?? entry.name.replace('.md', '');
-            const category = entry.frontmatter['category'] ?? '';
-            const maturity = entry.frontmatter['maturity'] ?? '';
-            sections.push(`- **${name}**${category ? ` [${category}]` : ''}${maturity ? ` (${maturity})` : ''}`);
-          }
-        }
-
-        // =================================================================
-        // 10. Templates — list
-        // =================================================================
-        if (index.templates.length > 0) {
-          sections.push('\n## Templates\n');
-          for (const tpl of index.templates) {
-            const title = tpl.frontmatter['title'] ?? tpl.name.replace('.md', '');
-            sections.push(`- ${title}`);
-          }
-        }
-
-        // =================================================================
-        // 11. Suggested next steps (only if AIDD not detected)
-        // =================================================================
-        if (!info.detected) {
-          sections.push('\n## Setup Required\n');
-          sections.push('1. **Initialize AIDD**: `aidd_scaffold { preset: "standard" }`');
-          sections.push('2. **Classify your task**: `aidd_classify_task { description: "..." }`');
+        // Fire-and-forget: update session with timing metrics
+        const updateTiming = context.services['updateSessionTiming'] as
+          ((id: string, ms: number) => Promise<void>) | undefined;
+        if (sessionId && updateTiming) {
+          updateTiming(sessionId, startupMs).catch(() => {});
         }
 
         return createTextResult(sections.join('\n'));

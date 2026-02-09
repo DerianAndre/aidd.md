@@ -50,6 +50,10 @@ function computeMetrics(modelId: string, sessions: SessionState[]): ModelMetrics
   let totalEfficiency = 0;
   let efficiencyCount = 0;
 
+  // TTH (startup timing) accumulators
+  let totalStartupMs = 0;
+  let startupCount = 0;
+
   // Fingerprint accumulators
   let fpCount = 0;
   const fpSums: Record<keyof ModelFingerprint, number> = {
@@ -80,6 +84,10 @@ function computeMetrics(modelId: string, sessions: SessionState[]): ModelMetrics
       totalInput += s.tokenUsage.inputTokens;
       totalOutput += s.tokenUsage.outputTokens;
     }
+    if (s.timingMetrics?.startupMs != null) {
+      startupCount++;
+      totalStartupMs += s.timingMetrics.startupMs;
+    }
     if (s.fingerprint) {
       fpCount++;
       for (const key of Object.keys(fpSums) as (keyof ModelFingerprint)[]) {
@@ -108,6 +116,9 @@ function computeMetrics(modelId: string, sessions: SessionState[]): ModelMetrics
     avgOutputTokens: tokenCount > 0 ? Math.round(totalOutput / tokenCount) : undefined,
     avgContextEfficiency: efficiencyCount > 0
       ? Math.round((totalEfficiency / efficiencyCount) * 100) / 100
+      : undefined,
+    avgStartupMs: startupCount > 0
+      ? Math.round(totalStartupMs / startupCount)
       : undefined,
     avgFingerprint: fpCount > 0
       ? {
@@ -147,7 +158,16 @@ export function createAnalyticsModule(storage: StorageProvider): AiddModule {
     name: 'analytics',
     description: 'AI model performance analytics — metrics, comparison, recommendations',
 
-    register(server: McpServer, _context: ModuleContext) {
+    register(server: McpServer, context: ModuleContext) {
+      // Cross-module service: getModelAvgTokens (lazy backend access)
+      context.services['getModelAvgTokens'] = async (...args: unknown[]) => {
+        const modelId = args[0] as string;
+        const sessions = await loadCompletedSessions(storage);
+        const modelSessions = sessions.filter((s) => s.aiProvider.modelId === modelId && s.tokenUsage);
+        if (modelSessions.length === 0) return null;
+        const totalOutput = modelSessions.reduce((sum, s) => sum + (s.tokenUsage?.outputTokens ?? 0), 0);
+        return Math.round(totalOutput / modelSessions.length);
+      };
       // ---- Model Performance ----
       registerTool(server, {
         name: 'aidd_model_performance',

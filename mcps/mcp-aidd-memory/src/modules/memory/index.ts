@@ -32,6 +32,33 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
     register(server: McpServer, context: ModuleContext) {
       const memoryDir = findMemoryDir(context.projectRoot);
 
+      // ---- Cross-module service: PAPI (queryDomainMistakes) ----
+      context.services['queryDomainMistakes'] = async (...args: unknown[]) => {
+        const domain = args[0] as string;
+        const limit = (args[1] as number) ?? 3;
+        const backend = await storage.getBackend();
+        const mistakes = await backend.listPermanentMemory({ type: 'mistake' });
+        const domainLower = domain.toLowerCase();
+        return mistakes
+          .filter((m) => {
+            try {
+              const content = JSON.parse(m.content) as Record<string, string>;
+              return m.title.toLowerCase().includes(domainLower) ||
+                (content['rootCause'] ?? '').toLowerCase().includes(domainLower);
+            } catch { return false; }
+          })
+          .sort((a, b) => {
+            const aOcc = (JSON.parse(a.content) as Record<string, number>)['occurrences'] ?? 1;
+            const bOcc = (JSON.parse(b.content) as Record<string, number>)['occurrences'] ?? 1;
+            return bOcc - aOcc;
+          })
+          .slice(0, limit)
+          .map((m) => {
+            const content = JSON.parse(m.content) as Record<string, string>;
+            return { error: m.title, fix: content['fix'] ?? content['prevention'] ?? '' };
+          });
+      };
+
       // ---- Layer 1: Search (compact index) ----
       registerTool(server, {
         name: 'aidd_memory_search',
@@ -265,6 +292,30 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
           }
 
           await backend.deletePermanentMemory(id);
+
+          // Confidence decay: if pruned entry is a convention, decay related evolution candidates
+          if (type === 'convention') {
+            try {
+              const candidates = await backend.listEvolutionCandidates({});
+              const prunedTokens = new Set(entry.title.toLowerCase().split(/\s+/));
+              for (const c of candidates) {
+                if (c.type !== 'new_convention' && c.type !== 'rule_elevation') continue;
+                const candidateTokens = new Set(c.title.toLowerCase().split(/\s+/));
+                const intersection = [...prunedTokens].filter((t) => candidateTokens.has(t)).length;
+                const union = prunedTokens.size + candidateTokens.size - intersection;
+                const jaccard = union > 0 ? intersection / union : 0;
+                if (jaccard > 0.3) {
+                  c.confidence = Math.round(c.confidence * 0.5);
+                  if (c.confidence < 30) {
+                    await backend.deleteEvolutionCandidate(c.id);
+                  } else {
+                    await backend.saveEvolutionCandidate(c);
+                  }
+                }
+              }
+            } catch { /* non-critical — prune succeeds regardless */ }
+          }
+
           return createJsonResult({ id, type, removed: true });
         },
       });
@@ -283,6 +334,75 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
             exported: true,
             directory: memoryDir,
             ...result,
+          });
+        },
+      });
+
+      // ---- Integrity check: detect memory entries contradicting rules ----
+      registerTool(server, {
+        name: 'aidd_memory_integrity_check',
+        description:
+          'Check permanent memory entries against framework rules for contradictions. Detects conventions that violate negative constraints (Never, MUST NOT, Forbidden).',
+        schema: {
+          autoFix: z.boolean().optional().describe('Auto-delete convention entries with high confidence violations (>0.8). Decisions/mistakes are never auto-deleted.'),
+        },
+        annotations: { idempotentHint: true },
+        handler: async (args) => {
+          const { autoFix } = args as { autoFix?: boolean };
+          const backend = await storage.getBackend();
+
+          // Parse negative constraints from rules
+          const rules = context.contentLoader.getIndex().rules;
+          const constraints: Array<{ keyword: string; source: string }> = [];
+          for (const rule of rules) {
+            const content = rule.getContent();
+            const lines = content.split('\n');
+            for (const line of lines) {
+              const match = line.match(/\b(?:Never|MUST NOT|Forbidden|NEVER|Do NOT|Don't)\b[:\s]+(.+)/i);
+              if (match) {
+                const keywords = match[1]!.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+                for (const kw of keywords) {
+                  constraints.push({ keyword: kw, source: rule.name });
+                }
+              }
+            }
+          }
+
+          if (constraints.length === 0) {
+            return createJsonResult({ totalChecked: 0, violations: [], message: 'No negative constraints found in rules' });
+          }
+
+          // Check all permanent memory entries
+          const entries = await backend.listPermanentMemory({});
+          const violations: Array<{ id: string; type: string; title: string; matchedConstraints: string[]; confidence: number }> = [];
+          let autoFixed = 0;
+
+          for (const entry of entries) {
+            const text = `${entry.title} ${entry.content}`.toLowerCase();
+            const matched = constraints.filter((c) => text.includes(c.keyword));
+            if (matched.length === 0) continue;
+
+            const confidence = Math.min(1, matched.length / Math.max(constraints.length * 0.1, 1));
+            violations.push({
+              id: entry.id,
+              type: entry.type,
+              title: entry.title,
+              matchedConstraints: [...new Set(matched.map((c) => `${c.keyword} (${c.source})`))],
+              confidence: Math.round(confidence * 100) / 100,
+            });
+
+            // AutoFix: only conventions with high confidence
+            if (autoFix && entry.type === 'convention' && confidence > 0.8) {
+              await backend.deletePermanentMemory(entry.id);
+              autoFixed++;
+            }
+          }
+
+          return createJsonResult({
+            totalChecked: entries.length,
+            constraintsParsed: constraints.length,
+            violations,
+            autoFixed,
           });
         },
       });
