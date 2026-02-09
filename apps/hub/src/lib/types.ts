@@ -220,6 +220,7 @@ export interface ArtifactEntry {
 // ---------------------------------------------------------------------------
 
 export interface SessionUpdatePayload {
+  name?: string;
   branch?: string;
   input?: string;
   output?: string;

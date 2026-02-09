@@ -5,6 +5,7 @@ import {
   updateArtifact,
   archiveArtifact,
   deleteArtifact,
+  callMcpTool,
 } from '../../../lib/tauri';
 import type { ArtifactEntry } from '../../../lib/types';
 
@@ -51,7 +52,19 @@ export const useArtifactsStore = create<ArtifactsStoreState>((set, get) => ({
   invalidate: () => set({ stale: true }),
 
   create: async (type, feature, title, description, content) => {
-    await createArtifact(type, feature, title, description, content);
+    try {
+      await callMcpTool('engine', 'aidd_artifact', {
+        action: 'create',
+        type,
+        feature,
+        title,
+        description,
+        content,
+      });
+    } catch {
+      // Fallback until all Hub flows are fully MCP-native.
+      await createArtifact(type, feature, title, description, content);
+    }
     set({ stale: true });
     get().fetch();
   },
@@ -63,7 +76,14 @@ export const useArtifactsStore = create<ArtifactsStoreState>((set, get) => ({
   },
 
   archive: async (id) => {
-    await archiveArtifact(id);
+    try {
+      await callMcpTool('engine', 'aidd_artifact', {
+        action: 'archive',
+        id,
+      });
+    } catch {
+      await archiveArtifact(id);
+    }
     set({
       artifacts: get().artifacts.map((a) =>
         a.id === id ? { ...a, status: 'done' as const } : a,

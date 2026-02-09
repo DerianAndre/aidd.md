@@ -259,6 +259,7 @@ const esMX: DeepStringify<typeof enUS> = {
   'page.sessions.editError': 'Error al actualizar la sesión.',
 
   'page.sessionDetail.title': 'Sesión: {{branch}}',
+  'page.sessionDetail.sessionId': 'ID de sesión',
   'page.sessionDetail.sessionName': 'Nombre de Sesión',
   'page.sessionDetail.sessionNamePlaceholder': 'ej. Implementar autenticación',
   'page.sessionDetail.metadata': 'Metadatos',

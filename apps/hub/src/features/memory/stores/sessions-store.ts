@@ -93,6 +93,7 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
     const mergeFn = (s: SessionState) => {
       if (s.id !== id) return s;
       const merged = { ...s };
+      if (updates.name !== undefined) merged.name = updates.name;
       if (updates.branch !== undefined) merged.branch = updates.branch;
       if (updates.input !== undefined) merged.input = updates.input;
       if (updates.output !== undefined) merged.output = updates.output;

@@ -105,7 +105,8 @@ export function SessionDetailPage() {
   // Build flat draft values from session
   const populateDraft = useCallback((s: SessionState) => {
     setDraft({
-      sessionName: s.input ?? '',
+      sessionName: s.name ?? s.input ?? '',
+      sessionInput: s.input ?? '',
       branch: s.branch ?? '',
       startedAt: s.startedAt ?? '',
       endedAt: s.endedAt ?? '',
@@ -149,8 +150,9 @@ export function SessionDetailPage() {
     setSaving(true);
     try {
       const updates: SessionUpdatePayload = {
+        name: draft.sessionName || undefined,
         branch: draft.branch,
-        input: draft.sessionName,
+        input: draft.sessionInput || undefined,
         output: draftOutput,
         aiProvider: {
           provider: draft.provider || undefined,
@@ -220,7 +222,9 @@ export function SessionDetailPage() {
 
   const metadataFields: FieldDefinition[] = useMemo(() => [
     { type: 'separator', key: 'sep-session', label: t('page.sessionDetail.metadata') },
+    { type: 'readonly', key: 'sessionId', label: t('page.sessionDetail.sessionId') },
     { type: 'text', key: 'sessionName', label: t('page.sessionDetail.sessionName'), placeholder: t('page.sessionDetail.sessionNamePlaceholder') },
+    { type: 'text', key: 'sessionInput', label: t('page.sessionDetail.input') },
     { type: 'text', key: 'branch', label: t('page.sessionDetail.branch') },
     { type: 'readonly', key: '_status', label: t('page.sessionDetail.status') },
     { type: 'datetime', key: 'startedAt', label: t('page.sessionDetail.startedAt') },
@@ -250,10 +254,11 @@ export function SessionDetailPage() {
 
   const draftWithComputed = useMemo(() => ({
     ...draft,
+    sessionId: session?.id ?? '',
     _status: draft.endedAt
       ? t('page.sessionDetail.statusCompleted')
       : t('page.sessionDetail.statusActive'),
-  }), [draft, t]);
+  }), [draft, session?.id, t]);
 
   // ---------------------------------------------------------------------------
   // Render
@@ -282,10 +287,14 @@ export function SessionDetailPage() {
   // Header title: session name > branch
   const headerTitle = editing
     ? t('page.sessions.editSession')
-    : session.input
-      ? session.input.length > 80
-        ? session.input.slice(0, 80) + '...'
-        : session.input
+    : session.name
+      ? session.name.length > 80
+        ? session.name.slice(0, 80) + '...'
+        : session.name
+      : session.input
+        ? session.input.length > 80
+          ? session.input.slice(0, 80) + '...'
+          : session.input
       : t('page.sessionDetail.title', { branch: session.branch });
 
   return (
@@ -303,6 +312,9 @@ export function SessionDetailPage() {
                 {session.branch}
               </span>
             )}
+            <span className="text-muted-foreground">
+              ID: <code className="font-mono">{session.id}</code>
+            </span>
             <span className="text-muted-foreground">
               {session.aiProvider?.provider}/{session.aiProvider?.model}
             </span>

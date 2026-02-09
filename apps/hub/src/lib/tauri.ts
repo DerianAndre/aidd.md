@@ -242,6 +242,27 @@ export const stopAllMcpServers = () =>
 export const getMcpServers = () =>
   invoke<McpServer[]>('get_mcp_servers');
 
+export interface McpRuntimeTool {
+  name: string;
+  description?: string;
+  inputSchema?: unknown;
+  annotations?: Record<string, unknown>;
+}
+
+export const listMcpTools = (pkg = 'engine') =>
+  invoke<McpRuntimeTool[]>('list_mcp_tools', { package: pkg });
+
+export const callMcpTool = <T = unknown>(
+  pkg: string,
+  toolName: string,
+  args: Record<string, unknown>,
+) =>
+  invoke<T>('call_mcp_tool', {
+    package: pkg,
+    toolName,
+    arguments: args,
+  });
+
 // MCP health scanning
 export type McpToolSource = 'claude_code' | 'cursor' | 'vscode' | 'gemini' | 'windsurf';
 export type McpConfigScope = 'global' | 'project';

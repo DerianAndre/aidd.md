@@ -4,9 +4,16 @@ import { Label } from '@/components/ui/label';
 import { Search } from 'lucide-react';
 import { getAllTools } from '../lib/mcp-catalog';
 import { ToolDetail } from './tool-detail';
+import type { McpToolInfo } from '../lib/mcp-catalog';
 
-export function ToolExplorer() {
-  const allTools = useMemo(() => getAllTools(), []);
+interface ToolExplorerProps {
+  tools?: (McpToolInfo & { packageName: string })[];
+  loading?: boolean;
+  error?: string | null;
+}
+
+export function ToolExplorer({ tools, loading = false, error = null }: ToolExplorerProps) {
+  const allTools = useMemo(() => tools ?? getAllTools(), [tools]);
   const [query, setQuery] = useState('');
 
   const filtered = useMemo(() => {
@@ -33,6 +40,12 @@ export function ToolExplorer() {
 
   return (
     <div className="space-y-4">
+      {error && (
+        <p className="rounded-md border border-warning/40 bg-warning/10 p-2 text-xs text-warning-foreground">
+          {error}
+        </p>
+      )}
+
       {/* Search */}
       <div>
         <Label className="sr-only">Search tools</Label>
@@ -53,7 +66,7 @@ export function ToolExplorer() {
       </p>
 
       {/* Grouped results */}
-      {[...grouped.entries()].map(([pkgName, tools]) => (
+      {!loading && [...grouped.entries()].map(([pkgName, tools]) => (
         <div key={pkgName}>
           <h3 className="mb-2 text-xs font-semibold text-muted-foreground">{pkgName}</h3>
           <div className="space-y-3">
@@ -64,7 +77,13 @@ export function ToolExplorer() {
         </div>
       ))}
 
-      {filtered.length === 0 && (
+      {loading && (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          Loading tools...
+        </p>
+      )}
+
+      {!loading && filtered.length === 0 && (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No tools match your search.
         </p>

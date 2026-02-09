@@ -34,12 +34,16 @@ export function SessionCard({ session, onPress, onEdit, onDelete }: SessionCardP
 
   const modelLabel = session.aiProvider.model.replace('claude-', '').replace(/-\d{8}$/, '');
   const isCompleted = !!session.endedAt;
-  const hasName = !!session.input;
+  const hasCustomName = !!session.name?.trim();
+  const hasPromptTitle = !hasCustomName && !!session.input;
+  const showsBranchAsTitle = !hasCustomName && !hasPromptTitle;
 
-  // Primary title: session name (input) if available, else branch
-  const title = hasName
-    ? truncate(session.input!, 50)
-    : truncate(session.branch, 40);
+  // Primary title: explicit session name > input prompt > branch
+  const title = hasCustomName
+    ? truncate(session.name!, 50)
+    : hasPromptTitle
+      ? truncate(session.input!, 50)
+      : truncate(session.branch, 40);
 
   return (
     <Card
@@ -55,12 +59,18 @@ export function SessionCard({ session, onPress, onEdit, onDelete }: SessionCardP
             <CardTitle className="truncate text-sm font-semibold leading-snug">
               {title}
             </CardTitle>
-            {hasName && (
+            {!showsBranchAsTitle && (
               <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
                 <GitBranch size={10} className="shrink-0" />
                 <span className="truncate">{truncate(session.branch, 30)}</span>
               </div>
             )}
+            <div className="mt-0.5 text-[11px] text-muted-foreground">
+              <span className="mr-1">ID:</span>
+              <code title={session.id} className="font-mono">
+                {truncate(session.id, 28)}
+              </code>
+            </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
             {statusChip(session)}

@@ -255,6 +255,7 @@ export default {
   'page.sessions.editError': 'Failed to update session.',
 
   'page.sessionDetail.title': 'Session: {{branch}}',
+  'page.sessionDetail.sessionId': 'Session ID',
   'page.sessionDetail.sessionName': 'Session Name',
   'page.sessionDetail.sessionNamePlaceholder': 'e.g. Implement user auth',
   'page.sessionDetail.metadata': 'Metadata',

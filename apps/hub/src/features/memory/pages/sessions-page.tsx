@@ -26,8 +26,10 @@ export function SessionsPage() {
     }
   }, [activeProject?.path, stale, fetchAll]);
 
-  const filterSession = (s: { branch: string; input?: string; aiProvider: { model: string } }, q: string) => {
+  const filterSession = (s: { id: string; name?: string; branch: string; input?: string; aiProvider: { model: string } }, q: string) => {
     return (
+      s.id.toLowerCase().includes(q) ||
+      (s.name?.toLowerCase().includes(q) ?? false) ||
       s.branch.toLowerCase().includes(q) ||
       s.aiProvider.model.toLowerCase().includes(q) ||
       (s.input?.toLowerCase().includes(q) ?? false)
