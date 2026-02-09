@@ -5,6 +5,7 @@ import {
   Trash2,
   MoreVertical,
   Cpu,
+  Calendar,
 } from "lucide-react";
 import {
   Card,
@@ -25,12 +26,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ComplianceRing } from "./compliance-ring";
 import { PhaseStepper } from "./phase-stepper";
-import { formatRelativeTime, truncate } from "../../../lib/utils";
+import { formatDate, formatRelativeTime, truncate } from "../../../lib/utils";
 import type { SessionState, ArtifactEntry } from "../../../lib/types";
+import type { WorkflowCompliance } from "../lib/workflow-compliance";
+import { resolveSessionTokenTelemetry } from "../lib/token-telemetry";
 
 interface SessionCardProps {
   session: SessionState;
   artifacts: ArtifactEntry[];
+  compliance?: WorkflowCompliance;
   onPress?: () => void;
   onEdit?: () => void;
   onComplete?: (id: string) => void;
@@ -40,6 +44,7 @@ interface SessionCardProps {
 export function SessionCard({
   session,
   artifacts,
+  compliance,
   onPress,
   onEdit,
   onComplete,
@@ -51,6 +56,33 @@ export function SessionCard({
     .replace(/-\d{8}$/, "");
   const complianceScore = session.outcome?.complianceScore ?? 0;
   const fastTrack = session.taskClassification?.fastTrack ?? false;
+  const startedMs = new Date(session.startedAt).getTime();
+  const endedMs = session.endedAt
+    ? new Date(session.endedAt).getTime()
+    : Date.now();
+  const durationMs =
+    Number.isFinite(startedMs) &&
+    Number.isFinite(endedMs) &&
+    endedMs >= startedMs
+      ? endedMs - startedMs
+      : 0;
+  const durationLabel =
+    durationMs < 60_000
+      ? `${Math.round(durationMs / 1000)}s`
+      : `${Math.round(durationMs / 60_000)}m`;
+  const tokenTelemetry = resolveSessionTokenTelemetry(session);
+  const inputTokens = tokenTelemetry.inputTokens;
+  const outputTokens = tokenTelemetry.outputTokens;
+  const qualityState = isActive
+    ? "In Flight"
+    : compliance?.status === "non-compliant"
+      ? "Non-Compliant"
+      : "Compliant";
+  const qualityColor = isActive
+    ? "accent"
+    : compliance?.status === "non-compliant"
+      ? "danger"
+      : "success";
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (onPress && (e.key === "Enter" || e.key === " ")) {
@@ -65,20 +97,28 @@ export function SessionCard({
       role="button"
       tabIndex={0}
       onKeyDown={handleKeyDown}
-      className="group/card-session transition-all hover:scale-[1.01] hover:shadow-lg cursor-pointer"
+      className="cursor-pointer border-border transition-colors hover:bg-accent/20"
       data-session-id={session.id}
     >
       <CardHeader>
         <CardTitle>
           {session.name || truncate(session.input || session.id, 60)}
         </CardTitle>
-        <CardDescription className="flex items-center gap-1 text-xs">
+        <CardDescription className="flex items-baseline gap-3 text-xs">
+          <span className="hidden">{truncate(session.id, 14)}</span>
           <GitBranch size={9} />
-          <span className="truncate">{truncate(session.branch, 20)}</span>
+          <span className="truncate -ml-1.5">
+            {truncate(session.branch, 20)}
+          </span>
           <Cpu size={9} />
-          <span>{modelLabel}</span>
+          <span className="-ml-1.5">{modelLabel}</span>
           <Clock size={10} />
-          {formatRelativeTime(session.startedAt)}
+          <span className="-ml-1.5">
+            {formatRelativeTime(session.startedAt)}
+          </span>
+
+          <Calendar size={10} />
+          <span className="-ml-1.5">{formatDate(session.startedAt)}</span>
         </CardDescription>
         <CardAction>
           <DropdownMenu>
@@ -125,12 +165,25 @@ export function SessionCard({
         </CardAction>
       </CardHeader>
 
-      <CardContent>
-        <div className="hidden">{truncate(session.id, 8)}</div>
-        <div className="flex flex-1 flex-col">
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground"></div>
+      <CardContent className="space-y-4">
+        <CardDescription>{truncate(session.input ?? "", 225)}</CardDescription>
+        <div className="flex items-center gap-2">
+          <Chip size="sm" color={isActive ? "accent" : "default"}>
+            {isActive ? "Active" : "Completed"}
+          </Chip>
+          <Chip size="sm" color={qualityColor}>
+            {qualityState}
+          </Chip>
+          {!isActive && compliance?.status === "non-compliant" && (
+            <Chip
+              size="sm"
+              color="danger"
+              title={compliance.missing.join(", ")}
+            >
+              Missing {compliance.missing.length}
+            </Chip>
+          )}
         </div>
-
         <div className="flex items-center gap-2 flex-wrap">
           {session.taskClassification?.complexity && (
             <Chip
@@ -158,35 +211,53 @@ export function SessionCard({
           )}
         </div>
 
-        {/* Lifecycle Progress */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-[10px]">
-            <span className="text-muted-foreground font-medium">
-              Lifecycle Progress
+        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+          <div>
+            Tokens:{" "}
+            <span className="font-mono text-foreground">
+              {tokenTelemetry.hasTelemetry
+                ? `${inputTokens}/${outputTokens}`
+                : "not recorded"}
             </span>
-            {artifacts.length > 0 && (
-              <span className="text-accent-foreground font-medium">
-                {artifacts.length} artifact{artifacts.length !== 1 ? "s" : ""}
-              </span>
-            )}
           </div>
-          <div className="shrink-0 flex items-center gap-2">
+          <div>
+            Output/Input ratio:{" "}
+            <span className="font-mono text-foreground">
+              {tokenTelemetry.ratio}
+            </span>
+          </div>
+          <div>
+            Duration:{" "}
+            <span className="font-mono text-foreground">{durationLabel}</span>
+          </div>
+          <div>
+            Artifacts:{" "}
+            <span className="font-mono text-foreground">
+              {artifacts.length}
+            </span>
+          </div>
+          {tokenTelemetry.isEstimated && (
+            <div className="col-span-2 text-[10px] text-amber-600">
+              Token telemetry estimated from session text.
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-md border border-border mt-auto p-2">
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Lifecycle</span>
+            <span className="font-medium">{complianceScore}%</span>
+          </div>
+          <div className="flex items-center gap-2">
             <ComplianceRing score={complianceScore} size="sm" />
             <PhaseStepper
               artifacts={artifacts}
               fastTrack={fastTrack}
+              session={session}
               orientation="horizontal"
             />
           </div>
         </div>
-        {session.tokenUsage && (
-          <div className="text-[10px] text-muted-foreground font-mono">
-            TID:{" "}
-            {session.tokenUsage.inputTokens === 0
-              ? "—"
-              : `${(session.tokenUsage.outputTokens / session.tokenUsage.inputTokens).toFixed(1)}x`}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

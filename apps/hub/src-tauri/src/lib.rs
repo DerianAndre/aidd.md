@@ -129,6 +129,7 @@ pub fn run() {
             presentation::commands::memory_commands::get_evolution_status,
             presentation::commands::memory_commands::get_pattern_stats,
             presentation::commands::memory_commands::list_all_observations,
+            presentation::commands::memory_commands::list_observations_by_session,
             presentation::commands::memory_commands::search_observations,
             presentation::commands::memory_commands::list_all_sessions,
             presentation::commands::memory_commands::list_evolution_candidates,

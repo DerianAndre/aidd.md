@@ -185,6 +185,14 @@ impl MemoryPort for McpMemoryAdapter {
         Ok(vec![])
     }
 
+    fn list_observations_by_session(
+        &self,
+        _session_id: &str,
+        _limit: Option<usize>,
+    ) -> Result<Vec<serde_json::Value>, String> {
+        Ok(vec![])
+    }
+
     fn list_all_sessions(&self, _limit: Option<usize>) -> Result<Vec<serde_json::Value>, String> {
         // MCP adapter: not yet implemented for detailed session listing
         Ok(vec![])

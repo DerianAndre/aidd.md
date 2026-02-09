@@ -24,6 +24,15 @@ impl MemoryService {
         self.memory_port.list_all_observations(limit)
     }
 
+    /// Use case: List observations for a single session
+    pub fn list_observations_by_session(
+        &self,
+        session_id: &str,
+        limit: Option<usize>,
+    ) -> Result<Vec<serde_json::Value>, String> {
+        self.memory_port.list_observations_by_session(session_id, limit)
+    }
+
     /// Use case: Search observations
     pub fn search_observations(
         &self,

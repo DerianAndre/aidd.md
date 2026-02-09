@@ -317,6 +317,9 @@ export const deletePermanentMemory = (memoryType: string, id: string) =>
 export const listAllObservations = (limit?: number) =>
   invoke<unknown[]>('list_all_observations', { limit: limit ?? null });
 
+export const listObservationsBySession = (sessionId: string, limit?: number) =>
+  invoke<unknown[]>('list_observations_by_session', { sessionId, limit: limit ?? null });
+
 export const listDrafts = () =>
   invoke<unknown[]>('list_drafts');
 

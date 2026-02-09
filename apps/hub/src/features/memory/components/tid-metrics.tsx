@@ -23,7 +23,7 @@ export function TidMetrics({ tokenUsage, compact = false, className }: TidMetric
   if (!tokenUsage) {
     return (
       <span className={cn('font-mono text-[10px] text-muted-foreground', className)}>
-        TID: —
+        Output/Input ratio: —
       </span>
     );
   }
@@ -34,7 +34,7 @@ export function TidMetrics({ tokenUsage, compact = false, className }: TidMetric
     return (
       <div className={cn('flex items-center gap-2 font-mono text-[10px]', className)}>
         <span className="text-foreground font-semibold">
-          TID: {tidRatio}
+          Output/Input ratio: {tidRatio}
         </span>
         <span className="text-cyan-500">
           {formatTokenCount(tokenUsage.inputTokens)}↓
@@ -48,9 +48,9 @@ export function TidMetrics({ tokenUsage, compact = false, className }: TidMetric
 
   return (
     <div className={cn('flex flex-col gap-1', className)}>
-      {/* TID Ratio - Primary metric */}
+      {/* Output/Input ratio - Primary metric */}
       <div className="flex items-center gap-2 font-mono text-xs">
-        <span className="text-muted-foreground">TID:</span>
+        <span className="text-muted-foreground">Output/Input ratio:</span>
         <span className="text-foreground font-semibold">{tidRatio}</span>
       </div>
 

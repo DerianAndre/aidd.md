@@ -29,6 +29,7 @@ import { useProjectStore } from "../../../stores/project-store";
 import { showSuccess, showError } from "../../../lib/toast";
 import { formatDuration, formatDate, scoreColor } from "../../../lib/utils";
 import { listArtifacts } from "../../../lib/tauri";
+import { resolveSessionTokenTelemetry } from "../lib/token-telemetry";
 import type {
   SessionState,
   SessionObservation,
@@ -62,6 +63,7 @@ const NATURE_OPTIONS = [
 ];
 
 const COMPLEXITY_OPTIONS = [
+  { label: "Low", value: "low" },
   { label: "Trivial", value: "trivial" },
   { label: "Moderate", value: "moderate" },
   { label: "Complex", value: "complex" },
@@ -73,6 +75,219 @@ const FEEDBACK_OPTIONS = [
   { label: "Negative", value: "negative" },
   { label: "None", value: "none" },
 ];
+
+function normalizeStringList(items: string[]): string[] {
+  return items.map((item) => item.trim()).filter((item) => item.length > 0);
+}
+
+function arraysEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let index = 0; index < a.length; index += 1) {
+    if (a[index] !== b[index]) return false;
+  }
+  return true;
+}
+
+function structuredEqual(
+  a: Array<Record<string, string>>,
+  b: Array<Record<string, string>>,
+  keys: string[],
+): boolean {
+  if (a.length !== b.length) return false;
+  for (let index = 0; index < a.length; index += 1) {
+    for (const key of keys) {
+      if ((a[index]?.[key] ?? "") !== (b[index]?.[key] ?? "")) return false;
+    }
+  }
+  return true;
+}
+
+function parseInteger(value: string | undefined, fallback = 0): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.trunc(parsed);
+}
+
+function buildSessionPatch({
+  session,
+  draft,
+  draftOutput,
+  draftTasksCompleted,
+  draftTasksPending,
+  draftFilesModified,
+  draftDecisions,
+  draftErrors,
+}: {
+  session: SessionState;
+  draft: Record<string, string>;
+  draftOutput: string;
+  draftTasksCompleted: string[];
+  draftTasksPending: string[];
+  draftFilesModified: string[];
+  draftDecisions: Array<Record<string, string>>;
+  draftErrors: Array<Record<string, string>>;
+}): SessionUpdatePayload {
+  const updates: SessionUpdatePayload = {};
+  const nowIso = new Date().toISOString();
+
+  const currentName = session.name ?? "";
+  const nextName = draft.sessionName ?? "";
+  if (nextName !== currentName) updates.name = nextName;
+
+  const currentInput = session.input ?? "";
+  const nextInput = draft.sessionInput ?? "";
+  if (nextInput !== currentInput) updates.input = nextInput;
+
+  const currentBranch = session.branch ?? "";
+  const nextBranch = draft.branch ?? "";
+  if (nextBranch !== currentBranch) updates.branch = nextBranch;
+
+  const currentOutput = session.output ?? "";
+  if (draftOutput !== currentOutput) updates.output = draftOutput;
+
+  const aiProviderPatch: NonNullable<SessionUpdatePayload["aiProvider"]> = {};
+  if ((draft.provider ?? "") !== (session.aiProvider?.provider ?? "")) {
+    aiProviderPatch.provider = draft.provider ?? "";
+  }
+  if ((draft.model ?? "") !== (session.aiProvider?.model ?? "")) {
+    aiProviderPatch.model = draft.model ?? "";
+  }
+  if ((draft.modelId ?? "") !== (session.aiProvider?.modelId ?? "")) {
+    aiProviderPatch.modelId = draft.modelId ?? "";
+  }
+  if ((draft.client ?? "") !== (session.aiProvider?.client ?? "")) {
+    aiProviderPatch.client = draft.client ?? "";
+  }
+  if (Object.keys(aiProviderPatch).length > 0) {
+    updates.aiProvider = aiProviderPatch;
+  }
+
+  const currentStartedAt = session.startedAt ?? "";
+  const nextStartedAt = draft.startedAt ?? "";
+  if (nextStartedAt !== currentStartedAt) updates.startedAt = nextStartedAt;
+
+  const currentEndedAt = session.endedAt ?? "";
+  const nextEndedAt = draft.endedAt ?? "";
+  if (nextEndedAt !== currentEndedAt) {
+    updates.endedAt = nextEndedAt.length > 0 ? nextEndedAt : null;
+  }
+
+  const taskClassificationPatch: NonNullable<SessionUpdatePayload["taskClassification"]> = {};
+  if ((draft.taskDomain ?? "") !== (session.taskClassification?.domain ?? "")) {
+    taskClassificationPatch.domain = draft.taskDomain ?? "";
+  }
+  if ((draft.taskNature ?? "") !== (session.taskClassification?.nature ?? "")) {
+    taskClassificationPatch.nature = draft.taskNature ?? "";
+  }
+  if ((draft.taskComplexity ?? "") !== (session.taskClassification?.complexity ?? "")) {
+    taskClassificationPatch.complexity = draft.taskComplexity ?? "";
+  }
+  if (Object.keys(taskClassificationPatch).length > 0) {
+    updates.taskClassification = taskClassificationPatch;
+  }
+
+  const outcomePatch: NonNullable<SessionUpdatePayload["outcome"]> = {};
+  const nextTestsPassing = draft.testsPassing === "true";
+  if (nextTestsPassing !== (session.outcome?.testsPassing ?? false)) {
+    outcomePatch.testsPassing = nextTestsPassing;
+  }
+  const nextComplianceScore = parseInteger(draft.complianceScore, 0);
+  if (nextComplianceScore !== (session.outcome?.complianceScore ?? 0)) {
+    outcomePatch.complianceScore = nextComplianceScore;
+  }
+  const nextReverts = parseInteger(draft.reverts, 0);
+  if (nextReverts !== (session.outcome?.reverts ?? 0)) {
+    outcomePatch.reverts = nextReverts;
+  }
+  const nextReworks = parseInteger(draft.reworks, 0);
+  if (nextReworks !== (session.outcome?.reworks ?? 0)) {
+    outcomePatch.reworks = nextReworks;
+  }
+  const nextUserFeedback =
+    draft.userFeedback === "none" ? undefined : draft.userFeedback;
+  if (nextUserFeedback && nextUserFeedback !== session.outcome?.userFeedback) {
+    outcomePatch.userFeedback = nextUserFeedback as
+      | "positive"
+      | "neutral"
+      | "negative";
+  }
+  if (Object.keys(outcomePatch).length > 0) {
+    updates.outcome = outcomePatch;
+  }
+
+  const nextTasksCompleted = normalizeStringList(draftTasksCompleted);
+  const currentTasksCompleted = normalizeStringList(session.tasksCompleted ?? []);
+  if (!arraysEqual(nextTasksCompleted, currentTasksCompleted)) {
+    updates.tasksCompleted = nextTasksCompleted;
+  }
+
+  const nextTasksPending = normalizeStringList(draftTasksPending);
+  const currentTasksPending = normalizeStringList(session.tasksPending ?? []);
+  if (!arraysEqual(nextTasksPending, currentTasksPending)) {
+    updates.tasksPending = nextTasksPending;
+  }
+
+  const nextFilesModified = normalizeStringList(draftFilesModified);
+  const currentFilesModified = normalizeStringList(session.filesModified ?? []);
+  if (!arraysEqual(nextFilesModified, currentFilesModified)) {
+    updates.filesModified = nextFilesModified;
+  }
+
+  const currentDecisions = (session.decisions ?? []).map((decision) => ({
+    decision: decision.decision ?? "",
+    reasoning: decision.reasoning ?? "",
+    timestamp: decision.timestamp ?? "",
+  }));
+  const nextDecisions = draftDecisions
+    .map((decision) => ({
+      decision: (decision.decision ?? "").trim(),
+      reasoning: (decision.reasoning ?? "").trim(),
+      timestamp: decision.timestamp ?? "",
+    }))
+    .filter(
+      (decision) =>
+        decision.decision.length > 0 || decision.reasoning.length > 0,
+    )
+    .map((decision) => ({
+      decision: decision.decision,
+      reasoning: decision.reasoning,
+      timestamp: decision.timestamp || nowIso,
+    }));
+  if (
+    !structuredEqual(currentDecisions, nextDecisions, [
+      "decision",
+      "reasoning",
+      "timestamp",
+    ])
+  ) {
+    updates.decisions = nextDecisions;
+  }
+
+  const currentErrors = (session.errorsResolved ?? []).map((error) => ({
+    error: error.error ?? "",
+    fix: error.fix ?? "",
+    timestamp: error.timestamp ?? "",
+  }));
+  const nextErrors = draftErrors
+    .map((error) => ({
+      error: (error.error ?? "").trim(),
+      fix: (error.fix ?? "").trim(),
+      timestamp: error.timestamp ?? "",
+    }))
+    .filter((error) => error.error.length > 0 || error.fix.length > 0)
+    .map((error) => ({
+      error: error.error,
+      fix: error.fix,
+      timestamp: error.timestamp || nowIso,
+    }));
+  if (
+    !structuredEqual(currentErrors, nextErrors, ["error", "fix", "timestamp"])
+  ) {
+    updates.errorsResolved = nextErrors;
+  }
+
+  return updates;
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -165,7 +380,7 @@ export function SessionDetailPage() {
   // Build flat draft values from session
   const populateDraft = useCallback((s: SessionState) => {
     setDraft({
-      sessionName: s.name ?? s.input ?? "",
+      sessionName: s.name ?? "",
       sessionInput: s.input ?? "",
       branch: s.branch ?? "",
       startedAt: s.startedAt ?? "",
@@ -191,10 +406,15 @@ export function SessionDetailPage() {
       (s.decisions ?? []).map((d) => ({
         decision: d.decision,
         reasoning: d.reasoning,
+        timestamp: d.timestamp,
       })),
     );
     setDraftErrors(
-      (s.errorsResolved ?? []).map((e) => ({ error: e.error, fix: e.fix })),
+      (s.errorsResolved ?? []).map((e) => ({
+        error: e.error,
+        fix: e.fix,
+        timestamp: e.timestamp,
+      })),
     );
   }, []);
 
@@ -212,64 +432,18 @@ export function SessionDetailPage() {
     setEditing(false);
   }, [session, populateDraft]);
 
-  const handleSave = useCallback(async () => {
-    if (!session) return;
-    setSaving(true);
-    try {
-      const updates: SessionUpdatePayload = {
-        name: draft.sessionName || undefined,
-        branch: draft.branch,
-        input: draft.sessionInput || undefined,
-        output: draftOutput,
-        aiProvider: {
-          provider: draft.provider || undefined,
-          model: draft.model || undefined,
-          modelId: draft.modelId || undefined,
-          client: draft.client || undefined,
-        },
-        startedAt: draft.startedAt || undefined,
-        endedAt: draft.endedAt || null,
-        taskClassification: {
-          domain: draft.taskDomain || undefined,
-          nature: draft.taskNature || undefined,
-          complexity: draft.taskComplexity || undefined,
-        },
-        outcome: {
-          testsPassing: draft.testsPassing === "true",
-          complianceScore: Number(draft.complianceScore) || 0,
-          reverts: Number(draft.reverts) || 0,
-          reworks: Number(draft.reworks) || 0,
-          userFeedback: (draft.userFeedback === "none"
-            ? undefined
-            : draft.userFeedback ||
-              undefined) as SessionUpdatePayload["outcome"] extends {
-            userFeedback?: infer U;
-          }
-            ? U
-            : never,
-        },
-        tasksCompleted: draftTasksCompleted,
-        tasksPending: draftTasksPending,
-        filesModified: draftFilesModified,
-        decisions: draftDecisions.map((d) => ({
-          decision: d.decision ?? "",
-          reasoning: d.reasoning ?? "",
-          timestamp: new Date().toISOString(),
-        })),
-        errorsResolved: draftErrors.map((e) => ({
-          error: e.error ?? "",
-          fix: e.fix ?? "",
-          timestamp: new Date().toISOString(),
-        })),
-      };
-      await editSessionFull(session.id, updates);
-      showSuccess(t("page.sessions.editSuccess"));
-      setEditing(false);
-    } catch {
-      showError(t("page.sessions.editError"));
-    } finally {
-      setSaving(false);
-    }
+  const pendingUpdates = useMemo(() => {
+    if (!session) return null;
+    return buildSessionPatch({
+      session,
+      draft,
+      draftOutput,
+      draftTasksCompleted,
+      draftTasksPending,
+      draftFilesModified,
+      draftDecisions,
+      draftErrors,
+    });
   }, [
     session,
     draft,
@@ -279,7 +453,32 @@ export function SessionDetailPage() {
     draftFilesModified,
     draftDecisions,
     draftErrors,
+  ]);
+
+  const pendingFieldCount = pendingUpdates ? Object.keys(pendingUpdates).length : 0;
+
+  const handleSave = useCallback(async () => {
+    if (!session || !pendingUpdates) return;
+    if (pendingFieldCount === 0) {
+      showSuccess("No changes detected");
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await editSessionFull(session.id, pendingUpdates);
+      showSuccess(t("page.sessions.editSuccess"));
+      setEditing(false);
+    } catch {
+      showError(t("page.sessions.editError"));
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    session,
     editSessionFull,
+    pendingUpdates,
+    pendingFieldCount,
     t,
   ]);
 
@@ -302,6 +501,9 @@ export function SessionDetailPage() {
     : session
       ? Date.now() - new Date(session.startedAt).getTime()
       : null;
+  const tokenTelemetry = session
+    ? resolveSessionTokenTelemetry(session)
+    : null;
 
   // ---------------------------------------------------------------------------
   // Field definitions
@@ -538,6 +740,20 @@ export function SessionDetailPage() {
                 {formatDuration(durationMs)}
               </span>
             )}
+            {tokenTelemetry?.hasTelemetry && (
+              <span className="text-muted-foreground font-mono text-[11px]">
+                Tokens {tokenTelemetry.inputTokens}/{tokenTelemetry.outputTokens}
+                {tokenTelemetry.ratio !== "—"
+                  ? ` (ratio ${tokenTelemetry.ratio})`
+                  : ""}
+                {tokenTelemetry.isEstimated ? " (estimated)" : ""}
+              </span>
+            )}
+            {!tokenTelemetry?.hasTelemetry && (
+              <span className="text-muted-foreground font-mono text-[11px]">
+                Tokens not recorded
+              </span>
+            )}
             <span className="text-muted-foreground">
               {formatDate(session.startedAt)}
             </span>
@@ -547,6 +763,12 @@ export function SessionDetailPage() {
           <div className="flex items-center gap-2">
             {editing ? (
               <>
+                <Chip
+                  size="sm"
+                  color={pendingFieldCount > 0 ? "warning" : "default"}
+                >
+                  {pendingFieldCount} change{pendingFieldCount === 1 ? "" : "s"}
+                </Chip>
                 <Button size="sm" disabled={saving} onClick={handleSave}>
                   <Save size={14} />{" "}
                   {saving ? t("common.saving") : t("common.save")}

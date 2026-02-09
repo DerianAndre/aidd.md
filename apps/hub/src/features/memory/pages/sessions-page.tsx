@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { SearchInput } from '@/components/ui/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Chip } from '@/components/ui/chip';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '../../../components/layout/page-header';
 import { EmptyState } from '../../../components/empty-state';
 import { ConfirmDialog } from '../../../components/confirm-dialog';
@@ -12,6 +14,8 @@ import { useSessionsStore } from '../stores/sessions-store';
 import { useProjectStore } from '../../../stores/project-store';
 import { showSuccess, showError } from '../../../lib/toast';
 
+type ViewMode = 'all' | 'active' | 'completed' | 'non-compliant';
+
 export function SessionsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -19,6 +23,7 @@ export function SessionsPage() {
   const {
     activeSessions,
     completedSessions,
+    complianceBySessionId,
     artifactsBySessionId,
     loading,
     fetchAll,
@@ -27,6 +32,7 @@ export function SessionsPage() {
   } = useSessionsStore();
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('all');
 
   useEffect(() => {
     if (activeProject?.path) {
@@ -56,7 +62,32 @@ export function SessionsPage() {
     return completedSessions.filter((s) => filterSession(s, q));
   }, [completedSessions, search]);
 
-  const total = filteredActive.length + filteredCompleted.length;
+  const visibleCompleted = useMemo(() => {
+    if (viewMode === 'non-compliant') {
+      return filteredCompleted.filter(
+        (session) => complianceBySessionId[session.id]?.status === 'non-compliant',
+      );
+    }
+    if (viewMode === 'active') return [];
+    return filteredCompleted;
+  }, [viewMode, filteredCompleted, complianceBySessionId]);
+
+  const visibleActive = useMemo(() => {
+    if (viewMode === 'completed' || viewMode === 'non-compliant') return [];
+    return filteredActive;
+  }, [viewMode, filteredActive]);
+
+  const total = visibleActive.length + visibleCompleted.length;
+  const nonCompliantCount = filteredCompleted.filter(
+    (session) => complianceBySessionId[session.id]?.status === 'non-compliant',
+  ).length;
+  const averageCompliance = Math.round(
+    (filteredCompleted.reduce((sum, session) => sum + (session.outcome?.complianceScore ?? 0), 0) /
+      Math.max(1, filteredCompleted.length)),
+  );
+  const fastTrackCount = [...filteredActive, ...filteredCompleted].filter(
+    (session) => session.taskClassification?.fastTrack === true,
+  ).length;
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -84,23 +115,80 @@ export function SessionsPage() {
       <PageHeader
         title={t('page.sessions.title')}
         description={
-          <span className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span>{t('page.sessions.description')}</span>
-            <Chip size="sm" color="default">{total} total</Chip>
-            {filteredActive.length > 0 && (
-              <Chip size="sm" color="accent">{filteredActive.length} active</Chip>
+            <Chip size="sm" color="default">{total} visible</Chip>
+            <Chip size="sm" color="accent">{filteredActive.length} active</Chip>
+            <Chip size="sm" color="default">{filteredCompleted.length} completed</Chip>
+            {nonCompliantCount > 0 && (
+              <Chip size="sm" color="danger">{nonCompliantCount} non-compliant</Chip>
             )}
-          </span>
+          </div>
         }
       />
 
-      <div className="mb-5">
+      <div className="mb-5 grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+        <Card className="py-0">
+          <CardContent className="px-4 py-3">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Total Sessions</p>
+            <p className="text-xl font-semibold">{filteredActive.length + filteredCompleted.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="py-0">
+          <CardContent className="px-4 py-3">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Avg Compliance</p>
+            <p className="text-xl font-semibold">{averageCompliance}%</p>
+          </CardContent>
+        </Card>
+        <Card className="py-0">
+          <CardContent className="px-4 py-3">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Fast-Track</p>
+            <p className="text-xl font-semibold">{fastTrackCount}</p>
+          </CardContent>
+        </Card>
+        <Card className="py-0">
+          <CardContent className="px-4 py-3">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Risk</p>
+            <p className="text-xl font-semibold text-destructive">{nonCompliantCount}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-center gap-2">
         <SearchInput
           value={search}
           onChange={setSearch}
           placeholder={t('page.sessions.searchPlaceholder')}
-          className="max-w-sm"
+          className="w-full max-w-sm"
         />
+        <Button
+          size="sm"
+          variant={viewMode === 'all' ? 'default' : 'outline'}
+          onClick={() => setViewMode('all')}
+        >
+          All
+        </Button>
+        <Button
+          size="sm"
+          variant={viewMode === 'active' ? 'default' : 'outline'}
+          onClick={() => setViewMode('active')}
+        >
+          Active
+        </Button>
+        <Button
+          size="sm"
+          variant={viewMode === 'completed' ? 'default' : 'outline'}
+          onClick={() => setViewMode('completed')}
+        >
+          Completed
+        </Button>
+        <Button
+          size="sm"
+          variant={viewMode === 'non-compliant' ? 'default' : 'outline'}
+          onClick={() => setViewMode('non-compliant')}
+        >
+          Non-Compliant
+        </Button>
       </div>
 
       {loading && (
@@ -115,19 +203,20 @@ export function SessionsPage() {
         <EmptyState message={search ? t('page.sessions.noMatch') : t('page.sessions.noSessions')} />
       )}
 
-      {!loading && filteredActive.length > 0 && (
+      {!loading && visibleActive.length > 0 && (
         <section className="mb-8">
           <div className="mb-3 flex items-center gap-2">
             <h3 className="text-sm font-semibold text-foreground">
-              {t('page.sessions.active', { count: filteredActive.length })}
+              {t('page.sessions.active', { count: visibleActive.length })}
             </h3>
             <div className="h-px flex-1 bg-border" />
           </div>
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredActive.map((session) => (
+          <div className="grid gap-3 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
+            {visibleActive.map((session) => (
               <SessionCard
                 key={session.id}
                 session={session}
+                compliance={complianceBySessionId[session.id]}
                 artifacts={artifactsBySessionId[session.id] ?? []}
                 onPress={() => navigateToDetail(session.id)}
                 onEdit={() => navigateToDetail(session.id)}
@@ -139,19 +228,20 @@ export function SessionsPage() {
         </section>
       )}
 
-      {!loading && filteredCompleted.length > 0 && (
+      {!loading && visibleCompleted.length > 0 && (
         <section>
           <div className="mb-3 flex items-center gap-2">
             <h3 className="text-sm font-semibold text-foreground">
-              {t('page.sessions.completed', { count: filteredCompleted.length })}
+              {t('page.sessions.completed', { count: visibleCompleted.length })}
             </h3>
             <div className="h-px flex-1 bg-border" />
           </div>
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredCompleted.map((session) => (
+          <div className="grid gap-3 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
+            {visibleCompleted.map((session) => (
               <SessionCard
                 key={session.id}
                 session={session}
+                compliance={complianceBySessionId[session.id]}
                 artifacts={artifactsBySessionId[session.id] ?? []}
                 onPress={() => navigateToDetail(session.id)}
                 onEdit={() => navigateToDetail(session.id)}

@@ -1,7 +1,21 @@
 import { create } from 'zustand';
-import { invoke } from '@tauri-apps/api/core';
-import { listAllSessions, listArtifacts, deleteSession, updateSession, updateSessionFull } from '../../../lib/tauri';
-import type { SessionState, SessionObservation, SessionUpdatePayload, ArtifactEntry } from '../../../lib/types';
+import {
+  listAllSessions,
+  listArtifacts,
+  listAllObservations,
+  listObservationsBySession,
+  listAuditScores,
+  deleteSession,
+  updateSession,
+  updateSessionFull,
+} from '../../../lib/tauri';
+import type {
+  SessionState,
+  SessionObservation,
+  SessionUpdatePayload,
+  ArtifactEntry,
+  AuditScore,
+} from '../../../lib/types';
 import {
   deriveWorkflowComplianceMap,
   type WorkflowCompliance,
@@ -9,37 +23,19 @@ import {
 
 const STALE_TTL = 30_000; // 30 seconds
 
-// Audit score type (matching Pattern Killer audit structure)
-export interface AuditScore {
-  sessionId: string;
-  totalScore: number;
-  dimensions: {
-    lexicalDiversity: number;
-    structuralVariation: number;
-    voiceAuthenticity: number;
-    patternAbsence: number;
-    semanticPreservation: number;
-    tidBonus?: number;
-  };
-  patternsFound: number;
-  verdict: 'pass' | 'retry' | 'escalate';
-  createdAt: string;
-}
-
 interface SessionsStoreState {
   activeSessions: SessionState[];
   completedSessions: SessionState[];
   complianceBySessionId: Record<string, WorkflowCompliance>;
-  artifactsBySessionId: Record<string, ArtifactEntry[]>; // NEW
-  auditScoresBySessionId: Record<string, AuditScore>; // NEW
+  artifactsBySessionId: Record<string, ArtifactEntry[]>;
+  observationsBySessionId: Record<string, number>;
+  auditScoresBySessionId: Record<string, AuditScore>;
   loading: boolean;
-  loadingAuditScores: boolean; // NEW
   stale: boolean;
   lastFetchedAt: number;
 
   fetchAll: (projectRoot?: string) => Promise<void>;
   fetchObservations: (projectRoot: string, sessionId: string, status: 'active' | 'completed') => Promise<SessionObservation[]>;
-  fetchAuditScores: (sessionIds: string[]) => Promise<void>; // NEW
   removeSession: (id: string) => Promise<void>;
   completeSession: (id: string) => Promise<void>;
   editSession: (id: string, branch?: string, input?: string, output?: string) => Promise<void>;
@@ -51,10 +47,10 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
   activeSessions: [],
   completedSessions: [],
   complianceBySessionId: {},
-  artifactsBySessionId: {}, // NEW
-  auditScoresBySessionId: {}, // NEW
+  artifactsBySessionId: {},
+  observationsBySessionId: {},
+  auditScoresBySessionId: {},
   loading: false,
-  loadingAuditScores: false, // NEW
   stale: true,
   lastFetchedAt: 0,
 
@@ -65,12 +61,23 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
     if (!stale && !isExpired) return;
     set({ loading: true });
     try {
-      const [raw, rawArtifacts] = await Promise.all([
-        listAllSessions(200),
-        listArtifacts(undefined, undefined, 500).catch(() => [] as unknown[]),
+      const [rawSessions, rawArtifacts] = await Promise.all([
+        listAllSessions(400),
+        listArtifacts(undefined, undefined, 2000).catch(() => [] as unknown[]),
       ]);
-      const sessions = (raw ?? []) as SessionState[];
+      const sessions = (rawSessions ?? []) as SessionState[];
       const artifacts = (rawArtifacts ?? []) as ArtifactEntry[];
+
+      const observationLimit = Math.min(5000, Math.max(300, sessions.length * 25));
+      const auditLimit = Math.min(5000, Math.max(300, sessions.length * 8));
+      const [rawObservations, rawAuditScores] = await Promise.all([
+        listAllObservations(observationLimit).catch(() => [] as unknown[]),
+        listAuditScores(auditLimit).catch(() => [] as unknown[]),
+      ]);
+      const observations = (rawObservations ?? []) as SessionObservation[];
+      const auditScores = ((rawAuditScores ?? []) as AuditScore[])
+        .filter((score) => !!score.sessionId)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       const active = sessions
         .filter((s) => !s.endedAt)
@@ -100,65 +107,45 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
         return acc;
       }, {} as Record<string, ArtifactEntry[]>);
 
+      const observationsBySessionId = observations.reduce((acc, observation) => {
+        acc[observation.sessionId] = (acc[observation.sessionId] ?? 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const auditScoresBySessionId: Record<string, AuditScore> = {};
+      for (const score of auditScores) {
+        if (!score.sessionId) continue;
+        if (!auditScoresBySessionId[score.sessionId]) {
+          auditScoresBySessionId[score.sessionId] = score;
+        }
+      }
+
       set({
         activeSessions: active,
         completedSessions: completed,
         complianceBySessionId,
         artifactsBySessionId,
+        observationsBySessionId,
+        auditScoresBySessionId,
         loading: false,
         stale: false,
         lastFetchedAt: Date.now(),
       });
     } catch {
-      set({ loading: false, stale: false, complianceBySessionId: {} });
-    }
-  },
-
-  fetchAuditScores: async (sessionIds: string[]) => {
-    if (sessionIds.length === 0) return;
-
-    set({ loadingAuditScores: true });
-
-    try {
-      // Query audit scores for multiple sessions in parallel
-      // Note: This requires the query_audit_scores Tauri command to be implemented
-      const scores = await Promise.all(
-        sessionIds.map(async (sessionId) => {
-          try {
-            const result = await invoke<AuditScore[]>('query_audit_scores', { sessionId });
-            // Return most recent audit score for this session
-            return result.length > 0 ? ([sessionId, result[0]] as const) : null;
-          } catch (error) {
-            console.warn(`Failed to fetch audit score for session ${sessionId}:`, error);
-            return null;
-          }
-        })
-      );
-
-      const scoreMap = Object.fromEntries(scores.filter((s): s is [string, AuditScore] => s !== null));
-
-      set(state => ({
-        auditScoresBySessionId: { ...state.auditScoresBySessionId, ...scoreMap },
-        loadingAuditScores: false,
-      }));
-    } catch (error) {
-      console.error('Failed to fetch audit scores:', error);
-      set({ loadingAuditScores: false });
+      set({
+        loading: false,
+        stale: false,
+        complianceBySessionId: {},
+        observationsBySessionId: {},
+        auditScoresBySessionId: {},
+      });
     }
   },
 
   fetchObservations: async (_projectRoot, sessionId, _status) => {
     try {
-      const results = await invoke<Array<{ id: string; session_id: string; title: string; type: string; created_at: string }>>('search_observations', { query: sessionId, limit: 100 });
-      return (results ?? [])
-        .filter((o) => o.session_id === sessionId)
-        .map((o) => ({
-          id: o.id,
-          sessionId: o.session_id,
-          type: o.type as SessionObservation['type'],
-          title: o.title,
-          createdAt: o.created_at,
-        })) as SessionObservation[];
+      const observations = await listObservationsBySession(sessionId, 1000);
+      return (observations ?? []) as SessionObservation[];
     } catch {
       return [];
     }
@@ -168,15 +155,18 @@ export const useSessionsStore = create<SessionsStoreState>((set, get) => ({
     await deleteSession(id);
     const nextCompliance = { ...get().complianceBySessionId };
     const nextArtifacts = { ...get().artifactsBySessionId };
+    const nextObservations = { ...get().observationsBySessionId };
     const nextAuditScores = { ...get().auditScoresBySessionId };
     delete nextCompliance[id];
     delete nextArtifacts[id];
+    delete nextObservations[id];
     delete nextAuditScores[id];
     set({
       activeSessions: get().activeSessions.filter((s) => s.id !== id),
       completedSessions: get().completedSessions.filter((s) => s.id !== id),
       complianceBySessionId: nextCompliance,
       artifactsBySessionId: nextArtifacts,
+      observationsBySessionId: nextObservations,
       auditScoresBySessionId: nextAuditScores,
     });
   },

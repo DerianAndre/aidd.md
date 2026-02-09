@@ -247,6 +247,52 @@ impl MemoryPort for SqliteMemoryAdapter {
         }).or_else(|_| Ok(vec![]))
     }
 
+    fn list_observations_by_session(
+        &self,
+        session_id: &str,
+        limit: Option<usize>,
+    ) -> Result<Vec<serde_json::Value>, String> {
+        let session_id = session_id.to_string();
+        let limit = limit.unwrap_or(500);
+        self.safe_query(move |conn| {
+            let mut stmt = conn.prepare(
+                "SELECT id, session_id, type, title, content, facts, concepts, \
+                 files_read, files_modified, discovery_tokens, created_at \
+                 FROM observations \
+                 WHERE session_id = ?1 \
+                 ORDER BY created_at DESC \
+                 LIMIT ?2"
+            )?;
+
+            let observations = stmt.query_map(rusqlite::params![session_id, limit], |row| {
+                let mut entry = serde_json::Map::new();
+                entry.insert("id".into(), serde_json::json!(row.get::<_, String>(0)?));
+                entry.insert("sessionId".into(), serde_json::json!(row.get::<_, String>(1)?));
+                entry.insert("type".into(), serde_json::json!(row.get::<_, String>(2)?));
+                entry.insert("title".into(), serde_json::json!(row.get::<_, String>(3)?));
+                entry.insert("narrative".into(), serde_json::json!(row.get::<_, Option<String>>(4)?.unwrap_or_default()));
+
+                let facts_str: String = row.get::<_, Option<String>>(5)?.unwrap_or_default();
+                let concepts_str: String = row.get::<_, Option<String>>(6)?.unwrap_or_default();
+                let files_read_str: String = row.get::<_, Option<String>>(7)?.unwrap_or_default();
+                let files_modified_str: String = row.get::<_, Option<String>>(8)?.unwrap_or_default();
+
+                entry.insert("facts".into(), serde_json::from_str(&facts_str).unwrap_or(serde_json::json!([])));
+                entry.insert("concepts".into(), serde_json::from_str(&concepts_str).unwrap_or(serde_json::json!([])));
+                entry.insert("filesRead".into(), serde_json::from_str(&files_read_str).unwrap_or(serde_json::json!([])));
+                entry.insert("filesModified".into(), serde_json::from_str(&files_modified_str).unwrap_or(serde_json::json!([])));
+                entry.insert("discoveryTokens".into(), serde_json::json!(row.get::<_, Option<i64>>(9)?.unwrap_or(0)));
+                entry.insert("createdAt".into(), serde_json::json!(row.get::<_, String>(10)?));
+
+                Ok(serde_json::Value::Object(entry))
+            })?
+                .filter_map(|r| r.ok())
+                .collect();
+
+            Ok(observations)
+        }).or_else(|_| Ok(vec![]))
+    }
+
     fn search_observations(
         &self,
         query: &str,

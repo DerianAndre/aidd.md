@@ -47,6 +47,19 @@ pub fn list_all_observations(
     Ok(serde_json::Value::Array(observations))
 }
 
+/// List observations for a specific session
+#[tauri::command]
+pub fn list_observations_by_session(
+    ctx: State<'_, AppContext>,
+    session_id: String,
+    limit: Option<usize>,
+) -> Result<serde_json::Value, String> {
+    let observations = ctx
+        .memory_service
+        .list_observations_by_session(&session_id, limit)?;
+    Ok(serde_json::Value::Array(observations))
+}
+
 /// Search observations
 #[tauri::command]
 pub fn search_observations(

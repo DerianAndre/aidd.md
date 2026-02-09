@@ -9,6 +9,13 @@ pub trait MemoryPort: Send + Sync {
     /// List all observations (no filter)
     fn list_all_observations(&self, limit: Option<usize>) -> Result<Vec<serde_json::Value>, String>;
 
+    /// List observations for a specific session.
+    fn list_observations_by_session(
+        &self,
+        session_id: &str,
+        limit: Option<usize>,
+    ) -> Result<Vec<serde_json::Value>, String>;
+
     /// Search observations by query
     fn search_observations(
         &self,
