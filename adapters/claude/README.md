@@ -28,7 +28,7 @@ AIDD integrates with Claude Code through three layers:
 |-------|------|---------|
 | **Protocol** | `CLAUDE.md` | Directive instructions the AI follows (startup, mandatory workflow pipeline, session end) |
 | **Configuration** | `.claude/settings.json` | Permissions, hooks, status line — one-file DX setup |
-| **MCP Server** | `@aidd.md/mcp-engine` | 71 tools for sessions, memory, validation, evolution |
+| **MCP Server** | `@aidd.md/mcp-engine` | 82 tools for sessions, memory, validation, evolution |
 
 Claude Code natively reads `CLAUDE.md` at session start and `AGENTS.md` for agent context. AIDD leverages this behavior to provide structured protocol without additional tooling.
 

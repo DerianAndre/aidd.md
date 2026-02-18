@@ -2,7 +2,7 @@
   "name": "@aidd.md/mcp-engine",
   "version": "1.0.0",
   "license": "MIT",
-  "description": "aidd.md — MCP — Engine: all 63 tools in one process",
+  "description": "aidd.md — MCP — Engine: all 82 tools in one process",
   "homepage": "https://aidd.md",
   "author": {
     "name": "Derian Castillo",
@@ -49,6 +49,13 @@
     "@types/node": "^22.0.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=22.0.0"

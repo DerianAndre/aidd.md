@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { DEFAULT_CONFIG } from '@aidd.md/mcp-shared';
 import type { ModuleContext, ToolResult } from '@aidd.md/mcp-shared';
 import { bootstrapModule } from '../modules/bootstrap/index.js';
 
@@ -54,7 +55,7 @@ function createContext(projectRoot: string): ModuleContext {
         memory: true,
       },
     } as ModuleContext['projectInfo'],
-    config: {} as ModuleContext['config'],
+    config: DEFAULT_CONFIG,
     logger: {
       debug: vi.fn(),
       info: vi.fn(),

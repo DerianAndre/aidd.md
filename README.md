@@ -179,7 +179,7 @@ See `content/specs/aidd-lifecycle.md` for full details and [WORKFLOW.md](./WORKF
 
 ## MCP Ecosystem
 
-The AIDD MCP engine exposes **71 tools** across 5 packages for full session tracking, memory persistence, validation, and self-improvement:
+The AIDD MCP engine exposes **82 tools** across 5 packages for full session tracking, memory persistence, validation, and self-improvement:
 
 ```
 packages/
@@ -265,7 +265,7 @@ aidd.md/
 
 ## IDE Integration
 
-AIDD integrates with AI-powered development tools through three layers: **Context** (file-based), **Protocol** (conversation lifecycle), and **MCP** (71 tools). See [adapters/README.md](adapters/README.md) for the full comparison.
+AIDD integrates with AI-powered development tools through three layers: **Context** (file-based), **Protocol** (conversation lifecycle), and **MCP** (82 tools). See [adapters/README.md](adapters/README.md) for the full comparison.
 
 `pnpm setup` auto-detects and configures all supported IDEs:
 

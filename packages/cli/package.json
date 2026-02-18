@@ -47,6 +47,13 @@
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=22.0.0"
   }

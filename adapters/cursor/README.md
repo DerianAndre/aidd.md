@@ -26,7 +26,7 @@ Cursor integrates with AIDD through two layers:
 | Layer | Mechanism | Purpose |
 |-------|-----------|---------|
 | **Context** | `.cursor/rules/` symlink + `AGENTS.md` | Agent roles, domain rules, immutable constraints |
-| **MCP** | `@aidd.md/mcp-engine` | 71 tools for sessions, memory, validation, evolution |
+| **MCP** | `@aidd.md/mcp-engine` | 82 tools for sessions, memory, validation, evolution |
 
 Cursor reads `.cursor/rules/` for rule files and `AGENTS.md` for agent context. AIDD maps both to the same `content/` source of truth via symlink.
 

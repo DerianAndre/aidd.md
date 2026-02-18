@@ -27,7 +27,7 @@ Gemini integrates with AIDD through up to three layers depending on the environm
 | Layer | Mechanism | Purpose |
 |-------|-----------|---------|
 | **Context** | `AGENTS.md` auto-load (Antigravity) | Agent roles, rules, knowledge — zero config |
-| **MCP** | `@aidd.md/mcp-engine` | 71 tools for sessions, memory, validation, evolution |
+| **MCP** | `@aidd.md/mcp-engine` | 82 tools for sessions, memory, validation, evolution |
 | **API** | System prompt injection | AIDD context in direct Gemini API calls |
 
 Antigravity natively auto-loads `AGENTS.md`, making AIDD integration zero-configuration for Gemini-powered development environments.

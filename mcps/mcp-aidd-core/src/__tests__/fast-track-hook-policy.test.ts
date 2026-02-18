@@ -64,7 +64,7 @@ describe('on-plan-enter hook fast-track policy', () => {
       encoding: 'utf8',
     });
 
-    expect(output).toContain('[Fast-Track]');
+    expect(output).toContain('skipped (fast-track)');
     expect(output).not.toContain('No brainstorm artifact found');
   });
 
@@ -80,6 +80,6 @@ describe('on-plan-enter hook fast-track policy', () => {
     });
 
     expect(output).toContain('No brainstorm artifact found');
-    expect(output).not.toContain('[Fast-Track]');
+    expect(output).not.toContain('skipped (fast-track)');
   });
 });

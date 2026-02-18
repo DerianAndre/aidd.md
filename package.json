@@ -60,7 +60,7 @@
     "cli:typecheck": "pnpm --filter @aidd.md/cli typecheck"
   },
   "devDependencies": {
-    "@types/node": "^25.0.8",
+    "@types/node": "^22.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"

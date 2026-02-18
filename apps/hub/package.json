@@ -1,5 +1,6 @@
 {
   "name": "@aidd.md/hub",
+  "private": true,
   "version": "1.0.0",
   "license": "MIT",
   "description": "aidd.md — Hub — The central UI for aidd.md",

@@ -34,7 +34,7 @@ function detectGitBranch(projectRoot: string): string {
 function getLiveConfig(context: ModuleContext): AiddConfig {
   const configPath = resolvePath(context.aiddDir, 'config.json');
   const raw = readJsonFile<Partial<AiddConfig>>(configPath);
-  return raw ? deepMerge(DEFAULT_CONFIG, raw) : context.config;
+  return deepMerge(DEFAULT_CONFIG, raw ?? context.config);
 }
 
 /**

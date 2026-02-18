@@ -1,6 +1,6 @@
 # MCP & Tool Mapping
 
-## 79 Tools across 21 Modules
+## 82 Tools across 21 Modules
 
 ### core (17)
 - **bootstrap**: aidd_detect_project, aidd_get_config, aidd_start
@@ -10,11 +10,11 @@
 - **routing**: aidd_classify_task, aidd_get_routing_table, aidd_model_route, aidd_get_model_matrix, aidd_model_matrix_status
 - **scaffold**: aidd_scaffold
 
-### memory (43)
+### memory (46)
 - **analytics**: aidd_model_performance, aidd_model_compare, aidd_model_recommend
 - **artifacts**: aidd_artifact
 - **branch**: aidd_branch
-- **diagnostics**: aidd_diagnose_error, aidd_project_health
+- **diagnostics**: aidd_diagnose_error, aidd_project_health, aidd_health_trend, aidd_system_health, aidd_session_compare
 - **drafts**: aidd_draft_create, aidd_draft_list, aidd_draft_approve, aidd_draft_reject
 - **evolution**: aidd_evolution_analyze, aidd_evolution_status, aidd_evolution_review, aidd_evolution_revert, aidd_evolution_approve, aidd_evolution_reject, aidd_evolution_delete
 - **lifecycle**: aidd_lifecycle_get, aidd_lifecycle_init, aidd_lifecycle_advance, aidd_lifecycle_status, aidd_lifecycle_list

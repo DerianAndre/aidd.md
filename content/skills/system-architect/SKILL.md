@@ -1,5 +1,5 @@
 ---
-name: software-architect
+name: system-architect
 description: >-
   Design software systems using the C4 model (Context, Containers, Components, Code).
   Generate Mermaid.js diagrams for visualization and create Architectural Decision Records (ADRs).

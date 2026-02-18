@@ -1,6 +1,6 @@
 # MCPs — Routing Index
 
-> Quick reference for AIDD MCP server packages. The MCP ecosystem provides 63 tools across 5 packages for AI-driven development.
+> Quick reference for AIDD MCP server packages. The MCP ecosystem provides 82 tools across 5 packages for AI-driven development.
 
 ---
 
@@ -8,16 +8,16 @@
 
 | Package                             | npm                   | Role   | Tools | Description                                                                                          |
 | ----------------------------------- | --------------------- | ------ | ----- | ---------------------------------------------------------------------------------------------------- |
-| [mcp-aidd-engine](mcp-aidd-engine/) | `@aidd.md/mcp-engine` | Engine | 63    | All-in-one server — combines Core + Memory + Tools in a single process                               |
+| [mcp-aidd-engine](mcp-aidd-engine/) | `@aidd.md/mcp-engine` | Engine | 82    | All-in-one server — combines Core + Memory + Tools in a single process                               |
 | [mcp-aidd-core](mcp-aidd-core/)     | `@aidd.md/mcp-core`   | Brain  | 17    | Guidance, routing, knowledge — project detection, task classification, TKB queries, model routing    |
-| [mcp-aidd-memory](mcp-aidd-memory/) | `@aidd.md/mcp-memory` | Memory | 27    | Sessions, observations, search, branch context, lifecycle, analytics, evolution, drafts, diagnostics |
+| [mcp-aidd-memory](mcp-aidd-memory/) | `@aidd.md/mcp-memory` | Memory | 46    | Sessions, observations, search, branch context, lifecycle, analytics, evolution, drafts, diagnostics |
 | [mcp-aidd-tools](mcp-aidd-tools/)   | `@aidd.md/mcp-tools`  | Hands  | 19    | Validation, enforcement, execution, CI — rule checking, code generation, pipeline integration        |
 
 ---
 
 ## Architecture
 
-**Engine mode** (recommended): Single process, all 63 tools via `@aidd.md/mcp-engine`. Direct inter-module function calls. Simpler setup and lower resource usage.
+**Engine mode** (recommended): Single process, all 82 tools via `@aidd.md/mcp-engine`. Direct inter-module function calls. Simpler setup and lower resource usage.
 
 **Split mode**: Three separate processes (`mcp-core`, `mcp-memory`, `mcp-tools`). Use when you need resource isolation or only specific capabilities.
 

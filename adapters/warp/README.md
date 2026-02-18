@@ -131,7 +131,7 @@ Without MCP support, Warp cannot:
 ┌──────────────────────┐    ┌──────────────────────┐
 │ Claude Code / Cursor │    │ Warp Terminal         │
 │                      │    │                       │
-│ - Full MCP (71 tools)│    │ - Context from        │
+│ - Full MCP (82 tools)│    │ - Context from        │
 │ - Session lifecycle  │◄──►│   AGENTS.md           │
 │ - Memory persistence │    │ - Rule-aware commands │
 │ - Hooks + automation │    │ - Git operations      │

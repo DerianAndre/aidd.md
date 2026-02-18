@@ -19,14 +19,14 @@ AIDD provides three integration layers. Not all tools support all layers:
 |-------|-------------|-------|
 | **Context** | Tool reads AIDD files for agent roles, rules, and knowledge | `AGENTS.md`, `content/` |
 | **Protocol** | Tool follows a structured conversation lifecycle | `CLAUDE.md`, adapter-specific config |
-| **MCP** | Tool calls AIDD tools for sessions, memory, validation, evolution | `@aidd.md/mcp-engine` (71 tools) |
+| **MCP** | Tool calls AIDD tools for sessions, memory, validation, evolution | `@aidd.md/mcp-engine` (82 tools) |
 
 ### Adapter Comparison
 
 | Feature | Claude Code | Cursor | Gemini | Warp |
 |---------|-------------|--------|--------|------|
 | Context loading | `CLAUDE.md` + `AGENTS.md` | `.cursor/rules/` + `AGENTS.md` | `AGENTS.md` (native) | `AGENTS.md` (manual) |
-| MCP support | Full (71 tools) | Full (71 tools) | Partial (API-level) | No |
+| MCP support | Full (82 tools) | Full (82 tools) | Partial (API-level) | No |
 | Hooks/automation | 9 hooks (8 command + 1 prompt) | Rules auto-apply | Auto-load | Manual |
 | Session tracking | Full lifecycle | Via MCP | Via MCP | No |
 | Memory persistence | 3-layer (obs → permanent → export) | Via MCP | Via MCP | No |
