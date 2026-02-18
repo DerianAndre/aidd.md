@@ -11,7 +11,7 @@ import {
   deepMerge,
   DEFAULT_CONFIG,
 } from '@aidd.md/mcp-shared';
-import type { AiddConfig, AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
+import type { AiddConfig, AiddModule, ModuleContext, TokenBudget } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // ---------------------------------------------------------------------------
@@ -35,6 +35,143 @@ function getLiveConfig(context: ModuleContext): AiddConfig {
   const configPath = resolvePath(context.aiddDir, 'config.json');
   const raw = readJsonFile<Partial<AiddConfig>>(configPath);
   return raw ? deepMerge(DEFAULT_CONFIG, raw) : context.config;
+}
+
+/**
+ * Determine workflow mode from classification.
+ * Returns: 'full' | 'guided' | 'fast-track'
+ */
+function resolveWorkflowMode(classification?: {
+  fastTrack?: boolean;
+  skippableStages?: string[];
+}): { mode: 'full' | 'guided' | 'fast-track'; skipped: string[] } {
+  const tc = classification ?? {};
+  const explicitSkip = Array.isArray(tc.skippableStages) && tc.skippableStages.length > 0
+    ? tc.skippableStages
+    : null;
+  const isFastTrack = tc.fastTrack === true;
+  const defaultSkip = ['brainstorm', 'plan', 'checklist'];
+  const skipped = explicitSkip ?? (isFastTrack ? defaultSkip : []);
+
+  if (skipped.includes('brainstorm') && skipped.includes('plan')) return { mode: 'fast-track', skipped };
+  if (skipped.includes('brainstorm')) return { mode: 'guided', skipped };
+  if (skipped.length === 0) return { mode: 'full', skipped };
+  return { mode: 'guided', skipped };
+}
+
+/**
+ * Build the workflow pipeline section for aidd_start response.
+ * BAP (Brainstorm & Ask → Plan) with token budget verbosity.
+ */
+function buildWorkflowPipeline(
+  sessionId: string | null,
+  classification?: {
+    fastTrack?: boolean;
+    skippableStages?: string[];
+    complexity?: string;
+  },
+  tokenBudget: TokenBudget = 'standard',
+): string[] {
+  const sid = sessionId ?? '<SESSION_ID>';
+  const lines: string[] = [];
+  const { mode, skipped } = resolveWorkflowMode(classification);
+
+  // --- Fast-Track (always compact regardless of budget) ---
+  if (mode === 'fast-track') {
+    const skippedLabel = skipped.join(', ') || 'none';
+    lines.push('\n## Workflow\n');
+    lines.push(`Session: \`${sid}\` | Mode: Fast-Track (skipping: ${skippedLabel})\n`);
+    lines.push(`1. **Build** \u2014 Execute directly. Update: \`aidd_session { action: "update", id: "${sid}", tasksCompleted: [...] }\``);
+    lines.push(`2. **Ship** \u2014 Create retro artifact. End: \`aidd_session { action: "end", id: "${sid}" }\``);
+    return lines;
+  }
+
+  // --- Guided mode ---
+  if (mode === 'guided') {
+    lines.push('\n## Workflow\n');
+    lines.push(`Session: \`${sid}\` | Mode: Guided | Budget: ${tokenBudget}\n`);
+    if (tokenBudget === 'minimal') {
+      lines.push('1. **Ask & Plan** \u2014 Ask user \u2192 plan artifact \u2192 approval');
+      lines.push('2. **Build** \u2014 Execute. Update session.');
+      lines.push('3. **Verify + Ship** \u2014 Typecheck/tests/build. Retro \u2192 archive \u2192 end session.');
+    } else {
+      lines.push('### Step 1 \u2014 Ask & Plan');
+      lines.push('- Ask the user at least 1 clarifying question about scope, constraints, and preferences.');
+      lines.push('- Surface anything they may have missed: dependencies, side effects, better approaches.');
+      lines.push('- Recommend mode change if complexity differs from initial assessment.');
+      lines.push(`- Enter plan mode. Create plan artifact: \`aidd_artifact { action: "create", type: "plan", sessionId: "${sid}" }\`. Exit for user approval.\n`);
+      lines.push('### Step 2 \u2014 Build');
+      lines.push(`- Execute plan. Update: \`aidd_session { action: "update", id: "${sid}", tasksCompleted: [...] }\`\n`);
+      lines.push('### Step 3 \u2014 Verify');
+      lines.push('- Typecheck + tests + build. Create checklist artifact.\n');
+      lines.push('### Step 4 \u2014 Ship');
+      lines.push(`- Create retro artifact. Archive all. End: \`aidd_session { action: "end", id: "${sid}" }\``);
+    }
+    return lines;
+  }
+
+  // --- Full BAP mode ---
+  lines.push('\n## Workflow\n');
+  lines.push(`Session: \`${sid}\` | Mode: Full | Budget: ${tokenBudget}`);
+
+  if (tokenBudget === 'minimal') {
+    lines.push('');
+    lines.push('1. **BAP** \u2014 Memory search \u2192 ask user \u2192 brainstorm artifact \u2192 plan artifact \u2192 approval');
+    lines.push('2. **Build** \u2014 Execute. Update session.');
+    lines.push('3. **Verify** \u2014 Typecheck + tests + build.');
+    lines.push('4. **Ship** \u2014 Retro artifact \u2192 archive \u2192 end session.');
+    return lines;
+  }
+
+  if (tokenBudget === 'standard') {
+    lines.push('\n### Step 1 \u2014 BAP (Brainstorm & Ask \u2192 Plan)\n');
+    lines.push(`- Search memory: \`aidd_memory_search { query: "..." }\`. Explore codebase.`);
+    lines.push('- Ask the user questions about intent, scope, constraints, and risks. Surface what they may have missed.');
+    lines.push(`- Create brainstorm artifact: \`aidd_artifact { action: "create", type: "brainstorm", sessionId: "${sid}" }\``);
+    lines.push(`- Enter plan mode. Create plan artifact. Exit for approval. On rejection \u2192 redo BAP.\n`);
+    lines.push('### Step 2 \u2014 Build');
+    lines.push(`- Execute plan. Update: \`aidd_session { action: "update", id: "${sid}", tasksCompleted: [...] }\`\n`);
+    lines.push('### Step 3 \u2014 Verify');
+    lines.push('- Typecheck + tests + build. Create checklist artifact.\n');
+    lines.push('### Step 4 \u2014 Ship');
+    lines.push(`- Create retro artifact. Archive all. End: \`aidd_session { action: "end", id: "${sid}" }\``);
+    return lines;
+  }
+
+  // tokenBudget === 'full' — maximum guidance
+  const questions = classification?.complexity === 'complex' ? '2+' : '2+';
+  lines.push(` | Recommended questions: ${questions}\n`);
+  lines.push('### Step 1 \u2014 BAP (Brainstorm & Ask \u2192 Plan)\n');
+  lines.push('**Brainstorm & Ask** (interleaved \u2014 explore and ask in conversation):');
+  lines.push(`- Search memory for prior context: \`aidd_memory_search { query: "..." }\``);
+  lines.push('- Explore the codebase: read related files, trace code paths, understand existing patterns');
+  lines.push('- Brainstorm options, trade-offs, and edge cases');
+  lines.push('- Ask the user targeted questions. Assume they do NOT see the full picture. Surface:');
+  lines.push('  - **Intent**: What problem are you really solving? Is there a simpler framing?');
+  lines.push('  - **Scope**: What\u2019s in/out? Are there hidden dependencies or side effects?');
+  lines.push('  - **Constraints**: Performance, compatibility, timeline, existing patterns to follow?');
+  lines.push('  - **Risks**: What could go wrong? What assumptions are we making?');
+  lines.push('  - **Alternatives**: Is there an existing solution, library, or pattern that already handles this?');
+  lines.push('- Based on findings, recommend workflow mode: "I recommend [full/guided/fast-track] because..."');
+  lines.push(`- Create brainstorm artifact: \`aidd_artifact { action: "create", type: "brainstorm", feature: "<slug>", title: "Brainstorm: <topic>", sessionId: "${sid}", content: "## Options\\n...\\n## Trade-offs\\n...\\n## Recommendations\\n..." }\`\n`);
+  lines.push('**Plan** (after alignment with user):');
+  lines.push(`- Enter plan mode. Create plan artifact: \`aidd_artifact { action: "create", type: "plan", feature: "<slug>", title: "Plan: <feature>", sessionId: "${sid}" }\``);
+  lines.push('- Exit for user approval. On rejection \u2192 return to Brainstorm & Ask.\n');
+  lines.push('### Step 2 \u2014 Build');
+  lines.push('- Implement the approved plan');
+  lines.push(`- Update progress: \`aidd_session { action: "update", id: "${sid}", tasksCompleted: [...], filesModified: [...] }\``);
+  lines.push(`- For errors: \`aidd_diagnose_error { error: "..." }\`\n`);
+  lines.push('### Step 3 \u2014 Verify');
+  lines.push('- Run typecheck + tests + build');
+  lines.push(`- Create checklist: \`aidd_artifact { action: "create", type: "checklist", sessionId: "${sid}", content: "- [ ] typecheck\\n- [ ] tests\\n- [ ] build" }\``);
+  lines.push('- If checks fail \u2192 return to Build\n');
+  lines.push('### Step 4 \u2014 Ship');
+  lines.push(`- Create retro: \`aidd_artifact { action: "create", type: "retro", sessionId: "${sid}", content: "## What worked\\n...\\n## What didn\\'t\\n...\\n## Lessons\\n..." }\``);
+  lines.push(`- Archive all artifacts: \`aidd_artifact { action: "archive", id: "..." }\``);
+  lines.push('- Record permanent memory if significant: `aidd_memory_add_decision` / `aidd_memory_add_mistake` / `aidd_memory_add_convention`');
+  lines.push(`- End: \`aidd_session { action: "end", id: "${sid}", outcome: { testsPassing: true, complianceScore: 90, reverts: 0, reworks: 0 } }\``);
+
+  return lines;
 }
 
 // ---------------------------------------------------------------------------
@@ -150,6 +287,10 @@ export const bootstrapModule: AiddModule = {
           .string()
           .optional()
           .describe('Parent session for threading'),
+        tokenBudget: z
+          .enum(['minimal', 'standard', 'full'])
+          .optional()
+          .describe('Token usage level. Controls response verbosity and workflow ceremony. Default from config.'),
       },
       annotations: { idempotentHint: false },
       handler: async (args) => {
@@ -171,14 +312,14 @@ export const bootstrapModule: AiddModule = {
         const index = context.contentLoader.getIndex();
         const classification = a['taskClassification'] as {
           domain?: string;
+          nature?: string;
           complexity?: string;
           fastTrack?: boolean;
+          skippableStages?: string[];
         } | undefined;
-        const slimStartEnabled = liveConfig.content.slimStartEnabled ?? true;
-        const slimStartTargetTokens = liveConfig.content.slimStartTargetTokens ?? 600;
-        const isSlim = slimStartEnabled && (
-          classification?.complexity === 'low' || classification?.fastTrack === true
-        );
+        const configBudget = liveConfig.content.tokenBudget ?? 'standard';
+        const paramBudget = a['tokenBudget'] as TokenBudget | undefined;
+        const tokenBudget: TokenBudget = paramBudget ?? configBudget;
 
         const sections: string[] = [];
 
@@ -258,24 +399,34 @@ export const bootstrapModule: AiddModule = {
           } catch { /* silent — PAPI is best-effort */ }
         }
 
-        if (isSlim) {
-            // =============================================================
-            // SLIM MODE: Critical guardrails only (~500-700 tokens total)
-            // =============================================================
-            sections.push('\n## Critical Guardrails\n');
-            sections.push('- Never use `any` without documented exception');
-            sections.push('- Never commit secrets');
-            sections.push('- ES modules only (`import`/`export`)');
-            sections.push(
-              `\n[Slim] Low-complexity task. Target context ~${slimStartTargetTokens} tokens. ` +
-              'Full context via `aidd_get_agent`, `aidd_get_routing_table`.',
-            );
-        } else {
+        // =================================================================
+        // 4b. Workflow Pipeline (both slim and full)
+        // =================================================================
+        const pipelineLines = buildWorkflowPipeline(sessionId, classification, tokenBudget);
+        sections.push(...pipelineLines);
+
+        if (tokenBudget === 'minimal') {
           // =============================================================
-          // FULL MODE: All sections (agents, rules, workflows, etc.)
+          // MINIMAL: Guardrails + compressed content (titles only)
+          // =============================================================
+          sections.push('\n## Guardrails\n');
+          sections.push('- No `any` without exception. No secrets. ES modules only.');
+
+          if (index.agents.length > 0 || index.rules.length > 0) {
+            sections.push(
+              `\n*${index.agents.length} agents, ${index.rules.length} rules available — use \`aidd_get_agent\`, \`aidd_get_routing_table\`*`,
+            );
+          }
+
+          if (!info.detected) {
+            sections.push('\n**Setup**: `aidd_scaffold { preset: "standard" }`');
+          }
+        } else if (tokenBudget === 'standard') {
+          // =============================================================
+          // STANDARD: Agents, rules (MUST lines), title lists
           // =============================================================
 
-          // 5. Agents (SSOT) — full routing.md content
+          // 5. Agents (SSOT) — routing.md content
           if (index.agents.length > 0) {
             sections.push('\n## Agents (SSOT)\n');
             const mainAgent = index.agents.find((ag) => ag.name === 'routing.md') ?? index.agents[0]!;
@@ -285,7 +436,7 @@ export const bootstrapModule: AiddModule = {
             }
           }
 
-          // 6. Active Rules — compact summaries to avoid context inflation
+          // 6. Active Rules — MUST/NEVER lines only
           if (index.rules.length > 0) {
             sections.push('\n## Active Rules (ENFORCE)\n');
             for (const rule of index.rules) {
@@ -297,6 +448,99 @@ export const bootstrapModule: AiddModule = {
                 .map((l) => l.trim())
                 .filter((l) => /\b(MUST|MUST NOT|NEVER|DO NOT|FORBIDDEN)\b/i.test(l))
                 .slice(0, 3);
+              if (strongLines.length > 0) {
+                for (const line of strongLines) {
+                  sections.push(`- ${line}`);
+                }
+              } else {
+                const fallback = content
+                  .split('\n')
+                  .map((l) => l.trim())
+                  .find((l) => l.length > 0 && !l.startsWith('#'));
+                if (fallback) sections.push(`- ${fallback.slice(0, 180)}`);
+              }
+              sections.push('');
+            }
+          }
+
+          // 7. Workflows — title list
+          if (index.workflows.length > 0) {
+            sections.push('\n## Workflows\n');
+            for (const wf of index.workflows) {
+              const title = wf.frontmatter['title'] ?? wf.name.replace('.md', '');
+              sections.push(`- ${title}`);
+            }
+          }
+
+          // 8. Skills — title list
+          if (index.skills.length > 0) {
+            sections.push('\n## Skills\n');
+            for (const skill of index.skills) {
+              const title = skill.frontmatter['title'] ?? skill.name.replace('.md', '');
+              sections.push(`- ${title}`);
+            }
+          }
+
+          // 9. Specs — title list
+          if (index.specs.length > 0) {
+            sections.push('\n## Specs\n');
+            for (const spec of index.specs) {
+              const title = spec.frontmatter['title'] ?? spec.name.replace('.md', '');
+              sections.push(`- ${title}`);
+            }
+          }
+
+          // 10. Knowledge (TKB) — title list
+          if (index.knowledge.length > 0) {
+            sections.push('\n## Knowledge (TKB)\n');
+            for (const entry of index.knowledge) {
+              const name = entry.frontmatter['name'] ?? entry.name.replace('.md', '');
+              sections.push(`- ${name}`);
+            }
+          }
+
+          // 11. Templates — title list
+          if (index.templates.length > 0) {
+            sections.push('\n## Templates\n');
+            for (const tpl of index.templates) {
+              const title = tpl.frontmatter['title'] ?? tpl.name.replace('.md', '');
+              sections.push(`- ${title}`);
+            }
+          }
+
+          // 12. Suggested next steps (only if AIDD not detected)
+          if (!info.detected) {
+            sections.push('\n## Setup Required\n');
+            sections.push('1. **Initialize AIDD**: `aidd_scaffold { preset: "standard" }`');
+            sections.push('2. **Classify your task**: `aidd_classify_task { description: "..." }`');
+          }
+        } else {
+          // =============================================================
+          // FULL: Everything with descriptions + extra hints
+          // =============================================================
+
+          // 5. Agents (SSOT) — full routing.md content + per-agent hints
+          if (index.agents.length > 0) {
+            sections.push('\n## Agents (SSOT)\n');
+            const mainAgent = index.agents.find((ag) => ag.name === 'routing.md') ?? index.agents[0]!;
+            sections.push(mainAgent.getContent());
+            if (index.agents.length > 1) {
+              sections.push(`\n*${index.agents.length} agent files available — use \`aidd_get_agent\` for individual agents*`);
+            }
+          }
+
+          // 6. Active Rules — MUST lines + examples
+          if (index.rules.length > 0) {
+            sections.push('\n## Active Rules (ENFORCE)\n');
+            for (const rule of index.rules) {
+              const title = rule.frontmatter['title'] ?? rule.name.replace('.md', '');
+              const content = rule.getContent();
+              sections.push(`### ${title}\n`);
+              const strongLines = content
+                .split('\n')
+                .map((l) => l.trim())
+                .filter((l) => /\b(MUST|MUST NOT|NEVER|DO NOT|FORBIDDEN)\b/i.test(l))
+                .slice(0, 5);
               if (strongLines.length > 0) {
                 for (const line of strongLines) {
                   sections.push(`- ${line}`);

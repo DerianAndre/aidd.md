@@ -32,10 +32,10 @@ try {
   } else if (skipped.includes('brainstorm')) {
     lines.push('  - Brainstorm: skipped (fast-track)');
   } else {
-    lines.push('  - WARNING: No brainstorm artifact found (CLAUDE.md \u00a72.1)');
+    lines.push('  - WARNING: No brainstorm artifact found (BAP step 1)');
   }
   if (research) lines.push(`  - Research: "${research.title}"`);
-  lines.push('Create a plan artifact (CLAUDE.md \u00a72.2).');
+  lines.push('Create a plan artifact (BAP \u2192 Plan).');
 
   console.log(lines.join('\n'));
-} catch { console.log('[AIDD] Plan mode entered. Create a plan artifact (CLAUDE.md \u00a72.2).'); }
+} catch { console.log('[AIDD] Plan mode entered. Create a plan artifact (BAP \u2192 Plan).'); }

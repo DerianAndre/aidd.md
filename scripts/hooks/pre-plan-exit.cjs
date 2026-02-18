@@ -19,7 +19,7 @@ process.stdin.on('end', () => {
     if (!plan) {
       process.stderr.write(
         '[AIDD] BLOCKED: No plan artifact found.\n' +
-        '  - Write a plan artifact (CLAUDE.md \u00a72.2) before exiting plan mode.'
+        '  - Write a plan artifact (BAP \u2192 Plan) before exiting plan mode.'
       );
       process.exit(2);
     }

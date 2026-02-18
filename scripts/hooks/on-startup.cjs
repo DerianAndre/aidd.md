@@ -24,21 +24,21 @@ try {
       const orphaned = arts.reduce((sum, a) => sum + a.cnt, 0);
       const lines = ['[AIDD] No active session (stale session detected).'];
       if (orphaned > 0) lines.push(`  - ${orphaned} orphaned artifact(s) found`);
-      lines.push('Call aidd_start. Workflow: CLAUDE.md \u00a72.');
+      lines.push('Call aidd_start. Follow the AIDD workflow.');
       console.log(lines.join('\n'));
     } else {
       const lines = [`[AIDD] Active session: ${session.id} (branch: ${session.branch}).`];
       if (s.input) lines.push(`  - Input: "${s.input}"`);
       const artTotal = arts.reduce((sum, a) => sum + a.cnt, 0);
       if (artTotal > 0) lines.push(`  - ${artTotal} active artifact(s)`);
-      lines.push('Resume or end it. Workflow: CLAUDE.md \u00a72.');
+      lines.push('Resume or end it. Follow the AIDD workflow.');
       console.log(lines.join('\n'));
     }
   } else {
     const orphaned = arts.reduce((sum, a) => sum + a.cnt, 0);
     const lines = ['[AIDD] No active session.'];
     if (orphaned > 0) lines.push(`  - ${orphaned} orphaned artifact(s) found`);
-    lines.push('Call aidd_start. Workflow: CLAUDE.md \u00a72.');
+    lines.push('Call aidd_start. Follow the AIDD workflow.');
     console.log(lines.join('\n'));
   }
-} catch { console.log('[AIDD] No active session. Call aidd_start. Workflow: CLAUDE.md \u00a72.'); }
+} catch { console.log('[AIDD] No active session. Call aidd_start. Follow the AIDD workflow.'); }

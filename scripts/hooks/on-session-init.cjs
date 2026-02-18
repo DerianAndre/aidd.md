@@ -32,7 +32,7 @@ process.stdin.on('end', () => {
     if (skipped.includes('brainstorm')) {
       console.log(
         '[AIDD] Session initialized. Brainstorm skipped (fast-track).\n' +
-        'Proceed to planning when ready (CLAUDE.md \u00a72.2).'
+        'Proceed to planning when ready (BAP \u2192 Plan).'
       );
       return;
     }
@@ -40,17 +40,17 @@ process.stdin.on('end', () => {
     if (brainstorm) {
       console.log(
         '[AIDD] Session initialized. Brainstorm exists.\n' +
-        'Proceed to planning when ready (CLAUDE.md \u00a72.2).'
+        'Proceed to planning when ready (BAP \u2192 Plan).'
       );
     } else {
       console.log(
-        '[AIDD] Session initialized. Next: brainstorm (CLAUDE.md \u00a72.1).\n' +
+        '[AIDD] Session initialized. Next: brainstorm (BAP step 1).\n' +
         '  - Explore the problem space and ask questions\n' +
         '  - Create a brainstorm artifact\n' +
         '  - Skip only if user explicitly opts out.'
       );
     }
   } catch {
-    console.log('[AIDD] Session initialized. Next: brainstorm (CLAUDE.md \u00a72.1).');
+    console.log('[AIDD] Session initialized. Next: brainstorm (BAP step 1).');
   }
 });

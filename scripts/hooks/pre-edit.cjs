@@ -68,7 +68,7 @@ process.stdin.on('end', () => {
     if (!session) {
       db.close();
       process.stderr.write(
-        '[AIDD] BLOCKED: No active session. Start one before editing files (CLAUDE.md \u00a71).'
+        '[AIDD] BLOCKED: No active session. Start one before editing files (aidd_start).'
       );
       process.exit(2);
     }
@@ -83,7 +83,7 @@ process.stdin.on('end', () => {
     if (sessionData.endedAt) {
       db.close();
       process.stderr.write(
-        '[AIDD] BLOCKED: Session already ended. Start a new one before editing files (CLAUDE.md \u00a71).'
+        '[AIDD] BLOCKED: Session already ended. Start a new one before editing files (aidd_start).'
       );
       process.exit(2);
     }
@@ -106,7 +106,7 @@ process.stdin.on('end', () => {
         db.close();
         process.stderr.write(
           '[AIDD] BLOCKED: Brainstorm required before editing files.\n' +
-          '  - Create a brainstorm artifact (CLAUDE.md \u00a72.1)\n' +
+          '  - Create a brainstorm artifact (BAP step 1)\n' +
           '  - Then create a plan before implementation (\u00a72.2).'
         );
         process.exit(2);
@@ -122,7 +122,7 @@ process.stdin.on('end', () => {
         db.close();
         process.stderr.write(
           '[AIDD] BLOCKED: Plan required before editing files.\n' +
-          '  - Create a plan artifact (CLAUDE.md \u00a72.2) before implementation.'
+          '  - Create a plan artifact (BAP \u2192 Plan) before implementation.'
         );
         process.exit(2);
       }

@@ -106,7 +106,7 @@ process.stdin.on('end', () => {
     if (missing.length > 0) {
       process.stderr.write(
         '[AIDD] BLOCKED: Cannot end session \u2014 missing required artifacts: ' + missing.join(', ') + '.\n' +
-        '  - Create them before ending (CLAUDE.md \u00a72.5, \u00a72.7).'
+        '  - Create them before ending (Verify + Ship steps).'
       );
       process.exit(2);
     }

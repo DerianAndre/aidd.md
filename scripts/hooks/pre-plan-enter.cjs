@@ -18,7 +18,7 @@ process.stdin.on('end', () => {
     if (!session) {
       db.close();
       process.stderr.write(
-        '[AIDD] BLOCKED: No active session. Start one before entering plan mode (CLAUDE.md \u00a71).'
+        '[AIDD] BLOCKED: No active session. Start one before entering plan mode (aidd_start).'
       );
       process.exit(2);
     }
@@ -45,7 +45,7 @@ process.stdin.on('end', () => {
         db.close();
         process.stderr.write(
           '[AIDD] BLOCKED: Brainstorm required before planning.\n' +
-          '  - Create a brainstorm artifact first (CLAUDE.md \u00a72.1)\n' +
+          '  - Create a brainstorm artifact first (BAP step 1)\n' +
           '  - Then retry entering plan mode.'
         );
         process.exit(2);

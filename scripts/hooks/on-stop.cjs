@@ -44,7 +44,7 @@ try {
   if (pendingCount > 0) lines.push(`  - ${pendingCount} pending task(s)`);
   if (activeArts.length > 0) lines.push(`  - ${activeArts.length} artifact(s) need archiving`);
   if (missing.length > 0) lines.push(`  - Missing: ${missing.join(', ')}`);
-  lines.push('Follow CLAUDE.md \u00a72.7 to end the session.');
+  lines.push('Complete the Ship step: retro artifact \u2192 archive \u2192 end session.');
 
   process.stderr.write(lines.join('\n'));
   process.exit(2);

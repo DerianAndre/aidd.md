@@ -100,6 +100,9 @@ export interface StackInfo {
 // Configuration
 // ---------------------------------------------------------------------------
 
+/** Token budget controls response verbosity and workflow ceremony. */
+export type TokenBudget = 'minimal' | 'standard' | 'full';
+
 export interface AiddConfig {
   evolution: {
     enabled: boolean;
@@ -124,7 +127,11 @@ export interface AiddConfig {
   };
   content: {
     overrideMode: 'merge' | 'project_only' | 'bundled_only';
+    /** Token budget: minimal (~400 tok), standard (~600), full (~800+). Default: standard. */
+    tokenBudget?: TokenBudget;
+    /** @deprecated Use tokenBudget instead. */
     slimStartEnabled?: boolean;
+    /** @deprecated Use tokenBudget instead. */
     slimStartTargetTokens?: number;
     paths?: ContentPaths;
   };
@@ -174,6 +181,7 @@ export const DEFAULT_CONFIG: AiddConfig = {
   },
   content: {
     overrideMode: 'merge',
+    tokenBudget: 'standard' as TokenBudget,
     slimStartEnabled: true,
     slimStartTargetTokens: 600,
   },

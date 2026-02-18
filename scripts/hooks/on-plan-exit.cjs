@@ -24,9 +24,9 @@ try {
 
   const lines = [
     `[AIDD] Plan reviewed: ${planTitle}. ${complianceHint}.`,
-    '  - If approved: archive artifacts, record decision (CLAUDE.md \u00a72.3)',
+    '  - If approved: archive artifacts, record decision (plan approval protocol)',
     '  - If rejected: record decision, return to brainstorm (\u00a72.1)',
   ];
 
   console.log(lines.join('\n'));
-} catch { console.log('[AIDD] Plan reviewed. Follow approval/rejection protocol (CLAUDE.md \u00a72.3).'); }
+} catch { console.log('[AIDD] Plan reviewed. Follow approval/rejection protocol (plan approval protocol).'); }

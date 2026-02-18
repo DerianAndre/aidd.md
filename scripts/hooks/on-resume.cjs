@@ -28,7 +28,7 @@ try {
       lines.push(`  - ${(s.tasksCompleted || []).length} done, ${(s.tasksPending || []).length} pending`);
       const artTotal = arts.reduce((sum, a) => sum + a.cnt, 0);
       if (artTotal > 0) lines.push(`  - ${artTotal} active artifact(s)`);
-      lines.push('Continue CLAUDE.md lifecycle.');
+      lines.push('Continue the AIDD workflow.');
       console.log(lines.join('\n'));
     }
   } else {

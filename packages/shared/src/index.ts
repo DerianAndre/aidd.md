@@ -70,6 +70,7 @@ export type {
   StackInfo,
   StorageBackend,
   SystemDiagnostics,
+  TokenBudget,
   TokenUsage,
   ToolAnnotations,
   ToolDefinition,

@@ -14,7 +14,7 @@ try {
     const ac = artCount ? artCount.cnt : 0;
     const lines = ['[AIDD] Context compaction imminent.'];
     lines.push(`  - Session ${row.id}: ${(s.tasksCompleted || []).length} completed, ${(s.tasksPending || []).length} pending, ${(s.filesModified || []).length} files, ${ac} artifact(s)`);
-    lines.push('Save session state now (CLAUDE.md \u00a72.7).');
+    lines.push('Save session state now (Ship step).');
     console.log(lines.join('\n'));
   }
-} catch { console.log('[AIDD] Context compaction imminent. Save session state now (CLAUDE.md \u00a72.7).'); }
+} catch { console.log('[AIDD] Context compaction imminent. Save session state now (Ship step).'); }
