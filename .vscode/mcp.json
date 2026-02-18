@@ -1,12 +1,1 @@
-{
-  "servers": {
-    "aidd-engine": {
-      "args": [
-        "-y",
-        "@aidd.md/mcp-engine"
-      ],
-      "command": "npx",
-      "type": "stdio"
-    }
-  }
-}
+{}

@@ -262,29 +262,28 @@ export function ConfigPage() {
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field orientation="horizontal">
-                  <FieldContent>
-                    <FieldLabel htmlFor="content-slim-start">{t('page.config.content.slimStart')}</FieldLabel>
-                    <FieldDescription>{t('page.config.content.slimStartHint')}</FieldDescription>
-                  </FieldContent>
-                  <Switch
-                    id="content-slim-start"
-                    size="sm"
-                    checked={optimisticLocal.content.slimStartEnabled ?? true}
-                    onCheckedChange={(v) => update('content', 'slimStartEnabled', v)}
-                  />
-                </Field>
                 <Field>
-                  <FieldLabel>{t('page.config.content.slimTargetTokens')}</FieldLabel>
-                  <Input
-                    type="number"
-                    value={optimisticLocal.content.slimStartTargetTokens ?? 600}
-                    onChange={(e) => update('content', 'slimStartTargetTokens', Number(e.target.value) || 600)}
-                    min={100}
-                    max={5000}
-                    step={50}
-                    className="w-28"
-                  />
+                  <FieldLabel>{t('page.config.content.tokenBudget')}</FieldLabel>
+                  <FieldDescription>{t('page.config.content.tokenBudgetHint')}</FieldDescription>
+                  <Select
+                    value={optimisticLocal.content.tokenBudget ?? 'standard'}
+                    onValueChange={(v) => update('content', 'tokenBudget', v as 'minimal' | 'standard' | 'full')}
+                  >
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="minimal">
+                        {t('page.config.content.tokenBudgetMinimal')}
+                      </SelectItem>
+                      <SelectItem value="standard">
+                        {t('page.config.content.tokenBudgetStandard')}
+                      </SelectItem>
+                      <SelectItem value="full">
+                        {t('page.config.content.tokenBudgetFull')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </Field>
               </FieldGroup>
             </CardContent>

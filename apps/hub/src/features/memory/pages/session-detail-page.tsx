@@ -174,14 +174,19 @@ function buildSessionPatch({
     updates.endedAt = nextEndedAt.length > 0 ? nextEndedAt : null;
   }
 
-  const taskClassificationPatch: NonNullable<SessionUpdatePayload["taskClassification"]> = {};
+  const taskClassificationPatch: NonNullable<
+    SessionUpdatePayload["taskClassification"]
+  > = {};
   if ((draft.taskDomain ?? "") !== (session.taskClassification?.domain ?? "")) {
     taskClassificationPatch.domain = draft.taskDomain ?? "";
   }
   if ((draft.taskNature ?? "") !== (session.taskClassification?.nature ?? "")) {
     taskClassificationPatch.nature = draft.taskNature ?? "";
   }
-  if ((draft.taskComplexity ?? "") !== (session.taskClassification?.complexity ?? "")) {
+  if (
+    (draft.taskComplexity ?? "") !==
+    (session.taskClassification?.complexity ?? "")
+  ) {
     taskClassificationPatch.complexity = draft.taskComplexity ?? "";
   }
   if (Object.keys(taskClassificationPatch).length > 0) {
@@ -218,7 +223,9 @@ function buildSessionPatch({
   }
 
   const nextTasksCompleted = normalizeStringList(draftTasksCompleted);
-  const currentTasksCompleted = normalizeStringList(session.tasksCompleted ?? []);
+  const currentTasksCompleted = normalizeStringList(
+    session.tasksCompleted ?? [],
+  );
   if (!arraysEqual(nextTasksCompleted, currentTasksCompleted)) {
     updates.tasksCompleted = nextTasksCompleted;
   }
@@ -479,7 +486,9 @@ export function SessionDetailPage() {
     draftErrors,
   ]);
 
-  const pendingFieldCount = pendingUpdates ? Object.keys(pendingUpdates).length : 0;
+  const pendingFieldCount = pendingUpdates
+    ? Object.keys(pendingUpdates).length
+    : 0;
 
   const handleSave = useCallback(async () => {
     if (!session || !pendingUpdates) return;
@@ -498,13 +507,7 @@ export function SessionDetailPage() {
     } finally {
       setSaving(false);
     }
-  }, [
-    session,
-    editSessionFull,
-    pendingUpdates,
-    pendingFieldCount,
-    t,
-  ]);
+  }, [session, editSessionFull, pendingUpdates, pendingFieldCount, t]);
 
   // Escape key cancels
   useEffect(() => {
@@ -520,9 +523,15 @@ export function SessionDetailPage() {
   const isActive = session && !session.endedAt;
   const compliance = session ? complianceBySessionId[session.id] : undefined;
   const draftStatus = session
-    ? draftStatusBySession[session.id] ?? { pending: 0, approved: 0, rejected: 0 }
+    ? (draftStatusBySession[session.id] ?? {
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+      })
     : { pending: 0, approved: 0, rejected: 0 };
-  const pendingDrafts = session ? pendingDraftsBySession[session.id] ?? draftStatus.pending : 0;
+  const pendingDrafts = session
+    ? (pendingDraftsBySession[session.id] ?? draftStatus.pending)
+    : 0;
   const approvedDrafts = draftStatus.approved;
   const rejectedDrafts = draftStatus.rejected;
   const totalDrafts = pendingDrafts + approvedDrafts + rejectedDrafts;
@@ -536,9 +545,7 @@ export function SessionDetailPage() {
     : session
       ? Date.now() - new Date(session.startedAt).getTime()
       : null;
-  const tokenTelemetry = session
-    ? resolveSessionTokenTelemetry(session)
-    : null;
+  const tokenTelemetry = session ? resolveSessionTokenTelemetry(session) : null;
   const startedAtMs = session ? getSessionStartedMs(session) : 0;
 
   // ---------------------------------------------------------------------------
@@ -783,7 +790,8 @@ export function SessionDetailPage() {
             )}
             {tokenTelemetry?.hasTelemetry && (
               <span className="text-muted-foreground font-mono text-[11px]">
-                Tokens {tokenTelemetry.inputTokens}/{tokenTelemetry.outputTokens}
+                Tokens {tokenTelemetry.inputTokens}/
+                {tokenTelemetry.outputTokens}
                 {tokenTelemetry.ratio !== "—"
                   ? ` (ratio ${tokenTelemetry.ratio})`
                   : ""}
@@ -802,41 +810,30 @@ export function SessionDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2">
+            <Button onClick={() => navigate("/sessions")}>
+              <ArrowLeft size={16} /> {t("common.back")}
+            </Button>
             {editing ? (
               <>
-                <Chip
-                  size="sm"
-                  color={pendingFieldCount > 0 ? "warning" : "default"}
-                >
+                <Chip color={pendingFieldCount > 0 ? "warning" : "default"}>
                   {pendingFieldCount} change{pendingFieldCount === 1 ? "" : "s"}
                 </Chip>
-                <Button size="sm" disabled={saving} onClick={handleSave}>
+                <Button disabled={saving} onClick={handleSave}>
                   <Save size={14} />{" "}
                   {saving ? t("common.saving") : t("common.save")}
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={saving}
-                >
+                <Button onClick={handleCancel} disabled={saving}>
                   {t("common.cancel")}
                 </Button>
               </>
             ) : (
               <>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleEdit}
-                  aria-label="Edit session"
-                >
+                <Button onClick={handleEdit} aria-label="Edit session">
                   <Pencil size={14} /> {t("common.edit")}
                 </Button>
                 {!hideFixCompliance && (
                   <Button
-                    size="sm"
-                    variant="outline"
+                    variant="destructive"
                     onClick={handleFixCompliance}
                     disabled={disableFixCompliance}
                     title={
@@ -849,23 +846,12 @@ export function SessionDetailPage() {
                   </Button>
                 )}
                 {isZenCandidate && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowAdvanced((v) => !v)}
-                  >
+                  <Button onClick={() => setShowAdvanced((v) => !v)}>
                     {showAdvanced ? "Zen Mode" : "Show Advanced"}
                   </Button>
                 )}
               </>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/sessions")}
-            >
-              <ArrowLeft size={16} /> {t("common.back")}
-            </Button>
           </div>
         }
       />
@@ -904,7 +890,10 @@ export function SessionDetailPage() {
         </CollapsibleSection>
 
         {!zenMode && (
-          <CollapsibleSection label={t("page.sessionDetail.outcome")} defaultOpen>
+          <CollapsibleSection
+            label={t("page.sessionDetail.outcome")}
+            defaultOpen
+          >
             {editing ? (
               <FrontmatterForm
                 disabled={false}
@@ -923,7 +912,9 @@ export function SessionDetailPage() {
                           ? t("page.sessionDetail.passing")
                           : t("page.sessionDetail.failing")
                       }
-                      color={session.outcome.testsPassing ? "success" : "danger"}
+                      color={
+                        session.outcome.testsPassing ? "success" : "danger"
+                      }
                     />
                     <OutcomeStat
                       label={t("page.sessionDetail.complianceLabel")}
@@ -933,12 +924,16 @@ export function SessionDetailPage() {
                     <OutcomeStat
                       label={t("page.sessionDetail.revertsLabel")}
                       value={String(session.outcome.reverts)}
-                      color={session.outcome.reverts > 0 ? "warning" : "default"}
+                      color={
+                        session.outcome.reverts > 0 ? "warning" : "default"
+                      }
                     />
                     <OutcomeStat
                       label={t("page.sessionDetail.reworksLabel")}
                       value={String(session.outcome.reworks)}
-                      color={session.outcome.reworks > 0 ? "warning" : "default"}
+                      color={
+                        session.outcome.reworks > 0 ? "warning" : "default"
+                      }
                     />
                     {session.outcome.userFeedback && (
                       <OutcomeStat

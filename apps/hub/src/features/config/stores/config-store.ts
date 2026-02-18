@@ -86,15 +86,9 @@ function validateAndNormalizeConfig(config: AiddConfig): { ok: true; value: Aidd
     },
     content: {
       overrideMode,
-      slimStartEnabled: boolOrDefault(
-        config.content.slimStartEnabled,
-        DEFAULT_CONFIG.content.slimStartEnabled ?? true,
-      ),
-      slimStartTargetTokens: clamp(
-        Math.trunc(numberOrDefault(config.content.slimStartTargetTokens, DEFAULT_CONFIG.content.slimStartTargetTokens ?? 600)),
-        100,
-        5000,
-      ),
+      tokenBudget: (['minimal', 'standard', 'full'].includes(config.content.tokenBudget as string)
+        ? config.content.tokenBudget
+        : DEFAULT_CONFIG.content.tokenBudget ?? 'standard') as 'minimal' | 'standard' | 'full',
     },
   };
 

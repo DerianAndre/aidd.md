@@ -49,8 +49,7 @@ export const DEFAULT_CONFIG: _AiddConfig = {
   },
   content: {
     overrideMode: 'merge',
-    slimStartEnabled: true,
-    slimStartTargetTokens: 600,
+    tokenBudget: 'standard',
   },
 };
 
