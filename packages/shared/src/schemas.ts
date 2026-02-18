@@ -44,16 +44,36 @@ export const aiProviderSchema = z.object({
 // Session State (Memory Layer 1)
 // ---------------------------------------------------------------------------
 
+export const tokenUsageSchema = z.object({
+  inputTokens: z.number().int().min(0),
+  outputTokens: z.number().int().min(0),
+  cacheReadTokens: z.number().int().min(0).optional(),
+  cacheWriteTokens: z.number().int().min(0).optional(),
+  totalCost: z.number().min(0).optional(),
+});
+
+export const modelFingerprintSchema = z.object({
+  avgSentenceLength: z.number(),
+  sentenceLengthVariance: z.number(),
+  typeTokenRatio: z.number(),
+  avgParagraphLength: z.number(),
+  passiveVoiceRatio: z.number(),
+  fillerDensity: z.number(),
+  questionFrequency: z.number(),
+});
+
 export const sessionOutcomeSchema = z.object({
   testsPassing: z.boolean(),
   complianceScore: z.number().min(0).max(100),
   reverts: z.number().int().min(0),
   reworks: z.number().int().min(0),
   userFeedback: z.enum(['positive', 'neutral', 'negative']).optional(),
+  contextEfficiency: z.number().optional(),
 });
 
 export const sessionStateSchema = z.object({
   id: z.string(),
+  name: z.string().optional(),
   memorySessionId: z.string().optional(),
   parentSessionId: z.string().optional(),
   branch: z.string(),
@@ -62,6 +82,8 @@ export const sessionStateSchema = z.object({
   startedAtTs: z.number().int().optional(),
   endedAtTs: z.number().int().optional(),
   aiProvider: aiProviderSchema,
+  input: z.string().optional(),
+  output: z.string().optional(),
   decisions: z.array(z.object({
     decision: z.string(),
     reasoning: z.string(),
@@ -96,6 +118,9 @@ export const sessionStateSchema = z.object({
   }),
   outcome: sessionOutcomeSchema.optional(),
   lifecycleSessionId: z.string().optional(),
+  tokenUsage: tokenUsageSchema.optional(),
+  tokenTelemetrySource: z.enum(['reported', 'estimated']).optional(),
+  fingerprint: modelFingerprintSchema.optional(),
   timingMetrics: z.object({
     startupMs: z.number().int().min(0).optional(),
     governanceOverheadMs: z.number().int().min(0).optional(),
@@ -315,5 +340,6 @@ export const aiddConfigSchema = z.object({
   content: z.object({
     overrideMode: z.enum(['merge', 'project_only', 'bundled_only']),
     tokenBudget: z.enum(['minimal', 'standard', 'full']).optional(),
+    sessionTracking: z.boolean().optional(),
   }),
 });

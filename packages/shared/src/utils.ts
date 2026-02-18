@@ -1,3 +1,18 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+/** Read the `version` field from the nearest `package.json` relative to a module's `import.meta.url`. */
+export function readPackageVersion(importMetaUrl: string): string {
+  const dir = dirname(fileURLToPath(importMetaUrl));
+  try {
+    const raw = readFileSync(join(dir, '..', 'package.json'), 'utf-8');
+    return (JSON.parse(raw) as { version: string }).version;
+  } catch {
+    return '0.0.0';
+  }
+}
+
 /** Parse YAML-like frontmatter from a markdown file. */
 export function parseFrontmatter(content: string): {
   frontmatter: Record<string, string>;

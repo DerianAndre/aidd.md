@@ -14,6 +14,12 @@ process.stdin.on('end', () => {
     // Only act on session end
     if (toolInput.action !== 'end') return;
 
+    const { isSessionTracking } = require('./lib/config.cjs');
+    if (!isSessionTracking()) {
+      console.log('[AIDD] Workflow-only mode \u2014 no tracking.');
+      return;
+    }
+
     const Database = require('better-sqlite3');
     const { resolve } = require('path');
     const db = new Database(resolve('.aidd', 'data.db'), { readonly: true });

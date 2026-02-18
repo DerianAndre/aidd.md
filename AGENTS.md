@@ -224,7 +224,10 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 
 ### SSOT
 
-`content/agents/routing.md` is the canonical agent hierarchy. Root `AGENTS.md` is a thin redirect for Gemini compatibility. If there is conflict between agent definitions and other files, agents win.
+- **`AGENTS.md` (this file)**: Operational protocol — startup, session lifecycle, memory operations, session end. Loaded by Gemini and other agents that read root `AGENTS.md`.
+- **`content/agents/routing.md`**: Agent hierarchy — roles, competency matrix, workflow orchestrators, system map. Canonical source for agent definitions.
+
+If there is conflict between agent definitions and other files, `content/agents/routing.md` wins for agent roles; this file wins for operational protocol.
 
 ### Commands
 

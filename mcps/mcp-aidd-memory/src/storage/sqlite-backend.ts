@@ -95,6 +95,17 @@ export class SqliteBackend implements StorageBackend {
     return now();
   }
 
+  private buildWhereClause(filters: Array<{ condition: string; value: unknown }>): { where: string; params: unknown[] } {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    for (const f of filters) {
+      conditions.push(f.condition);
+      params.push(f.value);
+    }
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    return { where, params };
+  }
+
   async initialize(): Promise<void> {
     ensureDir(this.config.aiddDir);
 
@@ -238,23 +249,12 @@ export class SqliteBackend implements StorageBackend {
   }
 
   async listSessions(filter?: SessionFilter): Promise<MemoryIndexEntry[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
+    const filters: Array<{ condition: string; value: unknown }> = [];
+    if (filter?.branch) filters.push({ condition: 'branch = ?', value: filter.branch });
+    if (filter?.status) filters.push({ condition: 'status = ?', value: filter.status });
+    if (filter?.memorySessionId) filters.push({ condition: 'memory_session_id = ?', value: filter.memorySessionId });
 
-    if (filter?.branch) {
-      conditions.push('branch = ?');
-      params.push(filter.branch);
-    }
-    if (filter?.status) {
-      conditions.push('status = ?');
-      params.push(filter.status);
-    }
-    if (filter?.memorySessionId) {
-      conditions.push('memory_session_id = ?');
-      params.push(filter.memorySessionId);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { where, params } = this.buildWhereClause(filters);
     const limit = filter?.limit ?? 50;
     const offset = filter?.offset ?? 0;
 
@@ -310,13 +310,10 @@ export class SqliteBackend implements StorageBackend {
   }
 
   async listObservations(filter?: { sessionId?: string; limit?: number }): Promise<SessionObservation[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
-    if (filter?.sessionId) {
-      conditions.push('session_id = ?');
-      params.push(filter.sessionId);
-    }
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const filters: Array<{ condition: string; value: unknown }> = [];
+    if (filter?.sessionId) filters.push({ condition: 'session_id = ?', value: filter.sessionId });
+
+    const { where, params } = this.buildWhereClause(filters);
     const limit = filter?.limit ?? 500;
     const rows = this.db.prepare(
       `SELECT * FROM observations ${where} ORDER BY created_at ASC LIMIT ?`,
@@ -523,19 +520,11 @@ export class SqliteBackend implements StorageBackend {
 
   async getAnalytics(query: AnalyticsQuery): Promise<AnalyticsResult> {
     if (query.metric === 'tool_usage') {
-      const conditions: string[] = [];
-      const params: unknown[] = [];
+      const filters: Array<{ condition: string; value: unknown }> = [];
+      if (query.dateStart) filters.push({ condition: 'timestamp >= ?', value: query.dateStart });
+      if (query.dateEnd) filters.push({ condition: 'timestamp <= ?', value: query.dateEnd });
 
-      if (query.dateStart) {
-        conditions.push('timestamp >= ?');
-        params.push(query.dateStart);
-      }
-      if (query.dateEnd) {
-        conditions.push('timestamp <= ?');
-        params.push(query.dateEnd);
-      }
-
-      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+      const { where, params } = this.buildWhereClause(filters);
       const limit = query.limit ?? 50;
 
       const rows = this.db.prepare(`
@@ -577,15 +566,10 @@ export class SqliteBackend implements StorageBackend {
   }
 
   async listBranches(filter?: { archived?: boolean }): Promise<BranchContext[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
+    const filters: Array<{ condition: string; value: unknown }> = [];
+    if (filter?.archived !== undefined) filters.push({ condition: 'archived = ?', value: filter.archived ? 1 : 0 });
 
-    if (filter?.archived !== undefined) {
-      conditions.push('archived = ?');
-      params.push(filter.archived ? 1 : 0);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { where, params } = this.buildWhereClause(filters);
     const rows = this.db.prepare(
       `SELECT data FROM branches ${where} ORDER BY updated_at DESC`,
     ).all(...params) as Array<{ data: string }>;
@@ -617,31 +601,14 @@ export class SqliteBackend implements StorageBackend {
   }
 
   async listEvolutionCandidates(filter?: EvolutionCandidateFilter): Promise<EvolutionCandidate[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
+    const filters: Array<{ condition: string; value: unknown }> = [];
+    if (filter?.type) filters.push({ condition: 'type = ?', value: filter.type });
+    if (filter?.title) filters.push({ condition: 'title LIKE ?', value: `%${filter.title}%` });
+    if (filter?.status) filters.push({ condition: 'status = ?', value: filter.status });
+    if (filter?.modelScope) filters.push({ condition: 'model_scope = ?', value: filter.modelScope });
+    if (filter?.minConfidence !== undefined) filters.push({ condition: 'confidence >= ?', value: filter.minConfidence });
 
-    if (filter?.type) {
-      conditions.push('type = ?');
-      params.push(filter.type);
-    }
-    if (filter?.title) {
-      conditions.push('title LIKE ?');
-      params.push(`%${filter.title}%`);
-    }
-    if (filter?.status) {
-      conditions.push('status = ?');
-      params.push(filter.status);
-    }
-    if (filter?.modelScope) {
-      conditions.push('model_scope = ?');
-      params.push(filter.modelScope);
-    }
-    if (filter?.minConfidence !== undefined) {
-      conditions.push('confidence >= ?');
-      params.push(filter.minConfidence);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { where, params } = this.buildWhereClause(filters);
     const rows = this.db.prepare(
       `SELECT data FROM evolution_candidates ${where} ORDER BY confidence DESC`,
     ).all(...params) as Array<{ data: string }>;
@@ -677,15 +644,10 @@ export class SqliteBackend implements StorageBackend {
   }
 
   async getEvolutionLog(filter?: EvolutionLogFilter): Promise<EvolutionLogEntry[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
+    const filters: Array<{ condition: string; value: unknown }> = [];
+    if (filter?.candidateId) filters.push({ condition: 'candidate_id = ?', value: filter.candidateId });
 
-    if (filter?.candidateId) {
-      conditions.push('candidate_id = ?');
-      params.push(filter.candidateId);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { where, params } = this.buildWhereClause(filters);
     const limit = filter?.limit ?? 50;
 
     const rows = this.db.prepare(
@@ -759,19 +721,11 @@ export class SqliteBackend implements StorageBackend {
   }
 
   async listDrafts(filter?: DraftFilter): Promise<DraftEntry[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
+    const filters: Array<{ condition: string; value: unknown }> = [];
+    if (filter?.category) filters.push({ condition: 'category = ?', value: filter.category });
+    if (filter?.status) filters.push({ condition: 'status = ?', value: filter.status });
 
-    if (filter?.category) {
-      conditions.push('category = ?');
-      params.push(filter.category);
-    }
-    if (filter?.status) {
-      conditions.push('status = ?');
-      params.push(filter.status);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { where, params } = this.buildWhereClause(filters);
     const limit = filter?.limit ?? 50;
     const rows = this.db.prepare(
       `SELECT * FROM drafts ${where} ORDER BY updated_at DESC LIMIT ?`,
@@ -836,15 +790,10 @@ export class SqliteBackend implements StorageBackend {
   }
 
   async listLifecycles(filter?: LifecycleFilter): Promise<LifecycleSession[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
+    const filters: Array<{ condition: string; value: unknown }> = [];
+    if (filter?.status) filters.push({ condition: 'status = ?', value: filter.status });
 
-    if (filter?.status) {
-      conditions.push('status = ?');
-      params.push(filter.status);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { where, params } = this.buildWhereClause(filters);
     const limit = filter?.limit ?? 50;
 
     const rows = this.db.prepare(
@@ -872,15 +821,10 @@ export class SqliteBackend implements StorageBackend {
   }
 
   async listPermanentMemory(filter?: PermanentMemoryFilter): Promise<PermanentMemoryEntry[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
+    const filters: Array<{ condition: string; value: unknown }> = [];
+    if (filter?.type) filters.push({ condition: 'type = ?', value: filter.type });
 
-    if (filter?.type) {
-      conditions.push('type = ?');
-      params.push(filter.type);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { where, params } = this.buildWhereClause(filters);
     const limit = filter?.limit ?? 100;
 
     const rows = this.db.prepare(
@@ -916,23 +860,12 @@ export class SqliteBackend implements StorageBackend {
   }
 
   async listBannedPatterns(filter?: BannedPatternFilter): Promise<BannedPattern[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
+    const filters: Array<{ condition: string; value: unknown }> = [];
+    if (filter?.active !== undefined) filters.push({ condition: 'active = ?', value: filter.active ? 1 : 0 });
+    if (filter?.modelScope) filters.push({ condition: '(model_scope = ? OR model_scope IS NULL)', value: filter.modelScope });
+    if (filter?.category) filters.push({ condition: 'category = ?', value: filter.category });
 
-    if (filter?.active !== undefined) {
-      conditions.push('active = ?');
-      params.push(filter.active ? 1 : 0);
-    }
-    if (filter?.modelScope) {
-      conditions.push('(model_scope = ? OR model_scope IS NULL)');
-      params.push(filter.modelScope);
-    }
-    if (filter?.category) {
-      conditions.push('category = ?');
-      params.push(filter.category);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { where, params } = this.buildWhereClause(filters);
     const rows = this.db.prepare(
       `SELECT * FROM banned_patterns ${where} ORDER BY use_count DESC`,
     ).all(...params) as Array<Record<string, unknown>>;
@@ -1047,19 +980,11 @@ export class SqliteBackend implements StorageBackend {
   }
 
   async listAuditScores(filter?: { sessionId?: string; modelId?: string; limit?: number }): Promise<AuditScore[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
+    const filters: Array<{ condition: string; value: unknown }> = [];
+    if (filter?.sessionId) filters.push({ condition: 'session_id = ?', value: filter.sessionId });
+    if (filter?.modelId) filters.push({ condition: 'model_id = ?', value: filter.modelId });
 
-    if (filter?.sessionId) {
-      conditions.push('session_id = ?');
-      params.push(filter.sessionId);
-    }
-    if (filter?.modelId) {
-      conditions.push('model_id = ?');
-      params.push(filter.modelId);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { where, params } = this.buildWhereClause(filters);
     const limit = filter?.limit ?? 50;
 
     const rows = this.db.prepare(
@@ -1113,20 +1038,18 @@ export class SqliteBackend implements StorageBackend {
   }
 
   async listArtifacts(filter?: ArtifactFilter): Promise<ArtifactEntry[]> {
-    const clauses: string[] = [];
-    const params: unknown[] = [];
+    const filters: Array<{ condition: string; value: unknown }> = [];
+    if (filter?.type) filters.push({ condition: 'type = ?', value: filter.type });
+    if (filter?.status) filters.push({ condition: 'status = ?', value: filter.status });
+    if (filter?.feature) filters.push({ condition: 'feature = ?', value: filter.feature });
+    if (filter?.sessionId) filters.push({ condition: 'session_id = ?', value: filter.sessionId });
 
-    if (filter?.type) { clauses.push('type = ?'); params.push(filter.type); }
-    if (filter?.status) { clauses.push('status = ?'); params.push(filter.status); }
-    if (filter?.feature) { clauses.push('feature = ?'); params.push(filter.feature); }
-    if (filter?.sessionId) { clauses.push('session_id = ?'); params.push(filter.sessionId); }
-
-    const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+    const { where, params } = this.buildWhereClause(filters);
     const limit = filter?.limit ?? 50;
-    const sql = `SELECT * FROM artifacts ${where} ORDER BY date DESC, created_at DESC LIMIT ?`;
-    params.push(limit);
 
-    const rows = this.db.prepare(sql).all(...params) as Record<string, unknown>[];
+    const rows = this.db.prepare(
+      `SELECT * FROM artifacts ${where} ORDER BY date DESC, created_at DESC LIMIT ?`,
+    ).all(...params, limit) as Record<string, unknown>[];
     return rows.map((r) => this.rowToArtifact(r));
   }
 
@@ -1156,15 +1079,10 @@ export class SqliteBackend implements StorageBackend {
   }
 
   async listHealthSnapshots(filter?: HealthSnapshotFilter): Promise<HealthSnapshot[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
+    const filters: Array<{ condition: string; value: unknown }> = [];
+    if (filter?.since) filters.push({ condition: 'timestamp >= ?', value: this.toUnixMs(filter.since) });
 
-    if (filter?.since) {
-      conditions.push('timestamp >= ?');
-      params.push(this.toUnixMs(filter.since));
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { where, params } = this.buildWhereClause(filters);
     const limit = filter?.limit ?? 50;
 
     const rows = this.db.prepare(

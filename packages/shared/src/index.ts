@@ -115,6 +115,7 @@ export type { Logger, LogLevel } from './logger.js';
 
 // Utilities
 export {
+  readPackageVersion,
   parseFrontmatter,
   extractTitle,
   generateId,
@@ -152,6 +153,8 @@ export {
   sessionObservationSchema,
   sessionStateSchema,
   sessionOutcomeSchema,
+  tokenUsageSchema,
+  modelFingerprintSchema,
   branchContextSchema,
   decisionEntrySchema,
   mistakeEntrySchema,

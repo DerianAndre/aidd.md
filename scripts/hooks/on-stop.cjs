@@ -5,7 +5,10 @@
 // Adapter-agnostic — referenced by .claude/settings.json and other adapters.
 const Database = require('better-sqlite3');
 const { resolve } = require('path');
+const { isSessionTracking } = require('./lib/config.cjs');
 try {
+  if (!isSessionTracking()) { process.exit(0); }
+
   const db = new Database(resolve('.aidd', 'data.db'), { readonly: true });
   const row = db.prepare("SELECT id, data FROM sessions WHERE status = 'active' ORDER BY started_at DESC LIMIT 1").get();
   const activeArts = db.prepare("SELECT id, type, title FROM artifacts WHERE status = 'active' ORDER BY type, created_at DESC").all();

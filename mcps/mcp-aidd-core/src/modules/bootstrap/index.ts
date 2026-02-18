@@ -62,6 +62,7 @@ function resolveWorkflowMode(classification?: {
 /**
  * Build the workflow pipeline section for aidd_start response.
  * BAP (Brainstorm & Ask → Plan) with token budget verbosity.
+ * When sessionTracking is false, tool call instructions are replaced with plain guidance.
  */
 function buildWorkflowPipeline(
   sessionId: string | null,
@@ -71,70 +72,114 @@ function buildWorkflowPipeline(
     complexity?: string;
   },
   tokenBudget: TokenBudget = 'standard',
+  sessionTracking: boolean = true,
 ): string[] {
   const sid = sessionId ?? '<SESSION_ID>';
   const lines: string[] = [];
   const { mode, skipped } = resolveWorkflowMode(classification);
+  const t = sessionTracking; // shorthand for conditionals
 
   // --- Fast-Track (always compact regardless of budget) ---
   if (mode === 'fast-track') {
     const skippedLabel = skipped.join(', ') || 'none';
     lines.push('\n## Workflow\n');
-    lines.push(`Session: \`${sid}\` | Mode: Fast-Track (skipping: ${skippedLabel})\n`);
-    lines.push(`1. **Build** \u2014 Execute directly. Update: \`aidd_session { action: "update", id: "${sid}", tasksCompleted: [...] }\``);
-    lines.push(`2. **Ship** \u2014 Create retro artifact. End: \`aidd_session { action: "end", id: "${sid}" }\``);
+    lines.push(t
+      ? `Session: \`${sid}\` | Mode: Fast-Track (skipping: ${skippedLabel})\n`
+      : `Mode: Workflow-only (no tracking) | Fast-Track (skipping: ${skippedLabel})\n`);
+    lines.push(t
+      ? `1. **Build** \u2014 Execute directly. Update: \`aidd_session { action: "update", id: "${sid}", tasksCompleted: [...] }\``
+      : '1. **Build** \u2014 Execute directly.');
+    lines.push(t
+      ? `2. **Ship** \u2014 Create retro artifact. End: \`aidd_session { action: "end", id: "${sid}" }\``
+      : '2. **Ship** \u2014 Review results. Wrap up.');
     return lines;
   }
 
   // --- Guided mode ---
   if (mode === 'guided') {
     lines.push('\n## Workflow\n');
-    lines.push(`Session: \`${sid}\` | Mode: Guided | Budget: ${tokenBudget}\n`);
+    lines.push(t
+      ? `Session: \`${sid}\` | Mode: Guided | Budget: ${tokenBudget}\n`
+      : `Mode: Workflow-only (no tracking) | Guided | Budget: ${tokenBudget}\n`);
     if (tokenBudget === 'minimal') {
-      lines.push('1. **Ask & Plan** \u2014 Ask user \u2192 plan artifact \u2192 approval');
-      lines.push('2. **Build** \u2014 Execute. Update session.');
-      lines.push('3. **Verify + Ship** \u2014 Typecheck/tests/build. Retro \u2192 archive \u2192 end session.');
+      lines.push(t
+        ? '1. **Ask & Plan** \u2014 Ask user \u2192 plan artifact \u2192 approval'
+        : '1. **Ask & Plan** \u2014 Ask user \u2192 plan \u2192 approval');
+      lines.push(t
+        ? '2. **Build** \u2014 Execute. Update session.'
+        : '2. **Build** \u2014 Execute plan.');
+      lines.push(t
+        ? '3. **Verify + Ship** \u2014 Typecheck/tests/build. Retro \u2192 archive \u2192 end session.'
+        : '3. **Verify + Ship** \u2014 Typecheck/tests/build. Review and wrap up.');
     } else {
       lines.push('### Step 1 \u2014 Ask & Plan');
       lines.push('- Ask the user at least 1 clarifying question about scope, constraints, and preferences.');
       lines.push('- Surface anything they may have missed: dependencies, side effects, better approaches.');
       lines.push('- Recommend mode change if complexity differs from initial assessment.');
-      lines.push(`- Enter plan mode. Create plan artifact: \`aidd_artifact { action: "create", type: "plan", sessionId: "${sid}" }\`. Exit for user approval.\n`);
+      lines.push(t
+        ? `- Enter plan mode. Create plan artifact: \`aidd_artifact { action: "create", type: "plan", sessionId: "${sid}" }\`. Exit for user approval.\n`
+        : '- Enter plan mode. Create a plan. Exit for user approval.\n');
       lines.push('### Step 2 \u2014 Build');
-      lines.push(`- Execute plan. Update: \`aidd_session { action: "update", id: "${sid}", tasksCompleted: [...] }\`\n`);
+      lines.push(t
+        ? `- Execute plan. Update: \`aidd_session { action: "update", id: "${sid}", tasksCompleted: [...] }\`\n`
+        : '- Execute plan.\n');
       lines.push('### Step 3 \u2014 Verify');
-      lines.push('- Typecheck + tests + build. Create checklist artifact.\n');
+      lines.push(t
+        ? '- Typecheck + tests + build. Create checklist artifact.\n'
+        : '- Typecheck + tests + build.\n');
       lines.push('### Step 4 \u2014 Ship');
-      lines.push(`- Create retro artifact. Archive all. End: \`aidd_session { action: "end", id: "${sid}" }\``);
+      lines.push(t
+        ? `- Create retro artifact. Archive all. End: \`aidd_session { action: "end", id: "${sid}" }\``
+        : '- Review results. Wrap up.');
     }
     return lines;
   }
 
   // --- Full BAP mode ---
   lines.push('\n## Workflow\n');
-  lines.push(`Session: \`${sid}\` | Mode: Full | Budget: ${tokenBudget}`);
+  lines.push(t
+    ? `Session: \`${sid}\` | Mode: Full | Budget: ${tokenBudget}`
+    : `Mode: Workflow-only (no tracking) | Full | Budget: ${tokenBudget}`);
 
   if (tokenBudget === 'minimal') {
     lines.push('');
-    lines.push('1. **BAP** \u2014 Memory search \u2192 ask user \u2192 brainstorm artifact \u2192 plan artifact \u2192 approval');
-    lines.push('2. **Build** \u2014 Execute. Update session.');
+    lines.push(t
+      ? '1. **BAP** \u2014 Memory search \u2192 ask user \u2192 brainstorm artifact \u2192 plan artifact \u2192 approval'
+      : '1. **BAP** \u2014 Explore \u2192 ask user \u2192 brainstorm \u2192 plan \u2192 approval');
+    lines.push(t
+      ? '2. **Build** \u2014 Execute. Update session.'
+      : '2. **Build** \u2014 Execute plan.');
     lines.push('3. **Verify** \u2014 Typecheck + tests + build.');
-    lines.push('4. **Ship** \u2014 Retro artifact \u2192 archive \u2192 end session.');
+    lines.push(t
+      ? '4. **Ship** \u2014 Retro artifact \u2192 archive \u2192 end session.'
+      : '4. **Ship** \u2014 Review results. Wrap up.');
     return lines;
   }
 
   if (tokenBudget === 'standard') {
     lines.push('\n### Step 1 \u2014 BAP (Brainstorm & Ask \u2192 Plan)\n');
-    lines.push(`- Search memory: \`aidd_memory_search { query: "..." }\`. Explore codebase.`);
+    lines.push(t
+      ? `- Search memory: \`aidd_memory_search { query: "..." }\`. Explore codebase.`
+      : '- Search memory and explore codebase for prior context.');
     lines.push('- Ask the user questions about intent, scope, constraints, and risks. Surface what they may have missed.');
-    lines.push(`- Create brainstorm artifact: \`aidd_artifact { action: "create", type: "brainstorm", sessionId: "${sid}" }\``);
-    lines.push(`- Enter plan mode. Create plan artifact. Exit for approval. On rejection \u2192 redo BAP.\n`);
+    lines.push(t
+      ? `- Create brainstorm artifact: \`aidd_artifact { action: "create", type: "brainstorm", sessionId: "${sid}" }\``
+      : '- Brainstorm options, trade-offs, and edge cases.');
+    lines.push(t
+      ? `- Enter plan mode. Create plan artifact. Exit for approval. On rejection \u2192 redo BAP.\n`
+      : '- Enter plan mode. Create a plan. Exit for approval. On rejection \u2192 redo BAP.\n');
     lines.push('### Step 2 \u2014 Build');
-    lines.push(`- Execute plan. Update: \`aidd_session { action: "update", id: "${sid}", tasksCompleted: [...] }\`\n`);
+    lines.push(t
+      ? `- Execute plan. Update: \`aidd_session { action: "update", id: "${sid}", tasksCompleted: [...] }\`\n`
+      : '- Execute plan.\n');
     lines.push('### Step 3 \u2014 Verify');
-    lines.push('- Typecheck + tests + build. Create checklist artifact.\n');
+    lines.push(t
+      ? '- Typecheck + tests + build. Create checklist artifact.\n'
+      : '- Typecheck + tests + build.\n');
     lines.push('### Step 4 \u2014 Ship');
-    lines.push(`- Create retro artifact. Archive all. End: \`aidd_session { action: "end", id: "${sid}" }\``);
+    lines.push(t
+      ? `- Create retro artifact. Archive all. End: \`aidd_session { action: "end", id: "${sid}" }\``
+      : '- Review results and lessons learned. Wrap up.');
     return lines;
   }
 
@@ -143,7 +188,9 @@ function buildWorkflowPipeline(
   lines.push(` | Recommended questions: ${questions}\n`);
   lines.push('### Step 1 \u2014 BAP (Brainstorm & Ask \u2192 Plan)\n');
   lines.push('**Brainstorm & Ask** (interleaved \u2014 explore and ask in conversation):');
-  lines.push(`- Search memory for prior context: \`aidd_memory_search { query: "..." }\``);
+  lines.push(t
+    ? `- Search memory for prior context: \`aidd_memory_search { query: "..." }\``
+    : '- Search memory and explore codebase for prior context');
   lines.push('- Explore the codebase: read related files, trace code paths, understand existing patterns');
   lines.push('- Brainstorm options, trade-offs, and edge cases');
   lines.push('- Ask the user targeted questions. Assume they do NOT see the full picture. Surface:');
@@ -153,23 +200,38 @@ function buildWorkflowPipeline(
   lines.push('  - **Risks**: What could go wrong? What assumptions are we making?');
   lines.push('  - **Alternatives**: Is there an existing solution, library, or pattern that already handles this?');
   lines.push('- Based on findings, recommend workflow mode: "I recommend [full/guided/fast-track] because..."');
-  lines.push(`- Create brainstorm artifact: \`aidd_artifact { action: "create", type: "brainstorm", feature: "<slug>", title: "Brainstorm: <topic>", sessionId: "${sid}", content: "## Options\\n...\\n## Trade-offs\\n...\\n## Recommendations\\n..." }\`\n`);
-  lines.push('**Plan** (after alignment with user):');
-  lines.push(`- Enter plan mode. Create plan artifact: \`aidd_artifact { action: "create", type: "plan", feature: "<slug>", title: "Plan: <feature>", sessionId: "${sid}" }\``);
+  if (t) {
+    lines.push(`- Create brainstorm artifact: \`aidd_artifact { action: "create", type: "brainstorm", feature: "<slug>", title: "Brainstorm: <topic>", sessionId: "${sid}", content: "## Options\\n...\\n## Trade-offs\\n...\\n## Recommendations\\n..." }\`\n`);
+    lines.push('**Plan** (after alignment with user):');
+    lines.push(`- Enter plan mode. Create plan artifact: \`aidd_artifact { action: "create", type: "plan", feature: "<slug>", title: "Plan: <feature>", sessionId: "${sid}" }\``);
+  } else {
+    lines.push('- Document your brainstorm findings (options, trade-offs, recommendations)\n');
+    lines.push('**Plan** (after alignment with user):');
+    lines.push('- Enter plan mode. Create a plan. Exit for user approval.');
+  }
   lines.push('- Exit for user approval. On rejection \u2192 return to Brainstorm & Ask.\n');
   lines.push('### Step 2 \u2014 Build');
   lines.push('- Implement the approved plan');
-  lines.push(`- Update progress: \`aidd_session { action: "update", id: "${sid}", tasksCompleted: [...], filesModified: [...] }\``);
+  if (t) {
+    lines.push(`- Update progress: \`aidd_session { action: "update", id: "${sid}", tasksCompleted: [...], filesModified: [...] }\``);
+  }
   lines.push(`- For errors: \`aidd_diagnose_error { error: "..." }\`\n`);
   lines.push('### Step 3 \u2014 Verify');
   lines.push('- Run typecheck + tests + build');
-  lines.push(`- Create checklist: \`aidd_artifact { action: "create", type: "checklist", sessionId: "${sid}", content: "- [ ] typecheck\\n- [ ] tests\\n- [ ] build" }\``);
+  if (t) {
+    lines.push(`- Create checklist: \`aidd_artifact { action: "create", type: "checklist", sessionId: "${sid}", content: "- [ ] typecheck\\n- [ ] tests\\n- [ ] build" }\``);
+  }
   lines.push('- If checks fail \u2192 return to Build\n');
   lines.push('### Step 4 \u2014 Ship');
-  lines.push(`- Create retro: \`aidd_artifact { action: "create", type: "retro", sessionId: "${sid}", content: "## What worked\\n...\\n## What didn\\'t\\n...\\n## Lessons\\n..." }\``);
-  lines.push(`- Archive all artifacts: \`aidd_artifact { action: "archive", id: "..." }\``);
-  lines.push('- Record permanent memory if significant: `aidd_memory_add_decision` / `aidd_memory_add_mistake` / `aidd_memory_add_convention`');
-  lines.push(`- End: \`aidd_session { action: "end", id: "${sid}", outcome: { testsPassing: true, complianceScore: 90, reverts: 0, reworks: 0 } }\``);
+  if (t) {
+    lines.push(`- Create retro: \`aidd_artifact { action: "create", type: "retro", sessionId: "${sid}", content: "## What worked\\n...\\n## What didn\\'t\\n...\\n## Lessons\\n..." }\``);
+    lines.push(`- Archive all artifacts: \`aidd_artifact { action: "archive", id: "..." }\``);
+    lines.push('- Record permanent memory if significant: `aidd_memory_add_decision` / `aidd_memory_add_mistake` / `aidd_memory_add_convention`');
+    lines.push(`- End: \`aidd_session { action: "end", id: "${sid}", outcome: { testsPassing: true, complianceScore: 90, reverts: 0, reworks: 0 } }\``);
+  } else {
+    lines.push('- Review results and lessons learned.');
+    lines.push('- Wrap up the session.');
+  }
 
   return lines;
 }
@@ -321,7 +383,36 @@ export const bootstrapModule: AiddModule = {
         const paramBudget = a['tokenBudget'] as TokenBudget | undefined;
         const tokenBudget: TokenBudget = paramBudget ?? configBudget;
 
+        const sessionTracking = liveConfig.content.sessionTracking; // undefined | true | false
+
         const sections: string[] = [];
+
+        // =================================================================
+        // 0. Setup prompt — when sessionTracking is not configured
+        // =================================================================
+        if (sessionTracking === undefined) {
+          sections.push('[[aidd.md]](https://aidd.md) Engine - ON');
+          sections.push('- **Session**: pending setup\n');
+
+          if (info.stack.name) {
+            sections.push(`- **Package**: ${info.stack.name}${info.stack.version ? ` v${info.stack.version}` : ''}`);
+          }
+          const deps = Object.keys(info.stack.dependencies);
+          if (deps.length > 0) {
+            const topDeps = deps.slice(0, 15).join(', ');
+            sections.push(`- **Dependencies** (${deps.length}): ${topDeps}${deps.length > 15 ? '...' : ''}`);
+          }
+
+          sections.push('\n## Setup Required\n');
+          sections.push('AIDD preferences are not configured yet. Ask the user:\n');
+          sections.push('1. **Session tracking**: Full tracking (sessions, artifacts, observations saved to DB) or Workflow-only (follow AIDD workflow steps without DB persistence)?');
+          sections.push('2. **Token budget**: Minimal (~400 tok), Standard (~600 tok), or Full (~800+ tok)?\n');
+          sections.push('After the user answers:');
+          sections.push('1. Save preferences to `.aidd/config.json` — set `content.sessionTracking` (boolean) and `content.tokenBudget` (string)');
+          sections.push('2. Call `aidd_start` again to initialize the workflow.');
+
+          return createTextResult(sections.join('\n'));
+        }
 
         // =================================================================
         // 1. Auto-start session via cross-module service
@@ -329,7 +420,7 @@ export const bootstrapModule: AiddModule = {
         let sessionId: string | null = null;
         const startSession = context.services['startSession'];
 
-        if (startSession) {
+        if (sessionTracking && startSession) {
           try {
             const branch = (a['branch'] as string) || detectGitBranch(context.projectRoot);
             const result = await startSession({
@@ -356,7 +447,9 @@ export const bootstrapModule: AiddModule = {
         // =================================================================
         sections.push('[[aidd.md]](https://aidd.md) Engine - ON');
 
-        if (sessionId) {
+        if (!sessionTracking) {
+          sections.push('- **Session**: workflow-only (no tracking)');
+        } else if (sessionId) {
           sections.push(`- **Session**: \`${sessionId}\` (active)`);
         } else {
           sections.push('- **Session**: failed to auto-start — call `aidd_session { action: "start" }` manually');
@@ -383,11 +476,11 @@ export const bootstrapModule: AiddModule = {
         }
 
         // =================================================================
-        // 4. PAPI: Pre-emptive mistake injection (both slim and full)
+        // 4. PAPI: Pre-emptive mistake injection (requires DB — skip when not tracking)
         // =================================================================
         const queryMistakes = context.services['queryDomainMistakes'] as
           ((domain: string, limit: number) => Promise<Array<{ error: string; fix: string }>>) | undefined;
-        if (queryMistakes && classification?.domain) {
+        if (sessionTracking && queryMistakes && classification?.domain) {
           try {
             const hazards = await queryMistakes(classification.domain, 3);
             if (hazards.length > 0) {
@@ -396,13 +489,15 @@ export const bootstrapModule: AiddModule = {
                 sections.push(`- **${h.error}** → ${h.fix}`);
               }
             }
-          } catch { /* silent — PAPI is best-effort */ }
+          } catch (err) {
+            context.logger.warn('Failed to query domain mistakes for PAPI hazard injection', err);
+          }
         }
 
         // =================================================================
         // 4b. Workflow Pipeline (both slim and full)
         // =================================================================
-        const pipelineLines = buildWorkflowPipeline(sessionId, classification, tokenBudget);
+        const pipelineLines = buildWorkflowPipeline(sessionId, classification, tokenBudget, sessionTracking);
         sections.push(...pipelineLines);
 
         if (tokenBudget === 'minimal') {
@@ -626,10 +721,10 @@ export const bootstrapModule: AiddModule = {
           }
         }
 
-        // Fire-and-forget: update session with timing metrics
+        // Fire-and-forget: update session with timing metrics (skip when not tracking)
         const updateTiming = context.services['updateSessionTiming'] as
           ((id: string, ms: number) => Promise<void>) | undefined;
-        if (sessionId && updateTiming) {
+        if (sessionTracking && sessionId && updateTiming) {
           updateTiming(sessionId, startupMs).catch(() => {});
         }
 

@@ -105,7 +105,7 @@ When `content/` is present alongside `AGENTS.md`, Gemini reads its contents for 
 
 ## 5. MCP Integration
 
-When the MCP server is configured in a Gemini-compatible environment, all 71 AIDD tools become available. The critical path:
+When the MCP server is configured in a Gemini-compatible environment, all 82 AIDD tools become available. The critical path:
 
 | Tool | When | Purpose |
 |------|------|---------|

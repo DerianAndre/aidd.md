@@ -4,6 +4,9 @@
 // Exit 2 + stderr = block. Exit 0 = allow. Fail-open on DB errors.
 const Database = require('better-sqlite3');
 const { resolve } = require('path');
+const { isSessionTracking } = require('./lib/config.cjs');
+
+if (!isSessionTracking()) { process.exit(0); }
 
 let input = '';
 process.stdin.setEncoding('utf8');

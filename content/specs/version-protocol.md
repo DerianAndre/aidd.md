@@ -44,9 +44,9 @@ Actions:
 
 Actions:
 - Check for AIDD structure (`AGENTS.md` + `rules/` + `skills/`): if found, load `AGENTS.md` as the source of truth for agent behavior.
-- Check for `ai/` folder (`AGENTS.md`, `memory/`, `rules/`, `llms/`): if found, load `AGENTS.md` and consult memory files.
+- Check for `.aidd/` folder (`AGENTS.md`, `memory/`, `rules/`, `llms/`): if found, load `AGENTS.md` and consult memory files.
 - Check for project-specific configuration (e.g., `CLAUDE.md`, `.cursorrules`, `.github/copilot-instructions.md`): read for project conventions.
-- If `ai/memory/` or `memory/` exists, consult `decisions.json`, `mistakes.json`, and `conventions.json` for prior context.
+- If `.aidd/memory/` or `memory/` exists, consult `decisions.json`, `mistakes.json`, and `conventions.json` for prior context.
 
 **Output**: Loaded project conventions, known decisions, and prior mistakes.
 

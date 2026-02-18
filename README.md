@@ -102,7 +102,7 @@ Confirm your role and loaded rules before proceeding.
 | Knowledge Architect | Documentation sync                      | "update docs", "document"       |
 | i18n Specialist     | Internationalization                    | "i18n", "translate"             |
 
-### Rules (11 files)
+### Rules (13 files)
 
 Immutable constraints — prescriptive, MUST follow. Located in `content/rules/`:
 
@@ -119,21 +119,26 @@ Immutable constraints — prescriptive, MUST follow. Located in `content/rules/`
 | `git-workflow.md`  | Commit format, branch strategy, spec-first flow              |
 | `documentation.md` | Normalized patterns, folder structure, ADR format            |
 | `performance.md`   | Performance budgets, optimization patterns                   |
+| `deliverables.md`  | Output format standards and deliverable requirements         |
 
-### Specifications (8 files)
+### Specifications (13 files)
 
 Formal reference documents — descriptive, detailed rationale. Located in `content/specs/`:
 
-| Specs                 | Content                                                     |
-| --------------------- | ----------------------------------------------------------- |
-| `aidd-lifecycle.md`   | 6-phase AI-Driven Development lifecycle                     |
-| `bluf-6.md`           | 6-part communication protocol                               |
-| `heuristics.md`       | 10 decision heuristics with examples                        |
-| `version-protocol.md` | 4-step version verification                                 |
-| `memory-layer.md`     | Project memory integration (decisions/mistakes/conventions) |
-| `supported-agents.md` | Agent registry and role definitions                         |
-| `model-matrix.md`     | Multi-provider model routing matrix                         |
-| `prompt-evolution.md` | Prompt evolution and optimization patterns                  |
+| Specs                        | Content                                                     |
+| ---------------------------- | ----------------------------------------------------------- |
+| `aidd-lifecycle.md`          | 6-phase AI-Driven Development lifecycle                     |
+| `bluf-6.md`                  | 6-part communication protocol                               |
+| `heuristics.md`              | 10 decision heuristics with examples                        |
+| `version-protocol.md`        | 4-step version verification                                 |
+| `memory-layer.md`            | Project memory integration (decisions/mistakes/conventions) |
+| `supported-agents.md`        | Agent registry and role definitions                         |
+| `model-matrix.md`            | Multi-provider model routing matrix                         |
+| `prompt-evolution.md`        | Prompt evolution and optimization patterns                  |
+| `orchestrator.md`            | Multi-agent workflow orchestration standards                |
+| `fast-track.md`              | Per-phase workflow skip for trivial tasks                   |
+| `implementation-summary.md`  | Structured completion report for SHIP phase                 |
+| `ltum-aidd.md`               | Low Token Usage Mode protocol                               |
 
 ### Skills (11 directories)
 

@@ -4,12 +4,17 @@
 // Reads stdin for tool context. Adapter-agnostic.
 const Database = require('better-sqlite3');
 const { resolve } = require('path');
+const { isSessionTracking } = require('./lib/config.cjs');
 
 let input = '';
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', (d) => { input += d; });
 process.stdin.on('end', () => {
   try {
+    if (!isSessionTracking()) {
+      console.log('[AIDD] Workflow-only mode \u2014 no tracking.');
+      return;
+    }
     const db = new Database(resolve('.aidd', 'data.db'), { readonly: true });
     const session = db.prepare("SELECT id, data FROM sessions WHERE status = 'active' ORDER BY started_at DESC LIMIT 1").get();
     const brainstorm = db.prepare("SELECT id FROM artifacts WHERE type = 'brainstorm' AND status = 'active' ORDER BY created_at DESC LIMIT 1").get();

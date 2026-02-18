@@ -1,7 +1,7 @@
-import { createAiddServer } from '@aidd.md/mcp-shared';
+import { createAiddServer, readPackageVersion } from '@aidd.md/mcp-shared';
 import { toolsModules } from './modules/index.js';
 
-const PKG_VERSION = '1.0.0';
+const PKG_VERSION = readPackageVersion(import.meta.url);
 
 export function createToolsServer(projectPath?: string) {
   return createAiddServer({

@@ -104,7 +104,7 @@ The `.cursor/rules/` symlink maps directly to AIDD's `content/rules/` structure:
 
 ## 4. MCP Integration
 
-When the MCP server is configured, Cursor gains access to all 71 AIDD tools. The critical path:
+When the MCP server is configured, Cursor gains access to all 82 AIDD tools. The critical path:
 
 | Tool | When | Purpose |
 |------|------|---------|

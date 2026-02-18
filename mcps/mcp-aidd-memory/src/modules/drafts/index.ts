@@ -9,6 +9,7 @@ import {
   ensureDir,
   generateId,
   now,
+  createLogger,
 } from '@aidd.md/mcp-shared';
 import type { AiddModule, ModuleContext, DraftEntry } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -33,6 +34,8 @@ function resolveTargetDir(projectRoot: string, category: DraftCategory): string 
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
+
+const logger = createLogger('drafts');
 
 export function createDraftsModule(storage: StorageProvider): AiddModule {
   return {
@@ -185,7 +188,9 @@ export function createDraftsModule(storage: StorageProvider): AiddModule {
                 });
                 evolutionUpdated = true;
               }
-            } catch { /* non-critical — draft approval succeeds regardless */ }
+            } catch (err) {
+              logger.warn('Failed to update linked evolution candidate on draft approval', err);
+            }
           }
 
           return createJsonResult({
@@ -242,7 +247,9 @@ export function createDraftsModule(storage: StorageProvider): AiddModule {
                 });
                 evolutionUpdated = true;
               }
-            } catch { /* non-critical */ }
+            } catch (err) {
+              logger.warn('Failed to update linked evolution candidate on draft rejection', err);
+            }
           }
 
           return createJsonResult({

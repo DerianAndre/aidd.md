@@ -128,7 +128,7 @@ Workflows are multi-step procedures. Place in `content/workflows/`.
 ## Rollback Plan
 ```
 
-**Orchestrators** (multi-agent workflows): Follow `content/workflows/SPEC.md` — requires 3+ skills, model tier specs, success criteria, and cost estimation.
+**Orchestrators** (multi-agent workflows): Follow `content/specs/orchestrator.md` — requires 3+ skills, model tier specs, success criteria, and cost estimation.
 
 ---
 

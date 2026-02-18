@@ -170,7 +170,7 @@
 - **Before releases** ensure docs are current (use `docs`)
 - **Major refactoring** requiring architecture + code + docs updates
 
-See [`content/workflows/SPEC.md`](./content/workflows/SPEC.md) for orchestrator standards and creation guidelines.
+See [`content/specs/orchestrator.md`](../specs/orchestrator.md) for orchestrator standards and creation guidelines.
 
 ---
 

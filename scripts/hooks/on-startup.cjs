@@ -6,7 +6,12 @@
 const Database = require('better-sqlite3');
 const { resolve } = require('path');
 const { execFileSync } = require('child_process');
+const { isSessionTracking } = require('./lib/config.cjs');
 try {
+  if (!isSessionTracking()) {
+    console.log('[AIDD] Workflow-only mode \u2014 no tracking. Call aidd_start for workflow guidance.');
+    process.exit(0);
+  }
   // LTUM hygiene: fix stale active sessions locally before reporting state.
   try {
     execFileSync('node', ['scripts/ltum/normalize-sessions.mjs', '--quiet'], {

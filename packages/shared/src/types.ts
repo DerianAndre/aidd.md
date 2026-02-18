@@ -129,6 +129,8 @@ export interface AiddConfig {
     overrideMode: 'merge' | 'project_only' | 'bundled_only';
     /** Token budget: minimal (~400 tok), standard (~600), full (~800+). Default: standard. */
     tokenBudget?: TokenBudget;
+    /** When false, AI follows AIDD workflow without DB persistence (no sessions, artifacts, observations). Undefined triggers setup prompt. */
+    sessionTracking?: boolean;
     paths?: ContentPaths;
   };
 }

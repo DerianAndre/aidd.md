@@ -1,9 +1,9 @@
-import { createAiddServer } from '@aidd.md/mcp-shared';
+import { createAiddServer, readPackageVersion } from '@aidd.md/mcp-shared';
 import { coreModules } from '@aidd.md/mcp-core/modules';
 import { memoryModules } from '@aidd.md/mcp-memory/modules';
 import { toolsModules } from '@aidd.md/mcp-tools/modules';
 
-const PKG_VERSION = '1.0.0';
+const PKG_VERSION = readPackageVersion(import.meta.url);
 
 export function createEngineServer(projectPath?: string) {
   return createAiddServer({

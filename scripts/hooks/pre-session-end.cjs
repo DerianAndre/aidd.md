@@ -6,6 +6,7 @@
 const Database = require('better-sqlite3');
 const { resolve } = require('path');
 const { existsSync, readFileSync } = require('fs');
+const { isSessionTracking } = require('./lib/config.cjs');
 
 let input = '';
 process.stdin.setEncoding('utf8');
@@ -19,6 +20,9 @@ process.stdin.on('end', () => {
     if (toolInput.action !== 'end') {
       process.exit(0);
     }
+
+    // Workflow-only mode: no sessions to validate
+    if (!isSessionTracking()) { process.exit(0); }
 
     const db = new Database(resolve('.aidd', 'data.db'), { readonly: true });
 

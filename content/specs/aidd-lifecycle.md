@@ -37,7 +37,7 @@ Core principle: **specification and implementation are separate commits**. The s
 **Objective**: Achieve full situational awareness and define the feature with testable acceptance criteria in one pass.
 
 - Read project AGENTS.md (if present) as the source of truth for agent configuration.
-- Scan `docs/`, `ai/memory/`, and project-specific configuration files.
+- Scan `docs/`, `.aidd/memory/`, and project-specific configuration files.
 - Analyze codebase: directory structure, naming conventions, active patterns.
 - Identify relevant domain concepts, existing abstractions, and dependency graph.
 - Consult `memory/decisions.json` and `memory/conventions.json` if they exist.

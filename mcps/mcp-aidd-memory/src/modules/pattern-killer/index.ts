@@ -5,6 +5,7 @@ import {
   createErrorResult,
   generateId,
   now,
+  createLogger,
 } from '@aidd.md/mcp-shared';
 import type {
   AiddModule,
@@ -20,6 +21,8 @@ import { detectPatterns, computeFingerprint, computeAuditScore } from './detecto
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
+
+const logger = createLogger('pattern-killer');
 
 export function createPatternKillerModule(storage: StorageProvider): AiddModule {
   return {
@@ -61,7 +64,9 @@ export function createPatternKillerModule(storage: StorageProvider): AiddModule 
                   tidContext = { responseTokens: session.tokenUsage.outputTokens, modelAvgTokens: avg };
                 }
               }
-            } catch { /* non-critical */ }
+            } catch (err) {
+              logger.warn('Failed to fetch TID context for pattern audit', err);
+            }
           }
 
           const score = computeAuditScore(text, banned, modelId, sessionId, tidContext);

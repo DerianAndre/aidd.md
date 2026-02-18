@@ -24,7 +24,7 @@ Utility-first CSS framework enabling rapid UI development through composable, si
 | Scenario                                  | Fit Score (1-10) | Rationale                                                            |
 | ----------------------------------------- | ---------------- | -------------------------------------------------------------------- |
 | Modern web projects (React, Vue, Next.js) | 10               | Industry standard, framework-agnostic, rapid prototyping             |
-| Custom brand design systems               | 10               | Fully customizable via `tailwind.config.js` (colors, spacing, fonts) |
+| Custom brand design systems               | 10               | Fully customizable via CSS `@theme` directive (colors, spacing, fonts) |
 | Responsive design required                | 10               | Built-in responsive variants (`sm:`, `md:`, `lg:`, `xl:`)            |
 | Need pre-built components                 | 6                | Use shadcn/ui, Headless UI, or DaisyUI on top of Tailwind            |
 | Legacy projects (Bootstrap, custom CSS)   | 5                | Migration effort, team learning curve                                |
@@ -48,36 +48,20 @@ Utility-first CSS framework enabling rapid UI development through composable, si
 ## Implementation Pattern
 
 ```bash
-# Install Tailwind CSS
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
+# Install Tailwind CSS v4
+npm install tailwindcss @tailwindcss/vite
 ```
 
-```javascript
-// tailwind.config.js
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
-  theme: {
-    extend: {
-      colors: {
-        brand: {
-          50: "#f0f9ff",
-          500: "#0ea5e9",
-          900: "#0c4a6e",
-        },
-      },
-      spacing: {
-        128: "32rem",
-      },
-    },
-  },
-  plugins: [],
-};
+```css
+/* app.css — CSS-only configuration (NO tailwind.config.js in v4) */
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: oklch(0.97 0.02 205);
+  --color-brand-500: oklch(0.65 0.15 205);
+  --color-brand-900: oklch(0.30 0.08 205);
+  --spacing-128: 32rem;
+}
 ```
 
 ```tsx
@@ -98,14 +82,22 @@ export function Button({ children, variant = "primary" }: ButtonProps) {
 }
 ```
 
-## Tailwind CSS v4 (2026)
+## Tailwind CSS v4 (2025+)
 
-**New Features:**
+**Breaking changes from v3:**
 
-- Faster builds with Rust-based compiler (vs PostCSS)
-- Native CSS variables for theming
-- Improved design token system
-- Better integration with modern bundlers (Vite, Turbopack)
+- **No `tailwind.config.js`** — all configuration via CSS `@theme` directive
+- **No `content` arrays** — automatic content detection
+- **No PostCSS plugin** — use `@tailwindcss/vite`, `@tailwindcss/postcss`, or `@tailwindcss/cli`
+- **OKLCH colors** — modern color space replaces hex/rgb defaults
+
+**New features:**
+
+- Rust-based compiler (10x+ faster builds)
+- Native CSS variables for all theme values
+- CSS-first configuration via `@theme` directive
+- First-party Vite plugin (`@tailwindcss/vite`)
+- Automatic content detection (no `content` array needed)
 
 ## Tailwind vs Traditional CSS
 

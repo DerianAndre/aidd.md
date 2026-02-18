@@ -30,13 +30,13 @@ The memory is not a log. It is a curated knowledge base. Entries are added delib
 
 Memory files live in the project root under one of two paths:
 
-- `ai/memory/` (preferred, within an `ai/` project intelligence folder)
+- `.aidd/memory/` (preferred, within the `.aidd/` project state folder)
 - `memory/` (alternative, at project root)
 
 Three JSON files:
 
 ```
-ai/memory/
+.aidd/memory/
   decisions.json
   mistakes.json
   conventions.json

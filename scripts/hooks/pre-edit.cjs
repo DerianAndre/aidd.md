@@ -7,6 +7,7 @@ const Database = require('better-sqlite3');
 const { resolve } = require('path');
 const { existsSync, readFileSync } = require('fs');
 const { execFileSync } = require('child_process');
+const { isSessionTracking } = require('./lib/config.cjs');
 
 let input = '';
 process.stdin.setEncoding('utf8');
@@ -58,6 +59,9 @@ process.stdin.on('end', () => {
         // Fail-open for tool stability.
       }
     }
+
+    // Workflow-only mode: skip session/artifact gates (LTUM guard above still ran)
+    if (!isSessionTracking()) { process.exit(0); }
 
     // Main check: active session must exist
     const db = new Database(resolve('.aidd', 'data.db'), { readonly: true });

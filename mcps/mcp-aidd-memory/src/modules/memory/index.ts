@@ -6,6 +6,7 @@ import {
   generateId,
   now,
   stripPrivateTags,
+  createLogger,
 } from '@aidd.md/mcp-shared';
 import type { AiddModule, ModuleContext } from '@aidd.md/mcp-shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -25,6 +26,8 @@ import type { DecisionEntry, MistakeEntry, ConventionEntry } from './permanent-m
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
+
+const logger = createLogger('memory');
 
 export function createMemoryModule(storage: StorageProvider): AiddModule {
   return {
@@ -425,7 +428,9 @@ export function createMemoryModule(storage: StorageProvider): AiddModule {
                   }
                 }
               }
-            } catch { /* non-critical — prune succeeds regardless */ }
+            } catch (err) {
+              logger.warn('Failed to decay related evolution candidates during prune', err);
+            }
           }
 
           return createJsonResult({ id, type, removed: true });

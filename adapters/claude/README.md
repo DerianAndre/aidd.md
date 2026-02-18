@@ -70,7 +70,7 @@ pnpm mcp:check
 
 Project-level configuration committed to Git. Contains:
 
-- **Permissions**: Auto-allow all 71 AIDD MCP tools + common Bash commands
+- **Permissions**: Auto-allow all 82 AIDD MCP tools + common Bash commands
 - **Hooks**: 9 hooks (8 command + 1 prompt) across 4 events for mandatory workflow pipeline enforcement
 - **Status Line**: Node.js script showing model, context, cost, duration
 

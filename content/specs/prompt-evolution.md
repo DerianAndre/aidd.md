@@ -569,7 +569,7 @@ Prompt Evolution adds a new dimension to each memory layer:
 Layer 5: EVOLUTION          (.aidd/evolution/)
   + prompt-evolution/       → Cross-session prompt improvement candidates
 
-Layer 4: PERMANENT          (ai/memory/)
+Layer 4: PERMANENT          (.aidd/memory/)
   + prompt-decisions.json   → "Why we changed the letterhead prompt from v1.2 to v2.0"
 
 Layer 3: LIFECYCLE          (.aidd/sessions/)
