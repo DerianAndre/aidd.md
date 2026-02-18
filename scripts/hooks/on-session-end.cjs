@@ -40,9 +40,9 @@ process.stdin.on('end', () => {
       }
     }
 
-    const checklist = db.prepare("SELECT id FROM artifacts WHERE type = 'checklist' AND (status = 'active' OR status = 'done') ORDER BY created_at DESC LIMIT 1").get();
-    const retro = db.prepare("SELECT id FROM artifacts WHERE type = 'retro' AND (status = 'active' OR status = 'done') ORDER BY created_at DESC LIMIT 1").get();
-    const activeArts = db.prepare("SELECT id, type FROM artifacts WHERE status = 'active'").all();
+    const checklist = db.prepare("SELECT id FROM artifacts WHERE session_id = ?1 AND type = 'checklist' AND (status = 'active' OR status = 'done') ORDER BY created_at DESC LIMIT 1").get(toolInput.id);
+    const retro = db.prepare("SELECT id FROM artifacts WHERE session_id = ?1 AND type = 'retro' AND (status = 'active' OR status = 'done') ORDER BY created_at DESC LIMIT 1").get(toolInput.id);
+    const activeArts = db.prepare("SELECT id, type FROM artifacts WHERE session_id = ?1 AND status = 'active'").all(toolInput.id);
     db.close();
 
     const warnings = [];

@@ -376,7 +376,24 @@ CREATE INDEX IF NOT EXISTS idx_artifacts_session ON artifacts(session_id);
 CREATE INDEX IF NOT EXISTS idx_artifacts_feature_status_date ON artifacts(feature, status, date DESC);
 `.trim();
 
-export const CURRENT_SCHEMA_VERSION = 3;
+export const CURRENT_SCHEMA_VERSION = 4;
+
+const HEALTH_SNAPSHOTS_MIGRATION = `
+CREATE TABLE IF NOT EXISTS health_snapshots (
+  id TEXT PRIMARY KEY,
+  timestamp INTEGER NOT NULL,
+  overall REAL NOT NULL,
+  session_success REAL NOT NULL,
+  compliance_avg REAL NOT NULL,
+  error_recurrence REAL NOT NULL,
+  model_consistency REAL NOT NULL,
+  memory_utilization REAL NOT NULL,
+  sessions_analyzed INTEGER NOT NULL,
+  session_id TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_health_snapshots_timestamp ON health_snapshots(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_health_snapshots_session ON health_snapshots(session_id);
+`.trim();
 
 export const MIGRATIONS: SchemaMigration[] = [
   {
@@ -393,6 +410,11 @@ export const MIGRATIONS: SchemaMigration[] = [
     version: 3,
     name: 'timestamp_enforcement_sessions_artifacts',
     statements: [TIMESTAMP_ENFORCEMENT_MIGRATION],
+  },
+  {
+    version: 4,
+    name: 'health_snapshots_table',
+    statements: [HEALTH_SNAPSHOTS_MIGRATION],
   },
 ];
 
@@ -412,6 +434,7 @@ export const REQUIRED_TABLES = [
   'pattern_detections',
   'artifacts',
   'audit_scores',
+  'health_snapshots',
   'observations_fts',
   'permanent_memory_fts',
 ] as const;
@@ -427,4 +450,5 @@ export const REQUIRED_INDEXES = [
   'idx_audit_model_created_at',
   'idx_artifacts_feature_status_date',
   'idx_lifecycle_status_updated_at',
+  'idx_health_snapshots_timestamp',
 ] as const;

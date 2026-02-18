@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "enforceResetOnEdit": true,
+  "enforceTelemetryOnEnd": true,
+  "requireStartupTimingOnEnd": false,
+  "maxFilesBeforeReset": 8,
+  "maxChangedLinesBeforeReset": 400,
+  "maxCrossModuleBoundaries": 2,
+  "maxActiveSessions": 1,
+  "maxStaleActiveSessions": 0,
+  "requireDocsAiSync": true
+}

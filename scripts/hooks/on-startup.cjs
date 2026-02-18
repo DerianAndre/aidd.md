@@ -5,7 +5,15 @@
 // Adapter-agnostic — referenced by .claude/settings.json and other adapters.
 const Database = require('better-sqlite3');
 const { resolve } = require('path');
+const { execFileSync } = require('child_process');
 try {
+  // LTUM hygiene: fix stale active sessions locally before reporting state.
+  try {
+    execFileSync('node', ['scripts/ltum/normalize-sessions.mjs', '--quiet'], {
+      stdio: ['ignore', 'ignore', 'ignore'],
+    });
+  } catch { /* fail-open */ }
+
   const db = new Database(resolve('.aidd', 'data.db'), { readonly: true });
   const session = db.prepare("SELECT id, branch, data FROM sessions WHERE status = 'active' ORDER BY started_at DESC LIMIT 1").get();
   const arts = db.prepare("SELECT type, count(*) as cnt FROM artifacts WHERE status = 'active' GROUP BY type").all();

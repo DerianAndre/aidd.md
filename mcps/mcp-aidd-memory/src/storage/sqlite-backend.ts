@@ -21,6 +21,8 @@ import type {
   EvolutionLogEntry,
   EvolutionLogFilter,
   EvolutionSnapshot,
+  HealthSnapshot,
+  HealthSnapshotFilter,
   LifecycleFilter,
   LifecycleSession,
   MemoryEntry,
@@ -37,6 +39,7 @@ import type {
   SessionObservation,
   SessionState,
   StorageBackend,
+  SystemDiagnostics,
   ToolUsageEntry,
 } from '@aidd.md/mcp-shared';
 import type { StorageConfig } from './types.js';
@@ -1130,6 +1133,94 @@ export class SqliteBackend implements StorageBackend {
   async deleteArtifact(id: string): Promise<boolean> {
     const result = this.db.prepare('DELETE FROM artifacts WHERE id = ?').run(id);
     return result.changes > 0;
+  }
+
+  // ---- Health Snapshots ----
+
+  async saveHealthSnapshot(snapshot: HealthSnapshot): Promise<void> {
+    this.db.prepare(`
+      INSERT OR REPLACE INTO health_snapshots (id, timestamp, overall, session_success, compliance_avg, error_recurrence, model_consistency, memory_utilization, sessions_analyzed, session_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      snapshot.id,
+      this.toUnixMs(snapshot.timestamp),
+      snapshot.overall,
+      snapshot.sessionSuccess,
+      snapshot.complianceAvg,
+      snapshot.errorRecurrence,
+      snapshot.modelConsistency,
+      snapshot.memoryUtilization,
+      snapshot.sessionsAnalyzed,
+      snapshot.sessionId,
+    );
+  }
+
+  async listHealthSnapshots(filter?: HealthSnapshotFilter): Promise<HealthSnapshot[]> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+
+    if (filter?.since) {
+      conditions.push('timestamp >= ?');
+      params.push(this.toUnixMs(filter.since));
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const limit = filter?.limit ?? 50;
+
+    const rows = this.db.prepare(
+      `SELECT * FROM health_snapshots ${where} ORDER BY timestamp DESC LIMIT ?`,
+    ).all(...params, limit) as Array<Record<string, unknown>>;
+
+    return rows.map((r) => ({
+      id: String(r['id']),
+      timestamp: this.fromUnixMs(r['timestamp']),
+      overall: Number(r['overall']),
+      sessionSuccess: Number(r['session_success']),
+      complianceAvg: Number(r['compliance_avg']),
+      errorRecurrence: Number(r['error_recurrence']),
+      modelConsistency: Number(r['model_consistency']),
+      memoryUtilization: Number(r['memory_utilization']),
+      sessionsAnalyzed: Number(r['sessions_analyzed']),
+      sessionId: String(r['session_id']),
+    }));
+  }
+
+  // ---- System Diagnostics ----
+
+  async getSystemDiagnostics(): Promise<SystemDiagnostics> {
+    const tables = [
+      'sessions', 'observations', 'permanent_memory', 'tool_usage',
+      'branches', 'evolution_candidates', 'evolution_log', 'drafts',
+      'lifecycle_sessions', 'banned_patterns', 'pattern_detections',
+      'artifacts', 'audit_scores', 'health_snapshots',
+    ];
+
+    const tableCounts: Record<string, number> = {};
+    for (const table of tables) {
+      try {
+        const row = this.db.prepare(`SELECT COUNT(*) as c FROM ${table}`).get() as { c: number };
+        tableCounts[table] = row.c;
+      } catch {
+        tableCounts[table] = -1;
+      }
+    }
+
+    const versionRow = this.db.prepare(
+      "SELECT value FROM meta WHERE key = 'schema_version'",
+    ).get() as { value: string } | undefined;
+    const schemaVersion = versionRow ? Number.parseInt(versionRow.value, 10) : 0;
+
+    let dbSizeBytes = 0;
+    let walSizeBytes = 0;
+    try {
+      dbSizeBytes = existsSync(this.dbPath) ? statSync(this.dbPath).size : 0;
+    } catch { /* ignore */ }
+    try {
+      const walPath = `${this.dbPath}-wal`;
+      walSizeBytes = existsSync(walPath) ? statSync(walPath).size : 0;
+    } catch { /* ignore */ }
+
+    return { dbSizeBytes, walSizeBytes, schemaVersion, tableCounts };
   }
 
   // ---- Schema guards ----

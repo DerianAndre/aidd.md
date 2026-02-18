@@ -5,6 +5,8 @@
 // Exit 2 + stderr = block. Exit 0 = allow. Fail-open on errors.
 const Database = require('better-sqlite3');
 const { resolve } = require('path');
+const { existsSync, readFileSync } = require('fs');
+const { execFileSync } = require('child_process');
 
 let input = '';
 process.stdin.setEncoding('utf8');
@@ -23,6 +25,38 @@ process.stdin.on('end', () => {
       normalized.includes('/memory/MEMORY.md')
     ) {
       process.exit(0);
+    }
+
+    // LTUM guardrail: require full-sync before mutation on hard reset conditions.
+    let enforceResetOnEdit = true;
+    try {
+      const cfgPath = resolve('scripts', 'ltum', 'config.json');
+      if (existsSync(cfgPath)) {
+        const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
+        enforceResetOnEdit = cfg.enforceResetOnEdit !== false;
+      }
+    } catch { /* fall back to default */ }
+
+    if (enforceResetOnEdit) {
+      try {
+        const raw = execFileSync(
+          'node',
+          ['scripts/ltum/reset-check.mjs', '--json', '--file', normalized],
+          { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
+        );
+        const report = JSON.parse(raw);
+        if (report.requiresFullSync) {
+          const reasons = Array.isArray(report.hardReasons) ? report.hardReasons : [];
+          process.stderr.write(
+            '[AIDD][LTUM] BLOCKED: Context reset required before Edit/Write.\n' +
+            reasons.map((r) => `  - ${r}`).join('\n') + '\n' +
+            `  - Next: ${report.nextAction || 'Run reset checks and sync.'}`
+          );
+          process.exit(2);
+        }
+      } catch {
+        // Fail-open for tool stability.
+      }
     }
 
     // Main check: active session must exist
@@ -66,8 +100,8 @@ process.stdin.on('end', () => {
     // Gate 1: Brainstorm artifact must exist (unless skipped)
     if (!skipped.includes('brainstorm')) {
       const brainstorm = db.prepare(
-        "SELECT id FROM artifacts WHERE type = 'brainstorm' AND (status = 'active' OR status = 'done') ORDER BY created_at DESC LIMIT 1"
-      ).get();
+        "SELECT id FROM artifacts WHERE session_id = ?1 AND type = 'brainstorm' AND (status = 'active' OR status = 'done') ORDER BY created_at DESC LIMIT 1"
+      ).get(session.id);
       if (!brainstorm) {
         db.close();
         process.stderr.write(
@@ -82,8 +116,8 @@ process.stdin.on('end', () => {
     // Gate 2: Plan artifact must exist (unless skipped)
     if (!skipped.includes('plan')) {
       const plan = db.prepare(
-        "SELECT id FROM artifacts WHERE type = 'plan' AND (status = 'active' OR status = 'done') ORDER BY created_at DESC LIMIT 1"
-      ).get();
+        "SELECT id FROM artifacts WHERE session_id = ?1 AND type = 'plan' AND (status = 'active' OR status = 'done') ORDER BY created_at DESC LIMIT 1"
+      ).get(session.id);
       if (!plan) {
         db.close();
         process.stderr.write(

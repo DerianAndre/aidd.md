@@ -632,6 +632,39 @@ export interface PatternStats {
 }
 
 // ---------------------------------------------------------------------------
+// Health Snapshots
+// ---------------------------------------------------------------------------
+
+export interface HealthSnapshot {
+  id: string;
+  timestamp: string;
+  overall: number;
+  sessionSuccess: number;
+  complianceAvg: number;
+  errorRecurrence: number;
+  modelConsistency: number;
+  memoryUtilization: number;
+  sessionsAnalyzed: number;
+  sessionId: string;
+}
+
+export interface HealthSnapshotFilter {
+  since?: string;
+  limit?: number;
+}
+
+// ---------------------------------------------------------------------------
+// System Diagnostics
+// ---------------------------------------------------------------------------
+
+export interface SystemDiagnostics {
+  dbSizeBytes: number;
+  walSizeBytes: number;
+  schemaVersion: number;
+  tableCounts: Record<string, number>;
+}
+
+// ---------------------------------------------------------------------------
 // Storage Backend
 // ---------------------------------------------------------------------------
 
@@ -816,6 +849,13 @@ export interface StorageBackend {
   getPatternStats(filter: PatternStatsFilter): Promise<PatternStats>;
   saveAuditScore(score: AuditScore): Promise<void>;
   listAuditScores(filter?: { sessionId?: string; modelId?: string; limit?: number }): Promise<AuditScore[]>;
+
+  // Health snapshots
+  saveHealthSnapshot(snapshot: HealthSnapshot): Promise<void>;
+  listHealthSnapshots(filter?: HealthSnapshotFilter): Promise<HealthSnapshot[]>;
+
+  // System diagnostics
+  getSystemDiagnostics(): Promise<SystemDiagnostics>;
 }
 
 // ---------------------------------------------------------------------------
