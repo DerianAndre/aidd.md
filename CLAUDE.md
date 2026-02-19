@@ -329,7 +329,7 @@ These run server-side via HookBus. Do NOT call them manually:
 
 This is the **aidd.md** repository — the open standard for AI-Driven Development. It contains:
 
-- **content/agents/** — Agent definitions (routing.md + per-agent files)
+- **content/routing.md** — Agent hierarchy, roles, competency matrix (SSOT)
 - **content/rules/** — Domain-specific rules (global, orchestrator, frontend, backend, etc.)
 - **content/skills/** — Specialized agent capabilities with SKILL.md + validation scripts
 - **content/workflows/** — Step-by-step guides for complex multi-agent tasks
@@ -342,7 +342,7 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 
 ### SSOT
 
-`content/agents/routing.md` is the canonical agent hierarchy (roles, competency matrix, system map). Root `AGENTS.md` is the operational protocol (startup, session lifecycle, memory operations). If there is conflict between agent definitions and other files, `content/agents/routing.md` wins for agent roles.
+`content/routing.md` is the canonical agent hierarchy (roles, competency matrix, system map). Root `AGENTS.md` is the operational protocol (startup, session lifecycle, memory operations). If there is conflict between agent definitions and other files, `content/routing.md` wins for agent roles.
 
 ### Commands
 
@@ -370,7 +370,7 @@ This is the **aidd.md** repository — the open standard for AI-Driven Developme
 
 ### Rules
 
-1. Follow `content/agents/routing.md` as SSOT for agent roles
+1. Follow `content/routing.md` as SSOT for agent roles
 2. Load domain-specific rules from `content/rules/` as needed
 3. Use skills from `content/skills/[agent]/SKILL.md` for specialized tasks
 4. Follow workflows from `content/workflows/` for multi-step procedures

@@ -34,7 +34,7 @@ export function AgentsListPage() {
         } else {
           // Fallback: try reading routing.md or AGENTS.md directly
           try {
-            const routingPath = `${activeProject.path}/.aidd/content/agents/routing.md`;
+            const routingPath = `${activeProject.path}/.aidd/content/routing.md`;
             const content = await readFile(routingPath);
             setAgents(parseAgentsFromRouting(content));
           } catch {

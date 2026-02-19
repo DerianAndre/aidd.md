@@ -31,7 +31,7 @@ const AGENTS_MD_REDIRECT = `# AGENTS.md
 
 ## Agent Definitions
 
-See [.aidd/content/agents/routing.md](.aidd/content/agents/routing.md) for the full agent hierarchy.
+See [.aidd/content/routing.md](.aidd/content/routing.md) for the full agent hierarchy and task dispatch.
 `;
 
 const AGENTS_MD = `# AIDD — AI-Driven Development
@@ -132,7 +132,7 @@ function getMinimalFiles(root: string): FileToCreate[] {
   const dirs = resolveContentDirs(root);
   return [
     { fullPath: resolve(root, 'AGENTS.md'), displayPath: 'AGENTS.md', content: AGENTS_MD_REDIRECT },
-    { fullPath: resolve(dirs.agents, 'routing.md'), displayPath: relative(root, resolve(dirs.agents, 'routing.md')), content: AGENTS_MD },
+    { fullPath: resolve(dirs.agents, 'routing.md'), displayPath: relative(root, resolve(dirs.agents, 'routing.md')), content: AGENTS_MD },  // dirs.agents points to content root
     { fullPath: resolve(dirs.rules, 'global.md'), displayPath: relative(root, resolve(dirs.rules, 'global.md')), content: GLOBAL_RULES },
   ];
 }

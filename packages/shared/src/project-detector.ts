@@ -10,7 +10,7 @@ export function detectProject(projectPath?: string): ProjectInfo {
   const aiddRoot = detectAiddRoot(root);
 
   const markers = {
-    agents: existsSync(resolve(aiddRoot, 'content', 'agents')),
+    agents: existsSync(resolve(aiddRoot, 'content', 'routing.md')) || existsSync(resolve(aiddRoot, 'content', 'agents')),
     rules: existsSync(resolve(aiddRoot, 'content', 'rules')),
     skills: existsSync(resolve(aiddRoot, 'content', 'skills')),
     workflows: existsSync(resolve(aiddRoot, 'content', 'workflows')),

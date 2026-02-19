@@ -24,22 +24,6 @@
 | [executing.md](executing.md)                       | Plan implementation with adaptive model assignment and verification                   | Implementing an approved plan with parallel dispatch and completion archival                            |
 | [cdh-architecture.md](cdh-architecture.md)         | Clean + DDD + Hexagonal architecture verification and enforcement                     | Verifying domain purity, dependency injection, framework agnosticism                                   |
 
----
 
-## Complexity Quick Reference
 
-| Complexity   | Workflows                                         |
-| ------------ | ------------------------------------------------- |
-| **High**     | orchestrator, full-stack-feature, analyze, executing         |
-| **Medium**   | docs, product, review, technology-selection, test, brainstorming, planning, cdh-architecture |
-| **Standard** | audit, design, feature-branch                                |
-
----
-
-## Model Strategy
-
-| Strategy                                        | Workflows             |
-| ----------------------------------------------- | --------------------- |
-| **Hybrid** (Tier 1 planning + Tier 2 execution) | orchestrator, analyze, executing               |
-| **Sequential** (phased tier progression)        | full-stack-feature, brainstorming, planning, cdh-architecture |
-| **Parallel** (concurrent agent dispatch)        | docs                                            |
+> Complexity classification and model strategy are defined in [`content/routing.md`](../routing.md) Sections 2 and 5.

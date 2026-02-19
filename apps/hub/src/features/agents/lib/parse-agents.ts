@@ -204,8 +204,8 @@ export function agentSlug(name: string): string {
 }
 
 /**
- * Parse agents from content/agents/routing.md structure.
- * This handles the new architecture where routing.md defines the agent hierarchy.
+ * Parse agents from content/routing.md structure.
+ * This handles the architecture where routing.md defines the agent hierarchy.
  */
 export function parseAgentsFromRouting(markdown: string): AgentEntry[] {
   const entries: AgentEntry[] = [];
@@ -342,7 +342,7 @@ function deduplicateAgents(entries: AgentEntry[]): AgentEntry[] {
 
 /**
  * Parse agents from FrameworkEntity[] (backend results).
- * Each entity represents an agent file from content/agents/.
+ * Each entity represents an agent file from content/.
  * Deduplicates entries that appear in both routing.md and individual files.
  */
 export function parseAgentsFromFrameworkEntities(entities: {

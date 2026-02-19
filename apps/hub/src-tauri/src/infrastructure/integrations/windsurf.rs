@@ -14,7 +14,7 @@ use super::adapter_trait::{
 /// Files managed:
 /// - Global: `~/.codeium/windsurf/mcp_config.json` — MCP server config
 /// - Project: `.windsurfrules` — rules pointer to AIDD content
-/// - Project: agents routing.md (config-resolved path)
+/// - Project: routing.md (config-resolved content root)
 /// - Project: `AGENTS.md` — thin redirect (cross-tool compat)
 pub struct WindsurfAdapter {
     home_dir: std::path::PathBuf,

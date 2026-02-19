@@ -20,11 +20,6 @@
 | [interfaces.md](interfaces.md) | Inter-agent contract matrix: zero fidelity loss between specialized agents | Multi-agent handoffs — ensures machine-readable outputs between pipeline nodes |
 | [performance.md](performance.md) | Evidence-based profiling and optimization: measure first, optimize second | Investigating performance issues, establishing performance budgets |
 
----
 
-## Loading Priority
 
-1. **global.md** — Always loaded first (universal rules)
-2. **orchestrator.md** — Loaded for task routing and coordination
-3. **Domain rules** — Loaded based on detected project stack and task type
-4. **Cross-cutting rules** — security.md, performance.md, git-workflow.md as needed
+> Loading priority and dispatch logic are defined in [`content/routing.md`](../routing.md) Section 2.

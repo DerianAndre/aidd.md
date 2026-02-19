@@ -60,7 +60,7 @@ npx @aidd.md/cli init    # copies framework, sets up .aidd/, integrates IDEs
 mkdir -p your-project/.aidd/content
 cp -r aidd.md/content/ your-project/.aidd/content/
 # Create thin AGENTS.md redirect at root (for Gemini compat)
-echo "See [.aidd/content/agents/](.aidd/content/agents/) for agent definitions." > your-project/AGENTS.md
+echo "See [.aidd/content/](.aidd/content/) for agent definitions." > your-project/AGENTS.md
 ```
 
 ### Activate the agent system
@@ -68,7 +68,7 @@ echo "See [.aidd/content/agents/](.aidd/content/agents/) for agent definitions."
 Use this prompt with any AI:
 
 ```
-Read .aidd/content/agents/routing.md and assume the most appropriate role for my task.
+Read .aidd/content/routing.md and assume the most appropriate role for my task.
 
 IMPERATIVES:
 1. Respect ALL rules in .aidd/content/rules/global.md
@@ -219,7 +219,7 @@ See [mcps/README.md](mcps/README.md) for full architecture and [mcps/PLAN.md](mc
 
 ```
 aidd.md/
-├── AGENTS.md                    # Thin redirect to content/agents/ (Gemini compat)
+├── AGENTS.md                    # Thin redirect to content/routing.md (Gemini compat)
 ├── CLAUDE.md                    # Claude Code conversation lifecycle protocol
 ├── WORKFLOW.md                  # User-facing methodology guide
 ├── README.md                    # This file
@@ -229,7 +229,7 @@ aidd.md/
 ├── pnpm-workspace.yaml          # Workspace config
 │
 ├── content/                     # Framework content (SSOT)
-│   ├── agents/                  # Agent definitions + routing
+│   ├── routing.md               # Agent hierarchy + routing (SSOT)
 │   ├── specs/                   # Formal specifications (13)
 │   ├── rules/                   # Immutable constraints (13)
 │   ├── skills/                  # Agent capabilities (11)

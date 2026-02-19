@@ -36,11 +36,11 @@ export class GeminiAdapter implements ToolAdapter {
       result,
     );
 
-    const agentsDir = join(projectPath, '.aidd', 'content', 'agents');
-    if (existsSync(agentsDir)) {
+    const routingFile = join(projectPath, '.aidd', 'content', 'routing.md');
+    if (existsSync(routingFile)) {
       result.messages.push('Gemini: AGENTS.md redirect + .gemini/settings.json configured');
     } else {
-      result.messages.push('Gemini: configured \u2014 run scaffold to create .aidd/content/agents/');
+      result.messages.push('Gemini: configured \u2014 run scaffold to create .aidd/content/routing.md');
     }
 
     return result;
@@ -61,7 +61,7 @@ export class GeminiAdapter implements ToolAdapter {
     const configFiles: string[] = [];
 
     const hasAgents = hasAgentsDir(projectPath);
-    if (hasAgents) configFiles.push(join(projectPath, '.aidd', 'content', 'agents'));
+    if (hasAgents) configFiles.push(join(projectPath, '.aidd', 'content', 'routing.md'));
 
     const hasSettings = existsSync(join(projectPath, '.gemini', 'settings.json'));
     if (hasSettings) configFiles.push(join(projectPath, '.gemini', 'settings.json'));

@@ -14,7 +14,7 @@ use super::adapter_trait::{
 /// Files managed:
 /// - Project: `.vscode/mcp.json` — MCP server config (VS Code native)
 /// - Project: `.github/copilot-instructions.md` — Copilot instructions
-/// - Project: agents routing.md (config-resolved path)
+/// - Project: routing.md (config-resolved content root)
 /// - Project: `AGENTS.md` — thin redirect (cross-tool compat)
 pub struct VscodeAdapter;
 

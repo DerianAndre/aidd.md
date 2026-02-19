@@ -62,7 +62,7 @@ export class ContentLoader {
     const paths = aiddPaths(root, this.pathOverrides);
 
     return {
-      agents: this.scanDir(paths.agents),
+      agents: this.scanDir(paths.agents, false),
       rules: this.scanDir(paths.rules),
       skills: this.scanDir(paths.skills),
       workflows: this.scanDir(paths.workflows),
@@ -72,10 +72,10 @@ export class ContentLoader {
     };
   }
 
-  private scanDir(dirPath: string): ContentEntry[] {
+  private scanDir(dirPath: string, recursive = true): ContentEntry[] {
     const files = listFiles(dirPath, {
       extensions: ['.md'],
-      recursive: true,
+      recursive,
     });
 
     return files.map((filePath) => {

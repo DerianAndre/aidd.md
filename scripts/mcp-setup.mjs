@@ -74,7 +74,6 @@ async function main() {
   console.log(`${DIM}[4/${STEPS}]${RESET} Initializing project state...`);
   const aiddDir = resolve(root, '.aidd');
   const dirs = [
-    'content/agents',
     'content/rules',
     'content/skills',
     'content/workflows',

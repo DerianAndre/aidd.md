@@ -12,7 +12,7 @@ use super::adapter_trait::{
 /// Gemini reads AGENTS.md natively — we create a thin redirect at root.
 ///
 /// Files managed:
-/// - Project: agents routing.md (config-resolved path)
+/// - Project: routing.md (config-resolved content root)
 /// - Project: `AGENTS.md` — thin redirect (Gemini reads this natively)
 /// - Project: `.gemini/settings.json` — optional Gemini settings
 pub struct GeminiAdapter;

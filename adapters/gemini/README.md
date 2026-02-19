@@ -75,12 +75,12 @@ Use system prompt injection (see [Section 6](#6-system-prompt-integration)).
 
 Antigravity detects and loads `AGENTS.md` automatically. The file serves as the single source of truth for:
 
-- Agent hierarchy (`content/agents/routing.md` as canonical reference)
+- Agent hierarchy (`content/routing.md` as canonical reference)
 - Rules (`content/rules/global.md` as supreme constraint)
 - Skill discovery (`content/skills/<name>/SKILL.md`)
 - Workflow procedures (`content/workflows/`)
 
-The root `AGENTS.md` is a thin redirect to `content/agents/routing.md` for Gemini compatibility. This ensures Gemini reads the same agent definitions as all other tools.
+The root `AGENTS.md` is a thin redirect to `content/routing.md` for Gemini compatibility. This ensures Gemini reads the same agent definitions as all other tools.
 
 ---
 

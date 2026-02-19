@@ -4,7 +4,7 @@ import type { ContentPaths } from './types.js';
 
 /**
  * Finds the project root by walking up from a start directory.
- * Looks for AIDD markers: .aidd/content/agents/, .aidd/content/rules/, or package.json.
+ * Looks for AIDD markers: .aidd/content/routing.md, .aidd/content/rules/, or package.json.
  */
 export function findProjectRoot(startDir?: string): string {
   let dir = startDir ?? process.env['AIDD_PROJECT_PATH'] ?? process.cwd();
@@ -12,8 +12,10 @@ export function findProjectRoot(startDir?: string): string {
 
   while (dir !== root) {
     // AIDD marker: .aidd/content/ is the standard
-    if (existsSync(resolve(dir, '.aidd', 'content', 'agents'))) return dir;
+    if (existsSync(resolve(dir, '.aidd', 'content', 'routing.md'))) return dir;
     if (existsSync(resolve(dir, '.aidd', 'content', 'rules'))) return dir;
+    // Backward compat: old agents/ directory marker
+    if (existsSync(resolve(dir, '.aidd', 'content', 'agents'))) return dir;
     // Fallback: package.json (generic project root)
     if (existsSync(resolve(dir, 'package.json'))) return dir;
     dir = resolve(dir, '..');
@@ -34,8 +36,10 @@ export function fromRoot(projectRoot: string, ...segments: string[]): string {
  */
 export function detectAiddRoot(projectRoot: string): string {
   const aiddDir = resolve(projectRoot, '.aidd');
-  if (existsSync(resolve(aiddDir, 'content', 'agents'))) return aiddDir;
+  if (existsSync(resolve(aiddDir, 'content', 'routing.md'))) return aiddDir;
   if (existsSync(resolve(aiddDir, 'content', 'rules'))) return aiddDir;
+  // Backward compat: old agents/ directory marker
+  if (existsSync(resolve(aiddDir, 'content', 'agents'))) return aiddDir;
 
   // Fallback: root level (source repo)
   return projectRoot;
@@ -51,9 +55,8 @@ export function aiddPaths(aiddRoot: string, overrides?: ContentPaths) {
     ? resolve(aiddRoot, overrides.content)
     : resolve(aiddRoot, 'content');
   return {
-    agents: overrides?.agents
-      ? resolve(aiddRoot, overrides.agents)
-      : resolve(contentDir, 'agents'),
+    // routing.md lives at the content root (no agents/ subdirectory)
+    agents: resolve(contentDir),
     rules: overrides?.rules ? resolve(aiddRoot, overrides.rules) : resolve(contentDir, 'rules'),
     skills: overrides?.skills
       ? resolve(aiddRoot, overrides.skills)

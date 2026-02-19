@@ -715,4 +715,4 @@ AIDD's memory layer helps track and surface debt:
 | Design Audit | [`content/workflows/design.md`](content/workflows/design.md) | WCAG + Tailwind audit |
 | Security Audit | [`content/workflows/analyze.md`](content/workflows/analyze.md) | OWASP assessment |
 | Test Workflow | [`content/workflows/test.md`](content/workflows/test.md) | Test generation |
-| Agent Routing | [`content/agents/routing.md`](content/agents/routing.md) | Agent hierarchy and roles |
+| Agent Routing | [`content/routing.md`](content/routing.md) | Agent hierarchy and roles |

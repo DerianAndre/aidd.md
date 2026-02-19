@@ -715,4 +715,4 @@ La capa de memoria de AIDD ayuda a rastrear y surfacear deuda:
 | Auditoria de Diseno | [`content/workflows/design.md`](content/workflows/design.md) | Auditoria WCAG + Tailwind |
 | Auditoria de Seguridad | [`content/workflows/analyze.md`](content/workflows/analyze.md) | Evaluacion OWASP |
 | Flujo de Pruebas | [`content/workflows/test.md`](content/workflows/test.md) | Generacion de pruebas |
-| Enrutamiento de Agentes | [`content/agents/routing.md`](content/agents/routing.md) | Jerarquia y roles de agentes |
+| Enrutamiento de Agentes | [`content/routing.md`](content/routing.md) | Jerarquia y roles de agentes |

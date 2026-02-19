@@ -128,7 +128,6 @@ The config file lives at `.aidd/config.json`. All fields are optional — missin
     // Custom content paths — all optional, relative to project root
     "paths": {
       "content": "content",               // Base content directory (default: "content")
-      "agents": "content/agents",          // Agents directory (default: "content/agents")
       "rules": "content/rules",           // Rules directory (default: "content/rules")
       "skills": "content/skills",         // Skills directory (default: "content/skills")
       "workflows": "content/workflows",   // Workflows directory (default: "content/workflows")
@@ -165,7 +164,6 @@ All paths in `content.paths` are relative to the `.aidd/` root. Every field is o
 | Field       | Default               | Description                                                                                         |
 | ----------- | --------------------- | --------------------------------------------------------------------------------------------------- |
 | `content`   | `"content"`           | Base content directory. All subdirectories resolve relative to this unless overridden individually. |
-| `agents`    | `"content/agents"`    | Agents directory.                                                                                   |
 | `rules`     | `"content/rules"`     | Rules directory.                                                                                    |
 | `skills`    | `"content/skills"`    | Skills directory.                                                                                   |
 | `workflows` | `"content/workflows"` | Workflows directory.                                                                                |
@@ -363,7 +361,7 @@ aidd_scaffold --preset full    # Creates .aidd/ + config.json + framework files
 ### Create `.aidd/` manually
 
 ```bash
-mkdir -p .aidd/content/agents .aidd/content/rules \
+mkdir -p .aidd/content/rules \
   .aidd/memory .aidd/sessions/active .aidd/sessions/completed \
   .aidd/branches/archive .aidd/drafts .aidd/analytics \
   .aidd/evolution/snapshots .aidd/cache

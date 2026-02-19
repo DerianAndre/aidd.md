@@ -466,7 +466,7 @@ const esMX: DeepStringify<typeof enUS> = {
   'page.overrides.override': 'personalización',
   'page.overrides.disabled': 'deshabilitado',
   'page.overrides.global': 'global',
-  'page.overrides.noAgents': 'No se encontraron agentes. Asegúrate de que content/agents/ exista en el framework.',
+  'page.overrides.noAgents': 'No se encontraron agentes. Asegúrate de que content/routing.md exista en el framework.',
   'page.overrides.noRules': 'Aún no hay reglas específicas del proyecto.',
   'page.overrides.selectCategory': 'Selecciona una categoría arriba para ver la vista previa del contenido efectivo.',
   'page.overrides.noProject': 'Selecciona un proyecto para administrar personalizaciones.',

@@ -160,5 +160,5 @@ When using Warp without an MCP editor, manually follow the AIDD lifecycle:
 
 - **Adapters Overview**: `adapters/README.md`
 - **AIDD Lifecycle**: `content/specs/aidd-lifecycle.md`
-- **Agent Hierarchy**: `content/agents/routing.md`
+- **Agent Hierarchy**: `content/routing.md`
 - **MCP Architecture**: `mcps/README.md`

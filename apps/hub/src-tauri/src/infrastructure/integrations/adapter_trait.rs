@@ -126,7 +126,7 @@ pub(crate) fn agents_redirect() -> String {
 
 ## Agent Definitions
 
-See [.aidd/content/agents/routing.md](.aidd/content/agents/routing.md) for the full agent hierarchy.
+See [.aidd/content/routing.md](.aidd/content/routing.md) for the full agent hierarchy.
 "#
     .to_string()
 }
@@ -138,21 +138,28 @@ pub(crate) fn ensure_agents_files(
     framework_path: &Path,
     result: &mut IntegrationResult,
 ) -> Result<(), String> {
-    // 1. Agents routing.md at config-resolved path
-    let agents_index = resolve_content_dir(project_path, "agents").join("routing.md");
-    if !agents_index.exists() {
-        let framework_agents = framework_path.join("agents").join("routing.md");
-        let content = if framework_agents.exists() {
-            std::fs::read_to_string(&framework_agents)
-                .map_err(|e| format!("Failed to read framework agents/routing.md: {}", e))?
+    // 1. Agents routing.md at content root
+    let routing_file = resolve_content_dir(project_path, "").join("routing.md");
+    if !routing_file.exists() {
+        let framework_routing = framework_path.join("routing.md");
+        let content = if framework_routing.exists() {
+            std::fs::read_to_string(&framework_routing)
+                .map_err(|e| format!("Failed to read framework routing.md: {}", e))?
         } else {
-            agents_content()
+            // Fallback: check legacy location
+            let legacy_routing = framework_path.join("agents").join("routing.md");
+            if legacy_routing.exists() {
+                std::fs::read_to_string(&legacy_routing)
+                    .map_err(|e| format!("Failed to read framework routing.md: {}", e))?
+            } else {
+                agents_content()
+            }
         };
-        if let Some(path) = ensure_file(&agents_index, &content)? {
+        if let Some(path) = ensure_file(&routing_file, &content)? {
             result.files_created.push(path);
         }
     } else {
-        result.messages.push("agents/ already exists — not overwritten".to_string());
+        result.messages.push("routing.md already exists — not overwritten".to_string());
     }
 
     // 2. Thin AGENTS.md redirect at root
@@ -166,14 +173,19 @@ pub(crate) fn ensure_agents_files(
     Ok(())
 }
 
-/// Check if the agents directory exists (config-aware).
+/// Check if routing.md exists (config-aware), with backward compat for legacy agents/ dir.
 pub(crate) fn has_agents_dir(project_path: &Path) -> bool {
+    let routing_file = resolve_content_dir(project_path, "").join("routing.md");
+    if routing_file.exists() {
+        return true;
+    }
+    // Backward compat: check legacy agents/ directory
     resolve_content_dir(project_path, "agents").exists()
 }
 
-/// Get the agents directory path (config-aware) for status reporting.
+/// Get the routing.md path (config-aware) for status reporting.
 pub(crate) fn agents_dir_path(project_path: &Path) -> PathBuf {
-    resolve_content_dir(project_path, "agents")
+    resolve_content_dir(project_path, "").join("routing.md")
 }
 
 // ---------------------------------------------------------------------------
@@ -196,12 +208,12 @@ r#"# {} — {} Instructions
 
 ## SSOT
 
-`.aidd/content/agents/` is the canonical source of truth for agent roles and coordination.
+`.aidd/content/routing.md` is the canonical source of truth for agent roles and coordination.
 
 ## Framework
 
 This project uses the [aidd.md](https://aidd.md) framework for AI-Driven Development:
-- **.aidd/content/agents/** — Agent definitions and routing
+- **.aidd/content/routing.md** — Agent definitions and routing
 - **.aidd/content/rules/** — Domain-specific rules
 - **.aidd/content/skills/** — Specialized capabilities
 - **.aidd/content/workflows/** — Multi-step procedures
@@ -225,7 +237,7 @@ If MCP is unavailable, run `pnpm mcp:check` in the terminal.
 
 ## Framework
 
-- Agent definitions: `.aidd/content/agents/`
+- Agent definitions: `.aidd/content/routing.md`
 - Domain rules: `.aidd/content/rules/`
 - Skills: `.aidd/content/skills/`
 - Workflows: `.aidd/content/workflows/`

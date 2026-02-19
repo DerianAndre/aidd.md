@@ -15,7 +15,7 @@ use super::adapter_trait::{
 /// - User scope: `~/.claude.json` — MCP server entry (user/local scope)
 /// - Project scope: `.mcp.json` — project-scoped MCP config (team-shareable)
 /// - Project: `CLAUDE.md` — project instructions
-/// - Project: agents routing.md (config-resolved path)
+/// - Project: routing.md (config-resolved content root)
 /// - Project: `AGENTS.md` — thin redirect (cross-tool compat)
 pub struct ClaudeAdapter {
     home_dir: std::path::PathBuf,

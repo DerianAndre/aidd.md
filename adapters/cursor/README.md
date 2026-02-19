@@ -130,7 +130,7 @@ When the MCP server is configured, Cursor gains access to all 82 AIDD tools. The
 
 Cursor reads `AGENTS.md` at the project root for high-level context. This file provides:
 
-- Agent hierarchy (`content/agents/routing.md` as SSOT)
+- Agent hierarchy (`content/routing.md` as SSOT)
 - System map pointing to `content/rules/`, `content/skills/`, `content/workflows/`
 - Skill discovery via `content/skills/<name>/SKILL.md`
 

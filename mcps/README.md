@@ -440,7 +440,7 @@ AIDD framework content ships inside the npm packages:
 ### Project Detection (runtime)
 
 The MCP scans for a `.aidd/` directory with AIDD content:
-1. `.aidd/content/agents/` — agent definitions directory
+1. `.aidd/content/routing.md` — agent hierarchy and routing
 2. `.aidd/content/rules/` — rule files
 3. `.aidd/content/skills/`, `workflows/`, `specs/`, `knowledge/`, `templates/`
 4. `.aidd/memory/` — permanent memory (decisions, mistakes, conventions)

@@ -462,7 +462,7 @@ export default {
   'page.overrides.override': 'override',
   'page.overrides.disabled': 'disabled',
   'page.overrides.global': 'global',
-  'page.overrides.noAgents': 'No agents found. Ensure content/agents/ exists in the framework.',
+  'page.overrides.noAgents': 'No agents found. Ensure content/routing.md exists in the framework.',
   'page.overrides.noRules': 'No project-specific rules yet.',
   'page.overrides.selectCategory': 'Select a category above to preview effective content.',
   'page.overrides.noProject': 'Select a project to manage overrides.',

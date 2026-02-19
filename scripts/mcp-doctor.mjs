@@ -357,7 +357,7 @@ const sectionCatalog = [
   { name: 'MCPs installed', desc: 'External MCP servers' },
   { name: 'aidd.md Framework', desc: 'Content and structure' },
   { name: 'Skills Validation', desc: 'Frontmatter integrity' },
-  { name: 'Cross-References', desc: 'AGENTS.md ↔ skills/' },
+  { name: 'Cross-References', desc: 'routing.md ↔ skills/' },
   { name: 'Model Matrix', desc: 'SSOT sync and freshness' },
   { name: 'Project State (.aidd/)', desc: 'Config, sessions, storage' },
   { name: 'Installed Agents', desc: 'Detected AI editors/CLIs' },
@@ -645,12 +645,11 @@ endSection();
 // =========================================================================
 beginSection('aidd.md Framework', 'Content and structure');
 
-const agentsDir = resolve(root, '.aidd', 'content', 'agents');
-if (existsSync(agentsDir)) {
-  const count = countFiles(agentsDir, '.md');
-  pass(`.aidd/content/agents/ (${count} files)`);
+const routingMdPath = resolve(root, '.aidd', 'content', 'routing.md');
+if (existsSync(routingMdPath)) {
+  pass('.aidd/content/routing.md found');
 } else {
-  warn('.aidd/content/agents/ not found (project-level agents)');
+  warn('.aidd/content/routing.md not found (agent routing definitions)');
 }
 
 const rulesDir = resolve(root, 'content/rules');
@@ -780,23 +779,20 @@ endSection();
 // =========================================================================
 // 7. Cross-Reference Integrity
 // =========================================================================
-beginSection('Cross-References', 'AGENTS.md ↔ skills/');
+beginSection('Cross-References', 'routing.md ↔ skills/');
 
-if (existsSync(agentsDir) && skillDirs.length > 0) {
+if (existsSync(routingMdPath) && skillDirs.length > 0) {
   try {
-    // Read all agent definition files from .aidd/content/agents/
-    const agentFiles = readdirSync(agentsDir).filter((f) => f.endsWith('.md'));
-    const agentsContent = agentFiles
-      .map((f) => readFileSync(resolve(agentsDir, f), 'utf-8'))
-      .join('\n');
-    const refs = [...agentsContent.matchAll(/skills\/([a-z0-9-]+)\/?/g)].map((m) => m[1]);
+    // Read routing.md from .aidd/content/routing.md
+    const routingContent = readFileSync(routingMdPath, 'utf-8');
+    const refs = [...routingContent.matchAll(/skills\/([a-z0-9-]+)\/?/g)].map((m) => m[1]);
     const uniqueRefs = [...new Set(refs)];
     const missing = uniqueRefs.filter((ref) => !skillDirs.includes(ref));
 
     if (missing.length === 0) {
-      pass(`agents/ → skills/ (${uniqueRefs.length} refs, all valid)`);
+      pass(`routing.md → skills/ (${uniqueRefs.length} refs, all valid)`);
     } else {
-      warn(`agents/ references ${missing.length} missing skill(s):`);
+      warn(`routing.md references ${missing.length} missing skill(s):`);
       for (const m of missing) {
         detail(`skills/${m}/ not found`);
       }
@@ -805,7 +801,7 @@ if (existsSync(agentsDir) && skillDirs.length > 0) {
     warn('Could not check cross-references');
   }
 } else {
-  info('Skipping cross-reference check (missing .aidd/content/agents/ or skills/)');
+  info('Skipping cross-reference check (missing .aidd/content/routing.md or skills/)');
 }
 
 endSection();
@@ -1074,7 +1070,7 @@ if (needsAiddSetup) {
 
   if (shouldCreate) {
     const dirs = [
-      '', 'content/agents', 'content/rules', 'memory',
+      '', 'content/rules', 'memory',
       'sessions', 'evolution', 'branches', 'drafts',
     ];
     for (const sub of dirs) {

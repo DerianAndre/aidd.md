@@ -20,23 +20,6 @@
 | [knowledge-architect](knowledge-architect/SKILL.md) | Technology Librarian — TKB curation, schema compliance, technology entry maintenance | T3 | "add to TKB", "update technology", "validate schema", "technology review" |
 | [i18n-specialist](i18n-specialist/SKILL.md) | Internationalization Expert — next-intl, react-i18next, locale routing, RTL support | T3 | Multilingual apps, translations, locale routing, pluralization, RTL layouts |
 
----
 
-## Tier Distribution
 
-| Tier | Effort | Skills |
-|------|--------|--------|
-| **T1** (High) | Architecture, Security, Planning | system-architect, contract-architect, security-architect |
-| **T2** (Standard) | Implementation, Integration | data-architect, design-architect, experience-engineer, platform-engineer |
-| **T3** (Low) | Components, Tests, Content | interface-artisan, quality-engineer, knowledge-architect, i18n-specialist |
-
----
-
-## Workflow Mapping
-
-| Workflow | Skills Involved |
-|----------|----------------|
-| orchestrator | system-architect, knowledge-architect, quality-engineer |
-| full-stack-feature | All 10 skills (excludes i18n-specialist unless multilingual) |
-| analyze | security-architect, quality-engineer, contract-architect, data-architect, platform-engineer, system-architect, experience-engineer |
-| docs | knowledge-architect, contract-architect, system-architect |
+> Tier distribution and workflow mapping are defined in [`content/routing.md`](../routing.md) Sections 2 and 4.

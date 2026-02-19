@@ -14,7 +14,7 @@ use super::adapter_trait::{
 /// Files managed:
 /// - Project: `.cursor/mcp.json` — MCP server config (project-scoped)
 /// - Project: `.cursor/rules/aidd.mdc` — AIDD rules pointer (MDC format)
-/// - Project: agents routing.md (config-resolved path)
+/// - Project: routing.md (config-resolved content root)
 /// - Project: `AGENTS.md` — thin redirect (cross-tool compat)
 pub struct CursorAdapter;
 

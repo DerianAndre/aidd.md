@@ -69,6 +69,6 @@ Context-only integration via `AGENTS.md` content. No native MCP support. Best su
 ## Cross-References
 
 - **Framework Spec**: `content/specs/aidd-lifecycle.md`
-- **Agent Hierarchy**: `content/agents/routing.md`
+- **Agent Hierarchy**: `content/routing.md`
 - **MCP Architecture**: `mcps/README.md`
 - **User Guide**: `WORKFLOW.md`

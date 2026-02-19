@@ -34,7 +34,7 @@ export const AGENTS_REDIRECT = `# AGENTS.md
 
 ## Agent Definitions
 
-See [.aidd/content/agents/routing.md](.aidd/content/agents/routing.md) for the full agent hierarchy.
+See [.aidd/content/routing.md](.aidd/content/routing.md) for the full agent hierarchy and task dispatch.
 `;
 
 export const RULES_POINTER = `This project uses the aidd.md framework for AI-Driven Development.
@@ -46,7 +46,7 @@ If MCP is unavailable, run \`pnpm mcp:check\` in the terminal.
 
 ## Framework
 
-- Agent definitions: \`.aidd/content/agents/\`
+- Framework router: \`.aidd/content/routing.md\`
 - Domain rules: \`.aidd/content/rules/\`
 - Skills: \`.aidd/content/skills/\`
 - Workflows: \`.aidd/content/workflows/\`
@@ -68,12 +68,12 @@ export function projectInstructions(projectName: string, toolName: string, mcpNo
 
 ## SSOT
 
-\`.aidd/content/agents/\` is the canonical source of truth for agent roles and coordination.
+\`.aidd/content/routing.md\` is the canonical source of truth for agent roles and task dispatch.
 
 ## Framework
 
 This project uses the [aidd.md](https://aidd.md) framework for AI-Driven Development:
-- **.aidd/content/agents/** — Agent definitions and routing
+- **.aidd/content/routing.md** — Framework router (single entrypoint)
 - **.aidd/content/rules/** — Domain-specific rules
 - **.aidd/content/skills/** — Specialized capabilities
 - **.aidd/content/workflows/** — Multi-step procedures
@@ -200,7 +200,8 @@ export function ensureAgentsRedirect(projectPath: string, result: IntegrationRes
   ensureFile(join(projectPath, 'AGENTS.md'), AGENTS_REDIRECT, result);
 }
 
-/** Check if the agents directory exists. */
+/** Check if the routing file exists (or legacy agents directory). */
 export function hasAgentsDir(projectPath: string): boolean {
-  return existsSync(join(projectPath, '.aidd', 'content', 'agents'));
+  return existsSync(join(projectPath, '.aidd', 'content', 'routing.md'))
+    || existsSync(join(projectPath, '.aidd', 'content', 'agents'));
 }

@@ -139,8 +139,6 @@ export interface AiddConfig {
 export interface ContentPaths {
   /** Override the base content directory (default: "content"). */
   content?: string;
-  /** Override AGENTS.md location (default: "AGENTS.md"). */
-  agents?: string;
   /** Override rules directory (default: "content/rules"). */
   rules?: string;
   /** Override skills directory (default: "content/skills"). */
