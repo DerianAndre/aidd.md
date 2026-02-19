@@ -67,18 +67,18 @@ flowchart LR
 
 ### Mapeo SDLC-AIDD
 
-| Fase SDLC | Equivalente AIDD | Integracion |
-|---|---|---|
-| Descubrir | — | Solo equipo: descubrimiento de producto |
-| Definir | — | Solo equipo: estrategia y backlog |
-| Disenar | Full-stack-feature etapas 1-4 | Arquitectura y UX asistida por IA |
-| Refinar | Product workflow (Spec/Gherkin/DoR) | Especificacion asistida por IA |
-| Planificar | UNDERSTAND + PLAN | Descomposicion asistida por IA |
-| Construir | SPEC + BUILD | Implementacion asistida por IA |
-| Verificar | VERIFY | Testing asistido por IA |
-| Liberar | SHIP + pipeline de despliegue | Commit asistido por IA + despliegue del equipo |
-| Operar | — | Solo equipo: operaciones en produccion |
-| Aprender | Memory layer + retro artifact | La memoria de IA informa futuras sesiones |
+| Fase SDLC  | Equivalente AIDD                    | Integracion                                    |
+| ---------- | ----------------------------------- | ---------------------------------------------- |
+| Descubrir  | —                                   | Solo equipo: descubrimiento de producto        |
+| Definir    | —                                   | Solo equipo: estrategia y backlog              |
+| Diseñar    | Full-stack-feature etapas 1-4       | Arquitectura y UX asistida por IA              |
+| Refinar    | Product workflow (Spec/Gherkin/DoR) | Especificacion asistida por IA                 |
+| Planificar | UNDERSTAND + PLAN                   | Descomposicion asistida por IA                 |
+| Construir  | SPEC + BUILD                        | Implementacion asistida por IA                 |
+| Verificar  | VERIFY                              | Testing asistido por IA                        |
+| Liberar    | SHIP + pipeline de despliegue       | Commit asistido por IA + despliegue del equipo |
+| Operar     | —                                   | Solo equipo: operaciones en produccion         |
+| Aprender   | Memory layer + retro artifact       | La memoria de IA informa futuras sesiones      |
 
 ---
 
@@ -88,32 +88,32 @@ flowchart LR
 
 Los roles tradicionales del equipo se mapean a los agentes equivalentes de AIDD. Los agentes de IA potencian los roles humanos — no los reemplazan.
 
-| Rol | Responsabilidades | Agente AIDD |
-|---|---|---|
-| Product Owner | Vision, backlog, prioridades, criterios de aceptacion | Master Orchestrator (clasificacion de entrada) |
-| Facilitador | Proceso, ceremonias, bloqueos, salud del equipo | Orchestrator (cumplimiento del pipeline) |
-| Desarrollador | Implementacion, revision de codigo, decisiones tecnicas | Fullstack Agent, Interface Artisan |
-| Ingeniero QA | Estrategia de pruebas, automatizacion, cobertura, UAT | Quality Engineer |
-| Disenador UX | Investigacion de usuarios, wireframes, usabilidad, sistemas de diseno | Design Architect, Experience Engineer |
-| Ingeniero de Seguridad | Modelado de amenazas, auditorias, cumplimiento | Security Architect |
-| Ingeniero DevOps | CI/CD, infraestructura, monitoreo, despliegues | Platform Engineer |
+| Rol                    | Responsabilidades                                                     | Agente AIDD                                    |
+| ---------------------- | --------------------------------------------------------------------- | ---------------------------------------------- |
+| Product Owner          | Vision, backlog, prioridades, criterios de aceptacion                 | Master Orchestrator (clasificacion de entrada) |
+| Facilitador            | Proceso, ceremonias, bloqueos, salud del equipo                       | Orchestrator (cumplimiento del pipeline)       |
+| Desarrollador          | Implementacion, revision de codigo, decisiones tecnicas               | Fullstack Agent, Interface Artisan             |
+| Ingeniero QA           | Estrategia de pruebas, automatizacion, cobertura, UAT                 | Quality Engineer                               |
+| Disenador UX           | Investigacion de usuarios, wireframes, usabilidad, sistemas de diseno | Design Architect, Experience Engineer          |
+| Ingeniero de Seguridad | Modelado de amenazas, auditorias, cumplimiento                        | Security Architect                             |
+| Ingeniero DevOps       | CI/CD, infraestructura, monitoreo, despliegues                        | Platform Engineer                              |
 
 ### Matriz RACI
 
 **R** = Responsable, **A** = Accountable (Rinde cuentas), **C** = Consultado, **I** = Informado
 
-| Fase | PO | Facilitador | Desarrollador | QA | UX | DevOps |
-|---|---|---|---|---|---|---|
-| Descubrir | **A/R** | I | C | C | **R** | I |
-| Definir | **A/R** | C | C | C | **R** | I |
-| Disenar | C | I | **R** | C | **A/R** | C |
-| Refinar | **A** | **R** | **R** | **R** | C | I |
-| Planificar | C | **R** | **A/R** | C | I | C |
-| Construir | I | I | **A/R** | C | C | C |
-| Verificar | C | I | **R** | **A/R** | C | C |
-| Liberar | I | I | **R** | **R** | I | **A/R** |
-| Operar | I | I | C | C | I | **A/R** |
-| Aprender | **A/R** | **R** | **R** | **R** | **R** | **R** |
+| Fase       | PO      | Facilitador | Desarrollador | QA      | UX      | DevOps  |
+| ---------- | ------- | ----------- | ------------- | ------- | ------- | ------- |
+| Descubrir  | **A/R** | I           | C             | C       | **R**   | I       |
+| Definir    | **A/R** | C           | C             | C       | **R**   | I       |
+| Disenar    | C       | I           | **R**         | C       | **A/R** | C       |
+| Refinar    | **A**   | **R**       | **R**         | **R**   | C       | I       |
+| Planificar | C       | **R**       | **A/R**       | C       | I       | C       |
+| Construir  | I       | I           | **A/R**       | C       | C       | C       |
+| Verificar  | C       | I           | **R**         | **A/R** | C       | C       |
+| Liberar    | I       | I           | **R**         | **R**   | I       | **A/R** |
+| Operar     | I       | I           | C             | C       | I       | **A/R** |
+| Aprender   | **A/R** | **R**       | **R**         | **R**   | **R**   | **R**   |
 
 ---
 
@@ -215,25 +215,25 @@ El punto de convergencia es **Refinar**: una vez que las historias cumplen la De
 
 **OKRs / KPIs**: Define metricas de exito usando Objetivos y Resultados Clave.
 
-| Componente | Descripcion | Ejemplo |
-|---|---|---|
-| Objetivo | Meta cualitativa | Mejorar la experiencia de onboarding de desarrolladores |
-| Resultado Clave 1 | Medida cuantitativa | Reducir tiempo-al-primer-commit de 3 dias a 1 dia |
-| Resultado Clave 2 | Medida cuantitativa | Lograr 80% de satisfaccion en encuesta de onboarding |
-| Resultado Clave 3 | Medida cuantitativa | Cero bugs criticos reportados en la primera semana |
+| Componente        | Descripcion         | Ejemplo                                                 |
+| ----------------- | ------------------- | ------------------------------------------------------- |
+| Objetivo          | Meta cualitativa    | Mejorar la experiencia de onboarding de desarrolladores |
+| Resultado Clave 1 | Medida cuantitativa | Reducir tiempo-al-primer-commit de 3 dias a 1 dia       |
+| Resultado Clave 2 | Medida cuantitativa | Lograr 80% de satisfaccion en encuesta de onboarding    |
+| Resultado Clave 3 | Medida cuantitativa | Cero bugs criticos reportados en la primera semana      |
 
 **Priorizacion**: Aplica uno o mas frameworks para ordenar el backlog:
 
-| Framework | Mejor Para | Formula |
-|---|---|---|
-| MoSCoW | Releases de alcance fijo | Must / Should / Could / Won't |
-| RICE | Equipos data-driven | (Alcance x Impacto x Confianza) / Esfuerzo |
-| WSJF | Flujo continuo | Costo del Retraso / Duracion del Trabajo |
+| Framework | Mejor Para               | Formula                                    |
+| --------- | ------------------------ | ------------------------------------------ |
+| MoSCoW    | Releases de alcance fijo | Must / Should / Could / Won't              |
+| RICE      | Equipos data-driven      | (Alcance x Impacto x Confianza) / Esfuerzo |
+| WSJF      | Flujo continuo           | Costo del Retraso / Duracion del Trabajo   |
 
 **Poblacion del Backlog**: Estructura el backlog como jerarquia:
 
 ```
-Epica (iniciativa grande, abarca multiples iteraciones)
+Epic (iniciativa grande, abarca multiples iteraciones)
   └── Feature (capacidad visible para el usuario)
         └── Historia de Usuario (Como [persona], quiero [objetivo], para que [beneficio])
               └── Tarea (unidad atomica de trabajo)
@@ -255,55 +255,49 @@ Epica (iniciativa grande, abarca multiples iteraciones)
 
 ---
 
-## 6. Fase 3: Disenar
+## 6. Fase 3: Diseñar
 
-**Proposito**: Crear la arquitectura tecnica y de UX antes de comenzar la implementacion.
-
-**Participantes**: Desarrollador, Disenador UX, Tech Lead
+- **Recurso**: [`content/workflows/orchestrator.md`](content/workflows/orchestrator.md)
+- **Proposito**: Crear la arquitectura tecnica y de UX antes de comenzar la implementacion.
+- **Participantes**: Desarrollador, Disenador UX, Tech Lead
 
 Esta fase esta bien cubierta por los workflows existentes de AIDD. Usa estos recursos:
 
-| Actividad | Recurso AIDD |
-|---|---|
-| Arquitectura del Sistema | [`content/workflows/full-stack-feature.md`](content/workflows/full-stack-feature.md) — Etapa 1: system-architect (diagramas C4, ADRs) |
-| Diseno de Contrato API | [`content/workflows/full-stack-feature.md`](content/workflows/full-stack-feature.md) — Etapa 2: contract-architect (spec OpenAPI) |
-| Diseno del Modelo de Datos | [`content/workflows/full-stack-feature.md`](content/workflows/full-stack-feature.md) — Etapa 3: data-architect (esquema SQL) |
-| Diseno UX/UI | [`content/workflows/full-stack-feature.md`](content/workflows/full-stack-feature.md) — Etapa 4: design-architect (tokens de diseno) |
-| Auditoria de Sistema de Diseno | [`content/workflows/design.md`](content/workflows/design.md) — Auditoria WCAG + Tailwind |
-
-### Lo Que Esta Fase Agrega Mas Alla de AIDD
-
-- **Revisiones de Diseno**: Programa revisiones de diseno como ceremonia del equipo. Presenta arquitectura, contratos API y mockups UX para retroalimentacion antes de continuar.
-- **Alineacion Entre Equipos**: Si la feature toca multiples equipos o servicios, realiza una sesion de alineacion para acordar interfaces y contratos.
-- **Validacion de Prototipo**: Para features de alta incertidumbre, construye un prototipo o prueba de concepto y valida con usuarios antes de comprometerse con la implementacion completa.
+| Actividad                      | Guia                                                                                         |
+| ------------------------------ | -------------------------------------------------------------------------------------------- |
+| Orchestrator                   | [orchestrator](content/workflows/orchestrator.md) — Workflow de orquestacion de actividades  |
+| Arquitectura del Sistema       | [system-architect](content/workflows/full-stack-feature.md) — Planeación, Diagramas C4, ADRs |
+| Patrones de arquitectura       | [cdh-architecture](content/workflows/cdh-architecture.md) — Clean / DDD / Hexagonal          |
+| Diseno de Contrato API         | [contract-architect](content/workflows/full-stack-feature.md) — Spec OpenAPI                 |
+| Diseno del Modelo de Datos     | [data-architect](content/workflows/full-stack-feature.md) — Esquema SQL                      |
+| Diseno UX/UI                   | [design-architect](content/workflows/full-stack-feature.md) (tokens de diseño)               |
+| Auditoria de Sistema de Diseño | [workflos/design](content/workflows/design.md) — Auditoria WCAG + Tailwind                   |
 
 ---
 
 ## 7. Fase 4: Refinar
 
-**Proposito**: Asegurar que cada historia cumpla la Definicion de Listo (Definition of Ready) antes de entrar a desarrollo.
+- **Recurso**: [`content/workflows/product.md`](content/workflows/product.md)
+- **Proposito**: Asegurar que cada historia cumpla la Definicion de Listo (Definition of Ready) antes de entrar a desarrollo.
+- **Participantes**: Product Owner, Desarrollador, Ingeniero QA, Disenador UX
 
-**Participantes**: Product Owner, Desarrollador, Ingeniero QA, Disenador UX
-
-Esta fase se mapea directamente al workflow de producto de AIDD. Usa estos recursos:
-
-| Actividad | Recurso AIDD |
-|---|---|
-| Especificacion Tecnica | [`content/workflows/product.md`](content/workflows/product.md) — Paso 1: Plantilla de spec |
-| Escenarios BDD | [`content/workflows/product.md`](content/workflows/product.md) — Paso 2: Gherkin (Given/When/Then) |
-| Eliminacion de Ambiguedades | [`content/workflows/product.md`](content/workflows/product.md) — Paso 3: Checklist de refinamiento |
-| Definicion de Listo | [`content/workflows/product.md`](content/workflows/product.md) — Paso 4: Checklist DoR |
+| Actividad                   | Guia                              |
+| --------------------------- | --------------------------------- |
+| Especificacion Tecnica      | Paso 1: Plantilla de spec         |
+| Escenarios BDD              | Paso 2: Gherkin (Given/When/Then) |
+| Eliminacion de Ambiguedades | Paso 3: Checklist de refinamiento |
+| Definicion de Listo         | Paso 4: Checklist DoR             |
 
 ### Ceremonia de Refinamiento
 
-| Aspecto | Guia |
-|---|---|
-| Frecuencia | Una vez por iteracion (o dos para ciclos cortos) |
-| Duracion | 60 minutos maximo |
-| Participantes | PO + Desarrolladores + QA + UX |
-| Entrada | Top N historias del backlog priorizado |
-| Proceso | PO presenta historia → Equipo hace preguntas → Se escriben criterios de aceptacion → Estimacion → Se revisa checklist DoR |
-| Salida | Historias que cumplen la Definicion de Listo |
+| Aspecto       | Guia                                                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Frecuencia    | Una vez por iteracion (o dos para ciclos cortos)                                                                          |
+| Duracion      | 60 minutos maximo                                                                                                         |
+| Participantes | PO + Desarrolladores + QA + UX                                                                                            |
+| Entrada       | Top N historias del backlog priorizado                                                                                    |
+| Proceso       | PO presenta historia → Equipo hace preguntas → Se escriben criterios de aceptacion → Estimacion → Se revisa checklist DoR |
+| Salida        | Historias que cumplen la Definicion de Listo                                                                              |
 
 ### Formato de Criterios de Aceptacion
 
@@ -327,27 +321,17 @@ Las historias que no cumplan la Definicion de Listo regresan al backlog para may
 
 ### Ceremonia de Planificacion de Iteracion
 
-| Aspecto | Guia |
-|---|---|
-| Frecuencia | Inicio de cada iteracion |
-| Duracion | 60-120 minutos (proporcional a la duracion de la iteracion) |
-| Entrada | Historias refinadas (DoR cumplido), capacidad del equipo, datos de velocidad |
-| Proceso | Revisar objetivo de iteracion → Seleccionar historias del tope del backlog → Descomponer en tareas → Estimar esfuerzo → Comprometerse |
-| Salida | Backlog de iteracion con historias y tareas comprometidas |
+| Aspecto    | Guia                                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Frecuencia | Inicio de cada iteracion                                                                                                              |
+| Duracion   | 60-120 minutos (proporcional a la duracion de la iteracion)                                                                           |
+| Entrada    | Historias refinadas (DoR cumplido), capacidad del equipo, datos de velocidad                                                          |
+| Proceso    | Revisar objetivo de iteracion → Seleccionar historias del tope del backlog → Descomponer en tareas → Estimar esfuerzo → Comprometerse |
+| Salida     | Backlog de iteracion con historias y tareas comprometidas                                                                             |
 
 **Planificacion de Capacidad**: Calcula la capacidad disponible basandote en tamano del equipo, disponibilidad (vacaciones, reuniones, rotacion de soporte) y velocidad historica. Comprometete con el 80% de la capacidad calculada para absorber incertidumbre.
 
 **Objetivo de Iteracion**: Escribe una sola oracion describiendo lo que la iteracion logra para el usuario. Ejemplo: *"Los usuarios pueden autenticarse via SSO y gestionar su configuracion de perfil."*
-
-### Coordinacion Diaria
-
-| Aspecto | Guia |
-|---|---|
-| Frecuencia | Diaria (sincrona o asincrona) |
-| Duracion | 15 minutos maximo |
-| Formato | ¿Que complete? ¿En que trabajare? ¿Algun bloqueo? |
-| Alternativa Asincrona | Actualizaciones escritas en un canal compartido antes de una hora fija diaria |
-| Resolucion de Bloqueos | Bloqueos senalados en standup → Facilitador da seguimiento en las siguientes 2 horas |
 
 ### Integracion con AIDD
 
@@ -369,13 +353,13 @@ Cuando un desarrollador toma una historia e inicia una sesion AIDD, los pasos de
 
 Esta fase se mapea a las fases SPEC y BUILD de AIDD. Usa estos recursos:
 
-| Actividad | Recurso AIDD |
-|---|---|
-| Ciclo de Vida AIDD | [`content/specs/aidd-lifecycle.md`](content/specs/aidd-lifecycle.md) — Fases 3-4 (SPEC + BUILD) |
-| Flujo Git | [`content/workflows/feature-branch.md`](content/workflows/feature-branch.md) — Branch → Commit → Push |
-| Estandares de Commit | [`content/rules/git-workflow.md`](content/rules/git-workflow.md) — Conventional Commits |
-| Estilo de Codigo | [`content/rules/code-style.md`](content/rules/code-style.md) — Nombrado, estructura, patrones |
-| Salidas Requeridas | [`content/rules/deliverables.md`](content/rules/deliverables.md) — Plan, ADR, diagrama, resumen |
+| Actividad            | Recurso AIDD                                                                                          |
+| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| Ciclo de Vida AIDD   | [`content/specs/aidd-lifecycle.md`](content/specs/aidd-lifecycle.md) — Fases 3-4 (SPEC + BUILD)       |
+| Flujo Git            | [`content/workflows/feature-branch.md`](content/workflows/feature-branch.md) — Branch → Commit → Push |
+| Estandares de Commit | [`content/rules/git-workflow.md`](content/rules/git-workflow.md) — Conventional Commits               |
+| Estilo de Codigo     | [`content/rules/code-style.md`](content/rules/code-style.md) — Nombrado, estructura, patrones         |
+| Salidas Requeridas   | [`content/rules/deliverables.md`](content/rules/deliverables.md) — Plan, ADR, diagrama, resumen       |
 
 ### Lo Que Esta Fase Agrega Mas Alla de AIDD
 
@@ -394,32 +378,32 @@ Esta fase se mapea a las fases SPEC y BUILD de AIDD. Usa estos recursos:
 
 Esta fase se mapea a la fase VERIFY de AIDD. Usa estos recursos:
 
-| Actividad | Recurso AIDD |
-|---|---|
-| Ciclo de Vida AIDD | [`content/specs/aidd-lifecycle.md`](content/specs/aidd-lifecycle.md) — Fase 5 (VERIFY) |
-| Estandares de Pruebas | [`content/rules/testing.md`](content/rules/testing.md) — Piramide, cobertura, patron AAA |
-| Flujo de Pruebas | [`content/workflows/test.md`](content/workflows/test.md) — Generacion de pruebas |
-| Auditoria de Seguridad | [`content/workflows/analyze.md`](content/workflows/analyze.md) — Evaluacion OWASP |
+| Actividad              | Recurso AIDD                                                                             |
+| ---------------------- | ---------------------------------------------------------------------------------------- |
+| Ciclo de Vida AIDD     | [`content/specs/aidd-lifecycle.md`](content/specs/aidd-lifecycle.md) — Fase 5 (VERIFY)   |
+| Estandares de Pruebas  | [`content/rules/testing.md`](content/rules/testing.md) — Piramide, cobertura, patron AAA |
+| Flujo de Pruebas       | [`content/workflows/test.md`](content/workflows/test.md) — Generacion de pruebas         |
+| Auditoria de Seguridad | [`content/workflows/analyze.md`](content/workflows/analyze.md) — Evaluacion OWASP        |
 
 ### Piramide de Pruebas
 
 Sigue la distribucion 70/20/10 (ver [`content/rules/testing.md`](content/rules/testing.md)):
 
-| Nivel | Porcentaje | Enfoque |
-|---|---|---|
-| Unitarias | 70% | Funciones puras, logica de negocio, casos limite |
-| Integracion | 20% | Endpoints API, consultas a base de datos, interacciones de servicios |
-| E2E | 10% | Flujos criticos de usuario, validacion entre sistemas |
+| Nivel       | Porcentaje | Enfoque                                                              |
+| ----------- | ---------- | -------------------------------------------------------------------- |
+| Unitarias   | 70%        | Funciones puras, logica de negocio, casos limite                     |
+| Integracion | 20%        | Endpoints API, consultas a base de datos, interacciones de servicios |
+| E2E         | 10%        | Flujos criticos de usuario, validacion entre sistemas                |
 
 ### UAT (Pruebas de Aceptacion de Usuario)
 
-| Aspecto | Guia |
-|---|---|
-| Participantes | PO + QA + usuario representativo (si es posible) |
-| Entrada | Feature desplegada en ambiente de staging |
-| Proceso | Recorrer cada criterio de aceptacion → Verificar escenarios Given/When/Then → Registrar pasa/falla |
-| Criterio | Todos los criterios de aceptacion pasan, no hay defectos P0/P1 abiertos |
-| Salida | Aprobacion del PO |
+| Aspecto       | Guia                                                                                               |
+| ------------- | -------------------------------------------------------------------------------------------------- |
+| Participantes | PO + QA + usuario representativo (si es posible)                                                   |
+| Entrada       | Feature desplegada en ambiente de staging                                                          |
+| Proceso       | Recorrer cada criterio de aceptacion → Verificar escenarios Given/When/Then → Registrar pasa/falla |
+| Criterio      | Todos los criterios de aceptacion pasan, no hay defectos P0/P1 abiertos                            |
+| Salida        | Aprobacion del PO                                                                                  |
 
 ### Puertas de Calidad (Quality Gates)
 
@@ -446,12 +430,12 @@ Antes de pasar a Liberar, verifica cada item (consolidado de [`content/specs/aid
 
 Usa [SemVer](https://semver.org/) para todos los releases:
 
-| Segmento | Incrementar Cuando | Ejemplo |
-|---|---|---|
-| MAJOR | Cambios que rompen la API publica | 2.0.0 |
-| MINOR | Nuevas features, retrocompatibles | 1.3.0 |
-| PATCH | Correcciones de bugs, retrocompatibles | 1.3.1 |
-| Pre-release | Alpha/beta/release candidate | 1.4.0-beta.1 |
+| Segmento    | Incrementar Cuando                     | Ejemplo      |
+| ----------- | -------------------------------------- | ------------ |
+| MAJOR       | Cambios que rompen la API publica      | 2.0.0        |
+| MINOR       | Nuevas features, retrocompatibles      | 1.3.0        |
+| PATCH       | Correcciones de bugs, retrocompatibles | 1.3.1        |
+| Pre-release | Alpha/beta/release candidate           | 1.4.0-beta.1 |
 
 Los commits convencionales (ver [`content/rules/git-workflow.md`](content/rules/git-workflow.md)) se mapean a incrementos de version: `feat:` → MINOR, `fix:` → PATCH, `feat!:` o `BREAKING CHANGE` → MAJOR.
 
@@ -489,12 +473,12 @@ flowchart LR
     style P fill:#26a69a,color:#fff
 ```
 
-| Etapa | Ambiente | Disparador | Puertas |
-|---|---|---|---|
-| Build | CI | Push a branch | Typecheck, lint, pruebas unitarias |
-| Test | CI | PR abierto | Pruebas de integracion, escaneo de seguridad |
-| Staging | Pre-produccion | PR mergeado a main | Pruebas E2E, pruebas de humo, revision del PO |
-| Production | En vivo | Tag / aprobacion manual | Health checks, plan de rollback listo |
+| Etapa      | Ambiente       | Disparador              | Puertas                                       |
+| ---------- | -------------- | ----------------------- | --------------------------------------------- |
+| Build      | CI             | Push a branch           | Typecheck, lint, pruebas unitarias            |
+| Test       | CI             | PR abierto              | Pruebas de integracion, escaneo de seguridad  |
+| Staging    | Pre-produccion | PR mergeado a main      | Pruebas E2E, pruebas de humo, revision del PO |
+| Production | En vivo        | Tag / aprobacion manual | Health checks, plan de rollback listo         |
 
 ### Estrategia de Rollback
 
@@ -525,32 +509,32 @@ Esta fase extiende la fase SHIP de AIDD con operaciones de despliegue:
 
 Rastrea tres categorias de metricas:
 
-| Categoria | Que Monitorear | Ejemplos |
-|---|---|---|
-| Aplicacion | Tasas de error, tiempos de respuesta, throughput | Latencia p95, tasa de 5xx, peticiones/seg |
-| Infraestructura | Utilizacion de recursos, saturacion, disponibilidad | CPU, memoria, disco, red |
-| Negocio | Comportamiento del usuario, conversion, engagement | Usuarios activos, adopcion de features, ingresos |
+| Categoria       | Que Monitorear                                      | Ejemplos                                         |
+| --------------- | --------------------------------------------------- | ------------------------------------------------ |
+| Aplicacion      | Tasas de error, tiempos de respuesta, throughput    | Latencia p95, tasa de 5xx, peticiones/seg        |
+| Infraestructura | Utilizacion de recursos, saturacion, disponibilidad | CPU, memoria, disco, red                         |
+| Negocio         | Comportamiento del usuario, conversion, engagement  | Usuarios activos, adopcion de features, ingresos |
 
 ### Alertas
 
 Define niveles de severidad con expectativas claras de respuesta:
 
-| Severidad | Descripcion | Tiempo de Respuesta | Escalacion |
-|---|---|---|---|
-| P0 — Critico | Servicio caido, riesgo de perdida de datos | 15 minutos | Paginacion inmediata al guardia |
-| P1 — Mayor | Feature degradada, existe workaround | 1 hora | Notificacion al lider del equipo |
-| P2 — Menor | Bug no critico, bajo impacto | 1 dia habil | Agregar al backlog |
-| P3 — Cosmetico | Pulido visual o de UX | Siguiente iteracion | Agregar al backlog |
+| Severidad      | Descripcion                                | Tiempo de Respuesta | Escalacion                       |
+| -------------- | ------------------------------------------ | ------------------- | -------------------------------- |
+| P0 — Critico   | Servicio caido, riesgo de perdida de datos | 15 minutos          | Paginacion inmediata al guardia  |
+| P1 — Mayor     | Feature degradada, existe workaround       | 1 hora              | Notificacion al lider del equipo |
+| P2 — Menor     | Bug no critico, bajo impacto               | 1 dia habil         | Agregar al backlog               |
+| P3 — Cosmetico | Pulido visual o de UX                      | Siguiente iteracion | Agregar al backlog               |
 
 **Regla**: Alerta sobre sintomas (pico en tasa de errores), no causas. Las alertas deben ser accionables — si nadie necesita hacer algo, no deberia ser una alerta.
 
 ### SLAs, SLOs y SLIs
 
-| Termino | Definicion | Ejemplo |
-|---|---|---|
-| SLI (Indicador) | Medida cuantitativa del servicio | Latencia de peticiones, tasa de error |
-| SLO (Objetivo) | Valor objetivo para un SLI | Latencia p95 < 200ms, tasa de error < 0.1% |
-| SLA (Acuerdo) | Compromiso contractual con consecuencias | 99.9% uptime o creditos emitidos |
+| Termino         | Definicion                               | Ejemplo                                    |
+| --------------- | ---------------------------------------- | ------------------------------------------ |
+| SLI (Indicador) | Medida cuantitativa del servicio         | Latencia de peticiones, tasa de error      |
+| SLO (Objetivo)  | Valor objetivo para un SLI               | Latencia p95 < 200ms, tasa de error < 0.1% |
+| SLA (Acuerdo)   | Compromiso contractual con consecuencias | 99.9% uptime o creditos emitidos           |
 
 **Error Budget (Presupuesto de Error)**: Si el objetivo SLO es 99.9% uptime (43.8 minutos de downtime/mes), el 0.1% restante es el presupuesto de error. Cuando se agota, congela trabajo de features y enfocate en confiabilidad.
 
@@ -574,25 +558,25 @@ Sigue un ciclo de vida estructurado:
 
 ### Recoleccion de Retroalimentacion
 
-| Canal | Tipo | Frecuencia |
-|---|---|---|
-| Feedback In-App | Input directo del usuario (calificacion, comentario) | Continua |
-| Tickets de Soporte | Problemas reportados por usuarios | Continua |
-| Analiticas | Datos de comportamiento (uso de features, funnels, abandono) | Continua |
-| Encuestas a Usuarios | Retroalimentacion estructurada (NPS, satisfaccion) | Trimestral |
-| Revision de Stakeholders | Contexto y direccion de negocio | Fin de iteracion |
+| Canal                    | Tipo                                                         | Frecuencia       |
+| ------------------------ | ------------------------------------------------------------ | ---------------- |
+| Feedback In-App          | Input directo del usuario (calificacion, comentario)         | Continua         |
+| Tickets de Soporte       | Problemas reportados por usuarios                            | Continua         |
+| Analiticas               | Datos de comportamiento (uso de features, funnels, abandono) | Continua         |
+| Encuestas a Usuarios     | Retroalimentacion estructurada (NPS, satisfaccion)           | Trimestral       |
+| Revision de Stakeholders | Contexto y direccion de negocio                              | Fin de iteracion |
 
 **Pipeline Retroalimentacion-a-Backlog**: Retroalimentacion → Triagear (¿duplicado? ¿valido?) → Categorizar (bug, solicitud de feature, mejora) → Priorizar (usando frameworks de la fase Definir) → Item de Backlog → Siguiente iteracion.
 
 ### Ceremonia de Retrospectiva
 
-| Aspecto | Guia |
-|---|---|
-| Frecuencia | Fin de cada iteracion |
-| Duracion | 60 minutos |
-| Facilitador | Rota cada iteracion (no siempre la misma persona) |
-| Formato | ¿Que salio bien? → ¿Que necesita mejorar? → Acciones |
-| Salida | 2-3 acciones concretas, cada una asignada a un dueno con fecha limite |
+| Aspecto     | Guia                                                                  |
+| ----------- | --------------------------------------------------------------------- |
+| Frecuencia  | Fin de cada iteracion                                                 |
+| Duracion    | 60 minutos                                                            |
+| Facilitador | Rota cada iteracion (no siempre la misma persona)                     |
+| Formato     | ¿Que salio bien? → ¿Que necesita mejorar? → Acciones                  |
+| Salida      | 2-3 acciones concretas, cada una asignada a un dueno con fecha limite |
 
 **Reglas**: Enfocate en proceso y sistema, no en individuos. Cada accion debe ser especifica, medible y asignada. Revisa primero las acciones de la iteracion anterior — si no se completaron, re-comprometete o eliminala.
 
@@ -624,31 +608,31 @@ La fase Aprender cierra el ciclo:
 
 Cuatro metricas clave del programa DevOps Research and Assessment (DORA):
 
-| Metrica | Definicion | Elite | Alta | Media | Baja |
-|---|---|---|---|---|---|
-| Frecuencia de Despliegue | Que tan seguido se despliega codigo a produccion | Bajo demanda (multiples/dia) | Semanal a mensual | Mensual a semestral | Semestral+ |
-| Lead Time de Cambios | Tiempo desde commit hasta produccion | Menos de 1 dia | 1 dia a 1 semana | 1 semana a 1 mes | 1-6 meses |
-| Tasa de Fallo en Cambios | % de despliegues que causan fallos | 0-15% | 16-30% | 31-45% | 46%+ |
-| Tiempo Medio de Recuperacion | Tiempo para restaurar servicio tras fallo | Menos de 1 hora | Menos de 1 dia | Menos de 1 semana | 1 semana+ |
+| Metrica                      | Definicion                                       | Elite                        | Alta              | Media               | Baja       |
+| ---------------------------- | ------------------------------------------------ | ---------------------------- | ----------------- | ------------------- | ---------- |
+| Frecuencia de Despliegue     | Que tan seguido se despliega codigo a produccion | Bajo demanda (multiples/dia) | Semanal a mensual | Mensual a semestral | Semestral+ |
+| Lead Time de Cambios         | Tiempo desde commit hasta produccion             | Menos de 1 dia               | 1 dia a 1 semana  | 1 semana a 1 mes    | 1-6 meses  |
+| Tasa de Fallo en Cambios     | % de despliegues que causan fallos               | 0-15%                        | 16-30%            | 31-45%              | 46%+       |
+| Tiempo Medio de Recuperacion | Tiempo para restaurar servicio tras fallo        | Menos de 1 hora              | Menos de 1 dia    | Menos de 1 semana   | 1 semana+  |
 
 ### Metricas Agile
 
-| Metrica | Que Mide | Uso |
-|---|---|---|
-| Velocidad | Story points completados por iteracion | Pronostico (tendencia, no meta) |
-| Cycle Time | Tiempo de "en progreso" a "terminado" | Eficiencia de flujo |
-| Lead Time | Tiempo de "backlog" a "terminado" | Capacidad de respuesta end-to-end |
-| Throughput | Items completados por iteracion | Capacidad de entrega |
-| WIP | Items en progreso simultaneamente | Deteccion de cuellos de botella |
+| Metrica    | Que Mide                               | Uso                               |
+| ---------- | -------------------------------------- | --------------------------------- |
+| Velocidad  | Story points completados por iteracion | Pronostico (tendencia, no meta)   |
+| Cycle Time | Tiempo de "en progreso" a "terminado"  | Eficiencia de flujo               |
+| Lead Time  | Tiempo de "backlog" a "terminado"      | Capacidad de respuesta end-to-end |
+| Throughput | Items completados por iteracion        | Capacidad de entrega              |
+| WIP        | Items en progreso simultaneamente      | Deteccion de cuellos de botella   |
 
 ### Metricas de Calidad
 
-| Metrica | Que Mide | Objetivo |
-|---|---|---|
-| Tasa de Escape de Defectos | Bugs encontrados post-release vs. pre-release | < 10% |
-| Cobertura de Pruebas | Codigo cubierto por pruebas automatizadas | Ver objetivos en [`content/rules/testing.md`](content/rules/testing.md) |
-| Turnaround de Code Review | Tiempo desde PR abierto hasta revision completada | < 24 horas |
-| Score de Cumplimiento AIDD | Adherencia al workflow por sesion | > 80 (ver puntuacion en [`CLAUDE.md`](CLAUDE.md)) |
+| Metrica                    | Que Mide                                          | Objetivo                                                                |
+| -------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- |
+| Tasa de Escape de Defectos | Bugs encontrados post-release vs. pre-release     | < 10%                                                                   |
+| Cobertura de Pruebas       | Codigo cubierto por pruebas automatizadas         | Ver objetivos en [`content/rules/testing.md`](content/rules/testing.md) |
+| Turnaround de Code Review  | Tiempo desde PR abierto hasta revision completada | < 24 horas                                                              |
+| Score de Cumplimiento AIDD | Adherencia al workflow por sesion                 | > 80 (ver puntuacion en [`CLAUDE.md`](CLAUDE.md))                       |
 
 **Principio**: Las metricas impulsan conversaciones, no juicios. Las tendencias importan mas que los absolutos. Nunca uses la velocidad como medida de rendimiento para individuos.
 
@@ -662,23 +646,23 @@ La deuda tecnica es trabajo diferido que ralentizara el desarrollo futuro si no 
 
 ### Identificacion
 
-| Fuente | Como Detectar |
-|---|---|
-| Complejidad de Codigo | Complejidad ciclomatica > 15 (herramientas de analisis estatico) |
-| Dependencias Desactualizadas | Auditoria de dependencias (`npm audit`, `pnpm outdated`) |
-| Pruebas Faltantes | Brechas de cobertura en areas de alto riesgo (ver matriz de prioridad en [`content/rules/testing.md`](content/rules/testing.md)) |
-| Violaciones de Arquitectura | Inversiones de dependencia, dependencias circulares, fugas de capa |
-| Marcadores en Codigo | Comentarios TODO, FIXME, HACK |
-| Friccion del Desarrollador | Quejas recurrentes sobre areas especificas durante retros |
+| Fuente                       | Como Detectar                                                                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Complejidad de Codigo        | Complejidad ciclomatica > 15 (herramientas de analisis estatico)                                                                 |
+| Dependencias Desactualizadas | Auditoria de dependencias (`npm audit`, `pnpm outdated`)                                                                         |
+| Pruebas Faltantes            | Brechas de cobertura en areas de alto riesgo (ver matriz de prioridad en [`content/rules/testing.md`](content/rules/testing.md)) |
+| Violaciones de Arquitectura  | Inversiones de dependencia, dependencias circulares, fugas de capa                                                               |
+| Marcadores en Codigo         | Comentarios TODO, FIXME, HACK                                                                                                    |
+| Friccion del Desarrollador   | Quejas recurrentes sobre areas especificas durante retros                                                                        |
 
 ### Clasificacion de Severidad
 
-| Severidad | Descripcion | Ejemplo |
-|---|---|---|
-| Critica | Bloquea trabajo de features o causa caidas | Dependencia deprecada con CVE conocido |
-| Alta | Ralentiza el desarrollo significativamente | Abstraccion faltante causando cirugia de escopeta |
-| Media | Causa friccion, existen workarounds | Convenciones de nombrado inconsistentes entre modulos |
-| Baja | Cosmetica, sin impacto en velocidad de entrega | Codigo muerto, imports no usados |
+| Severidad | Descripcion                                    | Ejemplo                                               |
+| --------- | ---------------------------------------------- | ----------------------------------------------------- |
+| Critica   | Bloquea trabajo de features o causa caidas     | Dependencia deprecada con CVE conocido                |
+| Alta      | Ralentiza el desarrollo significativamente     | Abstraccion faltante causando cirugia de escopeta     |
+| Media     | Causa friccion, existen workarounds            | Convenciones de nombrado inconsistentes entre modulos |
+| Baja      | Cosmetica, sin impacto en velocidad de entrega | Codigo muerto, imports no usados                      |
 
 ### Estrategia de Asignacion
 
@@ -698,21 +682,21 @@ La capa de memoria de AIDD ayuda a rastrear y surfacear deuda:
 
 ## 16. Referencias Cruzadas
 
-| Documento | Ruta | Cubre |
-|---|---|---|
-| Workflow AIDD | [`WORKFLOW.md`](WORKFLOW.md) | Guia de usuario del pipeline de IA |
-| Ciclo de Vida AIDD | [`content/specs/aidd-lifecycle.md`](content/specs/aidd-lifecycle.md) | Ciclo de vida tecnico de 6 fases |
-| Workflow de Producto | [`content/workflows/product.md`](content/workflows/product.md) | Spec, Gherkin, refinamiento, DoR |
-| Feature Full-Stack | [`content/workflows/full-stack-feature.md`](content/workflows/full-stack-feature.md) | Implementacion de feature en 10 etapas |
-| Feature Branch | [`content/workflows/feature-branch.md`](content/workflows/feature-branch.md) | Flujo Git |
-| Orquestador | [`content/workflows/orchestrator.md`](content/workflows/orchestrator.md) | Orquestacion de sesiones de IA |
-| Reglas de Pruebas | [`content/rules/testing.md`](content/rules/testing.md) | Piramide de pruebas, cobertura, AAA |
-| Entregables | [`content/rules/deliverables.md`](content/rules/deliverables.md) | Salidas requeridas por feature |
-| Flujo Git | [`content/rules/git-workflow.md`](content/rules/git-workflow.md) | Commits, branches, PRs |
-| Documentacion | [`content/rules/documentation.md`](content/rules/documentation.md) | Estructura de docs, plantilla ADR |
-| Capa de Memoria | [`content/specs/memory-layer.md`](content/specs/memory-layer.md) | Memoria entre sesiones |
-| Fast-Track | [`content/specs/fast-track.md`](content/specs/fast-track.md) | Clasificacion de tareas triviales |
-| Auditoria de Diseno | [`content/workflows/design.md`](content/workflows/design.md) | Auditoria WCAG + Tailwind |
-| Auditoria de Seguridad | [`content/workflows/analyze.md`](content/workflows/analyze.md) | Evaluacion OWASP |
-| Flujo de Pruebas | [`content/workflows/test.md`](content/workflows/test.md) | Generacion de pruebas |
-| Enrutamiento de Agentes | [`content/routing.md`](content/routing.md) | Jerarquia y roles de agentes |
+| Documento               | Ruta                                                                                 | Cubre                                  |
+| ----------------------- | ------------------------------------------------------------------------------------ | -------------------------------------- |
+| Workflow AIDD           | [`WORKFLOW.md`](WORKFLOW.md)                                                         | Guia de usuario del pipeline de IA     |
+| Ciclo de Vida AIDD      | [`content/specs/aidd-lifecycle.md`](content/specs/aidd-lifecycle.md)                 | Ciclo de vida tecnico de 6 fases       |
+| Workflow de Producto    | [`content/workflows/product.md`](content/workflows/product.md)                       | Spec, Gherkin, refinamiento, DoR       |
+| Feature Full-Stack      | [`content/workflows/full-stack-feature.md`](content/workflows/full-stack-feature.md) | Implementacion de feature en 10 etapas |
+| Feature Branch          | [`content/workflows/feature-branch.md`](content/workflows/feature-branch.md)         | Flujo Git                              |
+| Orquestador             | [`content/workflows/orchestrator.md`](content/workflows/orchestrator.md)             | Orquestacion de sesiones de IA         |
+| Reglas de Pruebas       | [`content/rules/testing.md`](content/rules/testing.md)                               | Piramide de pruebas, cobertura, AAA    |
+| Entregables             | [`content/rules/deliverables.md`](content/rules/deliverables.md)                     | Salidas requeridas por feature         |
+| Flujo Git               | [`content/rules/git-workflow.md`](content/rules/git-workflow.md)                     | Commits, branches, PRs                 |
+| Documentacion           | [`content/rules/documentation.md`](content/rules/documentation.md)                   | Estructura de docs, plantilla ADR      |
+| Capa de Memoria         | [`content/specs/memory-layer.md`](content/specs/memory-layer.md)                     | Memoria entre sesiones                 |
+| Fast-Track              | [`content/specs/fast-track.md`](content/specs/fast-track.md)                         | Clasificacion de tareas triviales      |
+| Auditoria de Diseno     | [`content/workflows/design.md`](content/workflows/design.md)                         | Auditoria WCAG + Tailwind              |
+| Auditoria de Seguridad  | [`content/workflows/analyze.md`](content/workflows/analyze.md)                       | Evaluacion OWASP                       |
+| Flujo de Pruebas        | [`content/workflows/test.md`](content/workflows/test.md)                             | Generacion de pruebas                  |
+| Enrutamiento de Agentes | [`content/routing.md`](content/routing.md)                                           | Jerarquia y roles de agentes           |

@@ -39,52 +39,10 @@
         "hooks": [{ "type": "command", "command": "node scripts/hooks/on-pre-compact.cjs" }]
       }
     ],
-    "PreToolUse": [
-      {
-        "matcher": "EnterPlanMode",
-        "hooks": [{ "type": "command", "command": "node scripts/hooks/pre-plan-enter.cjs" }]
-      },
-      {
-        "matcher": "ExitPlanMode",
-        "hooks": [{ "type": "command", "command": "node scripts/hooks/pre-plan-exit.cjs" }]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [{ "type": "command", "command": "node scripts/hooks/pre-edit.cjs" }]
-      },
-      {
-        "matcher": "mcp__aidd-engine__aidd_session",
-        "hooks": [{ "type": "command", "command": "node scripts/hooks/pre-session-end.cjs" }]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "mcp__aidd-engine__aidd_start",
         "hooks": [{ "type": "command", "command": "node scripts/hooks/on-session-init.cjs" }]
-      },
-      {
-        "matcher": "EnterPlanMode",
-        "hooks": [{ "type": "command", "command": "node scripts/hooks/on-plan-enter.cjs" }]
-      },
-      {
-        "matcher": "ExitPlanMode",
-        "hooks": [{ "type": "command", "command": "node scripts/hooks/on-plan-exit.cjs" }]
-      },
-      {
-        "matcher": "mcp__aidd-engine__aidd_session",
-        "hooks": [{ "type": "command", "command": "node scripts/hooks/on-session-end.cjs" }]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          { "type": "command", "command": "node scripts/hooks/on-stop.cjs" },
-          {
-            "type": "prompt",
-            "prompt": "Check if an AIDD session was properly ended. If 'stop_hook_active' is true, respond {\"ok\": true}. Otherwise: look for a recent aidd_session tool call with action 'end' and outcome metrics. If found, respond {\"ok\": true}. If not found, respond {\"ok\": false, \"reason\": \"Session still active. Complete the end protocol (CLAUDE.md §2.7) before closing.\"}."
-          }
-        ]
       }
     ]
   },
