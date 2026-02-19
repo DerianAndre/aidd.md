@@ -2,7 +2,7 @@
 
 > AIDD integration guide for Claude Code (claude.ai/claude-code)
 
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-18
 **Status**: Reference
 
 ---
@@ -71,7 +71,7 @@ pnpm mcp:check
 Project-level configuration committed to Git. Contains:
 
 - **Permissions**: Auto-allow all 82 AIDD MCP tools + common Bash commands
-- **Hooks**: 9 hooks (8 command + 1 prompt) across 4 events for mandatory workflow pipeline enforcement
+- **Hooks**: 13 hooks (12 command + 1 prompt) across 5 events for mandatory workflow pipeline enforcement
 - **Status Line**: Node.js script showing model, context, cost, duration
 
 ### `.claude/settings.local.json`
@@ -97,21 +97,25 @@ Cross-platform Node.js script for the status line. Receives JSON via stdin, outp
 
 ## 4. Hooks System
 
-AIDD uses 9 hooks (8 command + 1 prompt) across 4 Claude Code events for mandatory workflow pipeline enforcement:
+AIDD uses 13 hooks (12 command + 1 prompt) across 5 Claude Code events for mandatory workflow pipeline enforcement:
 
 ### Hook Inventory
 
-| # | Event | Type | Matcher | Script | Workflow Step |
-|---|-------|------|---------|--------|---------------|
-| 1 | `SessionStart` | command | `startup` | `on-startup.cjs` | Query DB for active session + orphaned artifacts |
-| 2 | `SessionStart` | command | `resume\|compact\|clear` | `on-resume.cjs` | Recover session context with task/artifact counts |
-| 3 | `PreCompact` | command | `""` (all) | `on-pre-compact.cjs` | Warn with session state + artifact count |
-| 4 | `PostToolUse` | command | `mcp__aidd-engine__aidd_start` | `on-session-init.cjs` | **Enforce mandatory brainstorm (§2.1)** |
-| 5 | `PostToolUse` | command | `EnterPlanMode` | `on-plan-enter.cjs` | **Verify brainstorm exists + enforce plan artifact (§2.2)** |
-| 6 | `PostToolUse` | command | `ExitPlanMode` | `on-plan-exit.cjs` | **Compliance tracking + approval/rejection protocol (§2.3)** |
-| 7 | `PostToolUse` | command | `mcp__aidd-engine__aidd_session` | `on-session-end.cjs` | **Review enforcement: verify checklist + retro on end (§2.7)** |
-| 8 | `Stop` | command | `""` (all) | `on-stop.cjs` | Enforce test + review + retro + archival + session end |
-| 9 | `Stop` | prompt | `""` (all) | (inline) | Block conversation end if session still active |
+| #  | Event | Type | Matcher | Script | Workflow Step |
+|----|-------|------|---------|--------|---------------|
+| 1  | `SessionStart` | command | `startup` | `on-startup.cjs` | Query DB for active session + orphaned artifacts |
+| 2  | `SessionStart` | command | `resume\|compact\|clear` | `on-resume.cjs` | Recover session context with task/artifact counts |
+| 3  | `PreCompact` | command | `""` (all) | `on-pre-compact.cjs` | Warn with session state + artifact count |
+| 4  | `PreToolUse` | command | `EnterPlanMode` | `pre-plan-enter.cjs` | Pre-validate before entering plan mode |
+| 5  | `PreToolUse` | command | `ExitPlanMode` | `pre-plan-exit.cjs` | Pre-validate before exiting plan mode |
+| 6  | `PreToolUse` | command | `Edit\|Write` | `pre-edit.cjs` | Pre-validate before file edits |
+| 7  | `PreToolUse` | command | `mcp__aidd-engine__aidd_session` | `pre-session-end.cjs` | Pre-validate before session end |
+| 8  | `PostToolUse` | command | `mcp__aidd-engine__aidd_start` | `on-session-init.cjs` | **Enforce mandatory brainstorm (§2.1)** |
+| 9  | `PostToolUse` | command | `EnterPlanMode` | `on-plan-enter.cjs` | **Verify brainstorm exists + enforce plan artifact (§2.2)** |
+| 10 | `PostToolUse` | command | `ExitPlanMode` | `on-plan-exit.cjs` | **Compliance tracking + approval/rejection protocol (§2.3)** |
+| 11 | `PostToolUse` | command | `mcp__aidd-engine__aidd_session` | `on-session-end.cjs` | **Review enforcement: verify checklist + retro on end (§2.7)** |
+| 12 | `Stop` | command | `""` (all) | `on-stop.cjs` | Enforce test + review + retro + archival + session end |
+| 13 | `Stop` | prompt | `""` (all) | (inline) | Block conversation end if session still active |
 
 All hook scripts live in `scripts/hooks/` (adapter-agnostic). The `.claude/settings.json` references them as `node scripts/hooks/<name>.cjs`.
 
@@ -147,6 +151,22 @@ Three enforcement layers ensure protocol compliance:
 1. **CLAUDE.md** — Directive instructions (MUST/ALWAYS/NEVER) with mandatory workflow pipeline make the AI follow the pipeline at every step
 2. **Smart command hooks** — DB-aware Node.js scripts inject specific session/artifact IDs and enforce artifact creation at every workflow transition
 3. **Prompt enforcer on Stop** — Blocks conversation from ending if AIDD session is still active
+
+### Shared Configuration Module
+
+All hook scripts share a common configuration module at `scripts/hooks/lib/config.cjs`:
+
+- **`isSessionTracking()`** — Reads `.aidd/config.json` and returns `true` if session tracking is enabled (default), `false` only when `content.sessionTracking` is explicitly `false`
+- When session tracking is disabled, hooks skip all database queries and provide abbreviated guidance
+- Fail-safe: returns `true` on any config read error (tracking is the safe default)
+
+### Session Tracking Modes
+
+The conversation lifecycle adapts based on `content.sessionTracking` in `.aidd/config.json`:
+
+- **`true` (default)** — Full lifecycle with DB persistence. All hooks query the database for state-aware enforcement.
+- **`false`** — Workflow-only mode. Hooks provide abbreviated guidance without DB queries. The AI follows the same pipeline steps but skips `aidd_session`, `aidd_artifact`, and `aidd_observation` tool calls.
+- **`undefined`** — First-run setup prompt. `aidd_start` returns a setup prompt asking the user to choose their preferred mode.
 
 ### Windows Compatibility
 

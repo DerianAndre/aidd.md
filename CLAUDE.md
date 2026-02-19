@@ -1,7 +1,7 @@
 # AIDD — Project Instructions for Claude Code
 
 > AI-Driven Development Framework — MCP Ecosystem
-> **Last Updated**: 2026-02-08
+> **Last Updated**: 2026-02-18
 
 ---
 
@@ -17,6 +17,7 @@ Call `aidd_start` immediately. Do NOT read files, search code, or begin any work
 | `taskClassification` | `{ domain, nature, complexity }` — if known from user request |
 | `branch`             | Auto-detected or user-specified                               |
 | `memorySessionId`    | For cross-session continuity (if provided)                    |
+| `tokenBudget`        | `'minimal' \| 'standard' \| 'full'` — controls response verbosity. Default from config. |
 
 This returns: session context + framework rules + active agents + suggested next steps.
 **Store the session ID returned by `aidd_start`. You need it for ALL subsequent operations.**
@@ -60,6 +61,8 @@ Expected status:
 - `skippableStages` overrides `fastTrack` when both are present
 
 **Defaults**: When `fastTrack: true` without explicit `skippableStages`, the default skip list is `['brainstorm', 'plan', 'checklist']` (only retro is required).
+
+**Workflow-only mode**: When `content.sessionTracking` is `false` in `.aidd/config.json`, follow the same workflow pipeline steps but skip all `aidd_session`, `aidd_artifact`, and `aidd_observation` tool calls. The workflow guidance from `aidd_start` will omit these calls automatically.
 
 ### 2.1 UNDERSTAND — Brainstorm
 

@@ -2,7 +2,7 @@
 
 > Complete reference for the `.aidd/` directory, `config.json`, environment variables, and storage architecture.
 
-**Last Updated**: 2026-02-07
+**Last Updated**: 2026-02-18
 
 ---
 
@@ -18,7 +18,7 @@
     - [CI categories](#ci-categories)
   - [Environment Variables](#environment-variables)
   - [SQLite Database](#sqlite-database)
-    - [Tables (16)](#tables-16)
+    - [Tables (18)](#tables-18)
     - [Schema checksum](#schema-checksum)
     - [WAL mode](#wal-mode)
     - [Pruning](#pruning)
@@ -122,6 +122,8 @@ The config file lives at `.aidd/config.json`. All fields are optional — missin
   // Content loading — how bundled vs project content merges
   "content": {
     "overrideMode": "merge",              // "merge" | "project_only" | "bundled_only"
+    "sessionTracking": true,              // true = full DB tracking, false = workflow-only (no DB), undefined = setup prompt
+    "tokenBudget": "standard",            // "minimal" (~400 tok) | "standard" (~600 tok) | "full" (~800+ tok)
 
     // Custom content paths — all optional, relative to project root
     "paths": {
@@ -238,7 +240,7 @@ Environment variables override config.json values. Set these in your MCP config 
 
 All persistent state lives in `.aidd/data.db` (SQLite with WAL mode). The database is gitignored — it's per-developer, regenerated from sessions.
 
-### Tables (16)
+### Tables (18)
 
 | Table                  | Purpose                          | Key Fields                                        |
 | ---------------------- | -------------------------------- | ------------------------------------------------- |
@@ -258,6 +260,12 @@ All persistent state lives in `.aidd/data.db` (SQLite with WAL mode). The databa
 | `banned_patterns`      | AI output anti-patterns          | `pattern`, `category`, `modelScope`               |
 | `pattern_detections`   | Pattern detection log            | `patternId`, `sessionId`, `confidence`            |
 | `audit_scores`         | 5-dimension text quality scores  | `sessionId`, `scores`, `verdict`                  |
+| `artifacts`            | Workflow artifacts (plan, retro) | `id`, `type`, `feature`, `sessionId`, `content`   |
+| `health_snapshots`     | Project health score over time   | `sessionId`, `scores`, `overall`, `createdAt`     |
+
+### Schema version
+
+Current schema version: **v4** (migration v4 added `health_snapshots` table). Migrations run automatically on startup.
 
 ### Schema checksum
 

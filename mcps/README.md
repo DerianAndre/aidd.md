@@ -203,6 +203,9 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 | `aidd_suggest_next`          | Context-aware next step suggestions with pre-filled tool args                         |
 | `aidd_optimize_context`      | Token-budget-aware context filtering                                                  |
 | `aidd_scaffold`              | Initialize AIDD in a project (minimal/standard/full)                                  |
+| `aidd_model_route`           | Route to optimal model for a tier with provider constraints                           |
+| `aidd_get_model_matrix`      | Full multi-provider model matrix (all registered models with tiers and status)        |
+| `aidd_model_matrix_status`   | Health status of model routing matrix (distribution, deprecation alerts)              |
 
 ### Memory: The Memory
 
@@ -242,6 +245,18 @@ Each MCP runs as a Node.js process. The AI tool connects via stdin/stdout using 
 | `aidd_pattern_stats`          | Pattern detection statistics per model with frequency breakdown            |
 | `aidd_pattern_score`          | Quick 5-dimension text quality evaluation with verdict                     |
 | `aidd_pattern_false_positive` | Report pattern as false positive, reduce confidence                        |
+| `aidd_memory_edit_decision`   | Edit an existing permanent decision entry                                  |
+| `aidd_memory_edit_mistake`    | Edit an existing permanent mistake entry                                   |
+| `aidd_memory_edit_convention` | Edit an existing permanent convention entry                                |
+| `aidd_memory_integrity_check` | Check permanent memory against rules for contradictions                    |
+| `aidd_evolution_approve`      | Approve an evolution candidate                                             |
+| `aidd_evolution_reject`       | Reject an evolution candidate (keeps audit trail)                          |
+| `aidd_evolution_delete`       | Permanently delete an evolution candidate                                  |
+| `aidd_draft_reject`           | Reject a pending content draft                                             |
+| `aidd_artifact`               | Manage workflow artifacts (create/update/archive/get/list/delete)          |
+| `aidd_health_trend`           | Health score trends over time with degradation alerts                      |
+| `aidd_system_health`          | MCP server runtime diagnostics (DB, HookBus, memory, sessions)            |
+| `aidd_session_compare`        | Side-by-side session comparison across compliance, tests, tools, errors    |
 
 ### Tools: The Hands
 
@@ -308,8 +323,8 @@ Single SQLite database for all persistent state:
 ```
 ┌─────────────────────────────────────────────────────
 │  SQLite (.aidd/data.db) — gitignored            
-│  16 tables: sessions, observations, branches,   
-│  evolution, patterns, memory, lifecycle, etc.    
+│  18 tables: sessions, observations, branches,
+│  evolution, patterns, memory, lifecycle, etc.
 │  FTS5 full-text search + WAL concurrent access   
 │  Schema checksum in meta table                   
 ├─────────────────────────────────────────────────────
@@ -487,7 +502,9 @@ The MCP scans for a `.aidd/` directory with AIDD content:
     "ignore": ["commit_format"]
   },
   "content": {
-    "override_mode": "merge"
+    "override_mode": "merge",
+    "sessionTracking": true,
+    "tokenBudget": "standard"
   }
 }
 ```

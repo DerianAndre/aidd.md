@@ -172,9 +172,10 @@ The Technology Knowledge Base (TKB) contains quantified metrics. Place in `conte
 
 1. Ensure your contribution follows the format guidelines above
 2. Update `AGENTS.md` if your change affects the system map or agent roles
-3. Run validation scripts if applicable: `pnpm validate:mermaid`, `pnpm validate:openapi`, etc.
-4. Write a clear PR description explaining what you're adding and why
-5. Reference any related issues
+3. If modifying hook scripts in `scripts/hooks/`, ensure the shared config module (`scripts/hooks/lib/config.cjs`) is kept consistent
+4. Run validation scripts if applicable: `pnpm validate:mermaid`, `pnpm validate:openapi`, etc.
+5. Write a clear PR description explaining what you're adding and why
+6. Reference any related issues
 
 **Commit format**: `type(scope): description`
 - Types: feat, fix, docs, refactor, test, chore

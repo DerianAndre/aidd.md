@@ -2,7 +2,7 @@
 
 > Concise, structured report produced at the end of every SHIP phase. Replaces verbose status dumps with scannable facts.
 
-**Last Updated**: 2026-02-07
+**Last Updated**: 2026-02-18
 **Status**: Reference
 
 ---

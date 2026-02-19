@@ -1,7 +1,7 @@
 ---
 name: Tailwind CSS
 category: frontend
-last_updated: 2026-01-14
+last_updated: 2026-02-18
 maturity: stable
 ---
 

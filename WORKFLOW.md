@@ -2,7 +2,7 @@
 
 > How the AI-Driven Development framework works — tool and AI agnostic
 
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-18
 **Status**: Reference
 
 ---
@@ -18,6 +18,25 @@ AIDD (AI-Driven Development) is a framework that structures how AI assistants de
 - **Self-improvement** — The framework evolves based on usage patterns and outcomes
 
 AIDD works with any AI-powered development tool that supports the MCP protocol (Claude Code, Cursor, Gemini, etc.).
+
+### Session Tracking Modes
+
+AIDD supports two session tracking modes:
+
+- **Full tracking** (default) — Sessions, artifacts, and observations are persisted to the SQLite database. Memory accumulates across sessions enabling cross-session learning.
+- **Workflow-only** — The AI follows the same Brainstorm → Plan → Execute → Test → Review → Ship pipeline, but without database persistence. Useful for quick tasks or when you don't need cross-session memory.
+
+Set the mode in `.aidd/config.json` under `content.sessionTracking` (boolean). If not configured, the AI will prompt you to choose on first use.
+
+### Token Budget
+
+Controls how verbose the AI's workflow guidance is:
+
+- **Minimal** (~400 tokens) — Compressed workflow steps, titles only for content lists
+- **Standard** (~600 tokens, default) — MUST/NEVER lines from rules, workflow steps with tool call examples
+- **Full** (~800+ tokens) — Complete guidance with descriptions, triggers, and detailed instructions
+
+Set in `.aidd/config.json` under `content.tokenBudget` or pass as a parameter to `aidd_start`.
 
 ---
 
@@ -107,6 +126,8 @@ The brainstorm and planning steps are mandatory by default. To skip them, say an
 - "Skip brainstorm"
 - "Just implement this"
 - "No planning needed"
+
+For trivial tasks (fewer than 3 steps, single-file fix, typo, config change), the AI may automatically classify the task as **fast-track** and skip brainstorm, plan, and checklist steps. You can override this with "no, this needs full workflow."
 
 Artifacts are still created for the steps that do execute.
 
@@ -240,11 +261,10 @@ You don't need to do anything for evolution to work. It runs server-side at zero
 .aidd/                    Project AIDD state
 ├── config.json           Framework configuration
 ├── data.db               SQLite database (sessions, memory, artifacts)
-├── memory/               Exported memory (committed to Git)
-│   ├── decisions.json    Architecture decisions
-│   ├── mistakes.json     Errors and fixes
-│   └── conventions.json  Project conventions
-└── state/                Runtime state (gitignored)
+└── memory/               Memory files (committed to Git)
+    ├── decisions.json    Architecture decisions
+    ├── mistakes.json     Errors and fixes
+    ├── conventions.json  Project conventions
     ├── insights.md       Auto-generated dashboard
     └── state-dump.sql    SQL state for debugging
 ```

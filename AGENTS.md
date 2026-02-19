@@ -1,7 +1,7 @@
 # AIDD — Project Instructions for AGENTS.md
 
 > AI-Driven Development Framework — MCP Ecosystem
-> **Last Updated**: 2026-02-08
+> **Last Updated**: 2026-02-18
 
 ---
 
@@ -17,9 +17,12 @@ Call `aidd_start` immediately. Do NOT read files, search code, or begin any work
 | `taskClassification` | `{ domain, nature, complexity }` — if known from user request |
 | `branch`             | Auto-detected or user-specified                               |
 | `memorySessionId`    | For cross-session continuity (if provided)                    |
+| `tokenBudget`        | `'minimal' \| 'standard' \| 'full'` — controls response verbosity |
 
 This returns: session context + framework rules + active agents + suggested next steps.
 **Store the session ID returned by `aidd_start`. You need it for ALL subsequent operations.**
+
+**Session tracking modes**: When `content.sessionTracking` is `false` in config, `aidd_start` returns workflow guidance without creating a database session. When `undefined`, a setup prompt is returned. All subsequent session/artifact/observation tools are skipped in workflow-only mode.
 
 **Fallback** (MCP unavailable): Run `pnpm mcp:check` in the terminal.
 

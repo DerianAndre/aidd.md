@@ -2,7 +2,7 @@
 
 > Structured development lifecycle where every feature flows through specification before implementation.
 
-**Last Updated**: 2026-02-06
+**Last Updated**: 2026-02-18
 **Status**: Reference
 
 ---

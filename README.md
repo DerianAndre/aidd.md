@@ -7,7 +7,7 @@
 > The open standard for AI-Driven Development. Multi-IDE, AI-agnostic agent coordination.
 
 **Version**: 1.0.0
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-18
 **License**: MIT
 **Domain**: https://aidd.md
 
@@ -139,6 +139,7 @@ Formal reference documents — descriptive, detailed rationale. Located in `cont
 | `fast-track.md`              | Per-phase workflow skip for trivial tasks                   |
 | `implementation-summary.md`  | Structured completion report for SHIP phase                 |
 | `ltum-aidd.md`               | Low Token Usage Mode protocol                               |
+| `routing.md`                 | Task classification and agent routing spec                  |
 
 ### Skills (11 directories)
 
@@ -202,12 +203,13 @@ mcps/
 |----------|-------|---------|
 | Project + Guidance | 6 | Bootstrap, task routing, heuristic analysis |
 | Knowledge + Agents | 5 | TKB queries, tech compatibility, agent skills |
-| Sessions + Memory | 15 | Session lifecycle, observations, permanent memory |
-| Lifecycle + Evolution | 8 | Phase tracking, self-improvement candidates |
+| Model Routing | 3 | Model matrix, tier routing, matrix health |
+| Sessions + Memory | 16 | Session lifecycle, observations, permanent memory, edits, integrity |
+| Lifecycle + Evolution | 12 | Phase tracking, self-improvement (analyze, approve, reject, delete) |
 | Analytics + Patterns | 9 | Model performance, output quality, fingerprinting |
-| Validation + CI | 18 | Code quality, compliance, commit generation |
-| Drafts + Artifacts | 4 | Content drafts, workflow documents |
-| Context + Health | 6 | Context optimization, diagnostics, scaffolding |
+| Validation + CI | 19 | Code quality, compliance, commit generation |
+| Drafts + Artifacts | 5 | Content drafts (create/list/approve/reject), workflow documents |
+| Context + Diagnostics | 7 | Context optimization, scaffolding, health trends, system diagnostics |
 
 See [mcps/README.md](mcps/README.md) for full architecture and [mcps/PLAN.md](mcps/PLAN.md) for implementation roadmap.
 
@@ -228,8 +230,8 @@ aidd.md/
 │
 ├── content/                     # Framework content (SSOT)
 │   ├── agents/                  # Agent definitions + routing
-│   ├── specs/                   # Formal specifications (8)
-│   ├── rules/                   # Immutable constraints (11)
+│   ├── specs/                   # Formal specifications (13)
+│   ├── rules/                   # Immutable constraints (13)
 │   ├── skills/                  # Agent capabilities (11)
 │   ├── workflows/               # Multi-step procedures (11)
 │   ├── knowledge/               # Technology Knowledge Base (106 entries)

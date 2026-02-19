@@ -2,7 +2,7 @@
 
 > AIDD integration guide for Cursor (cursor.sh)
 
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-18
 **Status**: Reference
 
 ---

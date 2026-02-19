@@ -2,7 +2,7 @@
 
 > Persistent, structured memory that accumulates project decisions, mistakes, and conventions across sessions.
 
-**Last Updated**: 2026-02-04
+**Last Updated**: 2026-02-18
 **Status**: Reference
 
 ---

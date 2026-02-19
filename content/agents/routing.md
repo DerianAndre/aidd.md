@@ -2,7 +2,7 @@
 
 > The open standard for AI-Driven Development. Multi-IDE, AI-agnostic agent coordination.
 
-**Last Updated**: 2026-02-07
+**Last Updated**: 2026-02-18
 **Version**: 1.0.0
 **Maintainer**: DerianAndre
 **License**: MIT
