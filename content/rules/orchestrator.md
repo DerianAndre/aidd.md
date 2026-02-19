@@ -33,7 +33,7 @@ Before entering any execution phase, classify the user's request to determine th
 
 | Signal                              | Entry Point            | Reference                          |
 | ----------------------------------- | ---------------------- | ---------------------------------- |
-| Vague idea, "I want to build..."    | Brainstorming          | `templates/brainstorming.md`       |
+| Vague idea, "I want to build..."    | Brainstorming          | `workflows/brainstorming.md`       |
 | Clear feature, needs research       | Research               | `templates/research.md`            |
 | Defined requirements, ready to plan | AIDD Phase 2 — PLAN    | `specs/aidd-lifecycle.md`          |
 | Existing plan, ready to build       | AIDD Phase 4 — BUILD   | `specs/aidd-lifecycle.md`          |
@@ -55,7 +55,7 @@ When ANY of these keywords appear with low context (< 2 sentences of specific re
 
 **Context sufficiency check**: If the user provides < 90% clarity (fewer than 3 of: what, why, who, constraints, scope), enter Step 0 automatically.
 
-**Protocol**: Do NOT start implementing. Ask questions first using the Listen → Probe → Mirror → Challenge → Converge protocol from `templates/brainstorming.md` Step 0.
+**Protocol**: Do NOT start implementing. Ask questions first using the Listen → Probe → Mirror → Challenge → Converge protocol from `workflows/brainstorming.md` Step 0.
 
 **See:** [`workflows/orchestrator.md`](../workflows/orchestrator.md) for the full intake-to-completion pipeline.
 

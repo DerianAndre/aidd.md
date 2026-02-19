@@ -27,8 +27,9 @@ Coordinate end-to-end development of a complete feature from initial architectur
 
 | Type            | Items                                        |
 | --------------- | -------------------------------------------- |
-| **Skills**      | writing-plans, executing-plans, verification |
-| **Specialized** | clean-ddd-hexagonal, frontend-design         |
+| **Workflows**   | planning, executing                          |
+| **Skills**      | verification-before-completion               |
+| **Specialized** | cdh-architecture, frontend-design            |
 | **MCPs**        | Context7, WebSearch                          |
 
 **Use when:**

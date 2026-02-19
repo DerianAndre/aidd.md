@@ -25,7 +25,7 @@ model_strategy: hybrid
 | Type            | Items                              |
 | --------------- | ---------------------------------- |
 | **Skills**      | systematic-debugging, verification |
-| **Specialized** | clean-ddd-hexagonal                |
+| **Workflows**   | cdh-architecture                   |
 | **MCPs**        | WebSearch                          |
 
 **Use when:**

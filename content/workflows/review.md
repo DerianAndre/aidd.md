@@ -20,7 +20,7 @@ model_strategy: sequential
 | Type            | Items                              |
 | --------------- | ---------------------------------- |
 | **Skills**      | code-review, receiving-code-review |
-| **Specialized** | clean-ddd-hexagonal                |
+| **Workflows**   | cdh-architecture                   |
 | **MCPs**        | WebSearch                          |
 
 ---

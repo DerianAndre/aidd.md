@@ -48,8 +48,12 @@ When the project has AIDD installed (detected by presence of `AGENTS.md` + `rule
 | Documentation sync                       | Orchestrator        | docs.md                         |
 | Technology selection, evaluation         | Orchestrator        | technology-selection.md         |
 | Code review, pre-merge                   | Quality Engineer    | review.md                       |
-| Brainstorming, ideation                  | Orchestrator        | product.md                      |
-| Architect mode (brainstorm→plan→execute) | Orchestrator        | orchestrator.md |
+| Brainstorming, ideation, diverge-converge | Orchestrator       | brainstorming.md                |
+| Plan creation, ADR, spec commitment       | Orchestrator       | planning.md                     |
+| Plan execution, implementation            | Orchestrator       | executing.md                    |
+| Hexagonal, DDD, clean architecture        | System Architect   | cdh-architecture.md             |
+| Product spec, Gherkin, Definition of Ready | Orchestrator      | product.md                      |
+| Architect mode (brainstorm→plan→execute)  | Orchestrator       | orchestrator.md                 |
 
 **AIDD takes priority**. When detected, AIDD agents and workflows are the SSOT. Templates serve as supplementary reference only.
 

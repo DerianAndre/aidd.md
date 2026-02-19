@@ -10,7 +10,7 @@ description: 🔍 Technology selection workflow using the Technology Knowledge B
 
 | Type       | Items               |
 | ---------- | ------------------- |
-| **Skills** | brainstorming       |
+| **Workflows** | brainstorming       |
 | **MCPs**   | WebSearch, Context7 |
 
 ---

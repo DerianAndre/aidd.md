@@ -22,7 +22,9 @@
 
 ### Master System Architect & Logic Orchestrator (The Polymath)
 
-**Purpose:** Entry point for all requests.### **Master Orchestrator** — Strategic Mapping & Delegation
+**Purpose:** Entry point for all requests.
+
+### **Master Orchestrator** — Strategic Mapping & Delegation
 
 - **Capability:** Decomposes user intent, queries Technology Knowledge Base (TKB), maps optimal execution paths
 - **Triggers:** All requests (first responder)
@@ -246,12 +248,12 @@ your-project/
 
 Run `pnpm setup` to auto-detect and configure all supported IDEs. The setup script detects installed tools, asks for confirmation, and writes the appropriate MCP config files.
 
-| IDE | Detection | Config Location | Mode |
-|-----|-----------|-----------------|------|
-| Claude Code | `~/.claude/` exists | `~/.claude/mcp.json` (global) | MCP auto-start |
-| Cursor | Always available | `.cursor/mcp.json` (project) | MCP auto-start |
-| VS Code | `.vscode/` or `code` CLI | `.vscode/mcp.json` (project) | MCP auto-start |
-| Gemini | `AGENTS.md` exists | Auto-detected (no config needed) | Reads AGENTS.md directly |
+| IDE         | Detection                | Config Location                  | Mode                     |
+| ----------- | ------------------------ | -------------------------------- | ------------------------ |
+| Claude Code | `~/.claude/` exists      | `~/.claude/mcp.json` (global)    | MCP auto-start           |
+| Cursor      | Always available         | `.cursor/mcp.json` (project)     | MCP auto-start           |
+| VS Code     | `.vscode/` or `code` CLI | `.vscode/mcp.json` (project)     | MCP auto-start           |
+| Gemini      | `AGENTS.md` exists       | Auto-detected (no config needed) | Reads AGENTS.md directly |
 
 Contributors get a local build path for fast startup (<1s). Adopters using `npx @aidd.md/cli init` get the `npx` command (portable, always resolves).
 

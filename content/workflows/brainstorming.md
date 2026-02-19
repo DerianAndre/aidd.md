@@ -1,23 +1,43 @@
-# Brainstorming — Diverge, Analyze, Converge, Document
+---
+name: brainstorming
+description: Structured diverge-analyze-converge-document ideation preventing anchoring bias and ensuring evidence-based decisions
+complexity: medium
+estimated_duration: 30 minutes
+skills_required:
+  - system-architect
+  - knowledge-architect
+model_strategy: sequential
+---
+
+# Workflow: Brainstorming (Diverge, Analyze, Converge, Document)
 
 > Structured ideation that prevents anchoring bias and ensures evidence-based decisions.
 
-**Effort Tier**: 1 (HIGH_EFFORT)
-**AIDD Skill**: `skills/system-architect/SKILL.md` (Strategic Planning)
 **Model Guidance**: Orchestrator (Tier 1) inline. Do NOT delegate brainstorming to subagents — it requires conversational continuity with the user.
-**Indicator**: `[aidd.md] Template - Loaded brainstorming`
-
----
 
 ## Purpose
 
-Apply a Diverge-Analyze-Converge-Document pattern to generate, evaluate, and select the optimal approach for a given problem or feature request. This template prevents premature convergence and ensures all viable options are explored before committing.
+Apply a Diverge-Analyze-Converge-Document pattern to generate, evaluate, and select the optimal approach for a given problem or feature request. This workflow prevents premature convergence and ensures all viable options are explored before committing.
+
+**Use when:**
+
+- Building a new feature from a vague or partially-formed idea
+- The user needs structured questioning before planning
+- Exploring trade-offs between multiple approaches
+- Starting any non-trivial creative work
+
+## Invocation
+
+| Type       | Items                          |
+| ---------- | ------------------------------ |
+| **Skills** | system-architect               |
+| **MCPs**   | Context7, WebSearch            |
 
 ---
 
-## Preconditions
+## Prerequisites
 
-- [ ] Clear problem statement or feature request defined
+- [ ] Clear problem statement or feature request defined (or vague idea to be explored)
 - [ ] Scope boundaries established (what is in/out of scope)
 - [ ] Success criteria identified (how do we know the solution works)
 - [ ] Relevant codebase context loaded (architecture, constraints, existing patterns)
@@ -34,9 +54,9 @@ Apply a Diverge-Analyze-Converge-Document pattern to generate, evaluate, and sel
 
 ---
 
-## Process Steps
+## Step 0: Elicit Requirements (if problem is vague)
 
-### Step 0: Elicit Requirements (if problem is vague)
+**Indicator**: `[aidd.md] Workflow - brainstorming (Elicit Requirements)`
 
 If the user enters with a vague idea, extract what they actually need before generating options. The user may not know what they want, may think they know but lack the optimal approach, or may have the right instinct but wrong framing. Questions are the primary tool.
 
@@ -55,7 +75,11 @@ If the user enters with a vague idea, extract what they actually need before gen
 
 **Skip this step** if the user arrives with a clear problem statement and defined scope.
 
-### Step 1: Define Problem Space
+---
+
+## Step 1: Define Problem Space
+
+**Indicator**: `[aidd.md] Workflow - brainstorming (Define Problem Space)`
 
 Clearly articulate:
 - **What** is the problem or opportunity?
@@ -64,7 +88,11 @@ Clearly articulate:
 - **What constraints** exist (time, technical, organizational)?
 - **What does success look like?**
 
-### Step 2: Diverge — Generate Options
+---
+
+## Step 2: Diverge — Generate Options
+
+**Indicator**: `[aidd.md] Workflow - brainstorming (Diverge)`
 
 Generate **at least 3 distinct approaches**. Rules:
 - No filtering or criticism during this phase
@@ -72,7 +100,11 @@ Generate **at least 3 distinct approaches**. Rules:
 - Include at least one "unconventional" option
 - Document each option with: name, summary, high-level approach, key trade-off
 
-### Step 3: Analyze — Comparison Matrix
+---
+
+## Step 3: Analyze — Comparison Matrix
+
+**Indicator**: `[aidd.md] Workflow - brainstorming (Analyze)`
 
 Evaluate each option against these criteria:
 
@@ -88,7 +120,11 @@ Evaluate each option against these criteria:
 
 Score each cell: Strong (++), Adequate (+), Neutral (0), Weak (-), Disqualifying (--)
 
-### Step 4: Converge — Select Optimal Path
+---
+
+## Step 4: Converge — Select Optimal Path
+
+**Indicator**: `[aidd.md] Workflow - brainstorming (Converge)`
 
 - Identify the option with the best weighted score
 - Document **why** it wins over alternatives with specific evidence
@@ -97,7 +133,11 @@ Score each cell: Strong (++), Adequate (+), Neutral (0), Weak (-), Disqualifying
 
 **Gate**: User chooses → `[Keep Brainstorming]` | `[Move to Research]` | `[Move to Plan]` | `[Accept & Execute]`
 
-### Step 5: Document — Decision Record
+---
+
+## Step 5: Document — Decision Record
+
+**Indicator**: `[aidd.md] Workflow - brainstorming (Document)`
 
 Produce a decision record containing:
 - **Decision**: What was decided
@@ -110,7 +150,7 @@ Produce a decision record containing:
 
 ---
 
-## Output Artifact
+## Artifacts Produced
 
 When brainstorming is complete, produce a structured summary:
 
@@ -125,11 +165,11 @@ When brainstorming is complete, produce a structured summary:
 - **Recommended Approach**: [1 paragraph]
 ```
 
-This artifact feeds directly into the Research phase (`templates/research.md`) or the Plan phase (`specs/aidd-lifecycle.md` Phase 3).
+This artifact feeds directly into the Research phase (`templates/research.md`) or the Plan phase (`workflows/planning.md`).
 
 ---
 
-## Quality Gates
+## Success Criteria
 
 - [ ] At least 3 genuinely distinct options were explored
 - [ ] Comparison matrix is completed with all criteria scored
@@ -155,12 +195,13 @@ This artifact feeds directly into the Research phase (`templates/research.md`) o
 
 ## Cross-References
 
-- **Workflow (AIDD mode)**: `workflows/brainstorming.md`
+- **Template (fallback mode)**: `templates/brainstorming.md`
 - **Next phase (Research)**: `templates/research.md`
+- **Next phase (Plan)**: `workflows/planning.md`
 - **Orchestration pipeline**: `workflows/orchestrator.md`
-- **Workflow**: `workflows/product.md`
+- **Product workflow**: `workflows/product.md`
 - **Decision tree**: `rules/orchestrator.md`
 - **System Architect skill**: `skills/system-architect/SKILL.md`
 - **BLUF-6 output format**: `specs/bluf-6.md`
-- **Technology selection workflow**: `workflows/technology-selection.md`
+- **Technology selection**: `workflows/technology-selection.md`
 - **AIDD lifecycle**: `specs/aidd-lifecycle.md`

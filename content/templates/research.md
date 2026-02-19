@@ -193,7 +193,7 @@ This artifact feeds directly into the Plan phase (`specs/aidd-lifecycle.md` Phas
 
 ## Cross-References
 
-- **Previous phase (Brainstorming)**: `templates/brainstorming.md`
+- **Previous phase (Brainstorming)**: `workflows/brainstorming.md` (AIDD) or `templates/brainstorming.md` (fallback)
 - **Next phase (Plan)**: `specs/aidd-lifecycle.md`
 - **Orchestration pipeline**: `workflows/orchestrator.md`
 - **BLUF-6 format**: `specs/bluf-6.md`

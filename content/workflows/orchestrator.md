@@ -25,9 +25,11 @@ Coordinate the full brainstorm → research → plan → execute → complete pi
 
 **Invocation:**
 
-- Skills: `/superpowers:brainstorming` → `/superpowers:writing-plans` → `/superpowers:executing-plans`
-- Specialized: `/clean-ddd-hexagonal` (when DDD/Hexagonal patterns detected)
-- MCPs: Context7 (docs lookup), WebSearch (trend/tech research), project-relevant MCPs
+| Type            | Items                                                   |
+| --------------- | ------------------------------------------------------- |
+| **Workflows**   | brainstorming → planning → executing                    |
+| **Specialized** | cdh-architecture (when DDD/Hexagonal patterns detected) |
+| **MCPs**        | Context7 (docs lookup), WebSearch (trend/tech research)  |
 
 ---
 
@@ -63,7 +65,7 @@ Coordinate the full brainstorm → research → plan → execute → complete pi
 - **Task:** Extract what the user actually needs through structured questioning.
 - **Input:** User's initial request + intake classification.
 - **Output:** Brainstorm Summary artifact.
-- **Reference:** `templates/brainstorming.md`
+- **Reference:** `workflows/brainstorming.md`
 - **Model:** Orchestrator (Tier 1) inline. Do NOT delegate to subagents — requires conversational continuity.
 
 Protocol:

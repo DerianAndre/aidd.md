@@ -21,8 +21,8 @@ model_strategy: sequential
 
 | Type            | Items                        |
 | --------------- | ---------------------------- |
-| **Skills**      | brainstorming, writing-plans |
-| **Specialized** | clean-ddd-hexagonal          |
+| **Workflows**   | brainstorming, planning      |
+| **Specialized** | cdh-architecture             |
 | **MCPs**        | Context7, WebSearch          |
 
 ---

@@ -282,7 +282,7 @@ If at any point the implementation diverges from the spec, the workflow loops ba
 ## Cross-References
 
 - **Orchestration pipeline**: `workflows/orchestrator.md`
-- **Brainstorming (pre-AIDD)**: `templates/brainstorming.md`
+- **Brainstorming**: `workflows/brainstorming.md` (AIDD) or `templates/brainstorming.md` (fallback)
 - **Research (pre-AIDD)**: `templates/research.md`
 - **Model tier assignments**: `specs/model-matrix.md`
 - **Task routing**: `templates/routing.md`

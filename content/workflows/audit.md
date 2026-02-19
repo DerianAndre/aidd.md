@@ -6,7 +6,6 @@ estimated_duration: 45 minutes
 skills_required:
   - system-architect
   - verification-before-completion
-  - clean-ddd-hexagonal
 model_strategy: sequential
 ---
 
@@ -19,7 +18,7 @@ model_strategy: sequential
 | Type            | Items                          |
 | --------------- | ------------------------------ |
 | **Skills**      | verification-before-completion |
-| **Specialized** | clean-ddd-hexagonal            |
+| **Workflows**   | cdh-architecture               |
 | **MCPs**        | Context7                       |
 
 ---

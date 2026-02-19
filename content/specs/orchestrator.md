@@ -209,7 +209,7 @@ Perform a comprehensive security audit of REST APIs against OWASP Top 10 (2025).
 | Type | Items |
 |------|-------|
 | **Skills** | verification-before-completion |
-| **Specialized** | clean-ddd-hexagonal |
+| **Workflows** | cdh-architecture |
 | **MCPs** | Context7 |
 
 ## Workflow Stages

@@ -19,6 +19,10 @@
 | [review.md](review.md)                             | Pre-merge code review focused on architecture, security, and technical debt            | Branch reviews, staged change audits, pre-merge quality checks                                         |
 | [technology-selection.md](technology-selection.md) | Evidence-based technology selection using the Technology Knowledge Base                | Choosing frameworks, databases, runtimes, or tools based on project constraints                        |
 | [test.md](test.md)                                 | Complete test suite generation with Vitest using cyclomatic complexity prioritization  | Writing tests, increasing coverage, targeting high-risk code paths                                     |
+| [brainstorming.md](brainstorming.md)               | Structured diverge-analyze-converge-document ideation protocol                        | Vague ideas, need structured questioning before planning, exploring trade-offs                          |
+| [planning.md](planning.md)                         | Plan document creation with ADRs, diagrams, and issue tracking                        | Creating executable plans from brainstorm/research findings, version-controlled specs                   |
+| [executing.md](executing.md)                       | Plan implementation with adaptive model assignment and verification                   | Implementing an approved plan with parallel dispatch and completion archival                            |
+| [cdh-architecture.md](cdh-architecture.md)         | Clean + DDD + Hexagonal architecture verification and enforcement                     | Verifying domain purity, dependency injection, framework agnosticism                                   |
 
 ---
 
@@ -26,9 +30,9 @@
 
 | Complexity   | Workflows                                         |
 | ------------ | ------------------------------------------------- |
-| **High**     | orchestrator, full-stack-feature, analyze         |
-| **Medium**   | docs, product, review, technology-selection, test |
-| **Standard** | audit, design, feature-branch                     |
+| **High**     | orchestrator, full-stack-feature, analyze, executing         |
+| **Medium**   | docs, product, review, technology-selection, test, brainstorming, planning, cdh-architecture |
+| **Standard** | audit, design, feature-branch                                |
 
 ---
 
@@ -36,6 +40,6 @@
 
 | Strategy                                        | Workflows             |
 | ----------------------------------------------- | --------------------- |
-| **Hybrid** (Tier 1 planning + Tier 2 execution) | orchestrator, analyze |
-| **Sequential** (phased tier progression)        | full-stack-feature    |
-| **Parallel** (concurrent agent dispatch)        | docs                  |
+| **Hybrid** (Tier 1 planning + Tier 2 execution) | orchestrator, analyze, executing               |
+| **Sequential** (phased tier progression)        | full-stack-feature, brainstorming, planning, cdh-architecture |
+| **Parallel** (concurrent agent dispatch)        | docs                                            |
